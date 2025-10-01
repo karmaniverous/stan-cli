@@ -1,0 +1,88 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Getting Started | @karmaniverous/stan</title><meta name="description" content="Documentation for @karmaniverous/stan"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/stan</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/stan">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="" aria-current="page">Getting Started</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="getting-started" class="tsd-anchor-link">Getting Started<a href="#getting-started" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1><p>This guide walks you through setting up STAN in an existing repository and using it effectively in chat.</p>
+<h2 id="1-install" class="tsd-anchor-link">1) Install<a href="#1-install" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Install the STAN CLI globally (pick one):</p>
+<pre><code class="bash"><span class="hl-3">npm</span><span class="hl-1"> </span><span class="hl-4">i</span><span class="hl-1"> </span><span class="hl-6">-g</span><span class="hl-1"> </span><span class="hl-4">@karmaniverous/stan</span><br/><span class="hl-5"># or</span><br/><span class="hl-3">pnpm</span><span class="hl-1"> </span><span class="hl-4">add</span><span class="hl-1"> </span><span class="hl-6">-g</span><span class="hl-1"> </span><span class="hl-4">@karmaniverous/stan</span><br/><span class="hl-5"># or</span><br/><span class="hl-3">yarn</span><span class="hl-1"> </span><span class="hl-4">global</span><span class="hl-1"> </span><span class="hl-4">add</span><span class="hl-1"> </span><span class="hl-4">@karmaniverous/stan</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="2-initialize-in-your-repo" class="tsd-anchor-link">2) Initialize in your repo<a href="#2-initialize-in-your-repo" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>From your repository root:</p>
+<pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">init</span>
+</code><button type="button">Copy</button></pre>
+
+<p>What this does:</p>
+<ul>
+<li>Creates <code>stan.config.yml</code> with sensible defaults.</li>
+<li>Ensures <code>.gitignore</code> entries for <code>.stan/output/</code>, <code>.stan/diff/</code>, <code>.stan/dist/</code>, and <code>.stan/patch/</code>.</li>
+<li>Ensures documentation metadata under <code>.stan/system/</code> and creates required directories. The project prompt (<code>.stan/system/stan.project.md</code>) is created on demand by STAN when repo‑specific requirements emerge (no template is installed).</li>
+<li>Writes an initial diff snapshot to <code>.stan/diff/.archive.snapshot.json</code>.</li>
+</ul>
+<p>You can re-run <code>stan init</code> safely. Use <code>--force</code> to accept defaults; otherwise you’ll be prompted.</p>
+<h2 id="3-understand-stanconfigyml" class="tsd-anchor-link">3) Understand stan.config.yml<a href="#3-understand-stanconfigyml" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Minimal example:</p>
+<pre><code class="yaml"><span class="hl-7">stanPath</span><span class="hl-1">: </span><span class="hl-8">.stan</span><br/><span class="hl-7">includes</span><span class="hl-1">: []</span><br/><span class="hl-7">excludes</span><span class="hl-1">: []</span><br/><span class="hl-7">scripts</span><span class="hl-1">:</span><br/><span class="hl-1">  </span><span class="hl-7">build</span><span class="hl-1">: </span><span class="hl-8">npm run stan:build</span><br/><span class="hl-1">  </span><span class="hl-7">lint</span><span class="hl-1">: </span><span class="hl-8">npm run lint</span><br/><span class="hl-1">  </span><span class="hl-7">test</span><span class="hl-1">: </span><span class="hl-8">npm run test</span><br/><span class="hl-1">  </span><span class="hl-7">typecheck</span><span class="hl-1">: </span><span class="hl-8">npm run typecheck</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Key settings:</p>
+<ul>
+<li><code>stanPath</code> (default <code>.stan</code>): STAN workspace folder.</li>
+<li><code>scripts</code>: commands whose combined stdout/stderr become deterministic text outputs (e.g., <code>test.txt</code>).</li>
+<li><code>includes</code>/<code>excludes</code>: glob controls for archiving; text files are included, binaries automatically excluded.</li>
+<li>Optional:
+<ul>
+<li><code>maxUndos</code> (history depth for snapshot undo/redo; default 10).</li>
+<li><code>patchOpenCommand</code> (editor open command; default <code>&quot;code -g {file}&quot;</code>).</li>
+</ul>
+</li>
+</ul>
+<h2 id="4-run-the-loop-locally" class="tsd-anchor-link">4) Run the loop locally<a href="#4-run-the-loop-locally" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Build and snapshot:</p>
+<pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span>
+</code><button type="button">Copy</button></pre>
+
+<p>This:</p>
+<ul>
+<li>Runs configured scripts (in parallel by default).</li>
+<li>Writes outputs to <code>.stan/output/*.txt</code>.</li>
+<li>Creates <code>.stan/output/archive.tar</code> (full snapshot of text files) and <code>.stan/output/archive.diff.tar</code> (changed files).</li>
+<li>Logs a concise “archive warnings” summary to the console (binary exclusions, large text call‑outs).</li>
+</ul>
+<p>To update the baseline snapshot without writing archives:</p>
+<pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">snap</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Patch iterations:</p>
+<pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">patch</span><span class="hl-1">              </span><span class="hl-5"># read unified diff from clipboard</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">patch</span><span class="hl-1"> </span><span class="hl-6">--check</span><span class="hl-1">      </span><span class="hl-5"># validate only (writes to sandbox)</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">patch</span><span class="hl-1"> </span><span class="hl-6">-f</span><span class="hl-1"> </span><span class="hl-4">fix.patch</span><span class="hl-1"> </span><span class="hl-5"># read from a file</span>
+</code><button type="button">Copy</button></pre>
+
+<p>On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste it into chat to get a corrected diff.</p>
+<p>Tips:</p>
+<ul>
+<li>Use <code>stan run -p</code> to print the plan and exit; use <code>stan run -P</code> to execute without printing the plan first.</li>
+<li>Use <code>-q</code> for sequential execution (preserves <code>-s</code> order).</li>
+<li>Use <code>-c</code> to include outputs inside archives and remove them from disk (combine mode).</li>
+</ul>
+<h2 id="5-use-the-bootloader-prompt-for-chat-clients" class="tsd-anchor-link">5) Use the bootloader prompt (for chat clients)<a href="#5-use-the-bootloader-prompt-for-chat-clients" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>STAN ships a small “bootloader” system prompt that reliably loads your attached system prompt from archives:</p>
+<ul>
+<li>Bootloader prompt (source): <a href="https://github.com/karmaniverous/stan/blob/main/.stan/system/stan.bootloader.md" target="_blank" class="external">.stan/system/stan.bootloader.md</a></li>
+</ul>
+<p>How to use with a third‑party client (TypingMind example):</p>
+<ol>
+<li>Create a custom agent and paste the entire bootloader into the agent’s System Prompt.</li>
+<li>Model: GPT‑5 (or your preferred GPT‑like model); set “High” reasoning effort and max_output_tokens to 32,000 if available.</li>
+<li>Start a fresh chat with this agent each time you attach a new archive set.</li>
+<li>Attach the latest <code>.stan/output/archive.tar</code> (and <code>archive.diff.tar</code> if present). The bootloader will locate and load <code>.stan/system/stan.system.md</code> from the archive automatically.</li>
+<li>Begin the discussion (e.g., “Here are my archives; please review the plan in <code>.stan/system/stan.todo.md</code> and propose next steps.”).</li>
+</ol>
+<p>Notes:</p>
+<ul>
+<li>The bootloader performs an integrity‑first tar read and refuses to proceed if <code>.stan/system/stan.system.md</code> cannot be found. Attachments are the source of truth.</li>
+<li>If you paste a previous handoff block, STAN uses it as input (does not generate a new handoff unless you explicitly ask).</li>
+</ul>
+<h2 id="6-quick-checklist" class="tsd-anchor-link">6) Quick checklist<a href="#6-quick-checklist" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
+<li>[ ] <code>stan init</code> successfully created config and docs.</li>
+<li>[ ] <code>stan run</code> produced text outputs and <code>archive.tar</code>/<code>archive.diff.tar</code>.</li>
+<li>[ ] You can attach archives in chat and the bootloader loads <code>stan.system.md</code>.</li>
+<li>[ ] Patches round‑trip cleanly (<code>stan patch --check</code> before applying).</li>
+</ul>
+<h2 id="troubleshooting" class="tsd-anchor-link">Troubleshooting<a href="#troubleshooting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
+<li>“Missing system prompt”: Attach an archive containing <code>.stan/system/stan.system.md</code> (or attach that file directly as <code>stan.system.md</code>).</li>
+<li>Patch failures: Use <code>--check</code> to validate; reply in chat with the FEEDBACK packet to receive a corrected diff.</li>
+<li>Large text files flagged: Consider adding globs to <code>excludes</code> to trim runtime noise from archives.</li>
+</ul>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#getting-started"><span>Getting <wbr/>Started</span></a><ul><li><a href="#1-install"><span>1) <wbr/>Install</span></a></li><li><a href="#2-initialize-in-your-repo"><span>2) <wbr/>Initialize in your repo</span></a></li><li><a href="#3-understand-stanconfigyml"><span>3) <wbr/>Understand stan.config.yml</span></a></li><li><a href="#4-run-the-loop-locally"><span>4) <wbr/>Run the loop locally</span></a></li><li><a href="#5-use-the-bootloader-prompt-for-chat-clients"><span>5) <wbr/>Use the bootloader prompt (for chat clients)</span></a></li><li><a href="#6-quick-checklist"><span>6) <wbr/>Quick checklist</span></a></li><li><a href="#troubleshooting"><span>Troubleshooting</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/stan" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../modules.html">@karmaniverous/stan</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

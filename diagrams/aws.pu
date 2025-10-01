@@ -1,0 +1,30 @@
+@startuml AWS
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v18.0/dist
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/ApplicationIntegration/all.puml
+!include AWSPuml/BusinessApplications/all.puml
+!include AWSPuml/Compute/all.puml
+!include AWSPuml/Database/all.puml
+!include AWSPuml/General/all.puml
+!include AWSPuml/Groups/all.puml
+!include AWSPuml/Storage/all.puml
+
+!define AWS_COLOR_BLACK #000000
+
+!define COLOR_BG_GREY #F2F2F2
+!define COLOR_BG_YELLOW #FDFCDC
+!define COLOR_BG_GREEN #E5FFDE
+!define COLOR_BG_PURPLE #F7F0F5
+!define COLOR_BG_RED #FFEAEE
+!define COLOR_BG_BLUE #E0FBFC
+
+' JGS Group
+AWSGroupColoring(JGSGroupColoring, COLOR_BG_GREEN, AWS_COLOR_BLACK, plain)
+!define JGSGroup(g_alias, g_label="JGS") AWSGroupEntity(g_alias, g_label, AWS_COLOR_BLACK, Gear, JGSGroupColoring)
+
+' Country Group
+AWSGroupColoring(CountryGroupColoring, COLOR_BG_BLUE, AWS_COLOR_BLACK, plain)
+!define CountryGroup(g_alias, g_label="Country") AWSGroupEntity(g_alias, g_label, AWS_COLOR_BLACK, Globe, CountryGroupColoring)
+
+@enduml

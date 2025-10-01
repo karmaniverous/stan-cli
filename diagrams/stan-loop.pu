@@ -1,0 +1,28 @@
+@startuml stan-loop 
+
+skinparam defaultFontName Monospace
+
+state "Build & Snapshot" as Build
+Build: - Edit code
+Build: - Review outputs
+Build: - Run: stan run
+
+state "Share & Baseline" as Share
+Share: - Attach archives + notes
+Share: - State requirements
+Share: - Run: stan snap
+
+state "Discuss & Patch" as Discuss
+Discuss: - Iterate to solution
+Discuss: - Get patches + commit
+Discuss: - Run: stan patch
+
+[*] --> Build
+
+Build --> Share : artifacts ready
+Share --> Discuss : handoff to assistant
+Discuss --> Build : loop until done
+
+Discuss --> [*] : done
+
+@enduml

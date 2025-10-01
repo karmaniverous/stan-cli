@@ -1,0 +1,49 @@
+{
+  "entryPoints": ["./src/index.ts"],
+  "highlightLanguages": [
+    "bash",
+    "console",
+    "css",
+    "diff",
+    "html",
+    "javascript",
+    "json",
+    "jsonc",
+    "json5",
+    "md",
+    "tsx",
+    "typescript",
+    "yaml"
+  ],
+  "hostedBaseUrl": "https://docs.karmanivero.us/stan",
+  "out": "./docs/",
+  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
+  "projectDocuments": [
+    "./docs-src/getting-started.md",
+    "./docs-src/the-stan-loop.md",
+    "./docs-src/cli-examples.md",
+    "./docs-src/configuration.md",
+    "./docs-src/patch-workflow.md",
+    "./docs-src/archives-and-snapshots.md",
+    "./docs-src/tutorial-quickstart.md",
+    "./docs-src/why-stan-over-alternatives.md",
+    "./docs-src/case-studies/rrstack.md",
+    "./contributing.md",
+    "./docs-src/faq.md",
+    "./CHANGELOG.md"
+  ],
+  "navigationLinks": {
+    "GitHub": "https://github.com/karmaniverous/stan"
+  },
+  "replaceText": {
+    "replacements": [
+      {
+        "pattern": "<!-- TYPEDOC_EXCLUDE -->.*?<!-- /TYPEDOC_EXCLUDE -->",
+        "flags": "gis",
+        "replace": ""
+      }
+    ]
+  },
+  "searchInComments": true,
+  "searchInDocuments": true
+}

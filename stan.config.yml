@@ -1,0 +1,22 @@
+cliDefaults:
+  run:
+    plan: false
+    sequential: true
+includes: []
+excludes:
+  - "*.local"
+  - assets
+  - CHANGELOG.md
+  - docs
+  - docs-src/**
+  - diagrams/**
+  - package-lock.json
+scripts:
+  typecheck: npm run typecheck
+  lint: npm run lint:fix
+  test: npm run test -- --no-color
+  build: npm run build
+  docs: npm run docs -- --emit none
+  knip: npm run knip
+patchOpenCommand: code -g {file}
+stanPath: .stan
