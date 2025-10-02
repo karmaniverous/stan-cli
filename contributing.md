@@ -13,7 +13,7 @@ Prereqs:
 
 Clone and install:
 ```bash
-git clone https://github.com/karmaniverous/stan.git
+git clone https://github.com/karmaniverous/stan-cli.git
 cd stan
 npm i
 ```

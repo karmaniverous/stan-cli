@@ -1,63 +1,109 @@
-# Project‑Specific Prompt (STAN)
+# Project‑Specific Augmentations — Multi‑Repo Coordination and Engine/CLI Boundaries
 
-This file contains assistant behavior and repo‑specific process rules that are not durable “requirements” (which now live in stan.requirements.md). Keep this document focused on policies, composition rules, and cross‑repo guidance.
+This document augments the system prompt with repo‑specific guidance for developing stan-core (engine) and stan-cli (CLI/runner) together using a published STAN baseline. It contains only instructions to the assistant. It is not a repository for project requirements or the dev plan.
 
-## Separation of concerns (project prompt vs requirements)
+The goals:
+- Keep engine/CLI responsibilities clean: the CLI acquires/presents; the core decides/processes.
+- Make multi‑repo context predictable and safe when archives ingest imports from other STAN instances.
+- Provide a lightweight, deterministic interop channel for cross‑repo coordination (multi‑file, aggressively pruned).
 
-- Durable, testable requirements now live in `.stan/system/stan.requirements.md` (split between stan-core and stan-cli).
-- This project prompt governs assistant behavior, authoring/assembly policy for prompts, cross‑repo recommendation cadence, and adapter expectations.
+---
 
-## Authoring & assembly (system prompt parts → monolith)
+## 1) Multi‑instance imports and disambiguation (authoritative vs contextual)
 
-- Author the system prompt as parts under `.stan/system/parts`.
-- Assemble to `.stan/system/stan.system.md` with `npm run gen-system`.
-- The packaged module includes `dist/stan.system.md`.
-- Downstream, the CLI injects the packaged monolith during full archive (and restores afterward) to keep archives self‑contained.
+- You may see multiple files named “stan.requirements.md” and “stan.todo.md” in a single archive (local + imported copies from other STAN repos).
+- Treat the local documents as the only authoritative targets for updates:
+  - Local requirements: `<stanPath>/system/stan.requirements.md`
+  - Local dev plan: `<stanPath>/system/stan.todo.md`
+- Treat imported documents as read‑only context:
+  - Imported content lives under: `.stan/imports/<label>/...`
+  - Never create, patch, or delete files under `.stan/imports/**`. Do not propose edits to imported requirements/todo; use them only to inform decisions.
+- When referencing a document, always disambiguate by explicit path. If you refer to an imported requirements/todo, include its `<label>` and the full repo‑relative path under `.stan/imports/<label>/...`.
+- When proposing changes to requirements or the dev plan, target only the local files under `<stanPath>/system/`.
 
-## Cross‑repo recommendation policy (assistant behavior)
+---
 
-- When a change crafted in this repo requires or would benefit from changes in the other repo:
-  - Propose the change and explicitly recommend opening an issue/PR in the other project.
-  - Keep engine vs adapter boundaries clear in the recommendation text:
-    - stan-core for engine logic, selection/archiving/patch handling.
-    - stan-cli for TTY/runner, key handling, plan printing, help, and editors.
-- When responding to diagnostics, prefer the smallest safe change in the appropriate repo and capture the cross‑repo recommendation explicitly.
+## 2) Interop threads — multi‑file messages (no front matter; aggressive pruning)
 
-## Imports bridge policy
+Use interop messages to coordinate cross‑repo actions (CLI ↔ Core). Messages are plain Markdown files; one file per message for small diffs and deterministic order.
 
-- To keep chat loops well-contextualized without bloating archives:
-  - Each repo should configure imports to stage the other repo’s high‑signal docs beneath `<stanPath>/imports/<label>/…`.
-  - Recommended labels:
-    - In stan-core: `cli-docs` → stan-cli docs/README/changelog.
-    - In stan-cli: `core-docs` → stan-core API/reference change notes.
-  - These imports are staged before archiving and appear in both full and diff archives, subject to reserved path exclusions.
+- Locations
+  - Outgoing (authored locally): `.stan/interop/<label>/*.md`
+    - `<label>` is the operational slug the peer uses as its import label (e.g., “core-interop”, “cli-interop”).
+  - Incoming (staged via imports): `.stan/imports/<label>/*.md`
+    - These are read‑only; consume them before proposing cross‑repo work.
 
-## Dev‑mode diagnostics triage (unchanged)
+- Filename convention (ordering by name)
+  - `<UTC>-<slug>.md`
+    - `<UTC>`: `YYYYMMDD-HHMMSSZ` (UTC, so lexicographic sort = chronological order).
+    - `<slug>`: short, url‑safe, lower‑case (e.g., `api-surface`, `clipboard-boundary`, `swappable-core`).
 
-- Analyze diagnostics from `stan patch`, then ask explicitly:
-  - Apply insights now (recommended), or
-  - Request listings / Defer to dev plan.
-- Only emit patches when explicitly approved; end with a commit message and keep documentation cadence rules.
+- Message body
+  - Plain Markdown; optional initial heading; then short bullets explaining:
+    - What/Why/Action items, and links/refs if helpful.
+  - Keep each message atomic and self‑contained.
 
-## Patch diagnostics envelope (unified)
+- Assistant obligations
+  - Always scan incoming interop messages first (sorted lexicographically by filename) and incorporate them before proposing cross‑repo work.
+  - When a change here implies a concrete action in the peer repo, propose creating a new outgoing interop message file under `.stan/interop/<label>/` using the filename convention and a concise body.
+  - Append‑only behavior: never rewrite prior messages; post a new file for updates.
+  - Aggressive pruning: as soon as an interop exchange is resolved and the conclusions are reflected in the local requirements/dev plan, propose File Ops to remove the now‑stale interop message file(s). Do not rotate; threads are intentionally short and ephemeral.
 
-- Continue to emit the unified diagnostics envelope (attempt summaries + jsdiff reasons) to standard output for both downstream and STAN repos.
-- Follow-up options to present consistently:
-  1. New patch(es) for affected file(s) (recommended),
-  2. Full listings of affected file(s).
+- File Ops examples (for pruning)
+  - Propose:
+    ```
+    ### File Ops
+    rm .stan/interop/<label>/20251001-170512Z-api-surface.md
+    ```
+  - Never propose File Ops that touch `.stan/imports/**`.
 
-## Selection & execution policy (summary)
+---
 
-- CLI defaults: flags > cliDefaults > built‑ins.
-- Run defaults: run all configured scripts, archive enabled, live enabled on TTY.
-- Cancellation MUST skip archive/diff phases; late‑cancel guard before archiving.
+## 3) Imports bridge — linking peer docs/types/messages for context
 
-## Patch Extensions — File Ops (summary)
+- Ensure imports in `stan.config.*` stage high‑signal peer artifacts into this repo’s `.stan/imports/<label>/...` before archiving. Typical labels:
+  - In stan-cli:
+    - `core-docs`: `../stan-core/.stan/system/stan.requirements.md`, `../stan-core/.stan/system/stan.todo.md`
+    - `core-types`: `../stan-core/dist/index.d.ts`
+    - `core-interop`: `../stan-core/.stan/interop/stan-cli/*.md`
+  - In stan-core:
+    - `cli-docs`: `../stan-cli/.stan/system/stan.requirements.md`, `../stan-cli/.stan/system/stan.todo.md`
+    - `cli-interop`: `../stan-cli/.stan/interop/stan-core/*.md`
+- If the imports mapping is missing or incomplete and the change at hand benefits from those artifacts, propose a precise patch to `stan.config.*` that adds only the minimal patterns needed. Do not propose broad globs. Avoid adding imports solely for convenience if they create large or noisy archives.
 
-- Allow declarative mv/cp/rm/rmdir/mkdirp with safe path normalization.
-- For failures, emit the unified diagnostics envelope.
+---
 
-## Out‑of‑scope reminders
+## 4) Engine/CLI boundaries — acquisition vs processing (behavioral guardrails)
 
-- Do not place durable requirements here; move them to stan.requirements.md.
-- Keep this file focused on assistant behavior and cross‑repo guidance.
+- CLI responsibilities (adapters; presentation):
+  - Acquire inputs (arguments, files, clipboard) and pass data to the engine as plain strings and structured options.
+  - Present outputs (warnings, statuses, diagnostics envelopes); open editors; handle TTY/live UI and cancellation.
+  - When cross‑repo actions are needed, create/maintain outgoing interop messages under `.stan/interop/<label>/...` and aggressively prune resolved items.
+
+- Core responsibilities (engine; processing):
+  - Accept patch input as strings (engine does not acquire from clipboard).
+  - Decide and process: selection/archiving/diffing/snapshot/patch pipeline/file ops/validation.
+  - No console I/O from core; surface warnings/notes via return values or optional callbacks to the caller (CLI).
+  - Provide prompt utilities (`getPackagedSystemPromptPath`, `assembleSystemMonolith`) as quiet, pure helpers; the CLI chooses if/how to invoke them.
+
+- Assistant guardrails
+  - Do not propose introducing clipboard/editor/TTY dependencies into the engine.
+  - When proposing refactors or new behavior, keep the engine pure and push acquisition/presentation concerns into the CLI adapters.
+  - If a change spans both repos, use interop messages to coordinate; do not attempt to drive both sides in a single monolithic patch unless requested.
+
+---
+
+## 5) Swappable core awareness (runtime selection by CLI)
+
+- The CLI may run against an alternate or in‑development engine via a `--core` option. You should:
+  - Avoid assumptions about the engine’s physical location or build flavor (dist vs source); reason about behavior solely through the documented public API.
+  - When asked to assist with loader or integration changes, generate small, testable adapter logic on the CLI side (e.g., path resolution, version/shape checks, banner print), and keep the engine API stable and presentation‑free.
+
+---
+
+## 6) Document cadence and commit behavior (unchanged)
+
+- If you emit any code Patch blocks for this repo, you MUST also update the local dev plan under `<stanPath>/system/stan.todo.md` (unless the change set is deletions‑only or explicitly plan‑only) and end with a proper Commit Message block as defined in the system prompt.
+- Never propose changes to imported documents (`.stan/imports/**`). Imported content is context only.
+
+---

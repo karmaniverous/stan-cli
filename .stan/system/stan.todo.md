@@ -11,7 +11,7 @@ This plan tracks two synchronized tracks in preparation for splitting the code b
 ### Next up (priority order)
 
 - Extract engine package scaffolding
-  - Create a new repo/package “@karmaniverous/stan-core”.
+  - Create a new repo/package “@karmaniverous/stan-cli-core”.
   - Copy engine modules:
     - config/, fs.ts, fs/reserved.ts, paths.ts
     - archive.ts (+ archive/constants.ts), archive/util.ts (return warnings)
@@ -62,7 +62,7 @@ This plan tracks two synchronized tracks in preparation for splitting the code b
 ### Next up (priority order)
 
 - Wire stan-cli to stan-core
-  - Replace internal imports with “@karmaniverous/stan-core” APIs:
+  - Replace internal imports with “@karmaniverous/stan-cli-core” APIs:
     - config loading, selection, archive/diff, snapshot, patch pipeline, imports staging.
   - Keep CLI behaviors: preflight/docs injection, plan printing, live/logger UI, cancellation gates, editor open, clipboard source.
 

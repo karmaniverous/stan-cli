@@ -34,7 +34,7 @@ npm pkg set scripts.typecheck="echo ok"   # replace with tsc if you have TS
 ## 2) Install STAN and initialize
 
 ```bash
-npm i -g @karmaniverous/stan
+npm i -g @karmaniverous/stan-cli
 stan init
 ```
 

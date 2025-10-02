@@ -4,7 +4,7 @@ title: The STAN Loop
 
 # The STAN Loop
 
-![STAN Loop](https://github.com/karmaniverous/stan/raw/main/assets/stan-loop.png)
+![STAN Loop](https://github.com/karmaniverous/stan-cli/raw/main/assets/stan-loop.png)
 
 STAN establishes a simple, reproducible loop for AI‑assisted development.
 

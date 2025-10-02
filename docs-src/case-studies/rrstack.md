@@ -25,4 +25,4 @@ title: Case Study — rrstack
 ## Repo links
 
 - rrstack: https://github.com/karmaniverous/rrstack
-- STAN: https://github.com/karmaniverous/stan
+- STAN: https://github.com/karmaniverous/stan-cli

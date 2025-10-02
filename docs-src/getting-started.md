@@ -11,11 +11,11 @@ This guide walks you through setting up STAN in an existing repository and using
 Install the STAN CLI globally (pick one):
 
 ```bash
-npm i -g @karmaniverous/stan
+npm i -g @karmaniverous/stan-cli
 # or
-pnpm add -g @karmaniverous/stan
+pnpm add -g @karmaniverous/stan-cli
 # or
-yarn global add @karmaniverous/stan
+yarn global add @karmaniverous/stan-cli
 ```
 
 ## 2) Initialize in your repo
@@ -100,7 +100,7 @@ Tips:
 
 STAN ships a small “bootloader” system prompt that reliably loads your attached system prompt from archives:
 
-- Bootloader prompt (source): [.stan/system/stan.bootloader.md](https://github.com/karmaniverous/stan/blob/main/.stan/system/stan.bootloader.md)
+- Bootloader prompt (source): [.stan/system/stan.bootloader.md](https://github.com/karmaniverous/stan-cli/blob/main/.stan/system/stan.bootloader.md)
 
 How to use with a third‑party client (TypingMind example):
 

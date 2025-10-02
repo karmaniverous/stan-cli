@@ -2,9 +2,9 @@
 
 # STAN — STAN Tames Autoregressive Nonsense
 
-[![npm version](https://img.shields.io/npm/v/@karmaniverous/stan.svg)](https://www.npmjs.com/package/@karmaniverous/stan) ![Node Current](https://img.shields.io/node/v/@karmaniverous/stan) <!-- TYPEDOC_EXCLUDE --> [![docs](https://img.shields.io/badge/docs-website-blue)](https://docs.karmanivero.us/stan) [![changelog](https://img.shields.io/badge/changelog-latest-blue.svg)](https://github.com/karmaniverous/stan/tree/main/CHANGELOG.md)<!-- /TYPEDOC_EXCLUDE --> [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/karmaniverous/stan/tree/main/LICENSE.md)
+[![npm version](https://img.shields.io/npm/v/@karmaniverous/stan-cli.svg)](https://www.npmjs.com/package/@karmaniverous/stan-cli) ![Node Current](https://img.shields.io/node/v/@karmaniverous/stan-cli) <!-- TYPEDOC_EXCLUDE --> [![docs](https://img.shields.io/badge/docs-website-blue)](https://docs.karmanivero.us/stan) [![changelog](https://img.shields.io/badge/changelog-latest-blue.svg)](https://github.com/karmaniverous/stan-cli/tree/main/CHANGELOG.md)<!-- /TYPEDOC_EXCLUDE --> [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/karmaniverous/stan-cli/tree/main/LICENSE.md)
 
-![STAN Loop](https://github.com/karmaniverous/stan/raw/main/assets/stan-loop.png)
+![STAN Loop](https://github.com/karmaniverous/stan-cli/raw/main/assets/stan-loop.png)
 
 STAN produces a single source of truth for AI‑assisted development: a tarball of your repo plus deterministic text outputs from your build/test/lint/typecheck scripts.
 
@@ -19,11 +19,11 @@ Because a freaking chatbot shouldn’t gaslight your code.
 ### 1. Install
 
 ```
-npm i -g @karmaniverous/stan
+npm i -g @karmaniverous/stan-cli
 # or
-pnpm add -g @karmaniverous/stan
+pnpm add -g @karmaniverous/stan-cli
 # or
-yarn global add @karmaniverous/stan
+yarn global add @karmaniverous/stan-cli
 ```
 
 ### 2. Initialize in your repo

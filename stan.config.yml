@@ -3,6 +3,12 @@ cliDefaults:
     plan: false
     sequential: true
 includes: []
+imports:
+  stan-core: 
+    - '../stan-core/.stan/system/stan.requirements.md'
+    - '../stan-core/.stan/system/stan.todo.md'
+    - '../stan-core/dist/types/index.d.ts'
+    - '../stan-core/.stan/interop/stan-cli/**'
 excludes:
   - "*.local"
   - assets
