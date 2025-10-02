@@ -1,9 +1,6 @@
 /**
- * Barrel exports for the stan engine.
+ * Barrel exports for stan-cli (CLI-facing surfaces).
  */
-export * from './archive';
-export * from './config/index';
-export * from './diff';
 export * from './help';
 export * from './run';
-export * from './validate/response';
+// (No engine exports here; engine is provided by @karmaniverous/stan-core)

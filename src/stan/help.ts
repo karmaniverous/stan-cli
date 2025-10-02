@@ -1,4 +1,4 @@
-import { loadConfigSync } from '@/stan/config';
+import { loadConfigSync } from '@karmaniverous/stan-core';
 
 /**
  * Render a help footer that lists available script keys and examples. *

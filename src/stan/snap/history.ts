@@ -5,7 +5,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { makeStanDirs } from '../paths';
 import { formatUtcStampLocal } from '../util/time';
 import { resolveContext } from './context';
 import {
@@ -17,8 +16,7 @@ import {
 } from './shared';
 
 const getStatePaths = (cwd: string, stanPath: string) => {
-  const dirs = makeStanDirs(cwd, stanPath);
-  const diffDir = dirs.diffAbs;
+  const diffDir = path.join(cwd, stanPath, 'diff');
   const statePath = within(diffDir, STATE_FILE);
   const snapPath = within(diffDir, '.archive.snapshot.json');
   return { diffDir, statePath, snapPath };

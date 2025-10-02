@@ -1,9 +1,9 @@
 /** src/cli/stan/patch.ts
  * CLI adapter for "stan patch" — Commander wiring only.
  */
+import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 
-import { findConfigPathSync, loadConfigSync } from '@/stan/config';
 import { runPatch } from '@/stan/patch/service';
 
 import { applyCliSafety } from './cli-utils';
@@ -62,7 +62,7 @@ export const registerPatch = (cli: Command): Command => {
       let defaultFile: string | undefined;
       try {
         const { loadConfigSync, findConfigPathSync } = await import(
-          '@/stan/config'
+          '@karmaniverous/stan-core'
         );
         const cwd = process.cwd();
         const p = findConfigPathSync(cwd);

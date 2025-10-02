@@ -1,10 +1,10 @@
 /* src/cli/stan/snap.ts
  * CLI adapter for "stan snap" — Commander wiring only.
  */
+import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { Command as Commander, Option } from 'commander';
 
-import { findConfigPathSync, loadConfigSync } from '@/stan/config';
 import {
   handleInfo,
   handleRedo,

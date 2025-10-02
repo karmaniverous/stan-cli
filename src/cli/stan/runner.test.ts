@@ -1,6 +1,5 @@
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import { describe, expect, it } from 'vitest';
-
-import type { ContextConfig } from '@/stan/config';
 
 import { deriveRunInvocation } from './run-args';
 

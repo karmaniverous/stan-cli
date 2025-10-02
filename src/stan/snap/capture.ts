@@ -2,7 +2,6 @@
 import { existsSync } from 'node:fs';
 import { copyFile, readFile, rm, writeFile } from 'node:fs/promises';
 
-import { makeStanDirs } from '../paths';
 import {
   ARCH_DIR,
   ensureDirs,
@@ -35,9 +34,9 @@ export const captureSnapshotAndArchives = async ({
   ts: string;
   maxUndos: number;
 }): Promise<void> => {
-  const dirs = makeStanDirs(cwd, stanPath);
-  const diffDir = dirs.diffAbs;
-  const outDir = dirs.outputAbs;
+  const diffDir = within(cwd, stanPath, 'diff');
+  const outDir = within(cwd, stanPath, 'output');
+  // ensureDirs will create as needed below
 
   const statePath = within(diffDir, STATE_FILE);
   const snapsDir = within(diffDir, SNAP_DIR);

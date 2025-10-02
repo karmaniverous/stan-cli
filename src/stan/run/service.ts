@@ -1,5 +1,5 @@
-import type { ContextConfig } from '@/stan/config';
-import { ensureOutputDir } from '@/stan/config';
+import type { ContextConfig } from '@karmaniverous/stan-core';
+import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { preflightDocsAndVersion } from '../preflight';
 import { renderRunPlan } from './plan';

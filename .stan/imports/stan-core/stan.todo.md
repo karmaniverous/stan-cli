@@ -8,19 +8,8 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 ## Next up (priority order)
 
-- Console‑free surfaces (callbacks/returns)
-  - Replace direct logging of archive classifier output with a returned `warnings` string and/or optional callback hook:
-    - `onArchiveWarnings(text)` for `createArchive` and `createArchiveDiff`.
-  - Update tests to assert returned data and/or callback invocations (no console spies).
-
-- Imports staging summaries
-  - Extend `prepareImports` to support an optional `onStage(label, files[])` callback and/or return per‑label summaries.
-  - Update tests accordingly; preserve default silent behavior.
-
 - Engine surface hygiene
-  - Remove presentation helpers from core and ensure they are not exported:
-    - Delete `src/stan/util/{color.ts,status.ts,time.ts}`; repair barrels; update knip hints.
-  - Export `CORE_VERSION` and add a unit test that asserts presence (stan‑cli will duck‑type version/shape during `--core` load).
+  - Export `CORE_VERSION` and keep it available via the engine barrel (stan‑cli duck‑types during `--core` load).
 
 - Patch engine fidelity
   - Maintain the canonical ingestion path: `detectAndCleanPatch(raw) → cleaned` → `applyPatchPipeline({ cleaned, patchAbs, check })`.
@@ -34,6 +23,22 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 ---
 
 ## Completed (recent)
+
+- Console‑free surfaces (phase 1)
+  - Archive: `createArchive` / `createArchiveDiff` now surface classifier
+    warnings via optional `onArchiveWarnings(text)` callback; engine emits no
+    console output. Tests updated to assert callbacks (no console spies).
+  - Imports: `prepareImports` accepts optional `onStage(label, files[])` and no
+    longer logs to console. Callback reports repo‑relative staged paths; tests
+    updated to assert invocation.
+
+- Engine surface hygiene
+  - Removed presentation helpers from core:
+    - Deleted `src/stan/util/{color.ts,status.ts,time.ts}` (engine is
+      transport/presentation‑free).
+  - Exported `CORE_VERSION` from the engine barrel; added a unit test that
+    asserts presence and shape. This enables stan‑cli’s `--core` banner and
+    compatibility checks without coupling.
 
 - Posted interop guidance to stan‑cli identifying engine‑duplicate modules safe to delete and the corresponding `@karmaniverous/stan-core` imports to adopt.
 

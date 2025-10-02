@@ -14,6 +14,8 @@ type CreateArchiveOptions = {
      * workspace rules. These are applied only when `includes` is empty.
      */
     excludes?: string[];
+    /** Optional callback for archive classifier warnings (engine remains silent by default). */
+    onArchiveWarnings?: (text: string) => void;
 };
 /** Create `stanPath/output/archive.tar` (or custom file name) from the repo root. */
 declare const createArchive: (cwd: string, stanPath: string, options?: CreateArchiveOptions) => Promise<string>;
@@ -166,7 +168,7 @@ declare const writeArchiveSnapshot: ({ cwd, stanPath, includes, excludes, }: {
  *   - includeOutputDirInDiff: When true, include `stanPath/output` in the diff.
  * @returns `{ diffPath }` absolute path to the diff archive.
  */
-declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes, updateSnapshot, includeOutputDirInDiff, }: {
+declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes, updateSnapshot, includeOutputDirInDiff, onArchiveWarnings, }: {
     cwd: string;
     stanPath: string;
     baseName: string;
@@ -174,6 +176,7 @@ declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes,
     excludes?: string[];
     updateSnapshot?: SnapshotUpdateMode;
     includeOutputDirInDiff?: boolean;
+    onArchiveWarnings?: (text: string) => void;
 }) => Promise<{
     diffPath: string;
 }>;
@@ -313,13 +316,18 @@ type ImportsMap = Record<string, string[]>;
  * - Cleans each label directory prior to staging.
  * - Copies only files (skips directories); unreadable files are skipped best‑effort.
  *
- * @param args - Object containing cwd, stanPath, and map of label -\> patterns.
+ * @param args - Object with cwd, stanPath, and map of label -\> patterns.
+ *   Optionally includes `onStage`, a callback invoked per label with
+ *   repo‑relative staged paths.
  */
 declare const prepareImports: (args: {
     cwd: string;
     stanPath: string;
     map?: ImportsMap | null;
+    onStage?: (label: string, files: string[]) => void;
 }) => Promise<void>;
 
-export { DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
+declare const CORE_VERSION: string;
+
+export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
 export type { Block, BlockKind, CliDefaults, CliDefaultsPatch, CliDefaultsRun, CliDefaultsSnap, ContextConfig, CreateArchiveOptions, FileOp, ScriptEntry, ScriptMap, SnapshotUpdateMode, ValidationResult };

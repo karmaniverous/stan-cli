@@ -1,9 +1,8 @@
 /* src/stan/snap/snap-run.ts
  * Snapshot capture operation with optional stash.
  */
-import { loadConfig } from '@/stan/config';
+import { loadConfig, writeArchiveSnapshot } from '@karmaniverous/stan-core';
 
-import { writeArchiveSnapshot } from '../diff';
 import { preflightDocsAndVersion } from '../preflight';
 import { utcStamp } from '../util/time';
 import { captureSnapshotAndArchives } from './capture';

@@ -3,15 +3,20 @@ import { readdir, rm } from 'node:fs/promises';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path, { resolve } from 'node:path';
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
+import {
+  createArchive,
+  createArchiveDiff,
+  prepareImports,
+} from '@karmaniverous/stan-core';
+// Prompt helpers are expected to be top-level core exports (interop note filed)
+import {
+  assembleSystemMonolith,
+  getPackagedSystemPromptPath,
+} from '@karmaniverous/stan-core';
+
 import { alert, ok } from '@/stan/util/color';
 
-import { createArchive } from '../archive';
-import type { ContextConfig } from '../config';
-import { createArchiveDiff } from '../diff';
-import { prepareImports } from '../imports/stage';
-import { getPackagedSystemPromptPath } from '../module';
-import { makeStanDirs } from '../paths';
-import { assembleSystemMonolith } from '../system/assemble';
 import { getVersionInfo } from '../version';
 // Progress callbacks for live renderer integration
 type ArchiveProgress = {
@@ -54,6 +59,10 @@ const resolvePackagedSystemMonolith = (): string | null => {
   return getPackagedSystemPromptPath();
 };
 
+const makeDirs = (cwd: string, stanPath: string) => ({
+  outputAbs: path.join(cwd, stanPath, 'output'),
+  patchAbs: path.join(cwd, stanPath, 'patch'),
+});
 /**
  * Write the packaged system prompt to `<stanPath>/system/stan.system.md` for
  * the duration of archiving and return a cleanup function that restores previous
@@ -173,7 +182,7 @@ export const archivePhase = async (
 ): Promise<{ archivePath: string; diffPath: string }> => {
   const { cwd, config, includeOutputs } = args;
   const silent = Boolean(opts?.silent);
-  const dirs = makeStanDirs(cwd, config.stanPath);
+  const dirs = makeDirs(cwd, config.stanPath);
 
   if (!silent) {
     console.log(`stan: start "${alert('archive')}"`);
@@ -256,7 +265,7 @@ export const archivePhase = async (
     await restore();
   }
   if (includeOutputs) {
-    await cleanupOutputsAfterCombine(dirs.outputAbs);
+    await cleanupOutputsAfterCombine(makeDirs(cwd, config.stanPath).outputAbs);
   }
   await cleanupPatchDirAfterArchive(cwd, config.stanPath);
 

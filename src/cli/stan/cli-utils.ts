@@ -2,10 +2,9 @@
  * DRY the repeated exitOverride + parse normalization across subcommands.
  */
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
+import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import type { Command, Option } from 'commander';
-
-import type { ContextConfig } from '@/stan/config';
-import { findConfigPathSync, loadConfigSync } from '@/stan/config';
 
 import { RUN_BASE_DEFAULTS } from './run/defaults';
 

@@ -4,9 +4,9 @@ import { createWriteStream } from 'node:fs';
 import { appendFile, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import treeKill from 'tree-kill';
 
-import type { ContextConfig } from '../config';
 import type { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, Selection } from './types';
 type RunHooks = {

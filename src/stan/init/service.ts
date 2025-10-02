@@ -3,12 +3,15 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import type { ContextConfig, ScriptMap } from '@karmaniverous/stan-core';
+import {
+  ensureOutputDir,
+  findConfigPathSync,
+  loadConfig,
+  writeArchiveSnapshot,
+} from '@karmaniverous/stan-core';
 import YAML from 'yaml';
 
-import type { ContextConfig, ScriptMap } from '@/stan/config';
-import { ensureOutputDir, findConfigPathSync, loadConfig } from '@/stan/config';
-
-import { writeArchiveSnapshot } from '../diff';
 import { ensureDocs } from './docs';
 import { ensureStanGitignore } from './gitignore';
 import { promptForConfig, readPackageJsonScripts } from './prompts'; /**

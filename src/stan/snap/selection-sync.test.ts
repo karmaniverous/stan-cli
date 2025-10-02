@@ -2,10 +2,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { createArchiveDiff, loadConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { loadConfig } from '@/stan/config';
-import { createArchiveDiff } from '@/stan/diff';
 import { handleSnap } from '@/stan/snap/snap-run';
 
 // Silence preflight messaging in tests

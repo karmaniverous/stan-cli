@@ -126,7 +126,7 @@ export const makeCli = (): Command => {
     }
 
     const cwd = process.cwd();
-    const cfgMod = await import('@/stan/config');
+    const cfgMod = await import('@karmaniverous/stan-core');
     const hasConfig = !!cfgMod.findConfigPathSync(cwd);
 
     if (!hasConfig) {

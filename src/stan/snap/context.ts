@@ -3,7 +3,7 @@
  */
 import path from 'node:path';
 
-import { findConfigPathSync, loadConfig } from '@/stan/config';
+import { findConfigPathSync, loadConfig } from '@karmaniverous/stan-core';
 
 /**
  * Resolve the effective execution context for snapshot operations. *

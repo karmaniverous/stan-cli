@@ -2,10 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { createArchive } from './archive';
-import { createArchiveDiff } from './diff';
 
 type TarCall = {
   file: string;

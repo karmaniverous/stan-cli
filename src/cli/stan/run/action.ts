@@ -1,11 +1,11 @@
 /// src/cli/stan/run/action.ts
 import path from 'node:path';
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
+import { findConfigPathSync, loadConfig } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
-import type { ContextConfig } from '@/stan/config';
-import { findConfigPathSync, loadConfig } from '@/stan/config';
 import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
 

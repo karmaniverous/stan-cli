@@ -4,8 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { ensureDir } from 'fs-extra';
-
-import { getModuleRoot } from '@/stan/module';
+import { packageDirectorySync } from 'package-directory';
 /**
  * Ensure <stanPath>/system contains the shipped docs and record package version * to <stanPath>/system/.docs.meta.json.
  *
@@ -19,7 +18,8 @@ export const ensureDocs = async (
 ): Promise<void> => {
   const thisFile = fileURLToPath(import.meta.url);
   const thisDir = path.dirname(thisFile);
-  const moduleRoot = getModuleRoot() ?? thisDir;
+  // Resolve this module's package root (no core dependency).
+  const moduleRoot = packageDirectorySync({ cwd: thisDir }) ?? thisDir;
 
   // Ensure the <stanPath>/system directory exists for metadata
   const systemDir = path.join(cwd, stanPath, 'system');

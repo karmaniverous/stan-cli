@@ -11,6 +11,12 @@ track is managed in the stan-core repository.
 
 ### Next up (priority order)
 
+- Rewire imports to top-level @karmaniverous/stan-core
+  - Replace broken imports of '@/stan/config', '../{archive,diff,imports,...}' and similar engine paths with
+    top-level `@karmaniverous/stan-core` imports (no subpaths).
+  - Inline minimal local path helpers where engine internals were previously used (e.g., output/diff paths).
+  - Open interop with stan-core to confirm top-level exports (prompt helpers, CORE_VERSION).
+
 - Swappable core loader (`--core`)
   - Implement a single `--core <value>` flag (env: `STAN_CORE`) that loads the
     entire core:

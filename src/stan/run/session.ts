@@ -13,8 +13,7 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { ContextConfig } from '@/stan/config';
-import { makeStanDirs } from '@/stan/paths';
+import type { ContextConfig } from '@karmaniverous/stan-core';
 
 import { archivePhase } from './archive';
 import { runScripts } from './exec';
@@ -51,7 +50,9 @@ export const runSessionOnce = async (args: {
     printPlan,
   } = args;
 
-  const dirs = makeStanDirs(cwd, config.stanPath);
+  const outputAbs = resolve(cwd, config.stanPath, 'output');
+  const outputRel = resolve(config.stanPath, 'output').replace(/\\/g, '/');
+  const dirs = { outputAbs, outputRel };
   const outAbs = dirs.outputAbs;
   const outRel = dirs.outputRel;
 

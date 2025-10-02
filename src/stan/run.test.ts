@@ -3,9 +3,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { ContextConfig } from './config';
 import { runSelected } from './run';
 
 const read = (p: string) => readFile(p, 'utf8');

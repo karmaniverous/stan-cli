@@ -3,8 +3,6 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { makeStanDirs } from '../paths';
-
 /**
  * Ensure standard `.gitignore` entries for the STAN workspace.
  *
@@ -20,12 +18,12 @@ export const ensureStanGitignore = async (
   stanPath: string,
 ): Promise<void> => {
   const giPath = path.join(cwd, '.gitignore');
-  const dirs = makeStanDirs(cwd, stanPath);
+  const rel = (sub: string) => path.join(stanPath, sub).replace(/\\/g, '/');
   const linesToEnsure = [
-    `${dirs.outputRel}/`,
-    `${dirs.diffRel}/`,
-    `${dirs.distRel}/`,
-    `${dirs.patchRel}/`,
+    `${rel('output')}/`,
+    `${rel('diff')}/`,
+    `${rel('dist')}/`,
+    `${rel('patch')}/`,
   ];
 
   let gi = existsSync(giPath) ? await readFile(giPath, 'utf8') : '';

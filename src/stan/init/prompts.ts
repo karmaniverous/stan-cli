@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { ContextConfig, ScriptMap } from '@/stan/config';
+import type { ContextConfig, ScriptMap } from '@karmaniverous/stan-core';
 
 const parseCsv = (v: string): string[] =>
   v
