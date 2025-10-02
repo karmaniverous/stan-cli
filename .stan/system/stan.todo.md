@@ -97,6 +97,12 @@ This plan tracks two synchronized tracks in preparation for splitting the code b
 
 ## Completed (recent)
 
+- Removed stan-core engine duplicates from stan-cli to open context and prepare for wiring to the linked core:
+  - deleted src/stan/{archive, classifier, config, diff, fs, imports, module, paths, system, validate, patch} and associated tests,
+  - deleted tools/gen-system.ts (prompt assembly now owned by core),
+  - preserved .stan/imports for core context.
+- Follow-up: rewire CLI adapters (run/patch/snap/help/preflight) to import engine APIs from stan-core and restore build/tests.
+
 - Unified diagnostics envelope and follow-up options clarified.
 - Response-format validator improvements and WARN parity across UIs.
 - Windows EBUSY mitigation in tests and cancellation paths.
