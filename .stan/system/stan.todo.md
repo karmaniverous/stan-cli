@@ -1,109 +1,99 @@
 # STAN Development Plan
 
-When updated: 2025-10-01 (UTC)
+When updated: 2025-10-02 (UTC)
 
-This plan tracks two synchronized tracks in preparation for splitting the code base into two packages: stan-core (engine) and stan-cli (CLI/runner). Until the repo is duplicated, both tracks live here; after duplication, each repo will retain only its corresponding track.
-
----
-
-## Track A — stan-core (engine)
-
-### Next up (priority order)
-
-- Extract engine package scaffolding
-  - Create a new repo/package “@karmaniverous/stan-cli-core”.
-  - Copy engine modules:
-    - config/, fs.ts, fs/reserved.ts, paths.ts
-    - archive.ts (+ archive/constants.ts), archive/util.ts (return warnings)
-    - diff.ts, snap/{capture,shared,context}.ts
-    - patch/\*\* (apply, jsdiff, detect, headers, parse, file-ops, diag/util, run/pipeline, util/fs)
-    - imports/stage.ts
-    - validate/response.ts (optional export)
-  - Remove CLI/runner/process/TTY concerns.
-
-- Remove console I/O from core
-  - Replace console.log in archive/util.ts with a return value (warningsBody) surfaced to the caller.
-  - Ensure snap history helpers return data/events only.
-
-- Patch ingestion — creation fallback (new)
-  - Implement “creation patch” heuristic in stan-core:
-    - When unified‑diff application fails and the patch is confidently detected as a new-file creation (e.g., /dev/null → b/<path>), strip diff headers and decode body by removing leading “+” from each payload line.
-    - Normalize to LF and create parent directories for nested paths.
-    - Gate behind the standard pipeline: only runs after git/jsdiff fail and only for new-file patches.
-  - Add unit tests covering:
-    - Simple creation, nested path, fenced chat artifacts, sandbox (check=true).
-
-- API surface and types
-  - Export public APIs listed in stan.requirements.md; ensure stable d.ts.
-  - Document return contracts where logging was removed.
-
-- Imports bridge (context from cli)
-  - Add a task to configure imports in stan-core’s stan.config.yml:
-    - label: “cli-docs”
-    - patterns: paths to staged stan-cli docs (README, CHANGELOG, docs/).
-
-- Cross‑repo recommendation
-  - Update stan.project.md in stan-core with a section that instructs the assistant to recommend stan-cli changes for any adapter/UX concerns.
-
-- Packaging & CI
-  - Rollup build for library + d.ts bundle (no CLI bundle).
-  - Ensure tar & fs-extra are runtime deps; no Commander/inquirer/log-update.
-  - Publish under a pre-release tag for initial integration.
-
-### Backlog / follow‑through
-
-- Performance profiling for large repos (selection and tar streaming).
-- Optional logger injection pattern (future) to support structured logging.
+This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine)
+track is managed in the stan-core repository.
 
 ---
 
-## Track B — stan-cli (CLI and runner)
+## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
 
-- Wire stan-cli to stan-core
-  - Replace internal imports with “@karmaniverous/stan-cli-core” APIs:
-    - config loading, selection, archive/diff, snapshot, patch pipeline, imports staging.
-  - Keep CLI behaviors: preflight/docs injection, plan printing, live/logger UI, cancellation gates, editor open, clipboard source.
+- Swappable core loader (`--core`)
+  - Implement a single `--core <value>` flag (env: `STAN_CORE`) that loads the
+    entire core:
+    - Omitted → installed `@karmaniverous/stan-core`.
+    - `dist:/path` → import `<path>/dist/mjs/index.js` (fallback cjs).
+    - `src:/path` → register `tsx` from `<path>` and import
+      `<path>/src/stan/index.ts`.
+    - Auto path → prefer dist if present; else src via tsx; else error with
+      actionable guidance.
+  - Version/shape handshake:
+    - Require `CORE_VERSION` and expected exports (duck‑typed).
+    - Print banner:
+      `Using core: <package|path> (CORE_VERSION <x.y.z>) [dist|src]`.
 
-- Archive warnings display
-  - Print stan-core’s warningsBody once per archive/diff phase in CLI.
+- Prompt injection from selected core
+  - Resolve monolith via `getPackagedSystemPromptPath()`.
+  - In dev (src mode), optionally run
+    `assembleSystemMonolith(cwd, stanPath)` before injection.
+  - Ensure injected prompt rides in full (not diff) archives deterministically
+    and is restored immediately after archiving.
+
+- Patch adapter (acquisition/presentation)
+  - Acquire patch from argument/file/clipboard; pass the string to core
+    (`detectAndCleanPatch` → `applyPatchPipeline`).
+  - Persist cleaned patch to `<stanPath>/patch/.patch` for the `git apply`
+    path.
+  - Print unified diagnostics envelopes on failure (downstream/stan contexts).
+  - Open modified files via configured editor (best‑effort).
+
+- Archive/diff adapter
+  - Stage imports before archiving.
+  - Present core warnings exactly once per phase; styling controlled by CLI.
+  - Diff archive must not force‑include the monolith.
+
+- Interop threads (multi‑file; no front matter; aggressive pruning)
+  - Adopt outgoing directory `.stan/interop/core-interop/*.md`.
+  - Stage incoming peer messages via imports under
+    `.stan/imports/stan-core/*.md`.
+  - When a change implies peer action, create a new outgoing interop file:
+    - Filename: `<UTC>-<slug>.md` (e.g., `20251001-170730Z-swappable-core.md`).
+    - Body: concise Markdown (subject optional + bullets for what/why/actions).
+  - Aggressive pruning: once conclusions are ingested into local
+    requirements/dev plan, remove resolved messages via File Ops.
 
 - Runner cancellation hardening
-  - Ensure the sequential scheduling gate prevents “after” scripts from starting after a SIGINT boundary; preserve late‑cancel guard before archive.
+  - Ensure sequential scheduling gate prevents “after” scripts from starting
+    beyond a SIGINT boundary; preserve late‑cancel guard before archive in live
+    and non‑live modes. Keep parity of artifacts between live/logger.
 
-- Help/UX parity
-  - Confirm BORING vs TTY parity on labels and summary lines.
-  - Verify defaults tagging and conflict messages.
+- Testing (CLI)
+  - Loader tests for `--core` paths (dist/src/auto) and banner output.
+  - Prompt injection tests (packaged and on‑demand assemble in dev).
+  - Interop message creation and pruning via File Ops.
+  - Archive/diff presentation tests (warnings printed once; BORING/non‑TTY
+    parity).
+  - Logger WARN test parity (warnPattern → status `warn` path).
 
-- Imports bridge (context from core)
-  - Add a task to configure imports in stan-cli’s stan.config.yml:
-    - label: “core-docs”
-    - patterns: paths to staged stan-core API docs and changelog.
-
-- Cross‑repo recommendation
-  - Update stan.project.md in stan-cli with a section that instructs the assistant to recommend stan-core changes for any engine concerns (selection/patch/archiving semantics).
-
-- Tests & docs
-  - Keep existing CLI/runner integration tests; adjust to stan-core wiring.
-  - Update README/help footers if flags/wording changed.
+- Documentation (CLI)
+  - Update help/usage for `--core`, interop threads policy, and engine purity
+    expectations.
 
 ### Backlog / follow‑through
 
-- Live table final-frame flush audit for edge cases.
-- Editor-open gating policy doc (“test mode” and force‑open).
+- Live table final‑frame flush audit for edge cases.
+- Editor‑open gating policy doc (“test mode” and force‑open options).
+- UX polish for diagnostics envelope presentation.
 
 ---
 
 ## Completed (recent)
 
-- Removed stan-core engine duplicates from stan-cli to open context and prepare for wiring to the linked core:
-  - deleted src/stan/{archive, classifier, config, diff, fs, imports, module, paths, system, validate, patch} and associated tests,
-  - deleted tools/gen-system.ts (prompt assembly now owned by core),
-  - preserved .stan/imports for core context.
-- Follow-up: rewire CLI adapters (run/patch/snap/help/preflight) to import engine APIs from stan-core and restore build/tests.
+- Removed stan-core engine duplicates from stan-cli to open context and prepare
+  for wiring to the linked core:
+  - deleted `src/stan/{archive, classifier, config, diff, fs, imports, module,
+    paths, system, validate, patch}` and associated tests,
+  - deleted `tools/gen-system.ts` (prompt assembly now owned by core),
+  - preserved `.stan/imports` for core context.
+- Follow‑up: rewire CLI adapters (run/patch/snap/help/preflight) to import
+  engine APIs from stan-core and restore build/tests.
 
-- Unified diagnostics envelope and follow-up options clarified.
-- Response-format validator improvements and WARN parity across UIs.
+- Unified diagnostics envelope and follow‑up options clarified.
+- Response‑format validator improvements and WARN parity across UIs.
 - Windows EBUSY mitigation in tests and cancellation paths.
 - Imports staging and selection parity improvements.
+
+---
