@@ -24,6 +24,14 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 ## Completed (recent)
 
+- Top-level surface readiness
+  - Exposed prompt helpers at the engine barrel:
+    `getPackagedSystemPromptPath` and `assembleSystemMonolith` are now
+    importable from the package top level.
+  - Normalized package "types" to `dist/types/index.d.ts` to match generated
+    Rollup d.ts outputs and the `exports` map. Ensures CLI consumers can import
+    all surfaces via `@karmaniverous/stan-core` without subpaths.
+
 - Console‑free surfaces (phase 1)
   - Archive: `createArchive` / `createArchiveDiff` now surface classifier
     warnings via optional `onArchiveWarnings(text)` callback; engine emits no
@@ -39,6 +47,13 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Exported `CORE_VERSION` from the engine barrel; added a unit test that
     asserts presence and shape. This enables stan‑cli’s `--core` banner and
     compatibility checks without coupling.
+
+- Interop coordination (exports confirmation)
+  - Posted `.stan/interop/stan-cli/20251002-exports-confirmed.md` confirming
+    top‑level exports for config, selection, archive/diff/snapshot, patch
+    engine, imports staging, validation, prompt helpers, and `CORE_VERSION`.
+    Package “types” normalized to `dist/types/index.d.ts`; CLI can import all
+    surfaces via `@karmaniverous/stan-core` without subpaths.
 
 - Posted interop guidance to stan‑cli identifying engine‑duplicate modules safe to delete and the corresponding `@karmaniverous/stan-core` imports to adopt.
 

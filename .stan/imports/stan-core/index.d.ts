@@ -327,7 +327,30 @@ declare const prepareImports: (args: {
     onStage?: (label: string, files: string[]) => void;
 }) => Promise<void>;
 
+/** Resolve packaged dist/stan.system.md if present. */
+declare const getPackagedSystemPromptPath: () => string | null;
+
+type AssembleResult = {
+    target: string;
+    action: 'written';
+} | {
+    target: string;
+    action: 'skipped-no-parts';
+    partsDir: string;
+} | {
+    target: string;
+    action: 'skipped-no-md';
+    partsDir: string;
+};
+/**
+ * Assemble parts into the monolith (no logs).
+ * - Returns 'written' when created/updated,
+ * - 'skipped-no-parts' when parts dir missing,
+ * - 'skipped-no-md' when no .md files present.
+ */
+declare const assembleSystemMonolith: (cwd: string, stanPath: string) => Promise<AssembleResult>;
+
 declare const CORE_VERSION: string;
 
-export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
+export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, assembleSystemMonolith, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, getPackagedSystemPromptPath, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
 export type { Block, BlockKind, CliDefaults, CliDefaultsPatch, CliDefaultsRun, CliDefaultsSnap, ContextConfig, CreateArchiveOptions, FileOp, ScriptEntry, ScriptMap, SnapshotUpdateMode, ValidationResult };
