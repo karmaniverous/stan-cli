@@ -353,4 +353,4 @@ declare const assembleSystemMonolith: (cwd: string, stanPath: string) => Promise
 declare const CORE_VERSION: string;
 
 export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, assembleSystemMonolith, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, getPackagedSystemPromptPath, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
-export type { Block, BlockKind, CliDefaults, CliDefaultsPatch, CliDefaultsRun, CliDefaultsSnap, ContextConfig, CreateArchiveOptions, FileOp, ScriptEntry, ScriptMap, SnapshotUpdateMode, ValidationResult };
+export type { ApplyResult, AssembleResult, Block, BlockKind, CliDefaults, CliDefaultsPatch, CliDefaultsRun, CliDefaultsSnap, ContextConfig, CreateArchiveOptions, FileOp, FileOpsPlan, ImportsMap, JsDiffOutcome, OpResult, PipelineOutcome, ScriptEntry, ScriptMap, SnapshotUpdateMode, ValidationResult };

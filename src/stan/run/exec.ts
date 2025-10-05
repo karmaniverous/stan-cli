@@ -278,12 +278,21 @@ export const runScripts = async (
     ) {
       const raw = (entry as { warnPattern?: string }).warnPattern;
       if (typeof raw === 'string' && raw.trim().length) {
+        const src = raw.trim();
+        // First attempt: use as-is.
         try {
-          warnPattern = new RegExp(raw);
-          // If this ever needs to tolerate over-escaped patterns from config, a normalized fallback can be added here.
+          warnPattern = new RegExp(src);
         } catch {
-          // Already validated by schema; best-effort here.
           warnPattern = undefined;
+        }
+        // Fallback: tolerate over-escaped backslashes (e.g., "\\\\b" -> "\b").
+        if (!warnPattern) {
+          try {
+            const deEscaped = src.replace(/\\\\/g, '\\');
+            warnPattern = new RegExp(deEscaped);
+          } catch {
+            warnPattern = undefined;
+          }
         }
       }
     }

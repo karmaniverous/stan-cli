@@ -265,7 +265,7 @@ export const archivePhase = async (
     await restore();
   }
   if (includeOutputs) {
-    await cleanupOutputsAfterCombine(makeDirs(cwd, config.stanPath).outputAbs);
+    await cleanupOutputsAfterCombine(dirs.outputAbs);
   }
   await cleanupPatchDirAfterArchive(cwd, config.stanPath);
 

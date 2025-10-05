@@ -83,7 +83,7 @@ export const runPatch = async (
       raw = await clipboardy.read();
       source = 'clipboard';
     }
-  } catch (e) {
+  } catch {
     console.log(`stan: ${statusFail('patch failed')} (unable to read source)`);
     return;
   }

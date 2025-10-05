@@ -14,10 +14,9 @@ type TarCall = {
 
 const calls: TarCall[] = [];
 
-// Mock tar.create to capture the file list and filter
-vi.mock('tar', () => ({
-  default: undefined,
-  create: async (
+// Mock tar (support both create and c) to capture the file list and filter
+vi.mock('tar', () => {
+  const record = async (
     opts: {
       file: string;
       cwd?: string;
@@ -29,8 +28,14 @@ vi.mock('tar', () => ({
     // Write recognizable content to the "archive"
     const { writeFile } = await import('node:fs/promises');
     await writeFile(opts.file, 'TAR', 'utf8');
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: undefined,
+    create: record,
+    c: record,
+  };
+});
 
 describe('combine archiving behavior (outputs inside archives)', () => {
   let dir: string;

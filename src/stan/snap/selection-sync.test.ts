@@ -25,10 +25,8 @@ const calls: TarCall[] = [];
 
 // Hoisted mock for 'tar': executed before the rest of the module body. It must
 // only reference symbols declared at module scope (e.g., `calls`).
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async (
+vi.mock('tar', () => {
+  const record = async (
     opts: {
       file: string;
       cwd?: string;
@@ -45,8 +43,14 @@ vi.mock('tar', () => ({
     // write a recognizable tar body
     const { writeFile } = await import('node:fs/promises');
     await writeFile(opts.file, 'TAR', 'utf8');
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: undefined,
+    create: record,
+    c: record,
+  };
+});
 
 describe('snap selection matches run selection (includes/excludes in sync)', () => {
   let dir: string;
