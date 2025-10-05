@@ -6,6 +6,7 @@ import { createArchiveDiff, loadConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleSnap } from '@/stan/snap/snap-run';
+import { __clearTarCalls, __tarCalls, type TarCall } from '@/test/mock-tar';
 
 // Silence preflight messaging in tests
 vi.mock('@/stan/preflight', () => ({
@@ -15,42 +16,7 @@ vi.mock('@/stan/preflight', () => ({
 
 // Capture tar.create calls to assert diff contents — define at module scope so
 // the hoisted vi.mock factory can access it reliably.
-type TarCall = {
-  file: string;
-  cwd?: string;
-  filter?: (p: string, s: unknown) => boolean;
-  files: string[];
-};
-const calls: TarCall[] = [];
-
-// Hoisted mock for 'tar': executed before the rest of the module body. It must
-// only reference symbols declared at module scope (e.g., `calls`).
-vi.mock('tar', () => {
-  const record = async (
-    opts: {
-      file: string;
-      cwd?: string;
-      filter?: (p: string, s: unknown) => boolean;
-    },
-    files: string[],
-  ) => {
-    calls.push({
-      file: opts.file,
-      cwd: opts.cwd,
-      filter: opts.filter,
-      files,
-    });
-    // write a recognizable tar body
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(opts.file, 'TAR', 'utf8');
-  };
-  return {
-    __esModule: true,
-    default: undefined,
-    create: record,
-    c: record,
-  };
-});
+// (Global tar mock is installed by setup; no per-test re-mock here.)
 
 describe('snap selection matches run selection (includes/excludes in sync)', () => {
   let dir: string;
@@ -58,7 +24,7 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), 'stan-snap-sync-'));
-    calls.length = 0; // reset captured calls between tests
+    __clearTarCalls(); // reset captured calls between tests
     try {
       process.chdir(dir);
     } catch {
@@ -126,6 +92,7 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
       includeOutputDirInDiff: false,
     });
 
+    const calls = __tarCalls();
     const diffCall = calls.find((c) => c.file.endsWith('archive.diff.tar'));
     expect(diffCall).toBeTruthy();
     const filesPacked = diffCall?.files ?? [];

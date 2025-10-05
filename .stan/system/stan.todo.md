@@ -95,3 +95,8 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 - Response‑format validator improvements and WARN parity across UIs.
 - Windows EBUSY mitigation in tests and cancellation paths.
 - Imports staging and selection parity improvements.
+
+- Test tar capture + WARN parity
+  - Centralized tar mocking in `src/test/mock-tar.ts` with global call capture (+ support for both `tar.create` and `tar.c`).
+  - Updated tests to read/clear captured calls via helpers instead of per-test re‑mocking: `src/stan/run.combine.archive.behavior.test.ts`, `src/stan/snap/selection-sync.test.ts`.
+  - Hardened WARN detection: compile warnPattern as‑is, then with de‑escaped backslashes, and finally with case‑insensitive fallback.

@@ -294,6 +294,14 @@ export const runScripts = async (
             warnPattern = undefined;
           }
         }
+        // Final fallback: case-insensitive compile (helps simple word tokens).
+        if (!warnPattern) {
+          try {
+            warnPattern = new RegExp(src, 'i');
+          } catch {
+            /* ignore */
+          }
+        }
       }
     }
     const p = await runOne(

@@ -5,44 +5,14 @@ import path from 'node:path';
 import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-type TarCall = {
-  file: string;
-  cwd?: string;
-  filter?: (p: string, s: unknown) => boolean;
-  files: string[];
-};
-
-const calls: TarCall[] = [];
-
-// Mock tar (support both create and c) to capture the file list and filter
-vi.mock('tar', () => {
-  const record = async (
-    opts: {
-      file: string;
-      cwd?: string;
-      filter?: (p: string, s: unknown) => boolean;
-    },
-    files: string[],
-  ) => {
-    calls.push({ file: opts.file, cwd: opts.cwd, filter: opts.filter, files });
-    // Write recognizable content to the "archive"
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(opts.file, 'TAR', 'utf8');
-  };
-  return {
-    __esModule: true,
-    default: undefined,
-    create: record,
-    c: record,
-  };
-});
+import { __clearTarCalls, __tarCalls, type TarCall } from '@/test/mock-tar';
 
 describe('combine archiving behavior (outputs inside archives)', () => {
   let dir: string;
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), 'stan-combine-'));
-    calls.length = 0;
+    __clearTarCalls();
   });
 
   afterEach(async () => {
@@ -78,6 +48,7 @@ describe('combine archiving behavior (outputs inside archives)', () => {
       updateSnapshot: 'replace',
     });
 
+    const calls = __tarCalls();
     const diffCall = calls.find((c) => c.file.endsWith('archive.diff.tar'));
     expect(diffCall).toBeTruthy();
     expect(typeof diffCall?.filter).toBe('function');
@@ -99,6 +70,7 @@ describe('combine archiving behavior (outputs inside archives)', () => {
 
     await createArchive(dir, out, { includeOutputDir: true });
 
+    const calls = __tarCalls();
     const regCall = calls.find((c) => c.file.endsWith('archive.tar'));
     expect(regCall).toBeTruthy();
     // createArchive provides a flat file list (no filter); ensure at least one outputPath file is included
