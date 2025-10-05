@@ -66,5 +66,6 @@
   "todo-tree.tree.groupedByTag": true,
   "todo-tree.tree.hideIconsWhenGroupedByTag": true,
   "todo-tree.tree.labelFormat": "${tag} ${after}",
-  "todo-tree.tree.showCountsInTree": true
+  "todo-tree.tree.showCountsInTree": true,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }
