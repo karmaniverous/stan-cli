@@ -1,6 +1,6 @@
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
-import type { ContextConfig } from '@/stan/config';
 import type { ExecutionMode, RunBehavior } from '@/stan/run';
 
 import { deriveRunInvocation } from '../run-args';

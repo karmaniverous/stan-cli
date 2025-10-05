@@ -88,6 +88,21 @@ track is managed in the stan-core repository.
 
 ## Completed (recent)
 
+- Build/typecheck/test unblock (phase 1)
+  - Removed stale prebuild step: `package.json` build no longer calls deleted
+    `tools/gen-system.ts`.
+  - Implemented CLI patch service (`src/stan/patch/service.ts`) that acquires,
+    cleans, persists, and applies patches via stan-core pipeline; prints concise
+    source and terminal status.
+  - Rewired CLI and tests to top-level `@karmaniverous/stan-core` types:
+    updated imports in `src/cli/stan/run-args.ts`, `src/cli/stan/run/derive.ts`,
+    and tests under `src/stan/run/*` and `src/stan/preflight.run.test.ts`.
+  - Fixed `src/stan/version.ts` to remove deleted internals; resolved module
+    root via `package-directory`, computed local dirs in-file, and preserved
+    existing preflight/version behavior.
+  - Fixed a small stray reference in `src/stan/run/archive.ts` (use local
+    `makeDirs`).
+
 - Removed stan-core engine duplicates from stan-cli to open context and prepare
   for wiring to the linked core:
   - deleted `src/stan/{archive, classifier, config, diff, fs, imports, module,

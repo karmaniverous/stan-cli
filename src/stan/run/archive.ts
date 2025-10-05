@@ -145,7 +145,7 @@ const cleanupPatchDirAfterArchive = async (
   cwd: string,
   stanPath: string,
 ): Promise<void> => {
-  const dirs = makeStanDirs(cwd, stanPath);
+  const dirs = makeDirs(cwd, stanPath);
   try {
     const entries = await readdir(dirs.patchAbs, { withFileTypes: true });
     await Promise.all(

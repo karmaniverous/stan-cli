@@ -5,14 +5,12 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readFile, realpath as realpathAsync } from 'node:fs/promises';
-import path from 'node:path';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+import { loadConfigSync, resolveStanPathSync } from '@karmaniverous/stan-core';
 import { packageDirectorySync } from 'package-directory';
 
-import { loadConfigSync, resolveStanPathSync } from '@/stan/config';
-import { getModuleRoot } from '@/stan/module';
-
-import { makeStanDirs } from './paths';
 export type VersionInfo = {
   packageVersion: string | null;
   nodeVersion: string;
@@ -31,6 +29,10 @@ export type VersionInfo = {
     version?: string;
   } | null;
 };
+
+const makeDirs = (cwd: string, stanPath: string) => ({
+  systemAbs: path.join(cwd, stanPath, 'system'),
+});
 
 const sha256 = async (abs: string): Promise<string> => {
   const body = await readFile(abs);
@@ -95,13 +97,14 @@ export const getVersionInfo = async (cwd: string): Promise<VersionInfo> => {
     devModeFromConfig = undefined;
   }
 
-  const dirs = makeStanDirs(repoRoot, stanPath);
+  const dirs = makeDirs(repoRoot, stanPath);
   const localSystem = path.join(dirs.systemAbs, 'stan.system.md');
   const docsMetaPath = path.join(dirs.systemAbs, '.docs.meta.json');
 
   // Module/package version
   let packageVersion: string | null = null;
-  const moduleRoot = getModuleRoot();
+  const thisDir = dirname(fileURLToPath(import.meta.url));
+  const moduleRoot = packageDirectorySync({ cwd: thisDir }) ?? null;
   if (moduleRoot) {
     try {
       const pkg = await readJson<{ version?: string }>(

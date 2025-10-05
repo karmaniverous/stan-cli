@@ -13,7 +13,8 @@ vi.mock('./preflight', () => ({
   preflightDocsAndVersion: (cwd: string) => preflightSpy(cwd),
 }));
 
-import type { ContextConfig } from './config';
+import type { ContextConfig } from '@karmaniverous/stan-core';
+
 import { runSelected } from './run';
 
 describe('preflight wiring on stan run', () => {

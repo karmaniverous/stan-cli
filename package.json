@@ -155,7 +155,7 @@
     "url": "git+https://github.com/karmaniverous/stan-cli.git"
   },
   "scripts": {
-    "build": "tsx tools/gen-system.ts && rimraf dist .rollup.cache .tsbuildinfo && rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "build": "rimraf dist .rollup.cache .tsbuildinfo && rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "changelog": "auto-changelog",
     "docs": "typedoc",
     "knip": "knip",

@@ -17,7 +17,8 @@
  * Behavior:
  * - combine, keep, archive are mapped directly to booleans; runner validates constraints.
  */
-import type { ContextConfig } from '@/stan/config';
+import type { ContextConfig } from '@karmaniverous/stan-core';
+
 import type { ExecutionMode, RunBehavior } from '@/stan/run';
 
 const stringsFrom = (v: unknown): string[] => {

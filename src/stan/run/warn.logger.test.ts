@@ -2,9 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ContextConfig } from '@/stan/config';
 import { runSelected } from '@/stan/run';
 
 // Keep tar lightweight (avoid real archiving)
