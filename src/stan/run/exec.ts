@@ -32,7 +32,7 @@ type RunHooks = {
 // Yield one event-loop tick so pending signal/key handlers (e.g., SIGINT)
 // can run before scheduling the next script.
 const yieldToEventLoop = (): Promise<void> =>
-  new Promise<void>((resolve) => setImmediate(resolve));
+  new Promise<void>((resolveP) => setImmediate(resolveP));
 
 const waitForStreamClose = (stream: NodeJS.WritableStream): Promise<void> =>
   new Promise<void>((resolveP, rejectP) => {
@@ -49,8 +49,8 @@ const configOrder = (config: ContextConfig): string[] =>
  * Normalize selection to config order.
  * - When selection is null/undefined, return all config keys.
  * - When selection exists:
- *   - [] =\> run nothing
- *   - non-empty =\> order by config order
+ *   - [] => run nothing
+ *   - non-empty => order by config order
  */
 export const normalizeSelection = (
   selection: Selection | undefined | null,
@@ -91,8 +91,8 @@ export const runOne = async (
     hangWarn?: number;
     hangKill?: number;
     hangKillGrace?: number;
-    /** Optional warn regex compiled from config; when matches output+error (exit=0) =\> warn. */
-    warnPattern?: RegExp;
+    /** Optional warn regexes compiled from config; any match across output+error (exit=0) => warn. */
+    warnPatterns?: RegExp[];
   },
   supervisor?: ProcessSupervisor,
 ): Promise<string> => {
@@ -185,31 +185,29 @@ export const runOne = async (
   let status: 'ok' | 'warn' | 'error' = 'ok';
   if (typeof exitCode === 'number' && exitCode !== 0) {
     status = 'error';
-  } else if (opts?.warnPattern) {
-    // Robust WARN detection:
-    // - Test the in‑memory combined body (stdout+stderr).
-    // - Also test the on‑disk output body unconditionally to avoid any edge timing.
-    // Reset lastIndex in case a global regex is supplied.
-    const rx = opts.warnPattern;
-    const testBody = (s: string): boolean => {
-      try {
-        rx.lastIndex = 0;
-        return rx.test(s);
-      } catch {
-        return false;
-      }
-    };
+  } else if (opts?.warnPatterns && opts.warnPatterns.length > 0) {
+    // Robust WARN detection (any-of across patterns and sources):
+    // - Test all compiled variants against the in‑memory combined body.
+    // - Also test the persisted output body to avoid rare flush/order edges.
+    const anyMatch = (rxs: RegExp[], s: string): boolean =>
+      rxs.some((r) => {
+        try {
+          r.lastIndex = 0;
+          return r.test(s);
+        } catch {
+          return false;
+        }
+      });
     let matched = false;
-    // Always consider the in-memory capture first.
-    if (combined.length > 0 && testBody(combined)) {
+    if (combined.length > 0 && anyMatch(opts.warnPatterns, combined)) {
       matched = true;
-    }
-    // Unconditionally also consider the persisted body (covers any flush/ordering edge).
-    try {
-      const diskBody = await readFile(outFile, 'utf8');
-      if (testBody(diskBody)) matched = true;
-    } catch {
-      /* ignore disk read errors */
+    } else {
+      try {
+        const diskBody = await readFile(outFile, 'utf8');
+        if (anyMatch(opts.warnPatterns, diskBody)) matched = true;
+      } catch {
+        /* ignore disk read errors */
+      }
     }
     if (matched) status = 'warn';
   }
@@ -270,7 +268,11 @@ export const runScripts = async (
             'script' in (entry as Record<string, unknown>)
           ? String((entry as { script: string }).script)
           : '';
-    let warnPattern: RegExp | undefined;
+    // Compile warn pattern variants:
+    // - as-is
+    // - de-escaped backslashes (\\b -> \b)
+    // - case-insensitive fallback
+    const warnPatterns: RegExp[] = [];
     if (
       entry &&
       typeof entry === 'object' &&
@@ -279,28 +281,24 @@ export const runScripts = async (
       const raw = (entry as { warnPattern?: string }).warnPattern;
       if (typeof raw === 'string' && raw.trim().length) {
         const src = raw.trim();
-        // First attempt: use as-is.
+        // As-is
         try {
-          warnPattern = new RegExp(src);
+          warnPatterns.push(new RegExp(src));
         } catch {
-          warnPattern = undefined;
+          /* ignore */
         }
-        // Fallback: tolerate over-escaped backslashes (e.g., "\\\\b" -> "\b").
-        if (!warnPattern) {
-          try {
-            const deEscaped = src.replace(/\\\\/g, '\\');
-            warnPattern = new RegExp(deEscaped);
-          } catch {
-            warnPattern = undefined;
-          }
+        // De-escaped
+        try {
+          const deEscaped = src.replace(/\\\\/g, '\\');
+          if (deEscaped !== src) warnPatterns.push(new RegExp(deEscaped));
+        } catch {
+          /* ignore */
         }
-        // Final fallback: case-insensitive compile (helps simple word tokens).
-        if (!warnPattern) {
-          try {
-            warnPattern = new RegExp(src, 'i');
-          } catch {
-            /* ignore */
-          }
+        // Case-insensitive
+        try {
+          warnPatterns.push(new RegExp(src, 'i'));
+        } catch {
+          /* ignore */
         }
       }
     }
@@ -322,7 +320,7 @@ export const runScripts = async (
         hangKill: (opts as unknown as { hangKill?: number })?.hangKill,
         hangKillGrace: (opts as unknown as { hangKillGrace?: number })
           ?.hangKillGrace,
-        warnPattern,
+        warnPatterns,
       },
       supervisor,
     );

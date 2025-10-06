@@ -16,8 +16,11 @@ export default defineConfig({
     environment: 'happy-dom',
     exclude: ['node_modules/**', 'dist/**', '.rollup.cache/**'],
     // Ensure dependencies are inlined so vi.mock('tar') applies within @karmaniverous/stan-core.
-    deps: {
-      inline: ['@karmaniverous/stan-core', 'tar'],
+    // Vitest v3: use server.deps.inline (deps.inline is deprecated).
+    server: {
+      deps: {
+        inline: ['@karmaniverous/stan-core', 'tar'],
+      },
     },
     coverage: {
       provider: 'v8',

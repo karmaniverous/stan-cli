@@ -7,6 +7,7 @@ import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runSelected } from '@/stan/run';
+import { rmDirWithRetries } from '@/test/helpers';
 
 // Lightweight tar mock
 vi.mock('tar', () => ({
@@ -53,7 +54,7 @@ describe('cancel parity: no-live mode responds to SIGINT (no archives; non-zero 
       // ignore
     }
     await new Promise((r) => setTimeout(r, 100));
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
   it('sequential scheduling stops and archives are skipped after SIGINT', async () => {

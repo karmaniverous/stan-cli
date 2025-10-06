@@ -1,11 +1,14 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { __clearTarCalls, __tarCalls, type TarCall } from '@/test/mock-tar';
+
+import { runSelected } from './run';
 
 describe('combine archiving behavior (outputs inside archives)', () => {
   let dir: string;
@@ -24,11 +27,8 @@ describe('combine archiving behavior (outputs inside archives)', () => {
     const out = 'out';
 
     // Make output tree with files that should and should not be included
-    await mkdir(path.join(dir, out, 'diff'), { recursive: true });
-    await mkdir(path.join(dir, out, 'output'), { recursive: true });
     await writeFile(path.join(dir, out, 'hello.txt'), 'hello', 'utf8');
     await writeFile(path.join(dir, out, 'diff', 'snap.json'), '{}', 'utf8');
-    // Simulate archives present under the output path
     await writeFile(
       path.join(dir, out, 'output', 'archive.tar'),
       'old',
@@ -39,6 +39,8 @@ describe('combine archiving behavior (outputs inside archives)', () => {
       'old',
       'utf8',
     );
+
+    const { createArchiveDiff } = await import('@karmaniverous/stan-core');
 
     await createArchiveDiff({
       cwd: dir,
@@ -65,8 +67,9 @@ describe('combine archiving behavior (outputs inside archives)', () => {
 
   it('createArchive (combine): includes files under the outputPath', async () => {
     const out = 'out';
-    await mkdir(path.join(dir, out), { recursive: true });
     await writeFile(path.join(dir, out, 'file.txt'), 'x', 'utf8');
+
+    const { createArchive } = await import('@karmaniverous/stan-core');
 
     await createArchive(dir, out, { includeOutputDir: true });
 
