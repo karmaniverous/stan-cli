@@ -74,6 +74,9 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Sequential gate hardening
+  - Added a tiny guard window (~25ms) before spawning the next script in sequential mode to absorb late-arriving SIGINT after the previous script finishes. Prevents the “after” script from starting across the boundary (fixes cancel.gate test: b.txt no longer created).
+
 - Test fixes (combine + selection-sync)
   - combine-behavior: added a local tar mock that records to the shared store so \_\_tarCalls() sees create/c calls; ensured parent dirs exist under out/ before writes.
   - selection-sync: removed duplicate `vi` imports and kept a local tar mock that records to the shared store; fixes TS2300 and reliably captures diff tar calls.

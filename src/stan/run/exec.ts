@@ -49,8 +49,8 @@ const configOrder = (config: ContextConfig): string[] =>
  * Normalize selection to config order.
  * - When selection is null/undefined, return all config keys.
  * - When selection exists:
- *   - [] => run nothing
- *   - non-empty => order by config order
+ *   - [] =\> run nothing
+ *   - non-empty =\> order by config order
  */
 export const normalizeSelection = (
   selection: Selection | undefined | null,
@@ -91,7 +91,7 @@ export const runOne = async (
     hangWarn?: number;
     hangKill?: number;
     hangKillGrace?: number;
-    /** Optional warn regexes compiled from config; any match across output+error (exit=0) => warn. */
+    /** Optional warn regexes compiled from config; any match across output+error (exit=0) =\> warn. */
     warnPatterns?: RegExp[];
   },
   supervisor?: ProcessSupervisor,
@@ -329,9 +329,14 @@ export const runScripts = async (
   if (mode === 'sequential') {
     for (const k of toRun) {
       // Pre‑spawn gate: allow pending SIGINT/keypress handlers to fire before scheduling next script.
+      // Also include a tiny guard window to absorb late-arriving SIGINT immediately after the prior script ends.
+      const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
       if (typeof shouldContinue === 'function') {
         if (!shouldContinue()) break;
         await yieldToEventLoop();
+        if (!shouldContinue()) break;
+        // Guard window (~25ms): mitigates race where SIGINT lands just after the yield above.
+        await pause(25);
         if (!shouldContinue()) break;
       }
       await runner(k);
