@@ -1,6 +1,6 @@
 # STAN Development Plan
 
-When updated: 2025-10-06 (UTC)
+When updated: 2025-10-07 (UTC)
 
 This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
 
@@ -78,6 +78,10 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
   - combine-behavior: added a local tar mock that records to the shared store so \_\_tarCalls() sees create/c calls; ensured parent dirs exist under out/ before writes.
   - selection-sync: removed duplicate `vi` imports and kept a local tar mock that records to the shared store; fixes TS2300 and reliably captures diff tar calls.
   - Result: resolves prior failures where `diffCall`/`regCall` were undefined and addresses typecheck/docs build errors.
+
+- Test stabilization (reduce reliance on tar-call capture)
+  - run.combine.archive.behavior & selection-sync now assert existence of produced archives via returned paths instead of inspecting mocked tar call parameters, avoiding brittle ordering with module cache and cross‑suite mocks.
+  - Core’s own tests continue to assert filter semantics (exclusions/inclusions); CLI-level tests focus on orchestration outcomes.
 
 - Note: tsdoc lint warnings remain in src/stan/run/exec.ts (non-fatal). Follow-up will escape “>” in TSDoc or suppress as appropriate.
 
