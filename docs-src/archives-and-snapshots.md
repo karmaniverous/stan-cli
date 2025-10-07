@@ -18,12 +18,11 @@ STAN selects files for archiving in two passes:
 
 - Base selection
   - Both regular and diff archives apply the same screening, including exclusion of binary files.
-  - A concise “archive warnings” summary (binary exclusions, large text call‑outs) is printed to the console.
-
+  - Classification is performed by the engine (binary exclusions, large‑text call‑outs). The CLI may surface a concise summary when enabled; by default no additional warnings file is written and archives are created silently.
+ 
   - Applies your `.gitignore`, default denials (`node_modules`, `.git`),
     user `excludes`, and STAN workspace rules. Explicit `excludes` take precedence
-    over any later `includes`.
-  - Reserved exclusions always apply:
+    over any later `includes`.  - Reserved exclusions always apply:
     - `<stanPath>/diff` is always excluded.
     - `<stanPath>/output` is excluded unless you enable combine mode.
 

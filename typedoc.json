@@ -17,7 +17,11 @@
   ],
   "hostedBaseUrl": "https://docs.karmanivero.us/stan",
   "out": "./docs/",
-  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
+  "plugin": [
+    "typedoc-plugin-mdn-links",
+    "typedoc-plugin-replace-text",
+    "typedoc-plugin-zod"
+  ],
   "projectDocuments": [
     "./docs-src/getting-started.md",
     "./docs-src/the-stan-loop.md",

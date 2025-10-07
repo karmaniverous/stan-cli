@@ -64,6 +64,7 @@
     "typedoc": "^0.28.13",
     "typedoc-plugin-mdn-links": "^5.0.9",
     "typedoc-plugin-replace-text": "^4.2.0",
+    "typedoc-plugin-zod": "^1.4.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.45.0",
     "vitest": "^3.2.4"

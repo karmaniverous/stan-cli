@@ -1,10 +1,7 @@
 {
   "entry": ["src/**/index.ts"],
-  "ignore": ["src/cli/stan/stan.ts"],
-  "ignoreDependencies": [
-    "@types/eslint__js",
-    "@types/eslint-config-prettier"
-  ],
+  "ignore": ["src/cli/stan/stan.ts", ".stan/**"],
+  "ignoreDependencies": ["@types/eslint__js", "@types/eslint-config-prettier"],
   "project": ["*/**", "!docs/**"],
   "rules": {
     "exports": "off",
