@@ -1,8 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-
-import { vi } from 'vitest';
+// Use global `vi` (vitest/globals) to avoid duplicate imports
 
 // Ensure tar calls are always captured for this test, independent of setup timing.
 // Writes to the same global store used by '@/test/mock-tar'.
@@ -37,7 +36,7 @@ vi.mock('tar', () => {
 });
 
 import { createArchiveDiff, loadConfig } from '@karmaniverous/stan-core';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { handleSnap } from '@/stan/snap/snap-run';
 import { __clearTarCalls, __tarCalls, type TarCall } from '@/test/mock-tar';

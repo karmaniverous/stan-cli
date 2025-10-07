@@ -75,6 +75,13 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 ## Completed (recent)
 
 - Test fixes (combine + selection-sync)
+  - combine-behavior: added a local tar mock that records to the shared store so \_\_tarCalls() sees create/c calls; ensured parent dirs exist under out/ before writes.
+  - selection-sync: removed duplicate `vi` imports and kept a local tar mock that records to the shared store; fixes TS2300 and reliably captures diff tar calls.
+  - Result: resolves prior failures where `diffCall`/`regCall` were undefined and addresses typecheck/docs build errors.
+
+- Note: tsdoc lint warnings remain in src/stan/run/exec.ts (non-fatal). Follow-up will escape “>” in TSDoc or suppress as appropriate.
+
+- Test fixes (combine + selection-sync)
   - createArchiveDiff/createArchive combine-behavior tests: ensure parent directories (out/, out/diff/, out/output/) exist before writeFile to avoid ENOENT on Windows/Linux.
   - selection-sync (snap parity): hoisted an explicit tar mock in the test file to guarantee capture of tar create/c calls regardless of module import timing; continues to assert filter contents via the shared global store.
   - Result: all three previously failing tests pass locally; behavior remains unchanged.

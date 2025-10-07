@@ -6,6 +6,38 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Ensure tar calls are captured into the shared global store that __tarCalls reads.
+// This local mock is hoisted for this suite and resilient to prior imports.
+vi.mock('tar', () => {
+  const ensureStore = (): Array<{
+    file: string;
+    cwd?: string;
+    filter?: (p: string, s: unknown) => boolean;
+    files: string[];
+  }> => {
+    if (!globalThis.__TAR_CALLS__) globalThis.__TAR_CALLS__ = [];
+    return globalThis.__TAR_CALLS__;
+  };
+  const record = async (
+    opts: {
+      file: string;
+      cwd?: string;
+      filter?: (p: string, s: unknown) => boolean;
+    },
+    files: string[],
+  ) => {
+    ensureStore().push({
+      file: opts.file,
+      cwd: opts.cwd,
+      filter: opts.filter,
+      files,
+    });
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile(opts.file, 'TAR', 'utf8');
+  };
+  return { __esModule: true, default: undefined, create: record, c: record };
+});
+
 import { __clearTarCalls, __tarCalls, type TarCall } from '@/test/mock-tar';
 
 import { runSelected } from './run';
