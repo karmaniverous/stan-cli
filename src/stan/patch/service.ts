@@ -18,13 +18,14 @@ import {
 import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
+import { error as colorError, ok as colorOk } from '@/stan/util/color';
+
 type RunPatchOptions = {
   file?: string | boolean;
   defaultFile?: string;
   noFile?: boolean;
   check?: boolean;
 };
-
 const readFromFile = async (cwd: string, relOrAbs: string): Promise<string> => {
   const abs = path.isAbsolute(relOrAbs) ? relOrAbs : path.join(cwd, relOrAbs);
   return readFile(abs, 'utf8');
@@ -40,9 +41,24 @@ const resolveStanPath = (cwd: string): string => {
   return '.stan';
 };
 
-/** Best-effort status label for BORING/non-TTY parity. */
-const statusOk = (s: string): string => `[OK] ${s}`;
-const statusFail = (s: string): string => `[FAIL] ${s}`;
+/** BORING detection aligned with util/color (TTY + environment). */
+const isBoring = (): boolean => {
+  const isTTY = Boolean(
+    (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
+  );
+  return (
+    process.env.STAN_BORING === '1' ||
+    process.env.NO_COLOR === '1' ||
+    process.env.FORCE_COLOR === '0' ||
+    !isTTY
+  );
+};
+
+/** Status tokens: colorized in TTY; bracketed in BORING/non‑TTY. */
+const statusOk = (s: string): string =>
+  isBoring() ? `[OK] ${s}` : `${colorOk('✔ ok')} ${s}`;
+const statusFail = (s: string): string =>
+  isBoring() ? `[FAIL] ${s}` : `${colorError('✖ fail')} ${s}`;
 
 export const runPatch = async (
   cwd: string,
@@ -98,6 +114,36 @@ export const runPatch = async (
 
   console.log(`stan: patch source: ${source}`);
 
+  /** Compose a compact diagnostics envelope from applyPatchPipeline outcome. */
+  const composeDiagnostics = (out: {
+    result?: {
+      captures?: Array<{ label?: string; code?: number; stderr?: string }>;
+    };
+    js?: { failed?: Array<{ path?: string; reason?: string }> };
+  }): string => {
+    const lines: string[] = [];
+    lines.push('START PATCH DIAGNOSTICS');
+    const caps = (out?.result?.captures ?? []) as Array<{
+      label?: string;
+      code?: number;
+      stderr?: string;
+    }>;
+    for (const c of caps) {
+      const firstStderr =
+        (c.stderr ?? '').split(/\r?\n/).find((l) => l.trim().length) ?? '';
+      lines.push(`${c.label ?? 'git'}: exit ${c.code ?? 0} — ${firstStderr}`);
+    }
+    const failed = (out?.js?.failed ?? []) as Array<{
+      path?: string;
+      reason?: string;
+    }>;
+    for (const f of failed) {
+      lines.push(`jsdiff: ${f.path ?? '(unknown)'}: ${f.reason ?? ''}`);
+    }
+    lines.push('END PATCH DIAGNOSTICS');
+    return lines.join('\n');
+  };
+
   // Persist cleaned payload (best-effort)
   const stanPath = resolveStanPath(cwd);
   const patchDir = path.join(cwd, stanPath, 'patch');
@@ -128,10 +174,39 @@ export const runPatch = async (
       console.log(
         `stan: ${statusOk(check ? 'patch check passed' : 'patch applied')}`,
       );
-    } else {
-      console.log(
-        `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
-      );
+      return;
+    }
+    // Failure: compose diagnostics, persist to .debug, try to copy to clipboard.
+    const diag = composeDiagnostics(
+      out as unknown as {
+        result?: {
+          captures?: Array<{ label?: string; code?: number; stderr?: string }>;
+        };
+        js?: { failed?: Array<{ path?: string; reason?: string }> };
+      },
+    );
+    // Persist under <stanPath>/patch/.debug/feedback.txt (best‑effort)
+    try {
+      const dbgDir = path.join(cwd, stanPath, 'patch', '.debug');
+      await ensureDir(dbgDir);
+      await writeFile(path.join(dbgDir, 'feedback.txt'), diag, 'utf8');
+    } catch {
+      /* ignore persistence errors */
+    }
+    // Try to copy to clipboard; fallback to console
+    let copied = false;
+    try {
+      await clipboardy.write(diag);
+      copied = true;
+    } catch {
+      /* ignore clipboard errors */
+    }
+    console.log(
+      `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
+    );
+    if (!copied) {
+      // Provide the envelope on stdout if clipboard unsupported
+      console.log(diag);
     }
   } catch {
     console.log(
