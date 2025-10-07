@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -27,6 +27,11 @@ describe('combine archiving behavior (outputs inside archives)', () => {
     const out = 'out';
 
     // Make output tree with files that should and should not be included
+    // Ensure parent directories exist (writeFile does not create them).
+    await mkdir(path.join(dir, out), { recursive: true });
+    await mkdir(path.join(dir, out, 'diff'), { recursive: true });
+    await mkdir(path.join(dir, out, 'output'), { recursive: true });
+
     await writeFile(path.join(dir, out, 'hello.txt'), 'hello', 'utf8');
     await writeFile(path.join(dir, out, 'diff', 'snap.json'), '{}', 'utf8');
     await writeFile(
@@ -67,6 +72,9 @@ describe('combine archiving behavior (outputs inside archives)', () => {
 
   it('createArchive (combine): includes files under the outputPath', async () => {
     const out = 'out';
+    // Ensure parent directory before writing
+    await mkdir(path.join(dir, out), { recursive: true });
+
     await writeFile(path.join(dir, out, 'file.txt'), 'x', 'utf8');
 
     const { createArchive } = await import('@karmaniverous/stan-core');

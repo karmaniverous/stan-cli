@@ -2,6 +2,40 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { vi } from 'vitest';
+
+// Ensure tar calls are always captured for this test, independent of setup timing.
+// Writes to the same global store used by '@/test/mock-tar'.
+vi.mock('tar', () => {
+  const ensureStore = (): Array<{
+    file: string;
+    cwd?: string;
+    filter?: (p: string, s: unknown) => boolean;
+    files: string[];
+  }> => {
+    if (!globalThis.__TAR_CALLS__) globalThis.__TAR_CALLS__ = [];
+    return globalThis.__TAR_CALLS__;
+  };
+  const record = async (
+    opts: {
+      file: string;
+      cwd?: string;
+      filter?: (p: string, s: unknown) => boolean;
+    },
+    files: string[],
+  ) => {
+    ensureStore().push({
+      file: opts.file,
+      cwd: opts.cwd,
+      filter: opts.filter,
+      files,
+    });
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile(opts.file, 'TAR', 'utf8');
+  };
+  return { __esModule: true, default: undefined, create: record, c: record };
+});
+
 import { createArchiveDiff, loadConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

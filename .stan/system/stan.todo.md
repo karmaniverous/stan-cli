@@ -74,6 +74,13 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Test fixes (combine + selection-sync)
+  - createArchiveDiff/createArchive combine-behavior tests: ensure parent directories (out/, out/diff/, out/output/) exist before writeFile to avoid ENOENT on Windows/Linux.
+  - selection-sync (snap parity): hoisted an explicit tar mock in the test file to guarantee capture of tar create/c calls regardless of module import timing; continues to assert filter contents via the shared global store.
+  - Result: all three previously failing tests pass locally; behavior remains unchanged.
+
+- Note: tsdoc lint warnings remain in src/stan/run/exec.ts (non-fatal). Follow-up will escape “>” in TSDoc or suppress at call sites.
+
 - Test capture & WARN parity
   - Migrated Vitest inlining to server.deps.inline so vi.mock('tar') applies across @karmaniverous/stan-core and tar. Removed a per-test tar re‑mock to rely on the global capture store.
   - Implemented robust WARN detection: compile warnPattern variants (as‑is, de‑escaped, case‑insensitive) and treat any‑of across in‑memory and persisted output as a WARN when exit=0. Logger UI now prints [WARN] as expected.
