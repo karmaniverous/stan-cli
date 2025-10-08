@@ -26,12 +26,8 @@ export class LiveSink {
   /** Persist the final frame (without clearing). */
   stop(): void {
     try {
-      // First persist the full table (header + rows + summary + hint).
+      // Persist the full table (header + rows + summary + hint).
       this.renderer?.flush();
-      // Then persist a header-only frame so the last update contains exactly one
-      // header line. This guards environments where a trailing update might omit
-      // the header and aligns with the live.restart.behavior test.
-      this.renderer?.showHeaderOnly?.();
       this.renderer?.stop();
     } catch {
       /* ignore */
