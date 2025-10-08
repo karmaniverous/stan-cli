@@ -82,10 +82,16 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
     inside this repo. This avoids drift and keeps prompt provenance consistent
     across environments.
 
+- Loop reversal UX + DRY
+  - Greyed out the choice suffix in the loop reversal prompt by dimming “(Y/n)”
+    in non‑BORING mode, matching the init snapshot prompt’s styling.
+  - Removed duplicated inline confirmation code from run/snap/patch and replaced
+    it with a shared helper (confirmLoopReversal) under src/stan/loop/reversal.ts
+    to keep behavior consistent and avoid drift across subcommands.
+
 - UI glyph consistency
   - Forced text presentation (U+FE0E) for all header/status symbols to avoid emoji
-    double‑width rendering on Windows/VS Code terminals.  - Headers (run/snap/patch): replaced “▶️” with “▶︎”.
-  - Styled labels/summary/logs: ensured text variants for ▶︎, ⚠︎, ⏸︎, ⏱︎, ✖︎, ✔︎, ◼︎.
+    double‑width rendering on Windows/VS Code terminals.  - Headers (run/snap/patch): replaced “▶️” with “▶︎”.  - Styled labels/summary/logs: ensured text variants for ▶︎, ⚠︎, ⏸︎, ⏱︎, ✖︎, ✔︎, ◼︎.
   - No changes to BORING tokens ([OK], [FAIL], etc.); tests remain stable.
 
 - Loop guard & header

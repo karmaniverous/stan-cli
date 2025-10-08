@@ -1,20 +1,18 @@
 /** src/cli/stan/patch.ts
  * CLI adapter for "stan patch" — Commander wiring only.
  */
-import readline from 'node:readline';
-
 import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 
+import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runPatch } from '@/stan/patch/service';
-import { go, warn } from '@/stan/util/color';
+import { go } from '@/stan/util/color';
 
 import { applyCliSafety } from './cli-utils';
 
 /**
- * Register the `patch` subcommand on the provided root CLI.
- *
+ * Register the `patch` subcommand on the provided root CLI. *
  * @param cli - Commander root command. * @returns The same root command for chaining.
  */
 export const registerPatch = (cli: Command): Command => {
@@ -73,22 +71,6 @@ export const registerPatch = (cli: Command): Command => {
         const token = isBoring() ? '[GO] patch' : go('▶︎ patch');
         console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
       };
-      const confirmReversal = async (): Promise<boolean> => {
-        if (!isTTY) return true;
-        if (process.env.STAN_YES === '1') return true;
-        const rl = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout,
-        });
-        const q = (s: string) =>
-          new Promise<string>((res) => rl.question(s, (a) => res(a)));
-        const token = isBoring() ? '[WARN]' : warn('⚠︎');
-        const a = (
-          await q(`stan: ${token} loop reversal detected! Continue? (Y/n) `)
-        ).trim();
-        rl.close();
-        return a === '' || /^[yY]/.test(a);
-      };
 
       // Header + reversal guard + state update
       try {
@@ -99,7 +81,7 @@ export const registerPatch = (cli: Command): Command => {
         const st = await readLoopState(cwd, stanPath);
         header(st?.last ?? null);
         if (st?.last && isBackward(st.last, 'patch')) {
-          const proceed = await confirmReversal();
+          const proceed = await confirmLoopReversal();
           if (!proceed) {
             console.log('');
             return;
