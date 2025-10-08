@@ -274,12 +274,16 @@ export const runSessionOnce = async (args: {
 
   // Cancellation short-circuit (skip archives)
   if (cancelled) {
+    // Live restart should reuse the same table area:
+    // - do NOT flush/persist a final frame,
+    // - do NOT print an extra blank line.
+    // Regular cancel: preserve prior behavior (flush + trailing blank).
     try {
-      ui.stop();
+      if (!restartRequested) ui.stop();
     } catch {
       /* ignore */
     }
-    if (liveEnabled) {
+    if (liveEnabled && !restartRequested) {
       console.log('');
     }
     try {
@@ -312,12 +316,14 @@ export const runSessionOnce = async (args: {
     } catch {
       /* ignore */
     }
+    // Ensure we don’t accumulate signal/exit handlers across restarts.
+    // (In regular cancel, this is harmless but tidy.)
+    detachSignals();
     return { created, cancelled: true, restartRequested };
     // detachSignals executed by caller paths below before return
   }
 
-  // Late-cancellation guard: if a SIGINT lands just after the first check above,
-  // allow one tick for handlers to run and re-check before archiving.
+  // Late-cancellation guard: if a SIGINT lands just after the first check above,  // allow one tick for handlers to run and re-check before archiving.
   // This ensures no archives are written after a cancel in both live and no-live modes.
   {
     try {

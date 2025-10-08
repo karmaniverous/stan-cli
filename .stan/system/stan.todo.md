@@ -74,24 +74,20 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart UX
+  - Restarting `stan run` in live mode now reuses the same table area instead of creating a second table. We suppress final-frame flush and the trailing blank line on restart, keeping the UI in-place for the next session.
+  - We also detach signal/exit hooks on restart so the subsequent run terminates cleanly without requiring a manual Ctrl+C.
+
 - Prompt injection source (core dist only)
-  - The CLI now always injects the packaged system prompt from stan-core
-    (dist/stan.system.md) during full archive creation and restores it before
-    computing the diff archive.
-  - Removed dev-only assembly from local parts; we never construct the monolith
-    inside this repo. This avoids drift and keeps prompt provenance consistent
-    across environments.
+  - The CLI now always injects the packaged system prompt from stan-core (dist/stan.system.md) during full archive creation and restores it before computing the diff archive.
+  - Removed dev-only assembly from local parts; we never construct the monolith inside this repo. This avoids drift and keeps prompt provenance consistent across environments.
 
 - Loop reversal UX + DRY
-  - Greyed out the choice suffix in the loop reversal prompt by dimming “(Y/n)”
-    in non‑BORING mode, matching the init snapshot prompt’s styling.
-  - Removed duplicated inline confirmation code from run/snap/patch and replaced
-    it with a shared helper (confirmLoopReversal) under src/stan/loop/reversal.ts
-    to keep behavior consistent and avoid drift across subcommands.
+  - Greyed out the choice suffix in the loop reversal prompt by dimming “(Y/n)” in non‑BORING mode, matching the init snapshot prompt’s styling.
+  - Removed duplicated inline confirmation code from run/snap/patch and replaced it with a shared helper (confirmLoopReversal) under src/stan/loop/reversal.ts to keep behavior consistent and avoid drift across subcommands.
 
 - UI glyph consistency
-  - Forced text presentation (U+FE0E) for all header/status symbols to avoid emoji
-    double‑width rendering on Windows/VS Code terminals.  - Headers (run/snap/patch): replaced “▶️” with “▶︎”.  - Styled labels/summary/logs: ensured text variants for ▶︎, ⚠︎, ⏸︎, ⏱︎, ✖︎, ✔︎, ◼︎.
+  - Forced text presentation (U+FE0E) for all header/status symbols to avoid emoji double‑width rendering on Windows/VS Code terminals. - Headers (run/snap/patch): replaced “▶️” with “▶︎”. - Styled labels/summary/logs: ensured text variants for ▶︎, ⚠︎, ⏸︎, ⏱︎, ✖︎, ✔︎, ◼︎.
   - No changes to BORING tokens ([OK], [FAIL], etc.); tests remain stable.
 
 - Loop guard & header
