@@ -37,14 +37,14 @@ export const renderSummary = (
   }
   return [
     `${elapsed}`,
-    cancel(`⏸ ${counts.waiting.toString()}`),
-    go(`▶ ${counts.running.toString()}`),
-    alert(`⏱ ${counts.quiet.toString()}`),
-    warn(`⏱ ${counts.stalled.toString()}`),
-    error(`⏱ ${counts.timeout.toString()}`),
-    ok(`✔ ${counts.ok.toString()}`),
-    warn(`⚠ ${counts.warn.toString()}`),
-    error(`✖ ${counts.fail.toString()}`),
-    stop(`◼ ${counts.cancelled.toString()}`),
+    cancel(`⏸︎ ${counts.waiting.toString()}`),
+    go(`▶︎ ${counts.running.toString()}`),
+    alert(`⏱︎ ${counts.quiet.toString()}`),
+    warn(`⏱︎ ${counts.stalled.toString()}`),
+    error(`⏱︎ ${counts.timeout.toString()}`),
+    ok(`✔︎ ${counts.ok.toString()}`),
+    warn(`⚠︎ ${counts.warn.toString()}`),
+    error(`✖︎ ${counts.fail.toString()}`),
+    stop(`◼︎ ${counts.cancelled.toString()}`),
   ].join(sep);
 };

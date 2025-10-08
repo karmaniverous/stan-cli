@@ -1,25 +1,54 @@
 /// src/cli/stan/run/action.ts
 import path from 'node:path';
+import readline from 'node:readline';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { findConfigPathSync, loadConfig } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
+import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
+import { go, warn } from '@/stan/util/color';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
-
 export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
 ): void => {
+  const isTTY = Boolean(
+    (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
+  );
+  const isBoring = (): boolean =>
+    process.env.STAN_BORING === '1' ||
+    process.env.NO_COLOR === '1' ||
+    process.env.FORCE_COLOR === '0' ||
+    !isTTY;
+  const header = (last: string | null): void => {
+    const token = isBoring() ? '[GO] run' : go('▶︎ run');
+    console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
+  };
+  const confirmReversal = async (): Promise<boolean> => {
+    if (!isTTY) return true; // non‑interactive: proceed
+    if (process.env.STAN_YES === '1') return true;
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    const q = (s: string) =>
+      new Promise<string>((res) => rl.question(s, (a) => res(a)));
+    const token = isBoring() ? '[WARN]' : warn('⚠︎');
+    const a = (
+      await q(`stan: ${token} loop reversal detected! Continue? (Y/n) `)
+    ).trim();
+    rl.close();
+    return a === '' || /^[yY]/.test(a);
+  };
   cmd.action(async (options: Record<string, unknown>) => {
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
       getFlagPresence();
-
     // Authoritative conflict handling: -S cannot be combined with -s/-x
     if (sawNoScriptsFlag && (sawScriptsFlag || sawExceptFlag)) {
       throw new CommanderError(
@@ -48,6 +77,28 @@ export const registerRunAction = (
         console.error('stan: failed to load config', msg);
       }
       config = { stanPath: 'stan', scripts: {} };
+    }
+
+    // Loop header + reversal guard
+    try {
+      const st = await readLoopState(runCwd, config.stanPath);
+      header(st?.last ?? null);
+      if (st?.last && isBackward(st.last, 'run')) {
+        const proceed = await confirmReversal();
+        if (!proceed) {
+          console.log('');
+          return;
+        }
+      }
+      // Update state at command start (so it reflects the action initiated)
+      try {
+        const ts = new Date().toISOString();
+        await writeLoopState(runCwd, config.stanPath, 'run', ts);
+      } catch {
+        // best-effort
+      }
+    } catch {
+      // ignore guard failures
     }
 
     // Derive run parameters

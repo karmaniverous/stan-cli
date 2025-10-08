@@ -1,4 +1,4 @@
-// src/stan/run/session.ts
+/* src/stan/run/session.ts
 /**
  * One-shot run session (single attempt).
  * - Windows EBUSY hardening: add a slightly longer final settle after cancellation.

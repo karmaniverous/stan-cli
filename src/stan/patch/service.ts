@@ -55,9 +55,9 @@ const isBoring = (): boolean => {
 
 /** Status tokens: colorized in TTY; bracketed in BORING/non‑TTY. */
 const statusOk = (s: string): string =>
-  isBoring() ? `[OK] ${s}` : `${colorOk('✔ ok')} ${s}`;
+  isBoring() ? `[OK] ${s}` : `${colorOk('✔')} ${s}`;
 const statusFail = (s: string): string =>
-  isBoring() ? `[FAIL] ${s}` : `${colorError('✖ fail')} ${s}`;
+  isBoring() ? `[FAIL] ${s}` : `${colorError('✖')} ${s}`;
 
 export const runPatch = async (
   cwd: string,

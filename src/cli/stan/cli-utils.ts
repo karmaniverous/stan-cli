@@ -109,7 +109,7 @@ export const loadConfigSafe = (dir = cwdSafe()): ContextConfig | null => {
 /** Root-level boolean defaults (debug/boring) from config or built-ins. */
 export const rootDefaults = (
   dir = cwdSafe(),
-): { debugDefault: boolean; boringDefault: boolean } => {
+): { debugDefault: boolean; boringDefault: boolean; yesDefault: boolean } => {
   const cfg = loadConfigSafe(dir);
   const cli = cfg?.cliDefaults;
   const debugDefault = Boolean(
@@ -118,9 +118,13 @@ export const rootDefaults = (
   const boringDefault = Boolean(
     typeof cli?.boring === 'boolean' ? cli.boring : false,
   );
-  return { debugDefault, boringDefault };
+  const yesDefault = Boolean(
+    typeof (cli as { yes?: boolean } | undefined)?.yes === 'boolean'
+      ? (cli as { yes?: boolean }).yes
+      : false,
+  );
+  return { debugDefault, boringDefault, yesDefault };
 };
-
 /** Run-phase defaults merged from config over baseline RUN_BASE_DEFAULTS. */
 export const runDefaults = (
   dir = cwdSafe(),

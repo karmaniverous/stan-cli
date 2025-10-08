@@ -60,25 +60,25 @@ export const label = (kind: StatusKind): string => {
   }
   switch (kind) {
     case 'warn':
-      return warn('⚠ warn');
+      return warn('⚠︎ warn');
     case 'waiting':
-      return cancel('⏸ waiting');
+      return cancel('⏸︎ waiting');
     case 'run':
-      return go('▶ run');
+      return go('▶︎ run');
     case 'ok':
-      return ok('✔ ok');
+      return ok('✔︎ ok');
     case 'error':
-      return error('✖ fail');
+      return error('✖︎ fail');
     case 'cancelled':
-      return stop('◼ cancelled');
+      return stop('◼︎ cancelled');
     case 'timeout':
-      return error('⏱ timeout');
+      return error('⏱︎ timeout');
     case 'quiet':
-      return alert('⏱ quiet');
+      return alert('⏱︎ quiet');
     case 'stalled':
-      return warn('⏱ stalled');
+      return warn('⏱︎ stalled');
     case 'killed':
-      return error('◼ killed');
+      return error('◼︎ killed');
     default:
       return '';
   }

@@ -74,6 +74,22 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- UI glyph consistency
+  - Forced text presentation (U+FE0E) for all header/status symbols to avoid emoji
+    double‑width rendering on Windows/VS Code terminals.
+  - Headers (run/snap/patch): replaced “▶️” with “▶︎”.
+  - Styled labels/summary/logs: ensured text variants for ▶︎, ⚠︎, ⏸︎, ⏱︎, ✖︎, ✔︎, ◼︎.
+  - No changes to BORING tokens ([OK], [FAIL], etc.); tests remain stable.
+
+- Loop guard & header
+  - Print a loop header before each command (run/snap/patch): “▶️ <cmd> (last command: X)” and BORING “[GO] …”.
+  - Detect backward movement through the loop (run→snap→patch→run) and prompt once to confirm (default Yes).
+  - Store last command in `<stanPath>/diff/.loop.state.json`.
+  - Global `-y, --yes` (and `cliDefaults.yes`) to auto-accept prompts; non‑TTY defaults to proceed so CI can simply pass `-y` as needed.
+- Global root flag
+  - Added `-y, --yes` / `-Y, --no-yes` at the root; resolves via flags > cliDefaults > built‑ins and is exported to subcommands via environment.
+  - Root help footer unchanged; defaults tagged like other root booleans.
+
 - Snap UX
   - Print a trailing blank line after `stan snap` completes (including abort and error paths) to visually separate output from the next shell prompt. Aligns with `stan run` and `stan patch` spacing policy.
 
@@ -135,7 +151,7 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
   - deleted `src/stan/{archive, classifier, config, diff, fs, imports, module, paths, system, validate, patch}` and associated tests,
   - deleted `tools/gen-system.ts` (prompt assembly now owned by core),
   - preserved `.stan/imports` for core context.
-- Follow‑up: rewire CLI adapters (run/patch/snap/help/preflight) to import engine APIs from stan-core and restore build/tests.
+- Follow-up: rewire CLI adapters (run/patch/snap/help/preflight) to import engine APIs from stan-core and restore build/tests.
 
 - Unified diagnostics envelope and follow‑up options clarified.
 - Response‑format validator improvements and WARN parity across UIs.
