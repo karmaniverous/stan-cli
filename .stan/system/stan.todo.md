@@ -74,6 +74,17 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Snap UX
+  - Print a trailing blank line after `stan snap` completes (including abort and error paths) to visually separate output from the next shell prompt. Aligns with `stan run` and `stan patch` spacing policy.
+
+- Patch UX (wording)
+  - Failure hint updated to: “Patch diagnostics uploaded to clipboard. Paste into chat for full listing.”
+  - Keeps clickable path output and trailing blank line after action.
+
+- Run UX (live renderer + tests)
+  - Live table: add a leading blank line and remove global left indent (flush-left).
+  - Updated live alignment test to expect the new shape (leading blank line, no two‑space indent).
+
 - Sequential gate hardening
   - Added a tiny guard window (~25ms) before spawning the next script in sequential mode to absorb late-arriving SIGINT after the previous script finishes. Prevents the “after” script from starting across the boundary (fixes cancel.gate test: b.txt no longer created).
 

@@ -55,7 +55,7 @@ describe('live renderer alignment (two-space indent)', () => {
     vi.restoreAllMocks();
   });
 
-  it('indents table, summary, and hint by exactly two spaces', async () => {
+  it('renders with a leading blank line and flush-left alignment (no global indent)', async () => {
     const cfg: ContextConfig = {
       stanPath: 'stan',
       scripts: { hello: 'node -e "process.stdout.write(`Hello`)"' },
@@ -72,13 +72,15 @@ describe('live renderer alignment (two-space indent)', () => {
     });
 
     const printed = writeSpy.mock.calls.map((c) => String(c[0])).join('');
-    // Look for header row with two leading spaces
-    const hasTwoSpaceHeader = /(?:^|\n) {2}Type\s+Item\s+Status/m.test(printed);
-    expect(hasTwoSpaceHeader).toBe(true);
-    // Summary and hint lines should also be indented by two spaces
-    const hasTwoSpaceSummary = /(?:^|\n) {2}\d{2}:\d{2}\s+•/m.test(printed);
-    const hasTwoSpaceHint = /(?:^|\n) {2}Press q to cancel/m.test(printed);
-    expect(hasTwoSpaceSummary).toBe(true);
-    expect(hasTwoSpaceHint).toBe(true);
+    // Leading blank line separates from the prior shell prompt
+    expect(printed.startsWith('\n')).toBe(true);
+    // Header row is flush-left (no two-space indent)
+    const hasHeader = /(?:^|\n)Type\s+Item\s+Status/m.test(printed);
+    expect(hasHeader).toBe(true);
+    // Summary and hint are also flush-left
+    const hasSummary = /(?:^|\n)\d{2}:\d{2}\s+•/m.test(printed);
+    const hasHint = /(?:^|\n)Press q to cancel/m.test(printed);
+    expect(hasSummary).toBe(true);
+    expect(hasHint).toBe(true);
   });
 });

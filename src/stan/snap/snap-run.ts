@@ -35,6 +35,8 @@ export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
       console.error(
         'stan: git stash -u failed; snapshot aborted (no changes made)',
       );
+      // Visual separation from next prompt
+      console.log('');
       return;
     }
   }
@@ -65,6 +67,8 @@ export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
         console.error('stan: git stash pop failed');
       }
     }
+    // Visual separation from next prompt
+    console.log('');
     return;
   }
 
@@ -86,4 +90,6 @@ export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
   }
 
   console.log('stan: snapshot updated');
+  // Visual separation from next prompt
+  console.log('');
 };

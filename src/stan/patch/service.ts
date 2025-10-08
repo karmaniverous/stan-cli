@@ -220,7 +220,7 @@ export const runPatch = async (
     // Brief guidance so users know what to do next
     if (copied) {
       console.log(
-        'stan: Patch diagnostics copied to clipboard. Paste into chat for full listing.',
+        'stan: Patch diagnostics uploaded to clipboard. Paste into chat for full listing.',
       );
     } else {
       console.log(
