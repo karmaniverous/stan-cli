@@ -9,15 +9,10 @@ import {
   createArchiveDiff,
   prepareImports,
 } from '@karmaniverous/stan-core';
-// Prompt helpers are expected to be top-level core exports (interop note filed)
-import {
-  assembleSystemMonolith,
-  getPackagedSystemPromptPath,
-} from '@karmaniverous/stan-core';
+import { getPackagedSystemPromptPath } from '@karmaniverous/stan-core';
 
 import { alert, ok } from '@/stan/util/color';
 
-import { getVersionInfo } from '../version';
 // Progress callbacks for live renderer integration
 type ArchiveProgress = {
   /** Called when a phase starts (kind: 'full' | 'diff'). */
@@ -112,27 +107,6 @@ const preparePackagedSystemPrompt = async (
 };
 
 /**
- * Dev‑only: assemble `.stan/system/parts/*.md` into `stan.system.md` before
- * archiving. No‑ops when the parts directory is missing or empty.
- *
- * This keeps archives reproducible while authoring the prompt as parts
- * in the STAN development repository.
- *
- * @param cwd - Repository root.
- * @param stanPath - STAN workspace folder.
- */
-const assembleSystemFromParts = async (
-  cwd: string,
-  stanPath: string,
-): Promise<void> => {
-  try {
-    await assembleSystemMonolith(cwd, stanPath);
-  } catch {
-    // best-effort
-  }
-};
-
-/**
  * Clear `<stanPath>/patch` contents after archiving (preserve the directory).
  *
  * Removes files under the patch workspace so subsequent archives include
@@ -161,10 +135,8 @@ const cleanupPatchDirAfterArchive = async (
 /**
  * Run the archive phase and produce both regular and diff archives.
  *
- * - In the STAN dev repo, assembles the system monolith from parts before
- *   archiving.
- * - In downstream repos, temporarily writes the packaged baseline system
- *   prompt for inclusion in the full archive and restores it afterwards.
+ * - Always injects the packaged baseline system prompt from stan-core (dist) for
+ *   the full archive and restores it before computing the diff.
  *
  * @param args - Object with:
  *   - cwd: Repo root.
@@ -187,19 +159,14 @@ export const archivePhase = async (
   if (!silent) {
     console.log(`stan: start "${alert('archive')}"`);
   }
-  // In this repo, assemble the system monolith from parts before archiving.
-  const vinfo = await getVersionInfo(cwd);
-  let restore: () => Promise<void> = async () => {};
-  if (vinfo.isDevModuleRepo) {
-    try {
-      await assembleSystemFromParts(cwd, config.stanPath);
-    } catch {
-      // best-effort
-    }
-  } else {
-    // Ensure the packaged system prompt is present during archiving (full archive).
-    restore = await preparePackagedSystemPrompt(cwd, config.stanPath);
-  }
+
+  // Ensure the packaged system prompt is present during archiving (full archive).
+  // Always source from stan-core dist — never assemble from local parts.
+  let restore: () => Promise<void> = await preparePackagedSystemPrompt(
+    cwd,
+    config.stanPath,
+  );
+
   let archivePath = '';
   let diffPath = '';
   try {

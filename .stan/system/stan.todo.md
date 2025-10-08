@@ -74,10 +74,17 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Prompt injection source (core dist only)
+  - The CLI now always injects the packaged system prompt from stan-core
+    (dist/stan.system.md) during full archive creation and restores it before
+    computing the diff archive.
+  - Removed dev-only assembly from local parts; we never construct the monolith
+    inside this repo. This avoids drift and keeps prompt provenance consistent
+    across environments.
+
 - UI glyph consistency
   - Forced text presentation (U+FE0E) for all header/status symbols to avoid emoji
-    double‑width rendering on Windows/VS Code terminals.
-  - Headers (run/snap/patch): replaced “▶️” with “▶︎”.
+    double‑width rendering on Windows/VS Code terminals.  - Headers (run/snap/patch): replaced “▶️” with “▶︎”.
   - Styled labels/summary/logs: ensured text variants for ▶︎, ⚠︎, ⏸︎, ⏱︎, ✖︎, ✔︎, ◼︎.
   - No changes to BORING tokens ([OK], [FAIL], etc.); tests remain stable.
 
