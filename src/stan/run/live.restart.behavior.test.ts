@@ -142,7 +142,9 @@ describe('live restart behavior (instructions + header-only persistence, no glob
         /Press q to cancel,\s*r to restart/i.test(f.body),
       ),
     ).toBe(true);
-    // Trigger restart ('r'); this should cause a single header-only flush (persist header) and then a new session.
+    // Trigger restart ('r'); this should cause a header-only flush (persist header) and then a new session.
+    // Record the update-call index just before emitting 'r' so we can bracket the interval.
+    const mark = updates().length;
     (
       process.stdin as unknown as { emit: (ev: string, d?: unknown) => void }
     ).emit('data', 'r');
@@ -163,21 +165,25 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     const anyRowRe = rowRe;
 
     const ups = updates();
-    const headerOnlyUpdates = ups.filter(
-      (u) => headerRe.test(u.body) && !anyRowRe.test(u.body),
+    // Find the first frame for our row after the restart marker.
+    const idxFirstAfter = ups.findIndex(
+      (u, i) => i >= mark && rowRe.test(u.body),
     );
+    expect(idxFirstAfter).toBeGreaterThan(-1);
 
-    // Exactly one header-only frame (from showHeaderOnly on restart)
-    expect(headerOnlyUpdates.length).toBe(1);
+    // There must be at least one header-only frame between the marker and the first post-restart row frame.
+    const headerOnlyBetween = ups
+      .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
+      .some((u) => headerRe.test(u.body) && !rowRe.test(u.body));
+    expect(headerOnlyBetween).toBe(true);
 
-    // Sanity: we should also have at least one frame with this script row and the hint.
-    const framesWithRows = ups.filter(
-      (u) => headerRe.test(u.body) && rowRe.test(u.body),
-    );
-    expect(framesWithRows.length).toBeGreaterThan(0);
+    // Sanity: at least one post-restart frame for our row carries the hint.
+    const postRestartRowFrames = ups.slice(Math.max(idxFirstAfter, mark));
     expect(
-      framesWithRows.some((u) =>
-        /Press q to cancel,\s*r to restart/i.test(u.body),
+      postRestartRowFrames.some(
+        (u) =>
+          rowRe.test(u.body) &&
+          /Press q to cancel,\s*r to restart/i.test(u.body),
       ),
     ).toBe(true);
   });

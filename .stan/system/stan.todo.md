@@ -1,9 +1,8 @@
 # STAN Development Plan
 
-When updated: 2025-10-07 (UTC)
+When updated: 2025-10-08 (UTC)
 
 This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
-
 ---
 
 ## Track — stan-cli (CLI and runner)
@@ -74,10 +73,14 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart test hardening (bracketed header-only check)
+  - Record the update index before emitting 'r' and assert at least one header-only frame appears strictly between that marker and the first post-restart row frame for this test.
+  - Keeps the bounded wait for the first [RUN] frame and the row-scoped assertions to avoid cross-suite noise.
+  - Retains Windows-safe teardown via rmDirWithRetries to mitigate EBUSY during temp directory removal.
+
 - Live restart test hardening
   - Targeted assertions to this suite’s script key to avoid cross‑suite log‑update noise (tests can run concurrently).
-  - Keep bounded wait for the first “[RUN]” frame; ensures hint visibility is asserted while running.
-  - Retained Windows‑safe teardown via rmDirWithRetries to avoid intermittent EBUSY.
+  - Keep bounded wait for the first “[RUN]” frame; ensures hint visibility is asserted while running.  - Retained Windows‑safe teardown via rmDirWithRetries to avoid intermittent EBUSY.
 
 - Live restart test hardening
   - Targeted assertions to this suite’s script key to avoid cross‑suite log‑update noise (tests can run concurrently).
