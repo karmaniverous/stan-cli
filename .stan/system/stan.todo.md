@@ -75,6 +75,11 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 ## Completed (recent)
 
 - Live restart test hardening
+  - Targeted assertions to this suite’s script key to avoid cross‑suite log‑update noise (tests can run concurrently).
+  - Keep bounded wait for the first “[RUN]” frame; ensures hint visibility is asserted while running.
+  - Retained Windows‑safe teardown via rmDirWithRetries to avoid intermittent EBUSY.
+
+- Live restart test hardening
   - Made the live restart behavior test wait for the first “[RUN]” frame (renderer refresh is ~1s) instead of sleeping a fixed 250 ms.
   - Asserts the instructions remain visible during running frames, verifies a single header-only flush on restart, and ensures no global clear.
   - Switched teardown to rmDirWithRetries to avoid intermittent Windows EBUSY on temp directory removal.

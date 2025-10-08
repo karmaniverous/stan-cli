@@ -68,6 +68,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
   const envBackup = { ...process.env };
   const ttyBackup = (process.stdout as unknown as { isTTY?: boolean }).isTTY;
   const stdinBackup = (process.stdin as unknown as { isTTY?: boolean }).isTTY;
+  const WAIT_KEY = '__liveRestartWait__';
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'stan-live-restart-'));
@@ -109,12 +110,12 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     const cfg: ContextConfig = {
       stanPath: 'stan',
       scripts: {
-        wait: 'node -e "setTimeout(()=>{}, 1200)"',
+        [WAIT_KEY]: 'node -e "setTimeout(()=>{}, 1200)"',
       },
     };
 
     // Kick off a live run (no archives to keep this fast)
-    const p = runSelected(dir, cfg, ['wait'], 'concurrent', {
+    const p = runSelected(dir, cfg, [WAIT_KEY], 'concurrent', {
       live: true,
       archive: false,
     });
@@ -124,14 +125,17 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       calls.filter(
         (c): c is { type: 'update'; body: string } => c.type === 'update',
       );
+    const rowRe = new RegExp(`(?:^|\\n)script\\s+${WAIT_KEY}\\s+`);
     await waitUntil(
-      () => updates().some((u) => /\[RUN\]/.test(u.body)),
+      () => updates().some((u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body)),
       2500,
       25,
     );
 
     // While running, latest update frames containing [RUN] must also include the hint.
-    const framesWithRun = updates().filter((u) => /\[RUN\]/.test(u.body));
+    const framesWithRun = updates().filter(
+      (u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body),
+    );
     // There should be at least one RUN frame by now (guard above waited for it).
     expect(framesWithRun.length).toBeGreaterThan(0);
     // The hint should be present in RUN frames ("Press q to cancel, r to restart")
@@ -158,7 +162,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // Header marker (Type/Item/Status/Time/Output), BORING & flush-left
     const headerRe = /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/m;
     // Any row line starts with either "script" or "archive"
-    const anyRowRe = /(?:^|\n)(script|archive)\s+/;
+    const anyRowRe = rowRe; // restrict to this suite's script row
 
     const ups = updates();
     const headerOnlyUpdates = ups.filter(
@@ -170,7 +174,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
 
     // Sanity: we should also have at least one frame with script/archive rows and the hint.
     const framesWithRows = ups.filter(
-      (u) => headerRe.test(u.body) && anyRowRe.test(u.body),
+      (u) => headerRe.test(u.body) && rowRe.test(u.body),
     );
     expect(framesWithRows.length).toBeGreaterThan(0);
     expect(
