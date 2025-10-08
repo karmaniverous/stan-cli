@@ -5,6 +5,7 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { rmDirWithRetries } from '@/test/helpers';
 // Keep archiving light (we don't archive in this test, but safe to mock)
 vi.mock('tar', () => ({
   __esModule: true,
@@ -46,6 +47,22 @@ vi.mock('log-update', () => {
 
 import { runSelected } from '@/stan/run';
 
+// Bounded waiter to detect a condition within a timeout.
+const waitUntil = async (
+  pred: () => boolean,
+  timeoutMs = 2500,
+  stepMs = 25,
+): Promise<void> => {
+  const start = Date.now();
+
+  while (true) {
+    if (pred()) return;
+    if (Date.now() - start >= timeoutMs) return;
+
+    await new Promise((r) => setTimeout(r, stepMs));
+  }
+};
+
 describe('live restart behavior (instructions + header-only persistence, no global clear)', () => {
   let dir: string;
   const envBackup = { ...process.env };
@@ -84,10 +101,9 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     } catch {
       /* ignore */
     }
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
-
   it('keeps instructions visible while running, performs a single header-only flush on restart, and never calls clear()', async () => {
     // Small long-running script to ensure we can trigger a restart while "running"
     const cfg: ContextConfig = {
@@ -103,15 +119,20 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       archive: false,
     });
 
-    // Give the runner a moment to start and render at least one running frame
-    await new Promise((r) => setTimeout(r, 250));
+    // Wait until we observe at least one [RUN] frame.
+    const updates = () =>
+      calls.filter(
+        (c): c is { type: 'update'; body: string } => c.type === 'update',
+      );
+    await waitUntil(
+      () => updates().some((u) => /\[RUN\]/.test(u.body)),
+      2500,
+      25,
+    );
 
     // While running, latest update frames containing [RUN] must also include the hint.
-    const framesWithRun = calls.filter(
-      (c) =>
-        c.type === 'update' && /\[RUN\]/.test((c as { body: string }).body),
-    ) as Array<{ type: 'update'; body: string }>;
-    // There should be at least one RUN frame by now.
+    const framesWithRun = updates().filter((u) => /\[RUN\]/.test(u.body));
+    // There should be at least one RUN frame by now (guard above waited for it).
     expect(framesWithRun.length).toBeGreaterThan(0);
     // The hint should be present in RUN frames ("Press q to cancel, r to restart")
     expect(
@@ -119,7 +140,6 @@ describe('live restart behavior (instructions + header-only persistence, no glob
         /Press q to cancel,\s*r to restart/i.test(f.body),
       ),
     ).toBe(true);
-
     // Trigger restart ('r'); this should cause a single header-only flush (persist header) and then a new session.
     (
       process.stdin as unknown as { emit: (ev: string, d?: unknown) => void }
@@ -140,10 +160,8 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // Any row line starts with either "script" or "archive"
     const anyRowRe = /(?:^|\n)(script|archive)\s+/;
 
-    const updates = calls.filter(
-      (c): c is { type: 'update'; body: string } => c.type === 'update',
-    );
-    const headerOnlyUpdates = updates.filter(
+    const ups = updates();
+    const headerOnlyUpdates = ups.filter(
       (u) => headerRe.test(u.body) && !anyRowRe.test(u.body),
     );
 
@@ -151,7 +169,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     expect(headerOnlyUpdates.length).toBe(1);
 
     // Sanity: we should also have at least one frame with script/archive rows and the hint.
-    const framesWithRows = updates.filter(
+    const framesWithRows = ups.filter(
       (u) => headerRe.test(u.body) && anyRowRe.test(u.body),
     );
     expect(framesWithRows.length).toBeGreaterThan(0);

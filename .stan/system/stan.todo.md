@@ -74,6 +74,11 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart test hardening
+  - Made the live restart behavior test wait for the first “[RUN]” frame (renderer refresh is ~1s) instead of sleeping a fixed 250 ms.
+  - Asserts the instructions remain visible during running frames, verifies a single header-only flush on restart, and ensures no global clear.
+  - Switched teardown to rmDirWithRetries to avoid intermittent Windows EBUSY on temp directory removal.
+
 - Live restart tests
   - Added a live-mode restart behavior test that runs a session, triggers restart via "r", and asserts:
     - Instructions ("Press q to cancel, r to restart") remain visible during running frames.
@@ -81,9 +86,6 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
     - Exactly one header-only flush is rendered at the restart boundary, avoiding redundant header-only frames.
   - The test uses a log-update mock to capture update/done/clear calls and verifies frame contents (header/rows/hint).
   - This provides coverage for the restart UX and guards against regressions while we iterate on renderer reuse.
-
-- Live restart visual polish
-  - On restart, the live table now rolls back to the header row (not a blank screen) before the next session begins, avoiding the transient “everything disappeared” flash that can look like a failure. The header is rendered and persisted; the next run immediately reuses the same UI area and fills rows in-place.
 
 - Live restart visual polish
   - On restart, the live table now rolls back to the header row (not a blank screen) before the next session begins, avoiding the transient “everything disappeared” flash that can look like a failure. The header is rendered and persisted; the next run immediately reuses the same UI area and fills rows in-place.
