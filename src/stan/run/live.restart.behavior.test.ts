@@ -186,5 +186,19 @@ describe('live restart behavior (instructions + header-only persistence, no glob
           /Press q to cancel,\s*r to restart/i.test(u.body),
       ),
     ).toBe(true);
+
+    // Final-frame assertions encoding the intended behavior:
+    // 1) Exactly one table should be visible in any single frame (no duplicate header).
+    //    The current bug renders a second table under the first after restart,
+    //    which yields 2 header lines within the same frame body.
+    // 2) Instructions should be visible (not disappear) in the final frame.
+    const last = ups.length > 0 ? ups[ups.length - 1].body : '';
+    const headerReGlobal =
+      /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
+    const headerMatches = last.match(headerReGlobal) ?? [];
+    // Expected (intended): 1; Current (buggy): typically >= 2 in one frame.
+    expect(headerMatches.length).toBe(1);
+    // Instructions must be present in the final frame.
+    expect(/Press q to cancel,\s*r to restart/i.test(last)).toBe(true);
   });
 });

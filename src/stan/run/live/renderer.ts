@@ -1,6 +1,7 @@
 /* src/stan/run/live/renderer.ts
  * TTY live progress rendering (ProgressRenderer).
  */
+let __UI_COUNTER = 1;
 
 import logUpdate from 'log-update';
 import { table } from 'table';
@@ -55,13 +56,15 @@ export class ProgressRenderer {
   };
   private timer?: NodeJS.Timeout;
   private readonly startedAt = now();
+  // Test-only: stable instance tag for restart-dedup tests (enabled when STAN_TEST_UI_TAG=1)
+  private readonly uiId: number;
   constructor(args?: { boring?: boolean; refreshMs?: number }) {
     this.opts = {
       boring: Boolean(args?.boring),
       refreshMs: args?.refreshMs ?? 1000,
     };
+    this.uiId = __UI_COUNTER++;
   }
-
   /** Render one final frame (no stop/persist). */
   public flush(): void {
     this.render();
@@ -316,9 +319,13 @@ export class ProgressRenderer {
     const elapsed = fmtMs(now() - this.startedAt);
     const counts = this.counts();
     const summary = renderSummary(elapsed, counts, this.opts.boring);
+    // Test-only UI tag (appears when STAN_TEST_UI_TAG=1); harmless in non-test runs.
+    const tag =
+      process.env.STAN_TEST_UI_TAG === '1' ? ` UI#${this.uiId.toString()}` : '';
     const hint = `${dim('Press')} ${bold('q')} ${dim('to cancel,')} ${bold(
       'r',
-    )} ${dim('to restart')}`;
+    )} ${dim('to restart')}${tag}`;
+    // We append the tag to the hint line only to avoid perturbing table layout in normal frames.
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
     // Add a leading blank line and remove global left indent
     const body = `\n${raw}`;

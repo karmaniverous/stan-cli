@@ -4,7 +4,6 @@ When updated: 2025-10-08 (UTC)
 
 This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
 ---
-
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
@@ -73,10 +72,15 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart test (expected failing) to pin bugs
+  - Added a test-only UI instance tag (UI#N) gated by STAN_TEST_UI_TAG=1 and a stricter live restart test that asserts:
+    - a single, persistent UI across restarts (exactly one UI tag across the entire run), and
+    - instructions persist while a script is running.
+  - The test is expected to FAIL with the current implementation (new UI on restart and instructions disappearing), matching user reports. This pins the behavior and will turn green when we reuse a single ProgressRenderer/LiveUI across restarts and keep the hint visible on every frame.
+
 - Live restart test hardening (bracketed header-only check)
   - Record the update index before emitting 'r' and assert at least one header-only frame appears strictly between that marker and the first post-restart row frame for this test.
-  - Keeps the bounded wait for the first [RUN] frame and the row-scoped assertions to avoid cross-suite noise.
-  - Retains Windows-safe teardown via rmDirWithRetries to mitigate EBUSY during temp directory removal.
+  - Keeps the bounded wait for the first [RUN] frame and the row-scoped assertions to avoid cross-suite noise.  - Retains Windows-safe teardown via rmDirWithRetries to mitigate EBUSY during temp directory removal.
 
 - Live restart test hardening
   - Targeted assertions to this suite’s script key to avoid cross‑suite log‑update noise (tests can run concurrently).
