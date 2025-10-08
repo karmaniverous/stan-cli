@@ -74,6 +74,9 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart visual polish
+  - On restart, the live table now rolls back to the header row (not a blank screen) before the next session begins, avoiding the transient “everything disappeared” flash that can look like a failure. The header is rendered and persisted; the next run immediately reuses the same UI area and fills rows in-place.
+
 - Live restart UX
   - Restarting `stan run` in live mode now reuses the same table area instead of creating a second table. We suppress final-frame flush and the trailing blank line on restart, keeping the UI in-place for the next session.
   - We also detach signal/exit hooks on restart so the subsequent run terminates cleanly without requiring a manual Ctrl+C.

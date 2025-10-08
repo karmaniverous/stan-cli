@@ -55,7 +55,6 @@ export class ProgressRenderer {
   };
   private timer?: NodeJS.Timeout;
   private readonly startedAt = now();
-
   constructor(args?: { boring?: boolean; refreshMs?: number }) {
     this.opts = {
       boring: Boolean(args?.boring),
@@ -67,11 +66,50 @@ export class ProgressRenderer {
   public flush(): void {
     this.render();
   }
+  /**
+   * Render only the header row and persist it (no idle row, no summary/hint).
+   * Useful for live restarts to keep the table scaffolding in place.
+   */
+  public showHeaderOnly(): void {
+    const header = ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) =>
+      bold(h),
+    );
+    const bodyTable = table([header], {
+      border: {
+        topBody: ``,
+        topJoin: ``,
+        topLeft: ``,
+        topRight: ``,
+        bottomBody: ``,
+        bottomJoin: ``,
+        bottomLeft: ``,
+        bottomRight: ``,
+        bodyLeft: ``,
+        bodyRight: ``,
+        bodyJoin: ``,
+        joinBody: ``,
+        joinLeft: ``,
+        joinRight: ``,
+        joinJoin: ``,
+      },
+      drawHorizontalLine: () => false,
+    });
+    const stripped = bodyTable
+      .split('\n')
+      .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
+      .join('\n')
+      .trimEnd();
+    const body = `\n${stripped}`;
+    try {
+      logUpdate(body);
+    } catch {
+      /* best-effort */
+    }
+  }
   start(): void {
     if (this.timer) return;
     this.timer = setInterval(() => this.render(), this.opts.refreshMs);
   }
-
   /** Clear any rendered output without persisting it. */
   public clear(): void {
     try {

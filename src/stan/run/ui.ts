@@ -1,4 +1,5 @@
-/* src/stan/run/ui.ts
+// src/stan/run/ui.ts
+/**
  * Runner UI ports and adapters:
  * - LoggerUI: legacy console logs (no-live).
  * - LiveUI: ProgressRenderer + TTY key handling (live).
@@ -10,6 +11,7 @@ import { ProgressRenderer } from './live/renderer';
 import { ProgressModel } from './progress/model';
 import { LiveSink } from './progress/sinks/live';
 import { LoggerSink } from './progress/sinks/logger';
+
 export type ArchiveKind = 'full' | 'diff';
 
 export type RunnerUI = {
@@ -72,7 +74,7 @@ export class LoggerUI implements RunnerUI {
     cwd: string,
     _startedAt: number,
     _endedAt: number,
-    exitCode?: number,
+    _exitCode?: number,
     status?: 'ok' | 'warn' | 'error',
   ): void {
     const rel = relative(cwd, outAbs).replace(/\\/g, '/');
@@ -223,7 +225,8 @@ export class LiveUI implements RunnerUI {
   /**
    * Tear down live rendering on cancellation.
    * - mode === 'cancel' (default): persist the final frame (do not clear).
-   * - mode === 'restart': clear the frame so the next run reuses the same UI area.
+   * - mode === 'restart': roll back to header and persist, so the next run reuses
+   *   the same UI area without a flash.
    */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
     try {
@@ -234,12 +237,18 @@ export class LiveUI implements RunnerUI {
       /* ignore */
     }
     try {
-      // For restart, do NOT flush a final frame (which can reprint the table).
-      // Clear immediately to ensure the next run reuses the same UI area without duplication.
       if (mode === 'restart') {
-        (this.sink as unknown as { clear?: () => void })?.clear?.();
+        try {
+          (
+            this.renderer as unknown as { showHeaderOnly?: () => void }
+          )?.showHeaderOnly?.();
+        } catch {
+          /* ignore */
+        }
+        // Persist the header (no clear), so the next session fills rows in place.
+        this.sink.stop();
       } else {
-        // cancel: persist final frame (log-update done via stop without clear)
+        // cancel: persist final frame (log-update done via stop)
         this.sink.stop();
       }
     } catch {
