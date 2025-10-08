@@ -238,15 +238,20 @@ export class LiveUI implements RunnerUI {
     }
     try {
       if (mode === 'restart') {
+        // Restart: keep the same renderer/sink alive and reuse the drawing area.
+        // Detach key handlers so next session can re-attach cleanly.
         try {
-          (
-            this.renderer as unknown as { showHeaderOnly?: () => void }
-          )?.showHeaderOnly?.();
+          this.control?.detach();
         } catch {
           /* ignore */
         }
-        // Persist the header (no clear), so the next session fills rows in place.
-        this.sink.stop();
+        this.control = null;
+        // Optionally render one more frame to reflect any pending status, but do not clear/stop.
+        try {
+          (this.renderer as unknown as { flush?: () => void })?.flush?.();
+        } catch {
+          /* ignore */
+        }
       } else {
         // cancel: persist final frame (log-update done via stop)
         this.sink.stop();
@@ -260,7 +265,6 @@ export class LiveUI implements RunnerUI {
       /* ignore */
     }
     this.control = null;
-    this.renderer = null;
   }
   installCancellation(triggerCancel: () => void, onRestart?: () => void): void {
     try {

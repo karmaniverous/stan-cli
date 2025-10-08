@@ -5,12 +5,12 @@ import { preflightDocsAndVersion } from '../preflight';
 import { renderRunPlan } from './plan';
 import { runSessionOnce } from './session';
 import type { ExecutionMode, RunBehavior } from './types';
+import { LiveUI, LoggerUI, type RunnerUI } from './ui';
 
 /**
  * High‑level runner for `stan run`.
  *
- * Responsibilities:
- * - Preflight docs/version (best‑effort).
+ * Responsibilities: * - Preflight docs/version (best‑effort).
  * - Ensure output/diff directories.
  * - Print the run plan.
  * - Execute selected scripts (in the chosen mode).
@@ -62,6 +62,11 @@ export const runSelected = async (
   // Resolve final selection list
   const selected = selection == null ? Object.keys(config.scripts) : selection;
 
+  // Create a single UI instance for the entire run; reuse across restarts.
+  const ui: RunnerUI = liveEnabled
+    ? new LiveUI({ boring: process.env.STAN_BORING === '1' })
+    : new LoggerUI();
+
   // Outer loop: allow live-mode restart (press 'r') to repeat a session once per trigger.
   let printedPlan = false;
   for (;;) {
@@ -74,6 +79,7 @@ export const runSelected = async (
       liveEnabled,
       planBody,
       printPlan: !printedPlan && behavior.plan !== false,
+      ui,
     });
     printedPlan = true;
 
@@ -82,7 +88,17 @@ export const runSelected = async (
       continue;
     }
     if (cancelled) {
+      // Cancelled (non-restart): session already stopped UI and printed spacing.
       return created;
+    }
+    // Normal completion: stop UI once for the whole run, then print trailing spacing.
+    try {
+      ui.stop();
+    } catch {
+      /* ignore */
+    }
+    if (liveEnabled) {
+      console.log('');
     }
     return created;
   }

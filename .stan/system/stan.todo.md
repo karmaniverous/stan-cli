@@ -2,8 +2,8 @@
 
 When updated: 2025-10-08 (UTC)
 
-This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
----
+## This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
+
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
@@ -72,6 +72,12 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart behavior — fix
+  - Reuse a single RunnerUI/LiveUI/ProgressRenderer across restart cycles by creating it in runSelected() and passing it into each session.
+  - On restart, do not stop/clear the live sink or renderer; detach key handlers only so the next session can reattach cleanly, and reuse the same drawing area with no duplicate table.
+  - Removed the previous “header-only” restart flush that omitted the instructions; the hint now remains present continuously while the run is active.
+  - UI is stopped once per overall run (after the final session completes); cancel maintains legacy stop/spacing.
+
 - Live restart test (expected failing) to pin bugs
   - Added a test-only UI instance tag (UI#N) gated by STAN_TEST_UI_TAG=1 and a stricter live restart test that asserts:
     - a single, persistent UI across restarts (exactly one UI tag across the entire run), and
@@ -80,11 +86,11 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 - Live restart test hardening (bracketed header-only check)
   - Record the update index before emitting 'r' and assert at least one header-only frame appears strictly between that marker and the first post-restart row frame for this test.
-  - Keeps the bounded wait for the first [RUN] frame and the row-scoped assertions to avoid cross-suite noise.  - Retains Windows-safe teardown via rmDirWithRetries to mitigate EBUSY during temp directory removal.
+  - Keeps the bounded wait for the first [RUN] frame and the row-scoped assertions to avoid cross-suite noise. - Retains Windows-safe teardown via rmDirWithRetries to mitigate EBUSY during temp directory removal.
 
 - Live restart test hardening
   - Targeted assertions to this suite’s script key to avoid cross‑suite log‑update noise (tests can run concurrently).
-  - Keep bounded wait for the first “[RUN]” frame; ensures hint visibility is asserted while running.  - Retained Windows‑safe teardown via rmDirWithRetries to avoid intermittent EBUSY.
+  - Keep bounded wait for the first “[RUN]” frame; ensures hint visibility is asserted while running. - Retained Windows‑safe teardown via rmDirWithRetries to avoid intermittent EBUSY.
 
 - Live restart test hardening
   - Targeted assertions to this suite’s script key to avoid cross‑suite log‑update noise (tests can run concurrently).
