@@ -26,24 +26,16 @@ export class LiveSink {
   /** Persist the final frame (without clearing). */
   stop(): void {
     try {
-      // First, flush the full table (rows + summary + hint) so the
-      // terminal shows the final state of all items.
       this.renderer?.flush();
-      // Then, render a concise header-only frame so the last “update”
-      // entry always contains exactly one header line. This satisfies
-      // restart behavior tests that assert the final frame’s header
-      // count deterministically, without relying on row presence.
-      (
-        this.renderer as unknown as { showHeaderOnly?: () => void }
-      )?.showHeaderOnly?.();
+      // Final frame remains the full table (header + rows + summary + hint).
+      // Header-only rendering is reserved for the restart bridge only.
       this.renderer?.stop();
     } catch {
       /* ignore */
     }
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
-  }
-  /** Clear immediately (used on restart). */
+  } /** Clear immediately (used on restart). */
   clear(): void {
     try {
       (this.renderer as unknown as { clear?: () => void })?.clear?.();

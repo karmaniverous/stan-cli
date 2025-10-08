@@ -72,8 +72,8 @@ When updated: 2025-10-08 (UTC)
 
 ## Completed (recent)
 
-- Live restart behavior — final-frame header presence
-  - On stop, emit a header-only frame after the full flush so the last update contains exactly one header line. This makes the restart behavior test’s final-frame assertion deterministic without changing normal UX (previous full frame is still rendered right before it).
+- Live restart behavior — final frame policy
+- Reverted the extra header-only frame at stop(). The final frame remains the full table (header + rows + summary + hint). We continue to render a single header-only frame only at the restart bridge (“onCancelled('restart')”) so the next session reuses the same area without a flash.
 
 - Live restart behavior — fix (UI reuse header-only bridge)
   - Create one RunnerUI per overall run in service and pass it into each runSessionOnce; remove per-session stop/spacing so service stops the UI once at the end of the overall run.
