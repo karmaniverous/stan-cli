@@ -74,6 +74,17 @@ This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) tr
 
 ## Completed (recent)
 
+- Live restart tests
+  - Added a live-mode restart behavior test that runs a session, triggers restart via "r", and asserts:
+    - Instructions ("Press q to cancel, r to restart") remain visible during running frames.
+    - No global clear is performed between sessions (log-update.clear not called).
+    - Exactly one header-only flush is rendered at the restart boundary, avoiding redundant header-only frames.
+  - The test uses a log-update mock to capture update/done/clear calls and verifies frame contents (header/rows/hint).
+  - This provides coverage for the restart UX and guards against regressions while we iterate on renderer reuse.
+
+- Live restart visual polish
+  - On restart, the live table now rolls back to the header row (not a blank screen) before the next session begins, avoiding the transient “everything disappeared” flash that can look like a failure. The header is rendered and persisted; the next run immediately reuses the same UI area and fills rows in-place.
+
 - Live restart visual polish
   - On restart, the live table now rolls back to the header row (not a blank screen) before the next session begins, avoiding the transient “everything disappeared” flash that can look like a failure. The header is rendered and persisted; the next run immediately reuses the same UI area and fills rows in-place.
 
