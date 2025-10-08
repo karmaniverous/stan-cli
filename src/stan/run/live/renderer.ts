@@ -282,12 +282,10 @@ export class ProgressRenderer {
       'r',
     )} ${dim('to restart')}`;
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
-    const padded = raw
-      .split('\n')
-      .map((l) => `  ${l}`)
-      .join('\n');
+    // Add a leading blank line and remove global left indent
+    const body = `\n${raw}`;
     try {
-      logUpdate(padded);
+      logUpdate(body);
     } catch {
       // best-effort
     }

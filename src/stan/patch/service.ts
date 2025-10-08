@@ -19,7 +19,6 @@ import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
 import { error as colorError, ok as colorOk } from '@/stan/util/color';
-
 type RunPatchOptions = {
   file?: string | boolean;
   defaultFile?: string;
@@ -114,6 +113,18 @@ export const runPatch = async (
 
   console.log(`stan: patch source: ${source}`);
 
+  // Extract the first target path from the diff headers for clickable IDE links.
+  const parseFirstTargetPath = (diffText: string): string | null => {
+    // Prefer +++ b/<path>
+    const mPlus = diffText.match(/^\+\+\+\s+b\/([^\r\n]+)$/m);
+    if (mPlus && mPlus[1]) return mPlus[1].trim().replace(/\\/g, '/');
+    // Fallback: diff --git a/<a> b/<b>
+    const mGit = diffText.match(/^diff --git a\/([^\s]+)\s+b\/([^\s]+)$/m);
+    if (mGit && mGit[2]) return mGit[2].trim().replace(/\\/g, '/');
+    return null;
+  };
+  const firstTarget = parseFirstTargetPath(cleaned);
+
   /** Compose a compact diagnostics envelope from applyPatchPipeline outcome. */
   const composeDiagnostics = (out: {
     result?: {
@@ -171,9 +182,11 @@ export const runPatch = async (
       check,
     });
     if (out.ok) {
-      console.log(
-        `stan: ${statusOk(check ? 'patch check passed' : 'patch applied')}`,
-      );
+      const msg = check ? 'patch check passed' : 'patch applied';
+      const tail = firstTarget ? ` -> ${firstTarget}` : '';
+      console.log(`stan: ${statusOk(msg)}${tail}`);
+      // Visual separation from next prompt
+      console.log('');
       return;
     }
     // Failure: compose diagnostics, persist to .debug, try to copy to clipboard.
@@ -186,10 +199,11 @@ export const runPatch = async (
       },
     );
     // Persist under <stanPath>/patch/.debug/feedback.txt (best‑effort)
+    const dbgDir = path.join(cwd, stanPath, 'patch', '.debug');
+    const dbgPath = path.join(dbgDir, 'feedback.txt');
     try {
-      const dbgDir = path.join(cwd, stanPath, 'patch', '.debug');
       await ensureDir(dbgDir);
-      await writeFile(path.join(dbgDir, 'feedback.txt'), diag, 'utf8');
+      await writeFile(dbgPath, diag, 'utf8');
     } catch {
       /* ignore persistence errors */
     }
@@ -201,9 +215,22 @@ export const runPatch = async (
     } catch {
       /* ignore clipboard errors */
     }
-    console.log(
-      `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
-    );
+    const failMsg = check ? 'patch check failed' : 'patch failed';
+    console.log(`stan: ${statusFail(failMsg)}`);
+    // Brief guidance so users know what to do next
+    if (copied) {
+      console.log(
+        'stan: Patch diagnostics copied to clipboard. Paste into chat for full listing.',
+      );
+    } else {
+      console.log(
+        `stan: Patch diagnostics written to ${path
+          .relative(cwd, dbgPath)
+          .replace(/\\/g, '/')} — copy and paste into chat for full listing.`,
+      );
+    }
+    // Visual separation from next prompt
+    console.log('');
     if (!copied) {
       // Provide the envelope on stdout if clipboard unsupported
       console.log(diag);
@@ -212,5 +239,6 @@ export const runPatch = async (
     console.log(
       `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
     );
+    console.log('');
   }
 };
