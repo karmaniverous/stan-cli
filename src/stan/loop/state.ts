@@ -39,7 +39,7 @@ export const writeLoopState = async (
   await writeFile(p, JSON.stringify({ last, ts }, null, 2), 'utf8');
 };
 
-/** True when moving backward through the loop (order: run->snap->patch->run) */
+/** True when moving backward through the loop (order: run-\>snap-\>patch-\>run) */
 export const isBackward = (prev: LoopCmd, current: LoopCmd): boolean => {
   const a = ORDER[prev];
   const b = ORDER[current];

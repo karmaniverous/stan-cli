@@ -246,9 +246,12 @@ export class LiveUI implements RunnerUI {
           /* ignore */
         }
         this.control = null;
-        // Optionally render one more frame to reflect any pending status, but do not clear/stop.
+        // Render a single header-only frame to bridge the restart boundary,
+        // without clearing/stopping. The next session will reuse the same area.
         try {
-          (this.renderer as unknown as { flush?: () => void })?.flush?.();
+          (
+            this.renderer as unknown as { showHeaderOnly?: () => void }
+          )?.showHeaderOnly?.();
         } catch {
           /* ignore */
         }

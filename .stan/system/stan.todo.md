@@ -72,6 +72,15 @@ When updated: 2025-10-08 (UTC)
 
 ## Completed (recent)
 
+- Live restart behavior — fix (UI reuse header-only bridge)
+  - Create one RunnerUI per overall run in service and pass it into each runSessionOnce; remove per-session stop/spacing so service stops the UI once at the end of the overall run.
+  - On restart, detach key handlers only and keep the sink/renderer alive; render a single header-only frame to bridge the restart boundary (no global clear, no duplicate table). The instructions line remains visible during running frames.
+  - TypeScript wiring: runSessionOnce now accepts `ui` in its args; fixes TS2353 where service passed an unknown property.
+  - Result: the live.restart.behavior test passes (header-only frame appears strictly between the restart signal and the first post-restart row; final frame shows exactly one header).
+
+- TSDoc cleanup
+  - Escaped “>” in src/stan/loop/state.ts comments to satisfy tsdoc/syntax warnings (no behavior change).
+
 - Live restart behavior — fix
   - Reuse a single RunnerUI/LiveUI/ProgressRenderer across restart cycles by creating it in runSelected() and passing it into each session.
   - On restart, do not stop/clear the live sink or renderer; detach key handlers only so the next session can reattach cleanly, and reuse the same drawing area with no duplicate table.

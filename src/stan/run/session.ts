@@ -4,7 +4,8 @@
  * - Windows EBUSY hardening: add a slightly longer final settle after cancellation.
  * - Wires live/no-live UI, cancellation keys (q / Ctrl+C), and restart (r in live).
  * - Schedules scripts (concurrent|sequential) and optionally runs the archive phase.
- * - Preserves all existing logging semantics: *   - Plan printing is driven by the caller via printPlan + planBody.
+ * - Preserves all existing logging semantics:
+ *   - Plan printing is driven by the caller via printPlan + planBody.
  *   - Live mode renders the progress table; legacy "stan: start/done" archive
  *     lines remain suppressed.
  *   - No-live mode prints concise status lines.
@@ -20,7 +21,7 @@ import { runScripts } from './exec';
 import { installExitHook } from './exit';
 import { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, RunBehavior } from './types';
-import { LiveUI, LoggerUI, type RunnerUI } from './ui';
+import { type RunnerUI } from './ui';
 
 const shouldWriteOrder =
   process.env.NODE_ENV === 'test' || process.env.STAN_WRITE_ORDER === '1';
@@ -34,6 +35,7 @@ export const runSessionOnce = async (args: {
   liveEnabled: boolean;
   planBody?: string;
   printPlan?: boolean;
+  ui: RunnerUI;
 }): Promise<{
   created: string[];
   cancelled: boolean;
@@ -48,6 +50,7 @@ export const runSessionOnce = async (args: {
     liveEnabled,
     planBody,
     printPlan,
+    ui,
   } = args;
 
   const outputAbs = resolve(cwd, config.stanPath, 'output');
@@ -55,10 +58,6 @@ export const runSessionOnce = async (args: {
   const dirs = { outputAbs, outputRel };
   const outAbs = dirs.outputAbs;
   const outRel = dirs.outputRel;
-
-  const ui: RunnerUI = liveEnabled
-    ? new LiveUI({ boring: process.env.STAN_BORING === '1' })
-    : new LoggerUI();
 
   // Optional order file (tests)
   let orderFile: string | undefined;
@@ -77,7 +76,6 @@ export const runSessionOnce = async (args: {
   }
 
   ui.start();
-
   // Build run list and pre-register UI rows so table shows full schedule up front
   const toRun = (selection ?? []).filter((k) =>
     Object.prototype.hasOwnProperty.call(config.scripts, k),
@@ -353,10 +351,6 @@ export const runSessionOnce = async (args: {
     created.push(archivePath, diffPath);
   }
 
-  ui.stop();
-  if (liveEnabled) {
-    console.log('');
-  }
   // Detach signals & exit hook before returning to caller (or restart loop)
   detachSignals();
   return { created, cancelled: false, restartRequested };
