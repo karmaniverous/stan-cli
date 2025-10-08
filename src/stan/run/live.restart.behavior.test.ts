@@ -120,7 +120,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       archive: false,
     });
 
-    // Wait until we observe at least one [RUN] frame.
+    // Wait until we observe at least one [RUN] frame for this test's row.
     const updates = () =>
       calls.filter(
         (c): c is { type: 'update'; body: string } => c.type === 'update',
@@ -132,13 +132,11 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       25,
     );
 
-    // While running, latest update frames containing [RUN] must also include the hint.
+    // While running, latest update frames for this row containing [RUN] must also include the hint.
     const framesWithRun = updates().filter(
       (u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body),
     );
-    // There should be at least one RUN frame by now (guard above waited for it).
     expect(framesWithRun.length).toBeGreaterThan(0);
-    // The hint should be present in RUN frames ("Press q to cancel, r to restart")
     expect(
       framesWithRun.every((f) =>
         /Press q to cancel,\s*r to restart/i.test(f.body),
@@ -161,8 +159,8 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // Detect header rows and header-only frames.
     // Header marker (Type/Item/Status/Time/Output), BORING & flush-left
     const headerRe = /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/m;
-    // Any row line starts with either "script" or "archive"
-    const anyRowRe = rowRe; // restrict to this suite's script row
+    // Any row line for this test's script
+    const anyRowRe = rowRe;
 
     const ups = updates();
     const headerOnlyUpdates = ups.filter(
@@ -172,7 +170,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // Exactly one header-only frame (from showHeaderOnly on restart)
     expect(headerOnlyUpdates.length).toBe(1);
 
-    // Sanity: we should also have at least one frame with script/archive rows and the hint.
+    // Sanity: we should also have at least one frame with this script row and the hint.
     const framesWithRows = ups.filter(
       (u) => headerRe.test(u.body) && rowRe.test(u.body),
     );
