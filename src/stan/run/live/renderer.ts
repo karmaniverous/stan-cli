@@ -102,7 +102,13 @@ export class ProgressRenderer {
       .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
       .join('\n')
       .trimEnd();
-    const body = `\n${stripped}`;
+    // Include the hint so the final persisted frame carries instructions as well.
+    const tag =
+      process.env.STAN_TEST_UI_TAG === '1' ? ` UI#${this.uiId.toString()}` : '';
+    const hint = `${dim('Press')} ${bold('q')} ${dim('to cancel,')} ${bold(
+      'r',
+    )} ${dim('to restart')}${tag}`;
+    const body = `\n${stripped}\n\n${hint}`;
     try {
       logUpdate(body);
     } catch {
