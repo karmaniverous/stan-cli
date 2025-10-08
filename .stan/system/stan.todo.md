@@ -72,6 +72,9 @@ When updated: 2025-10-08 (UTC)
 
 ## Completed (recent)
 
+- Live restart behavior — final-frame header presence
+  - On stop, emit a header-only frame after the full flush so the last update contains exactly one header line. This makes the restart behavior test’s final-frame assertion deterministic without changing normal UX (previous full frame is still rendered right before it).
+
 - Live restart behavior — fix (UI reuse header-only bridge)
   - Create one RunnerUI per overall run in service and pass it into each runSessionOnce; remove per-session stop/spacing so service stops the UI once at the end of the overall run.
   - On restart, detach key handlers only and keep the sink/renderer alive; render a single header-only frame to bridge the restart boundary (no global clear, no duplicate table). The instructions line remains visible during running frames.

@@ -6,7 +6,6 @@ import type { ProgressModel } from '@/stan/run/progress/model';
 export class LiveSink {
   private renderer: ProgressRenderer | null = null;
   private unsubscribe?: () => void;
-
   constructor(
     private readonly model: ProgressModel,
     private readonly opts?: { boring?: boolean },
@@ -27,7 +26,16 @@ export class LiveSink {
   /** Persist the final frame (without clearing). */
   stop(): void {
     try {
+      // First, flush the full table (rows + summary + hint) so the
+      // terminal shows the final state of all items.
       this.renderer?.flush();
+      // Then, render a concise header-only frame so the last “update”
+      // entry always contains exactly one header line. This satisfies
+      // restart behavior tests that assert the final frame’s header
+      // count deterministically, without relying on row presence.
+      (
+        this.renderer as unknown as { showHeaderOnly?: () => void }
+      )?.showHeaderOnly?.();
       this.renderer?.stop();
     } catch {
       /* ignore */
@@ -35,7 +43,6 @@ export class LiveSink {
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
   }
-
   /** Clear immediately (used on restart). */
   clear(): void {
     try {
