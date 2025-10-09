@@ -155,15 +155,26 @@ export class ProgressRenderer {
     }
   }
 
-  /** Compose + write a final frame without the hint (leading/trailing blanks preserved). */
+  /**
+   * Compose + write a final frame without the hint (leading/trailing blanks preserved).
+   * Pad one extra newline so the line count matches the prior frame when the hint
+   * is removed. This prevents a trailing CSI “clear” from becoming the final
+   * character and guarantees the last byte is “\n” (required by tests),
+   * without introducing the “walking down” effect between ticks.
+   */
   private renderFinalNoHint(): void {
-    const body = composeFrameBody({
+    let body = composeFrameBody({
       rows: Array.from(this.rows.values()),
       startedAt: this.startedAt,
       boring: this.opts.boring,
       uiId: this.uiId,
       includeHint: false,
     });
+    // Ensure the final persisted frame ends with a newline even when the hint
+    // line is removed (rows shrink). This keeps the last byte as "\n" while
+    // avoiding per‑tick “walking”.
+    if (!body.endsWith('\n')) body += '\n';
+    body += '\n';
     this.writer?.write(body);
   }
 
