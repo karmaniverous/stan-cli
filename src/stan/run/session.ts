@@ -1,4 +1,4 @@
-/* src/stan/run/session.ts
+// src/stan/run/session.ts
 /**
  * One-shot run session (single attempt).
  * - Windows EBUSY hardening: add a slightly longer final settle after cancellation.
@@ -77,8 +77,22 @@ export const runSessionOnce = async (args: {
   }
 
   ui.start();
+  // Prepare UI for a new session: drop any previous rows (e.g., cancelled from restart).
+  try {
+    (
+      ui as unknown as { prepareForNewSession?: () => void }
+    )?.prepareForNewSession?.();
+  } catch {
+    /* ignore */
+  }
   // Build run list and pre-register UI rows so the table shows full schedule up front
   const toRun = queueUiRows(ui, selection, config, Boolean(behavior.archive));
+  // Flush immediately so the first frame shows new waiting/run rows without delay.
+  try {
+    (ui as unknown as { flushNow?: () => void })?.flushNow?.();
+  } catch {
+    /* ignore */
+  }
 
   // Cancellation/restart wiring
   const supervisor = new ProcessSupervisor({

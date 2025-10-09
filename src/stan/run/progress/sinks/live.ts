@@ -75,6 +75,15 @@ export class LiveSink {
     this.unsubscribe = undefined;
   }
 
+  /** Force an immediate render of the current table state (no stop/clear). */
+  flushNow(): void {
+    try {
+      this.renderer?.flush();
+    } catch {
+      /* ignore */
+    }
+  }
+
   /** Clear immediately (used on restart). */
   clear(): void {
     try {

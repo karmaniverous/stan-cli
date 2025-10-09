@@ -1,4 +1,3 @@
-// src/stan/run/ui.ts
 /**
  * Runner UI ports and adapters:
  * - LoggerUI: legacy console logs (no-live).
@@ -224,41 +223,39 @@ export class LiveUI implements RunnerUI {
   /**
    * Tear down live rendering on cancellation.
    * - mode === 'cancel' (default): persist a header-only bridge (with hint).
-   * - mode === 'restart': drop prior rows, render header-only bridge, keep area for next session.
+   * - mode === 'restart': paint CANCELLED immediately and flush; keep table
+   *   visible while processes terminate; rows are cleared at the next session start.
    */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
     liveTrace.ui.onCancelled(mode);
     try {
       if (mode === 'restart') {
         liveTrace.session.info(
-          'restart: detach keys + render header-only bridge',
+          'restart: paint CANCELLED immediately, then detach keys; keep table until next session',
         );
         // Restart:
-        // - Do NOT paint "cancelled" rows.
+        // - Paint current and waiting scripts as CANCELLED immediately.
+        // - Flush to show the cancelled state + hint while processes terminate.
         // - Detach key handlers so next session can re-attach cleanly.
-        // - Reset renderer rows so the next full table reflects the new session only.
+        try {
+          (
+            this.sink as unknown as { cancelPending?: () => void }
+          )?.cancelPending?.();
+        } catch {
+          /* ignore */
+        }
+        try {
+          (this.sink as unknown as { flushNow?: () => void })?.flushNow?.();
+        } catch {
+          /* ignore */
+        }
         try {
           this.control?.detach();
         } catch {
           /* ignore */
         }
         this.control = null;
-        try {
-          (
-            this.sink as unknown as { resetForRestart?: () => void }
-          )?.resetForRestart?.();
-        } catch {
-          /* ignore */
-        }
-        // Render a single header-only frame to bridge the restart boundary,
-        // without clearing/stopping. The next session will reuse the same area.
-        try {
-          (
-            this.renderer as unknown as { showHeaderOnly?: () => void }
-          )?.showHeaderOnly?.();
-        } catch {
-          /* ignore */
-        }
+        // Rows remain until next session start; no header-only gap here.
       } else {
         // cancel: persist a header-only bridge (keep area + hint)
         liveTrace.ui.stop();
@@ -267,13 +264,28 @@ export class LiveUI implements RunnerUI {
     } catch {
       /* ignore */
     }
+  }
+
+  /** Called just before queueing rows for a new session to remove cancelled carryover. */
+  prepareForNewSession(): void {
     try {
-      this.control?.detach();
+      (
+        this.sink as unknown as { resetForRestart?: () => void }
+      )?.resetForRestart?.();
     } catch {
       /* ignore */
     }
-    this.control = null;
   }
+
+  /** Optional passthrough for an immediate render (used to avoid UI gaps). */
+  flushNow(): void {
+    try {
+      (this.sink as unknown as { flushNow?: () => void })?.flushNow?.();
+    } catch {
+      /* ignore */
+    }
+  }
+
   installCancellation(triggerCancel: () => void, onRestart?: () => void): void {
     try {
       this.control = new RunnerControl({ onCancel: triggerCancel, onRestart });

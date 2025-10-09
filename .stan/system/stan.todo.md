@@ -72,18 +72,21 @@ When updated: 2025-10-09 (UTC)
 
 ## Completed (recent)
 
-- Live restart and final-frame policy
-  - Restart bridge: do not paint “cancelled” rows; instead clear renderer rows and render a header-only bridge with the hint. The first full table after restart now reflects only the new session’s rows (waiting/run), with the hint continuously visible.
-  - Final completion: persist the full table (rows + summary + hint). Header-only persistence is reserved for cancellation paths and restart bridges.
-  - Changes:
-    - ProgressRenderer.resetRows() to drop prior rows without clearing the screen.
-    - LiveSink.resetForRestart() to invoke renderer reset at the restart boundary.
-    - LiveSink.stop(opts) now supports headerOnly=true for cancellation; default persists the full table.
-    - LiveUI.onCancelled('restart') stops painting cancelled rows and resets before the header-only bridge; on cancel, it persists a header-only bridge; on normal completion, it persists the final full table.
+- Restart UX follow-up:
+  - On restart (‘r’), immediately paint all in‑flight and waiting scripts as CANCELLED and flush, keeping the table and hint visible while processes terminate (no empty table).
+  - Just before the next session queues rows, clear prior rows and flush after queue so the first frame shows the new run/waiting rows nearly instantly.
+  - Implemented via LiveUI.onCancelled('restart') → cancelPending()+flush; LiveUI.prepareForNewSession()+flush after queue; no header-only gap on restart.- Live restart and final-frame policy
+- Restart bridge: do not paint “cancelled” rows; instead clear renderer rows and render a header-only bridge with the hint. The first full table after restart now reflects only the new session’s rows (waiting/run), with the hint continuously visible.
+- Final completion: persist the full table (rows + summary + hint). Header-only persistence is reserved for cancellation paths and restart bridges.
+- Changes:
+  - ProgressRenderer.resetRows() to drop prior rows without clearing the screen.
+  - LiveSink.resetForRestart() to invoke renderer reset at the restart boundary.
+  - LiveSink.stop(opts) now supports headerOnly=true for cancellation; default persists the full table.
+  - LiveUI.onCancelled('restart') stops painting cancelled rows and resets before the header-only bridge; on cancel, it persists a header-only bridge; on normal completion, it persists the final full table.
 
 - Exit/cancel idempotency
   - Added an internal “stopped” guard to LiveUI.stop() and LiveSink.stop() so late/double calls no‑op.
-  - This prevents duplicate final‑frame flushes when the process exit hook fires after a manual cancel.  - Verified that repeated stop invocations do not emit extra frames and that exit‑hook cleanup is effectively a no‑op after detach.
+  - This prevents duplicate final‑frame flushes when the process exit hook fires after a manual cancel. - Verified that repeated stop invocations do not emit extra frames and that exit‑hook cleanup is effectively a no‑op after detach.
 
 - UI/renderer/session decomposition (instrumentation seam and structure)
   - Split the monolithic UI into:
