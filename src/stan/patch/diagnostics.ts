@@ -1,5 +1,6 @@
 // src/stan/patch/diagnostics.ts
 import type { TargetInfo } from '@/stan/patch/diff';
+import { parseFirstTarget } from '@/stan/patch/diff';
 
 const listFiles = (files: TargetInfo[]): string[] => {
   const kind = (k: TargetInfo['kind']): string =>
@@ -89,6 +90,13 @@ export const composeDiffFailureEnvelope = (
 ): string => {
   const lines: string[] = [];
   lines.push('START PATCH DIAGNOSTICS');
+  // Declaratively identify the target file when detectable from the patch head.
+  try {
+    const target = parseFirstTarget(cleaned);
+    if (target) lines.push(`file: ${target}`);
+  } catch {
+    /* best-effort */
+  }
   const caps = out?.result?.captures ?? [];
   for (const c of caps) {
     const first =

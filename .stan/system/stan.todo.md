@@ -18,6 +18,15 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- Patch diagnostics & editor behavior
+  - On patch failures, copy the diagnostics envelope to the system clipboard (do not print the full envelope to the console) and print a concise instruction to paste it into chat for a full, post‑patch listing.
+  - Include a declarative file identification line at the top of the diagnostics envelope:
+    - `file: <repo‑relative path>`
+  - Open the target file in the configured editor for both successful patches and failures (non‑check).
+
+- Live table stability & config
+  - Removed invalid `stringLength` option from the `table` config to resolve runtime “Invalid config” and TypeScript/lint errors; kept flush‑left alignment and no‑border rendering.
+
 - Patch service decomposition & policy enforcement
   - Decomposed patch orchestrator into small helpers: src/stan/patch/{input.ts,diff.ts,diagnostics.ts,editor.ts,status.ts}.
   - FO vs Diff classification: • File Ops patches are FO-only; presence of diff content is rejected. • Diff patches are single-file only; multi-file diffs are rejected with a clear envelope.

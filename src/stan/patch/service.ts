@@ -20,6 +20,7 @@ import {
   loadConfigSync,
   parseFileOpsBlock,
 } from '@karmaniverous/stan-core';
+import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
 import {
@@ -93,7 +94,14 @@ export const runPatch = async (
     const diag = composeInvalidFileOpsWithDiffEnvelope(opsPlan.ops, files);
     console.log(`stan: ${statusFail('patch failed')}`);
     console.log('');
-    console.log(diag);
+    try {
+      await clipboardy.write(diag);
+    } catch {
+      /* ignore */
+    }
+    console.log(
+      'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
+    );
     return;
   }
 
@@ -126,7 +134,14 @@ export const runPatch = async (
         `stan: ${statusFail(check ? 'file ops check failed' : 'file ops failed')}`,
       );
       console.log('');
-      console.log(diag);
+      try {
+        await clipboardy.write(diag);
+      } catch {
+        /* ignore */
+      }
+      console.log(
+        'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
+      );
       return;
     } catch {
       console.log(
@@ -145,7 +160,12 @@ export const runPatch = async (
       const diag = composeMultiFileInvalidEnvelope(single.files);
       console.log(`stan: ${statusFail('patch failed (multi-file diff)')}`);
       console.log('');
-      console.log(diag);
+      try {
+        await clipboardy.write(diag);
+      } catch {}
+      console.log(
+        'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
+      );
       return;
     }
     const firstTarget = parseFirstTarget(cleaned);
@@ -184,13 +204,48 @@ export const runPatch = async (
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
       );
       console.log('');
-      console.log(diag);
+      try {
+        await clipboardy.write(diag);
+      } catch {
+        /* ignore */
+      }
+      // Open the target file on failure as well (best-effort; non-check only).
+      if (!check) {
+        const cfg = (() => {
+          try {
+            const p = findConfigPathSync(cwd);
+            return p ? loadConfigSync(cwd) : null;
+          } catch {
+            return null;
+          }
+        })();
+        maybeOpenFiles(cwd, [single.target.path], cfg?.patchOpenCommand);
+      }
+      console.log(
+        'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
+      );
       return;
     } catch {
       console.log(
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
       );
       console.log('');
+      // Even on unexpected errors, attempt to open the target (non-check).
+      if (!check) {
+        try {
+          const cfg = (() => {
+            try {
+              const p = findConfigPathSync(cwd);
+              return p ? loadConfigSync(cwd) : null;
+            } catch {
+              return null;
+            }
+          })();
+          maybeOpenFiles(cwd, [single.target.path], cfg?.patchOpenCommand);
+        } catch {
+          /* ignore */
+        }
+      }
       return;
     }
   }

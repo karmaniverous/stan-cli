@@ -28,7 +28,6 @@ export const headerCells = (): string[] =>
 
 export const bodyTable = (rows: string[][]): string =>
   table(rows, {
-    stringLength: (s) => stripAnsi(s).length,
     border: {
       topBody: ``,
       topJoin: ``,
