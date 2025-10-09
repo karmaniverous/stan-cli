@@ -11,6 +11,9 @@ import { stripAnsi } from '@/stan/run/live/format';
 // Spy frames written by the live writer
 const frames = (spy: { mock: { calls: unknown[][] } }) =>
   spy.mock.calls.map((c) => String(c[0]));
+// The writer may clear surplus lines at the very end with CR + CSI K; strip those
+// trailing clears before asserting final newline termination.
+const stripTrailingClears = (s: string) => s.replace(/(?:\r\\x1B\[K)+$/g, '');
 
 // Bounded waiter to detect a condition within a timeout.
 const waitUntil = async (
@@ -103,8 +106,9 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
         .find((s) => /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/.test(s)) ??
       '';
 
-    // Final persisted frame ends with newline.
-    expect(last.endsWith('\n')).toBe(true);
+    // Final persisted frame ends with newline (after stripping trailing clear sequences).
+    const normalized = stripTrailingClears(last);
+    expect(normalized.endsWith('\n')).toBe(true);
   });
 
   it('styled (ANSI): final frame ends with \\n; hint visible (ANSI stripped)', async () => {
@@ -134,8 +138,9 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
         .reverse()
         .find((s) => /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/.test(s)) ??
       '';
-    // Final persisted frame ends with newline.
-    expect(last.endsWith('\n')).toBe(true);
+    // Final persisted frame ends with newline (after stripping trailing clear sequences).
+    const normalized = stripTrailingClears(last);
+    expect(normalized.endsWith('\n')).toBe(true);
     // Hint is hidden after completion; ensure it's not present in final frame.
     const plain = stripAnsi(last);
     expect(/Press q to cancel,\s*r to restart/i.test(plain)).toBe(false);

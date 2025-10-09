@@ -18,6 +18,14 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- Live restart/footer tests — relax brittle assertions
+  - Footer trailing newline: account for the writer’s trailing “CR + CSI K”
+    clears by stripping those sequences before asserting the final newline.
+  - Restart CANCELLED visibility: accept either an explicit CANCELLED repaint
+    between restart and the next session or an immediate new-session start on
+    fast terminals; still enforce that no [FAIL] appears before the first
+    post-restart start frame.
+
 - Patch UX & service refactor
   - Patch logs: keep all “stan: …” lines contiguous and print exactly one trailing blank line after the final log (before the shell prompt).
   - Removed mid‑sequence blank lines prior to the diagnostics line; diagnostics copy notice now appears immediately after the status.
