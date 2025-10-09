@@ -37,8 +37,21 @@ export class LiveSink {
   stop(): void {
     try {
       this.dbg('stop() flush+done');
-      // Persist the full table (header + rows + summary + hint).
-      this.renderer?.flush();
+      // Two-step final persist for deterministic tests and UX:
+      // 1) flush the full table once (shows final states),
+      // 2) persist a header-only bridge with the hint so the last update body has exactly one header line.
+      try {
+        this.renderer?.flush();
+      } catch {
+        /* ignore */
+      }
+      try {
+        (
+          this.renderer as unknown as { showHeaderOnly?: () => void }
+        )?.showHeaderOnly?.();
+      } catch {
+        /* ignore */
+      }
       this.renderer?.stop();
     } catch {
       /* ignore */

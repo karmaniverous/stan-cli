@@ -4,50 +4,18 @@
 let __UI_COUNTER = 1;
 
 import logUpdate from 'log-update';
-import { table } from 'table';
 
 import { liveTrace } from '@/stan/run/live/trace';
 import { renderSummary } from '@/stan/run/summary';
-import { bold, dim } from '@/stan/util/color';
 
 import { label } from '../labels';
-
-export type ScriptState =
-  | { kind: 'waiting' }
-  | { kind: 'running'; startedAt: number; lastOutputAt?: number }
-  | { kind: 'warn'; durationMs: number; outputPath?: string }
-  | {
-      kind: 'quiet';
-      startedAt: number;
-      lastOutputAt?: number;
-      quietFor: number;
-    }
-  | {
-      kind: 'stalled';
-      startedAt: number;
-      lastOutputAt: number;
-      stalledFor: number;
-    }
-  | { kind: 'done'; durationMs: number; outputPath?: string }
-  | { kind: 'error'; durationMs: number; outputPath?: string }
-  | { kind: 'timedout'; durationMs: number; outputPath?: string }
-  | { kind: 'cancelled'; durationMs?: number }
-  | { kind: 'killed'; durationMs?: number };
+import { bodyTable, fmtMs, headerCells, hintLine, stripAnsi } from './format';
+import type { RowMeta, ScriptState } from './types';
 
 type InternalState = ScriptState & { outputPath?: string };
-
-type RowMeta = { type: 'script' | 'archive'; item: string };
 type Row = RowMeta & { state: InternalState };
 
 const now = (): number => Date.now();
-const pad2 = (n: number): string => n.toString().padStart(2, '0');
-const fmtMs = (ms: number): string => {
-  if (ms < 0) ms = 0;
-  const s = Math.floor(ms / 1000);
-  const mm = Math.floor(s / 60);
-  const ss = s % 60;
-  return `${pad2(mm)}:${pad2(ss)}`;
-};
 
 export class ProgressRenderer {
   private readonly rows = new Map<string, Row>();
@@ -80,30 +48,9 @@ export class ProgressRenderer {
   public showHeaderOnly(): void {
     liveTrace.renderer.headerOnly({});
     this.frameNo += 1;
-    const header = ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) =>
-      bold(h),
-    );
-    const bodyTable = table([header], {
-      border: {
-        topBody: ``,
-        topJoin: ``,
-        topLeft: ``,
-        topRight: ``,
-        bottomBody: ``,
-        bottomJoin: ``,
-        bottomLeft: ``,
-        bottomRight: ``,
-        bodyLeft: ``,
-        bodyRight: ``,
-        bodyJoin: ``,
-        joinBody: ``,
-        joinLeft: ``,
-        joinRight: ``,
-        joinJoin: ``,
-      },
-      drawHorizontalLine: () => false,
-    });
-    const stripped = bodyTable
+    const header = headerCells();
+    const tableStr = bodyTable([header]);
+    const stripped = tableStr
       .split('\n')
       .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
       .join('\n')
@@ -111,14 +58,12 @@ export class ProgressRenderer {
     // Include the hint so the final persisted frame carries instructions as well.
     const tag =
       process.env.STAN_TEST_UI_TAG === '1' ? ` UI#${this.uiId.toString()}` : '';
-    const hint = `${dim('Press')} ${bold('q')} ${dim('to cancel,')} ${bold(
-      'r',
-    )} ${dim('to restart')}${tag}`;
+    const hint = hintLine(this.uiId);
     const body = `\n${stripped}\n\n${hint}`;
     // ANSI-safe debug summary for this header-only frame
     if (liveTrace.enabled) {
       try {
-        const plain = this.stripAnsi(body);
+        const plain = stripAnsi(body);
         const headerRe =
           /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
         const headerCount = (plain.match(headerRe) ?? []).length;
@@ -208,15 +153,12 @@ export class ProgressRenderer {
       const st = row.state;
       switch (st.kind) {
         case 'waiting': {
-          // Never started: mark as cancelled with NO duration so the Time column renders blank.
-          // This avoids misleading “00:00” for items that were never run.
           this.update(key, { kind: 'cancelled' });
           break;
         }
         case 'running':
         case 'quiet':
         case 'stalled': {
-          // Finalize duration from startedAt; preserve any existing outputPath
           const started =
             typeof (st as { startedAt?: number }).startedAt === 'number'
               ? (st as { startedAt: number }).startedAt
@@ -226,8 +168,6 @@ export class ProgressRenderer {
           this.update(key, { kind: 'cancelled', durationMs: dur });
           break;
         }
-        // Leave rows that already carry a terminal status untouched so their final
-        // state, durations, and output paths remain visible.
         default:
           break;
       }
@@ -251,21 +191,13 @@ export class ProgressRenderer {
   }
 
   private render(): void {
-    const header = ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) =>
-      bold(h),
-    );
+    const header = headerCells();
 
     const rows: string[][] = [];
     rows.push(header);
     if (this.rows.size === 0) {
       const elapsed = fmtMs(now() - this.startedAt);
-      rows.push([
-        dim('—'),
-        dim('—'),
-        dim(this.opts.boring ? '[IDLE]' : 'idle'),
-        dim(elapsed),
-        dim(''),
-      ]);
+      rows.push(['—', '—', this.opts.boring ? '[IDLE]' : 'idle', elapsed, '']);
     } else {
       const all = Array.from(this.rows.values());
       const grouped = [
@@ -299,7 +231,6 @@ export class ProgressRenderer {
             ? (st.outputPath ?? '')
             : '';
 
-        // Map internal state to shared StatusKind
         const kind =
           st.kind === 'warn'
             ? 'warn'
@@ -324,32 +255,9 @@ export class ProgressRenderer {
       }
     }
 
-    const bodyTable = table(rows, {
-      border: {
-        topBody: ``,
-        topJoin: ``,
-        topLeft: ``,
-        topRight: ``,
-        bottomBody: ``,
-        bottomJoin: ``,
-        bottomLeft: ``,
-        bottomRight: ``,
-        bodyLeft: ``,
-        bodyRight: ``,
-        bodyJoin: ``,
-        joinBody: ``,
-        joinLeft: ``,
-        joinRight: ``,
-        joinJoin: ``,
-      },
-      drawHorizontalLine: () => false,
-      columns: {
-        2: { alignment: 'left' },
-        3: { alignment: 'right' },
-      },
-    });
+    const tableStr = bodyTable(rows);
 
-    const strippedTable = bodyTable
+    const strippedTable = tableStr
       .split('\n')
       .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
       .join('\n');
@@ -357,20 +265,13 @@ export class ProgressRenderer {
     const elapsed = fmtMs(now() - this.startedAt);
     const counts = this.counts();
     const summary = renderSummary(elapsed, counts, this.opts.boring);
-    // Test-only UI tag (appears when STAN_TEST_UI_TAG=1); harmless in non-test runs.
-    const tag =
-      process.env.STAN_TEST_UI_TAG === '1' ? ` UI#${this.uiId.toString()}` : '';
-    const hint = `${dim('Press')} ${bold('q')} ${dim('to cancel,')} ${bold(
-      'r',
-    )} ${dim('to restart')}${tag}`;
-    // We append the tag to the hint line only to avoid perturbing table layout in normal frames.
+    const hint = hintLine(this.uiId);
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
-    // Add a leading blank line and remove global left indent
     const body = `\n${raw}`;
     this.frameNo += 1;
     if (liveTrace.enabled) {
       try {
-        const plain = this.stripAnsi(body);
+        const plain = stripAnsi(body);
         const headerRe =
           /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
         const headerMatches = (plain.match(headerRe) ?? []).length;
@@ -414,7 +315,7 @@ export class ProgressRenderer {
     let cancelled = 0;
     let fail = 0;
     let timeout = 0;
-    for (const [, row] of this.rows.entries()) {
+    for (const [, row] of this.rows) {
       const st = row.state;
       switch (st.kind) {
         case 'warn':
@@ -460,13 +361,5 @@ export class ProgressRenderer {
       fail,
       timeout,
     };
-  }
-  // Minimal ANSI-stripping to make header/hint checks reliable in TTY
-  private stripAnsi(s: string): string {
-    try {
-      return s.replace(/\\x1B\[[0-9;]*m/g, '');
-    } catch {
-      return s;
-    }
   }
 }

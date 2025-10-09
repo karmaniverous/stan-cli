@@ -1,9 +1,8 @@
 # STAN Development Plan
 
-When updated: 2025-10-08 (UTC)
+When updated: 2025-10-09 (UTC)
 
 ## This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
-
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
@@ -72,10 +71,22 @@ When updated: 2025-10-08 (UTC)
 
 ## Completed (recent)
 
+- UI/renderer/session decomposition (instrumentation seam and structure)
+  - Split the monolithic UI into:
+    - src/stan/run/ui/logger-ui.ts and src/stan/run/ui/live-ui.ts
+    - Barrel at src/stan/run/ui/index.ts with shared types in src/stan/run/ui/types.ts
+  - Extract renderer helpers:
+    - src/stan/run/live/types.ts (local renderer types)
+    - src/stan/run/live/format.ts (fmtMs/stripAnsi/table/hint/header helpers)
+  - Extract session signal wiring to src/stan/run/session/signals.ts to isolate SIGINT/exit-hook handling.
+  - Shrinks the largest files and clarifies seams (UI composition, formatting utilities, and signal lifecycle).
+
+- Final-frame policy fix (tests)
+  - LiveSink.stop() now flushes the full table then persists a header-only bridge with the hint before calling done(). Ensures the last update body contains exactly one header line and the hint, satisfying restart tests.
+
 - Live tracing decomposition (instrumentation seam)
   - Extracted STAN_LIVE_DEBUG instrumentation from three large modules into a shared tracer:
-    - src/stan/run/live/trace.ts centralizes all debug emission (stderr) under well‑named methods.
-    - Updated src/stan/run/live/renderer.ts, src/stan/run/ui.ts, and src/stan/run/session.ts to call the tracer instead of inlined helpers.
+    - src/stan/run/live/trace.ts centralizes all debug emission (stderr) under well‑named methods.    - Updated src/stan/run/live/renderer.ts, src/stan/run/ui.ts, and src/stan/run/session.ts to call the tracer instead of inlined helpers.
   - No functional changes; only instrumentation moved. This trims LOC in the most instrumented modules and keeps the seam clean for future diagnostics changes.
   - Tests unchanged; tracer defaults to no‑op unless STAN_LIVE_DEBUG=1.
 

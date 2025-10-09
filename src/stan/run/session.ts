@@ -17,13 +17,13 @@ import { resolve } from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 
 import { liveTrace } from '@/stan/run/live/trace';
+import { attachSessionSignals } from '@/stan/run/session/signals';
 
 import { archivePhase } from './archive';
 import { runScripts } from './exec';
-import { installExitHook } from './exit';
 import { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, RunBehavior } from './types';
-import { type RunnerUI } from './ui';
+import type { RunnerUI } from './ui';
 
 const shouldWriteOrder =
   process.env.NODE_ENV === 'test' || process.env.STAN_WRITE_ORDER === '1';
@@ -154,12 +154,6 @@ export const runSessionOnce = async (args: {
 
   // Session-wide SIGINT → cancel (parity for live/no-live)
   const onSigint = (): void => triggerCancel();
-  try {
-    liveTrace.session.info('install SIGINT handler');
-    process.on('SIGINT', onSigint);
-  } catch {
-    /* ignore */
-  }
 
   // Keys: live wires restart; logger wires SIGINT parity only
   ui.installCancellation(
@@ -168,7 +162,7 @@ export const runSessionOnce = async (args: {
   );
 
   // Central exit hook: best-effort teardown on real exits
-  const uninstallExit = installExitHook(async () => {
+  const detachSignals = attachSessionSignals(onSigint, async () => {
     liveTrace.session.exitHook();
     try {
       ui.stop();
@@ -191,20 +185,6 @@ export const runSessionOnce = async (args: {
       /* ignore */
     }
   });
-  const detachSignals = (): void => {
-    try {
-      liveTrace.session.info('detach SIGINT handler');
-      process.off('SIGINT', onSigint);
-    } catch {
-      /* ignore */
-    }
-    try {
-      liveTrace.session.info('uninstall exit hook');
-      uninstallExit();
-    } catch {
-      /* ignore */
-    }
-  };
 
   const created: string[] = [];
   let collectPromise: Promise<void> | null = null;
@@ -278,10 +258,6 @@ export const runSessionOnce = async (args: {
 
   // Cancellation short-circuit (skip archives)
   if (cancelled) {
-    // Live restart should reuse the same table area:
-    // - do NOT flush/persist a final frame,
-    // - do NOT print an extra blank line.
-    // Regular cancel: preserve prior behavior (flush + trailing blank).
     try {
       if (!restartRequested) {
         liveTrace.session.info('cancel path: ui.stop()');
@@ -314,24 +290,16 @@ export const runSessionOnce = async (args: {
       /* ignore */
     }
     try {
-      // Final settle before teardown (Windows EBUSY mitigation)
-      // Empirically, a slightly longer settle on Windows further reduces
-      // transient EBUSY/ENOTEMPTY during teardown after SIGINT-driven cancellation.
-      // Keep a smaller pause on non-Windows to avoid unnecessary delay.
       const settleMs = process.platform === 'win32' ? 1600 : 400;
       await new Promise((r) => setTimeout(r, settleMs));
     } catch {
       /* ignore */
     }
-    // Ensure we don’t accumulate signal/exit handlers across restarts.
-    // (In regular cancel, this is harmless but tidy.)
     detachSignals();
     return { created, cancelled: true, restartRequested };
-    // detachSignals executed by caller paths below before return
   }
 
-  // Late-cancellation guard: if a SIGINT lands just after the first check above,  // allow one tick for handlers to run and re-check before archiving.
-  // This ensures no archives are written after a cancel in both live and no-live modes.
+  // Late-cancellation guard before archiving
   {
     try {
       await new Promise((r) => setImmediate(r));
@@ -343,6 +311,7 @@ export const runSessionOnce = async (args: {
       return { created, cancelled: true, restartRequested };
     }
   }
+
   // ARCHIVE PHASE
   if (behavior.archive) {
     const includeOutputs = Boolean(behavior.combine);
@@ -360,7 +329,7 @@ export const runSessionOnce = async (args: {
     created.push(archivePath, diffPath);
   }
 
-  // Detach signals & exit hook before returning to caller (or restart loop)
+  // Detach signals & exit hook before returning
   liveTrace.session.info(
     'normal path: detach signals, returning to caller (no ui.stop() here)',
   );
