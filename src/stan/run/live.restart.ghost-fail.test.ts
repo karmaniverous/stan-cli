@@ -5,47 +5,8 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { rmDirWithRetries } from '@/test/helpers';
-
-// Keep archiving light (we don't archive in this test, but safe to mock)
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
-// Capture log-update frames and side-channel methods for verification.
-type LogUpdateCall =
-  | { type: 'update'; body: string }
-  | { type: 'clear' }
-  | { type: 'done' };
-const calls: LogUpdateCall[] = [];
-
-// Hoisted mock for log-update
-vi.mock('log-update', () => {
-  const impl = (s: string) => {
-    try {
-      calls.push({ type: 'update', body: String(s) });
-      (process.stdout as unknown as { write: (chunk: string) => void }).write(
-        String(s),
-      );
-    } catch {
-      // ignore
-    }
-  };
-  (impl as unknown as { clear?: () => void }).clear = () => {
-    calls.push({ type: 'clear' });
-  };
-  (impl as unknown as { done?: () => void }).done = () => {
-    calls.push({ type: 'done' });
-  };
-  return { __esModule: true, default: impl };
-});
-
 import { runSelected } from '@/stan/run';
+import { rmDirWithRetries } from '@/test/helpers';
 
 // Bounded waiter to detect a condition within a timeout.
 const waitUntil = async (
@@ -67,6 +28,7 @@ describe('live restart: no ghost end-state from previous session', () => {
   const ttyBackup = (process.stdout as unknown as { isTTY?: boolean }).isTTY;
   const stdinBackup = (process.stdin as unknown as { isTTY?: boolean }).isTTY;
   const FAIL_KEY = '__ghostFail__';
+  let writeSpy: { mockRestore: () => void; mock: { calls: unknown[][] } };
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'stan-live-ghost-'));
@@ -78,7 +40,15 @@ describe('live restart: no ghost end-state from previous session', () => {
     } catch {
       /* ignore */
     }
-    calls.length = 0;
+    writeSpy = vi
+      .spyOn(
+        process.stdout as unknown as { write: (c: string) => boolean },
+        'write',
+      )
+      .mockImplementation(() => true) as unknown as {
+      mockRestore: () => void;
+      mock: { calls: unknown[][] };
+    };
   });
 
   afterEach(async () => {
@@ -100,6 +70,7 @@ describe('live restart: no ghost end-state from previous session', () => {
     } catch {
       /* ignore */
     }
+    writeSpy.mockRestore();
     await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
@@ -121,21 +92,18 @@ describe('live restart: no ghost end-state from previous session', () => {
       archive: false,
     });
 
-    const updates = () =>
-      calls.filter(
-        (c): c is { type: 'update'; body: string } => c.type === 'update',
-      );
+    const writes = () => writeSpy.mock.calls.map((c) => String(c[0]));
     const rowRe = new RegExp(`(?:^|\\n)script\\s+${FAIL_KEY}\\s+`, 'i');
 
     // Wait until FAIL_KEY is running in the first session.
     await waitUntil(
-      () => updates().some((u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body)),
+      () => writes().some((u) => rowRe.test(u) && /\[RUN\]/.test(u)),
       2500,
       25,
     );
 
     // Mark current updates index, then trigger restart while the script is running.
-    const mark = updates().length;
+    const mark = writes().length;
     (
       process.stdin as unknown as { emit: (ev: string, d?: unknown) => void }
     ).emit('data', 'r');
@@ -148,7 +116,7 @@ describe('live restart: no ghost end-state from previous session', () => {
 
     // Analyze frames strictly between the restart marker and the first time
     // the script is actually re-queued/re-started in the new session (WAIT or RUN).
-    const ups = updates();
+    const ups = writes();
     const reStart = new RegExp(
       `(?:^|\\n)script\\s+${FAIL_KEY}\\s+\\[(WAIT|RUN)\\]`,
       'i',
@@ -162,21 +130,19 @@ describe('live restart: no ghost end-state from previous session', () => {
       'i',
     );
     // First non-CANCELLED appearance (marks when the new session really begins for this script)
-    const idxFirstStart = ups.findIndex(
-      (u, i) => i >= mark && reStart.test(u.body),
-    );
+    const idxFirstStart = ups.findIndex((u, i) => i >= mark && reStart.test(u));
     expect(idxFirstStart).toBeGreaterThan(-1);
 
     // There should be at least one CANCELLED flush between restart and the first start frame.
     const cancelledBetween = ups
       .slice(mark, idxFirstStart)
-      .some((u) => reCancelled.test(u.body));
+      .some((u) => reCancelled.test(u));
     expect(cancelledBetween).toBe(true);
 
     // In that same window, assert we do NOT render a [FAIL] for this script (ghost end-state).
     const ghostFailBeforeStart = ups
       .slice(mark, idxFirstStart)
-      .some((u) => reFail.test(u.body));
+      .some((u) => reFail.test(u));
 
     // EXPECTED (intended fix): false
     // CURRENT (buggy): often true, due to stale onEnd from the previous session.

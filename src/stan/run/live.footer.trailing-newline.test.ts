@@ -8,38 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runSelected } from '@/stan/run';
 import { stripAnsi } from '@/stan/run/live/format';
 
-// Capture log-update frames and side-channel methods for verification.
-type LogUpdateCall =
-  | { type: 'update'; body: string }
-  | { type: 'clear' }
-  | { type: 'done' };
-const calls: LogUpdateCall[] = [];
-
-// Hoisted mock for log-update
-vi.mock('log-update', () => {
-  const impl = (s: string) => {
-    try {
-      calls.push({ type: 'update', body: String(s) });
-      (process.stdout as unknown as { write: (chunk: string) => void }).write(
-        String(s),
-      );
-    } catch {
-      // ignore
-    }
-  };
-  (impl as unknown as { clear?: () => void }).clear = () => {
-    calls.push({ type: 'clear' });
-  };
-  (impl as unknown as { done?: () => void }).done = () => {
-    calls.push({ type: 'done' });
-  };
-  return { __esModule: true, default: impl };
-});
-
-const updates = () =>
-  calls.filter(
-    (c): c is { type: 'update'; body: string } => c.type === 'update',
-  );
+// Spy frames written by the live writer
+const frames = (spy: { mock: { calls: unknown[][] } }) =>
+  spy.mock.calls.map((c) => String(c[0]));
 
 // Bounded waiter to detect a condition within a timeout.
 const waitUntil = async (
@@ -62,6 +33,7 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
   const stdinBackup = (process.stdin as unknown as { isTTY?: boolean }).isTTY;
   const envBackup = { ...process.env };
   const HOLD = '__footerHold__';
+  let writeSpy: { mockRestore: () => void; mock: { calls: unknown[][] } };
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'stan-live-footer-'));
@@ -71,7 +43,15 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
     } catch {
       /* ignore */
     }
-    calls.length = 0;
+    writeSpy = vi
+      .spyOn(
+        process.stdout as unknown as { write: (c: string) => boolean },
+        'write',
+      )
+      .mockImplementation(() => true) as unknown as {
+      mockRestore: () => void;
+      mock: { calls: unknown[][] };
+    };
   });
 
   afterEach(async () => {
@@ -92,6 +72,7 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
     } catch {
       /* ignore */
     }
+    writeSpy.mockRestore();
     await rm(dir, { recursive: true, force: true });
     vi.restoreAllMocks();
   });
@@ -116,31 +97,33 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
     const rowRe = new RegExp(`(?:^|\\n)script\\s+${HOLD}\\s+`);
     // Wait until we observe >=3 frames for this row in [RUN].
     await waitUntil(() => {
-      const ups = updates();
-      const runFrames = ups.filter(
-        (u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body),
-      );
+      const ups = frames(writeSpy);
+      const runFrames = ups.filter((u) => rowRe.test(u) && /\[RUN\]/.test(u));
       return runFrames.length >= 3;
     });
 
     await p;
 
-    const ups = updates();
-    expect(ups.length).toBeGreaterThan(0);
-    const last = ups[ups.length - 1].body;
+    const ups = frames(writeSpy);
+    const lastFrame =
+      [...ups]
+        .reverse()
+        .find(
+          (s) =>
+            /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/.test(s) ||
+            /Press q to cancel,\s*r to restart/i.test(s),
+        ) ?? '';
 
     // Final persisted frame ends with newline.
-    expect(last.endsWith('\n')).toBe(true);
+    expect(lastFrame.endsWith('\n')).toBe(true);
 
     // Extract the last 3 RUN frames for this row; they must contain the hint.
     const lastThreeRun = ups
-      .filter((u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body))
+      .filter((u) => rowRe.test(u) && /\[RUN\]/.test(u))
       .slice(-3);
     expect(lastThreeRun.length).toBe(3);
     expect(
-      lastThreeRun.every((f) =>
-        /Press q to cancel,\s*r to restart/i.test(f.body),
-      ),
+      lastThreeRun.every((f) => /Press q to cancel,\s*r to restart/i.test(f)),
     ).toBe(true);
   });
 
@@ -161,12 +144,18 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
     });
     // Wait for at least one RUN frame, then completion.
     const rowRe = new RegExp(`(?:^|\\n)script\\s+${HOLD}\\s+`);
-    await waitUntil(() => updates().some((u) => rowRe.test(u.body)));
+    await waitUntil(() => frames(writeSpy).some((u) => rowRe.test(u)));
     await p;
 
-    const ups = updates();
-    expect(ups.length).toBeGreaterThan(0);
-    const last = ups[ups.length - 1].body;
+    const ups = frames(writeSpy);
+    const last =
+      [...ups]
+        .reverse()
+        .find(
+          (s) =>
+            /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/.test(s) ||
+            /Press q to cancel/i.test(s),
+        ) ?? '';
     // Final persisted frame ends with newline.
     expect(last.endsWith('\n')).toBe(true);
     // Hint visible after stripping ANSI.

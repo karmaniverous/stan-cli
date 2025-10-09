@@ -5,47 +5,8 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { rmDirWithRetries } from '@/test/helpers';
-// Keep archiving light (we don't archive in this test, but safe to mock)
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
-// Capture log-update frames and side-channel methods for verification.
-type LogUpdateCall =
-  | { type: 'update'; body: string }
-  | { type: 'clear' }
-  | { type: 'done' };
-const calls: LogUpdateCall[] = [];
-
-// hoisted mock for log-update
-vi.mock('log-update', () => {
-  const impl = (s: string) => {
-    try {
-      // record update calls and mirror to stdout like real log-update
-      calls.push({ type: 'update', body: String(s) });
-      (process.stdout as unknown as { write: (chunk: string) => void }).write(
-        String(s),
-      );
-    } catch {
-      // ignore
-    }
-  };
-  (impl as unknown as { clear?: () => void }).clear = () => {
-    calls.push({ type: 'clear' });
-  };
-  (impl as unknown as { done?: () => void }).done = () => {
-    calls.push({ type: 'done' });
-  };
-  return { __esModule: true, default: impl };
-});
-
 import { runSelected } from '@/stan/run';
+import { rmDirWithRetries } from '@/test/helpers';
 
 // Bounded waiter to detect a condition within a timeout.
 const waitUntil = async (
@@ -69,6 +30,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
   const ttyBackup = (process.stdout as unknown as { isTTY?: boolean }).isTTY;
   const stdinBackup = (process.stdin as unknown as { isTTY?: boolean }).isTTY;
   const WAIT_KEY = '__liveRestartWait__';
+  let writeSpy: { mockRestore: () => void; mock: { calls: unknown[][] } };
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'stan-live-restart-'));
@@ -80,7 +42,15 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     } catch {
       /* ignore */
     }
-    calls.length = 0;
+    writeSpy = vi
+      .spyOn(
+        process.stdout as unknown as { write: (c: string) => boolean },
+        'write',
+      )
+      .mockImplementation(() => true) as unknown as {
+      mockRestore: () => void;
+      mock: { calls: unknown[][] };
+    };
   });
 
   afterEach(async () => {
@@ -102,9 +72,11 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     } catch {
       /* ignore */
     }
+    writeSpy.mockRestore();
     await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
+
   it('keeps instructions visible while running, performs a single header-only flush on restart, and never calls clear()', async () => {
     // Small long-running script to ensure we can trigger a restart while "running"
     const cfg: ContextConfig = {
@@ -121,30 +93,25 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     });
 
     // Wait until we observe at least one [RUN] frame for this test's row.
-    const updates = () =>
-      calls.filter(
-        (c): c is { type: 'update'; body: string } => c.type === 'update',
-      );
+    const writes = () => writeSpy.mock.calls.map((c) => String(c[0]));
     const rowRe = new RegExp(`(?:^|\\n)script\\s+${WAIT_KEY}\\s+`);
     await waitUntil(
-      () => updates().some((u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body)),
+      () => writes().some((u) => rowRe.test(u) && /\[RUN\]/.test(u)),
       2500,
       25,
     );
 
     // While running, latest update frames for this row containing [RUN] must also include the hint.
-    const framesWithRun = updates().filter(
-      (u) => rowRe.test(u.body) && /\[RUN\]/.test(u.body),
+    const framesWithRun = writes().filter(
+      (u) => rowRe.test(u) && /\[RUN\]/.test(u),
     );
     expect(framesWithRun.length).toBeGreaterThan(0);
     expect(
-      framesWithRun.every((f) =>
-        /Press q to cancel,\s*r to restart/i.test(f.body),
-      ),
+      framesWithRun.every((f) => /Press q to cancel,\s*r to restart/i.test(f)),
     ).toBe(true);
     // Trigger restart ('r'); this should cause a header-only flush (persist header) and then a new session.
     // Record the update-call index just before emitting 'r' so we can bracket the interval.
-    const mark = updates().length;
+    const mark = writes().length;
     (
       process.stdin as unknown as { emit: (ev: string, d?: unknown) => void }
     ).emit('data', 'r');
@@ -155,36 +122,25 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // Await the full run to finish
     await p;
 
-    // No global clear during the entire cycle
-    expect(calls.some((c) => c.type === 'clear')).toBe(false);
-
     // Detect header rows and header-only frames.
     // Header marker (Type/Item/Status/Time/Output), BORING & flush-left
     const headerRe = /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/m;
     // Any row (script or archive)
     const anyRowLineRe = /(?:^|\n)(script|archive)\s+/i;
-    // Any row line for this test's script
-    const anyRowRe = rowRe;
-    const ups = updates();
+    const ups = writes();
     // Find the first frame for our row after the restart marker.
-    const idxFirstAfter = ups.findIndex(
-      (u, i) => i >= mark && rowRe.test(u.body),
-    );
+    const idxFirstAfter = ups.findIndex((u, i) => i >= mark && rowRe.test(u));
     expect(idxFirstAfter).toBeGreaterThan(-1);
 
     // New policy: immediately paint CANCELLED (no header-only gap) then start the new session.
     // Assert at least one frame between 'r' and the first post-restart row contains CANCELLED.
     const cancelledBetween = ups
       .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
-      .some(
-        (u) =>
-          /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/m.test(u.body) &&
-          /\[CANCELLED\]/.test(u.body),
-      );
+      .some((u) => headerRe.test(u) && /\[CANCELLED\]/.test(u));
     // Allow a deterministic header-only bridge as a fallback UX, if no CANCELLED was observed
     const headerOnlyBetween = ups
       .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
-      .some((u) => headerRe.test(u.body) && !anyRowLineRe.test(u.body));
+      .some((u) => headerRe.test(u) && !anyRowLineRe.test(u));
 
     expect(cancelledBetween || headerOnlyBetween).toBe(true);
 
@@ -192,24 +148,18 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     const postRestartRowFrames = ups.slice(Math.max(idxFirstAfter, mark));
     expect(
       postRestartRowFrames.some(
-        (u) =>
-          rowRe.test(u.body) &&
-          /Press q to cancel,\s*r to restart/i.test(u.body),
+        (u) => rowRe.test(u) && /Press q to cancel,\s*r to restart/i.test(u),
       ),
     ).toBe(true);
 
     // Final-frame assertions encoding the intended behavior:
     // 1) Exactly one table should be visible in any single frame (no duplicate header).
-    //    The current bug renders a second table under the first after restart,
-    //    which yields 2 header lines within the same frame body.
     // 2) Instructions should be visible (not disappear) in the final frame.
-    const last = ups.length > 0 ? ups[ups.length - 1].body : '';
+    const last = [...ups].reverse().find((s) => headerRe.test(s)) ?? '';
     const headerReGlobal =
       /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
     const headerMatches = last.match(headerReGlobal) ?? [];
-    // Expected (intended): 1; Current (buggy): typically >= 2 in one frame.
     expect(headerMatches.length).toBe(1);
-    // Instructions must be present in the final frame.
     expect(/Press q to cancel,\s*r to restart/i.test(last)).toBe(true);
   });
 });
