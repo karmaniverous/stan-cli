@@ -3,7 +3,6 @@
 When updated: 2025-10-09 (UTC)
 
 ## This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
-
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
