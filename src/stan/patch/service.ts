@@ -1,39 +1,47 @@
 /** src/stan/patch/service.ts
- * CLI-facing patch service:
- * - Acquire patch from argument, file (-f), default file from config, or clipboard.
- * - Clean payload via stan-core.
- * - Persist to <stanPath>/patch/.patch.
- * - Apply via stan-core pipeline (git apply cascade + jsdiff fallback).
- * - Print concise terminal status lines and source.
- * - After a successful apply (non--check), best‑effort open modified files in the editor
- *   configured by patchOpenCommand (default: "code -g {file}").
+ * CLI-facing patch orchestrator.
+ * - Acquire raw patch from argument/file/default/clipboard (input.ts).
+ * - Recognize & enforce patch kind:
+ *   • File Ops only (no diff) → execute/validate ops.
+ *   • Diff only (no File Ops) → enforce single-file rule, then apply.
+ * - Persist the raw body to <stanPath>/patch/.patch (auditable).
+ * - Compose compact diagnostics envelopes with declared targets (diagnostics.ts).
+ * - After successful diff apply (non--check), best‑effort open the modified file in the editor
+ *   configured by patchOpenCommand (default: "code -g \{file\}").
  */
-import { spawn } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
   applyPatchPipeline,
-  DEFAULT_OPEN_COMMAND,
   detectAndCleanPatch,
+  executeFileOps,
   findConfigPathSync,
   loadConfigSync,
+  parseFileOpsBlock,
 } from '@karmaniverous/stan-core';
-import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
-import { error as colorError, ok as colorOk } from '@/stan/util/color';
+import {
+  composeDiffFailureEnvelope,
+  composeFileOpsFailuresEnvelope,
+  composeInvalidFileOpsWithDiffEnvelope,
+  composeMultiFileInvalidEnvelope,
+} from '@/stan/patch/diagnostics';
+import {
+  collectPatchedTargets,
+  enforceSingleFileDiff,
+  parseFirstTarget,
+} from '@/stan/patch/diff';
+import { maybeOpenFiles } from '@/stan/patch/editor';
+import { readPatchSource } from '@/stan/patch/input';
+import { statusFail, statusOk } from '@/stan/patch/status';
 
-type RunPatchOptions = {
+export type RunPatchOptions = {
   file?: string | boolean;
   defaultFile?: string;
   noFile?: boolean;
   check?: boolean;
-};
-
-const readFromFile = async (cwd: string, relOrAbs: string): Promise<string> => {
-  const abs = path.isAbsolute(relOrAbs) ? relOrAbs : path.join(cwd, relOrAbs);
-  return readFile(abs, 'utf8');
 };
 
 const resolveStanPath = (cwd: string): string => {
@@ -41,50 +49,9 @@ const resolveStanPath = (cwd: string): string => {
     const p = findConfigPathSync(cwd);
     if (p) return loadConfigSync(cwd).stanPath;
   } catch {
-    // fall through to default
+    /* ignore */
   }
   return '.stan';
-};
-
-/** BORING detection aligned with util/color (TTY + environment). */
-const isBoring = (): boolean => {
-  const isTTY = Boolean(
-    (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
-  );
-  return (
-    process.env.STAN_BORING === '1' ||
-    process.env.NO_COLOR === '1' ||
-    process.env.FORCE_COLOR === '0' ||
-    !isTTY
-  );
-};
-
-/** Status tokens: colorized in TTY; bracketed in BORING/non‑TTY. */
-const statusOk = (s: string): string =>
-  isBoring() ? `[OK] ${s}` : `${colorOk('✔')} ${s}`;
-const statusFail = (s: string): string =>
-  isBoring() ? `[FAIL] ${s}` : `${colorError('✖')} ${s}`;
-
-/** Collect b/ target paths from a cleaned unified diff (exclude /dev/null). */
-const collectPatchedTargets = (cleaned: string): string[] => {
-  const targets = new Set<string>();
-  // Prefer +++ b/<path> lines
-  const plusRe = /^\+\+\+\s+([^\r\n]+)$/gm;
-  for (const m of cleaned.matchAll(plusRe)) {
-    const raw = (m[1] ?? '').trim();
-    if (!raw || raw === '/dev/null') continue;
-    const p = raw.replace(/^b\//, '').replace(/^\.\//, '');
-    if (p) targets.add(p);
-  }
-  // Fallback: diff --git a/<a> b/<b>
-  const dg = /^diff --git a\/([^\s]+)\s+b\/([^\s]+)$/gm;
-  for (const m of cleaned.matchAll(dg)) {
-    const b = (m[2] ?? '').trim();
-    if (!b || b === '/dev/null') continue;
-    const p = b.replace(/^b\//, '').replace(/^\.\//, '');
-    if (p) targets.add(p);
-  }
-  return Array.from(targets);
 };
 
 export const runPatch = async (
@@ -92,226 +59,142 @@ export const runPatch = async (
   inputMaybe: string | undefined,
   opts: RunPatchOptions = {},
 ): Promise<void> => {
-  let source = 'clipboard';
+  // 1) Acquire raw input
   let raw = '';
-
+  let source = 'clipboard';
   try {
-    if (typeof inputMaybe === 'string' && inputMaybe.trim().length > 0) {
-      raw = inputMaybe;
-      source = 'argument';
-    } else if (typeof opts.file === 'string' && opts.file.trim().length > 0) {
-      raw = await readFromFile(cwd, opts.file.trim());
-      source = `file "${opts.file.trim()}"`;
-    } else if (opts.file === true) {
-      // -f with no filename: prefer defaultFile when available; otherwise clipboard
-      if (
-        !opts.noFile &&
-        typeof opts.defaultFile === 'string' &&
-        opts.defaultFile.trim().length
-      ) {
-        raw = await readFromFile(cwd, opts.defaultFile.trim());
-        source = `file "${opts.defaultFile.trim()}"`;
-      } else {
-        raw = await clipboardy.read();
-        source = 'clipboard';
-      }
-    } else if (
-      !opts.noFile &&
-      typeof opts.defaultFile === 'string' &&
-      opts.defaultFile.trim().length
-    ) {
-      raw = await readFromFile(cwd, opts.defaultFile.trim());
-      source = `file "${opts.defaultFile.trim()}"`;
-    } else {
-      raw = await clipboardy.read();
-      source = 'clipboard';
-    }
+    const got = await readPatchSource(cwd, inputMaybe, {
+      file: opts.file,
+      defaultFile: opts.defaultFile,
+      noFile: opts.noFile,
+    });
+    raw = got.raw;
+    source = got.source;
   } catch {
     console.log(`stan: ${statusFail('patch failed')} (unable to read source)`);
     return;
   }
+  console.log(`stan: patch source: ${source}`);
 
-  // Clean payload
+  // 2) Classify kind (File Ops vs Diff)
+  const opsPlan = parseFileOpsBlock(raw);
+  const hasOps = (opsPlan.ops?.length ?? 0) > 0;
   let cleaned = '';
   try {
     cleaned = detectAndCleanPatch(raw);
   } catch {
     cleaned = '';
   }
+  const hasDiff = cleaned.trim().length > 0;
 
-  console.log(`stan: patch source: ${source}`);
+  // 3) Enforce mutually exclusive kinds
+  if (hasOps && hasDiff) {
+    const files = collectPatchedTargets(cleaned);
+    const diag = composeInvalidFileOpsWithDiffEnvelope(opsPlan.ops, files);
+    console.log(`stan: ${statusFail('patch failed')}`);
+    console.log('');
+    console.log(diag);
+    return;
+  }
 
-  // Extract the first target path from the diff headers for clickable IDE links.
-  const parseFirstTargetPath = (diffText: string): string | null => {
-    // Prefer +++ b/<path>
-    const mPlus = diffText.match(/^\+\+\+\s+b\/([^\r\n]+)$/m);
-    if (mPlus && mPlus[1]) return mPlus[1].trim().replace(/\\/g, '/');
-    // Fallback: diff --git a/<a> b/<b>
-    const mGit = diffText.match(/^diff --git a\/([^\s]+)\s+b\/([^\s]+)$/m);
-    if (mGit && mGit[2]) return mGit[2].trim().replace(/\\/g, '/');
-    return null;
-  };
-  const firstTarget = parseFirstTargetPath(cleaned);
-
-  /** Compose a compact diagnostics envelope from applyPatchPipeline outcome. */
-  const composeDiagnostics = (out: {
-    result?: {
-      captures?: Array<{ label?: string; code?: number; stderr?: string }>;
-    };
-    js?: { failed?: Array<{ path?: string; reason?: string }> };
-  }): string => {
-    const lines: string[] = [];
-    lines.push('START PATCH DIAGNOSTICS');
-    const caps = (out?.result?.captures ?? []) as Array<{
-      label?: string;
-      code?: number;
-      stderr?: string;
-    }>;
-    for (const c of caps) {
-      const firstStderr =
-        (c.stderr ?? '').split(/\r?\n/).find((l) => l.trim().length) ?? '';
-      lines.push(`${c.label ?? 'git'}: exit ${c.code ?? 0} — ${firstStderr}`);
-    }
-    const failed = (out?.js?.failed ?? []) as Array<{
-      path?: string;
-      reason?: string;
-    }>;
-    for (const f of failed) {
-      lines.push(`jsdiff: ${f.path ?? '(unknown)'}: ${f.reason ?? ''}`);
-    }
-    lines.push('END PATCH DIAGNOSTICS');
-    return lines.join('\n');
-  };
-
-  // Persist cleaned payload (best-effort)
+  // 4) Persist raw payload (auditable; also covers FO-only)
   const stanPath = resolveStanPath(cwd);
   const patchDir = path.join(cwd, stanPath, 'patch');
   const patchAbs = path.join(patchDir, '.patch');
   try {
     await ensureDir(patchDir);
-    await writeFile(patchAbs, cleaned, 'utf8');
+    await writeFile(patchAbs, raw, 'utf8');
   } catch {
-    // ignore persistence failures; still attempt to apply from memory
+    /* ignore persistence failures */
   }
 
-  // Short-circuit: nothing usable
-  if (cleaned.trim().length === 0) {
-    console.log(`stan: ${statusFail('patch failed')} (no unified diff found)`);
-    return;
-  }
-
-  // Apply
   const check = Boolean(opts.check);
-  try {
-    const out = await applyPatchPipeline({
-      cwd,
-      patchAbs,
-      cleaned,
-      check,
-    });
-    if (out.ok) {
-      const msg = check ? 'patch check passed' : 'patch applied';
-      const tail = firstTarget ? ` -> ${firstTarget}` : '';
-      console.log(`stan: ${statusOk(msg)}${tail}`);
 
-      // Best-effort: open modified files in the configured editor (skip in tests/disabled).
-      try {
-        if (
-          !check &&
-          process.env.STAN_OPEN_EDITOR !== '0' &&
-          process.env.NODE_ENV !== 'test'
-        ) {
-          // Resolve editor command
-          const openCmd = ((): string => {
-            try {
-              const p = findConfigPathSync(cwd);
-              if (p) {
-                const cfg = loadConfigSync(cwd);
-                const t = cfg?.patchOpenCommand;
-                if (typeof t === 'string' && t.trim().length) return t.trim();
-              }
-            } catch {
-              /* ignore */
-            }
-            return DEFAULT_OPEN_COMMAND;
-          })();
-
-          // Collect target paths from diff headers
-          const targets = collectPatchedTargets(cleaned);
-          for (const rel of targets) {
-            const cmd = openCmd.replace(/\{file\}/g, rel);
-            // Detached, shell-based invocation; ignore stdio and errors.
-            const child = spawn(cmd, {
-              cwd,
-              shell: true,
-              detached: true,
-              stdio: 'ignore',
-            });
-            try {
-              child.unref();
-            } catch {
-              /* ignore */
-            }
-          }
-        }
-      } catch {
-        // best-effort; do not fail success path for editor issues
+  // 5) File Ops only
+  if (hasOps && !hasDiff) {
+    try {
+      const res = await executeFileOps(cwd, opsPlan.ops, check);
+      const ok = Boolean(res.ok);
+      if (ok) {
+        const msg = check ? 'file ops check passed' : 'file ops applied';
+        console.log(`stan: ${statusOk(msg)}`);
+        console.log('');
+        return;
       }
-
-      // Visual separation from next prompt
+      const diag = composeFileOpsFailuresEnvelope(opsPlan.ops, res.results);
+      console.log(
+        `stan: ${statusFail(check ? 'file ops check failed' : 'file ops failed')}`,
+      );
+      console.log('');
+      console.log(diag);
+      return;
+    } catch {
+      console.log(
+        `stan: ${statusFail(check ? 'file ops check failed' : 'file ops failed')}`,
+      );
       console.log('');
       return;
     }
-    // Failure: compose diagnostics, persist to .debug, try to copy to clipboard.
-    const diag = composeDiagnostics(
-      out as unknown as {
-        result?: {
-          captures?: Array<{ label?: string; code?: number; stderr?: string }>;
-        };
-        js?: { failed?: Array<{ path?: string; reason?: string }> };
-      },
-    );
-    // Persist under <stanPath>/patch/.debug/feedback.txt (best‑effort)
-    const dbgDir = path.join(cwd, stanPath, 'patch', '.debug');
-    const dbgPath = path.join(dbgDir, 'feedback.txt');
-    try {
-      await ensureDir(dbgDir);
-      await writeFile(dbgPath, diag, 'utf8');
-    } catch {
-      /* ignore persistence errors */
-    }
-    // Try to copy to clipboard; fallback to console
-    let copied = false;
-    try {
-      await clipboardy.write(diag);
-      copied = true;
-    } catch {
-      /* ignore clipboard errors */
-    }
-    const failMsg = check ? 'patch check failed' : 'patch failed';
-    console.log(`stan: ${statusFail(failMsg)}`);
-    // Brief guidance so users know what to do next
-    if (copied) {
-      console.log(
-        'stan: Patch diagnostics uploaded to clipboard. Paste into chat for full listing.',
-      );
-    } else {
-      console.log(
-        `stan: Patch diagnostics written to ${path
-          .relative(cwd, dbgPath)
-          .replace(/\\/g, '/')} — copy and paste into chat for full listing.`,
-      );
-    }
-    // Visual separation from next prompt
-    console.log('');
-    if (!copied) {
-      // Provide the envelope on stdout if clipboard unsupported
-      console.log(diag);
-    }
-  } catch {
-    console.log(
-      `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
-    );
-    console.log('');
   }
+
+  // 6) Diff only
+  if (!hasOps && hasDiff) {
+    // Enforce single-file diff rule
+    const single = enforceSingleFileDiff(cleaned);
+    if (!single.ok) {
+      const diag = composeMultiFileInvalidEnvelope(single.files);
+      console.log(`stan: ${statusFail('patch failed (multi-file diff)')}`);
+      console.log('');
+      console.log(diag);
+      return;
+    }
+    const firstTarget = parseFirstTarget(cleaned);
+    try {
+      const out = await applyPatchPipeline({
+        cwd,
+        patchAbs,
+        cleaned,
+        check,
+      });
+      if (out.ok) {
+        const msg = check ? 'patch check passed' : 'patch applied';
+        const tail = firstTarget ? ` -> ${firstTarget}` : '';
+        console.log(`stan: ${statusOk(msg)}${tail}`);
+        // Best-effort editor open (non-check)
+        if (!check) {
+          const cfg = (() => {
+            try {
+              const p = findConfigPathSync(cwd);
+              return p ? loadConfigSync(cwd) : null;
+            } catch {
+              return null;
+            }
+          })();
+          await maybeOpenFiles(
+            cwd,
+            [single.target.path],
+            cfg?.patchOpenCommand,
+          );
+        }
+        console.log('');
+        return;
+      }
+      const diag = composeDiffFailureEnvelope(cleaned, out);
+      console.log(
+        `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
+      );
+      console.log('');
+      console.log(diag);
+      return;
+    } catch {
+      console.log(
+        `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
+      );
+      console.log('');
+      return;
+    }
+  }
+
+  // 7) Neither kind recognized
+  console.log(`stan: ${statusFail('patch failed')} (no unified diff found)`);
 };

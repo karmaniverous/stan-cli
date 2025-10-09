@@ -18,10 +18,20 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- Patch service decomposition & policy enforcement
+  - Decomposed patch orchestrator into small helpers:
+    src/stan/patch/{input.ts,diff.ts,diagnostics.ts,editor.ts,status.ts}.
+  - FO vs Diff classification:
+    • File Ops patches are FO-only; presence of diff content is rejected.
+    • Diff patches are single-file only; multi-file diffs are rejected with a clear envelope.
+  - FO-only path executes/validates File Ops (dry-run under --check) and returns concise status.
+  - Persist raw patch body to .stan/patch/.patch for FO auditability.
+  - Diagnostics envelopes now list declared files/targets up front for clarity.
+  - Editor open retained for successful diff apply (non--check), best‑effort and detached.
+
 - Patch UX: open modified files after successful apply
   - After a successful `stan patch` (non-`--check`), open each modified file in the configured editor
-    via `patchOpenCommand` (default `code -g {file}`), detached and best‑effort.
-  - Skips in tests or when `STAN_OPEN_EDITOR=0` is set; failures are ignored.
+    via `patchOpenCommand` (default `code -g {file}`), detached and best‑effort.  - Skips in tests or when `STAN_OPEN_EDITOR=0` is set; failures are ignored.
 
 - Anchored writer: first-frame newline and stable finalization
   - First paint writes the composed body “as-is” (no CR prefix) so the frame begins with a literal leading newline after ANSI stripping (fixes alignment test).
