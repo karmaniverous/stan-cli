@@ -64,7 +64,7 @@ export class ProgressRenderer {
     const summary = renderSummary(elapsed, counts, this.opts.boring);
     const hint = hintLine(this.uiId);
 
-    const body = `\n${stripped}\n\n${summary}\n${hint}`;
+    const body = `\n${stripped}\n\n${summary}\n${hint}\n`;
 
     // ANSI-safe debug summary for this header-only frame
     if (liveTrace.enabled) {
@@ -256,7 +256,7 @@ export class ProgressRenderer {
     const summary = renderSummary(elapsed, counts, this.opts.boring);
     const hint = hintLine(this.uiId);
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
-    const body = `\n${raw}`;
+    const body = `\n${raw}\n`;
     this.frameNo += 1;
     if (liveTrace.enabled) {
       try {

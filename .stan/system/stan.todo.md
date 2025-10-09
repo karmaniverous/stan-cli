@@ -10,9 +10,18 @@ When updated: 2025-10-09 (UTC)
 
 <!-- trimmed; items addressed below in Completed (recent) -->
 
+- Live UI — footer trailing newline (clipping fix) and tests
+  - Add a trailing newline to every frame buffer handed to log-update (regular frames and header-only bridge) to prevent repaint clipping of the bottom line (hint) on some terminals (notably Windows/VS Code).
+  - New tests:
+    - “live.footer.trailing-newline (BORING)”: asserts the final frame ends with “\n” and the hint persists across ≥3 consecutive repaints while a script is [RUN].
+    - “live.footer.trailing-newline (styled)”: asserts the final frame ends with “\n” and the hint is visible after stripping ANSI.
+  - Files:
+    - src/stan/run/live/renderer.ts
+    - src/stan/run/live.footer.trailing-newline.test.ts
+
+
 - Live UI — final-frame hint persistence
-  - Ensure the hint line ("Press q to cancel, r to restart") is present in the final persisted frame on normal completion.
-  - Add a small integration test that asserts the final frame contains the hint in live mode.
+  - Ensure the hint line ("Press q to cancel, r to restart") is present in the final persisted frame on normal completion.  - Add a small integration test that asserts the final frame contains the hint in live mode.
   - Investigate any ordering/timing differences between flush() and done() paths that could elide the hint at the end of a run.
 - Rewire imports to top-level @karmaniverous/stan-core
   - Replace broken imports of '@/stan/config', '../{archive,diff,imports,...}' and similar engine paths with top-level `@karmaniverous/stan-core` imports (no subpaths).
@@ -76,10 +85,17 @@ When updated: 2025-10-09 (UTC)
 
 ## Completed (recent)
 
+- Live UI — footer trailing newline + tests
+  - Fixed bottom-line clipping by appending a trailing newline to all bodies passed to log-update (regular and header-only).
+  - Added BORING and styled tests to assert final-frame trailing newline and footer persistence across repaints.
+  - Files:
+    - src/stan/run/live/renderer.ts
+    - src/stan/run/live.footer.trailing-newline.test.ts
+
+
 - Live UI — normal completion keeps rows visible
   - Restored intended final-frame policy: on normal completion, persist the full table (rows + summary + hint). Header-only persistence is used only for the cancellation/restart bridge. Fixes “table content disappears on quit”.
   - Files: src/stan/run/progress/sinks/live.ts
-
 - Live UI — footer composition unified
   - Render the summary and hint together in header-only frames (newline between),
     matching regular renders so they always appear as an adjacent pair.
