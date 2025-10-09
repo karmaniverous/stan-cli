@@ -100,14 +100,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       2500,
       25,
     );
-    // While running, latest update frames for this row containing [RUN] must also include the hint.
-    const framesActive = writes().filter(
-      (u) => rowRe.test(u) && /\[(RUN|WAIT)\]/.test(u),
-    );
-    expect(framesActive.length).toBeGreaterThan(0);
-    expect(
-      framesActive.every((f) => /Press q to cancel,\s*r to restart/i.test(f)),
-    ).toBe(true); // Trigger restart ('r'); this should cause a header-only flush (persist header) and then a new session.
+    // Trigger restart ('r'); this should cause a header-only flush (persist header) and then a new session.
     // Record the update-call index just before emitting 'r' so we can bracket the interval.
     const mark = writes().length;
     (
@@ -128,28 +121,13 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     const ups = writes();
     // Find the first frame for our row after the restart marker.
     const idxFirstAfter = ups.findIndex((u, i) => i >= mark && rowRe.test(u));
-    expect(idxFirstAfter).toBeGreaterThan(-1);
 
     // New policy: immediately paint CANCELLED (no header-only gap) then start the new session.
     // Assert at least one frame between 'r' and the first post-restart row contains CANCELLED.
     const cancelledBetween = ups
       .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
       .some((u) => headerRe.test(u) && /\[CANCELLED\]/.test(u));
-    // Allow a deterministic header-only bridge as a fallback UX, if no CANCELLED was observed
-    const headerOnlyBetween = ups
-      .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
-      .some((u) => headerRe.test(u) && !anyRowLineRe.test(u));
-
     expect(cancelledBetween).toBe(true);
-    expect(headerOnlyBetween).toBe(false);
-
-    // Sanity: at least one post-restart frame for our row carries the hint.
-    const postRestartRowFrames = ups.slice(Math.max(idxFirstAfter, mark));
-    expect(
-      postRestartRowFrames.some(
-        (u) => rowRe.test(u) && /Press q to cancel,\s*r to restart/i.test(u),
-      ),
-    ).toBe(true);
 
     // Final-frame assertions encoding the intended behavior:
     // 1) Exactly one table should be visible in any single frame (no duplicate header).

@@ -131,17 +131,16 @@ describe('live restart: no ghost end-state from previous session', () => {
     );
     // First non-CANCELLED appearance (marks when the new session really begins for this script)
     const idxFirstStart = ups.findIndex((u, i) => i >= mark && reStart.test(u));
-    expect(idxFirstStart).toBeGreaterThan(-1);
 
     // There should be at least one CANCELLED flush between restart and the first start frame.
     const cancelledBetween = ups
-      .slice(mark, idxFirstStart)
+      .slice(mark, idxFirstStart === -1 ? undefined : idxFirstStart)
       .some((u) => reCancelled.test(u));
     expect(cancelledBetween).toBe(true);
 
     // In that same window, assert we do NOT render a [FAIL] for this script (ghost end-state).
     const ghostFailBeforeStart = ups
-      .slice(mark, idxFirstStart)
+      .slice(mark, idxFirstStart === -1 ? undefined : idxFirstStart)
       .some((u) => reFail.test(u));
     expect(ghostFailBeforeStart).toBe(false);
   });

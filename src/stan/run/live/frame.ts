@@ -94,9 +94,10 @@ export const composeFrameBody = (args: {
   const summary = renderSummary(elapsed, counts, boring);
   const hint = includeHint ? `\n${hintLine(uiId)}` : '';
 
-  // Keep a leading blank line and a padding blank line for stability.
+  // Leading blank line before table; exactly one blank line between table and summary;
+  // final frame ends with a single newline (no extra pad lines).
   const raw = `${strippedTable.trimEnd()}\n\n${summary}${hint}`;
-  const body = `\n${raw}\n \n`;
+  const body = `\n${raw}\n`;
 
   // Minimal debug sanity when enabled (never throws)
   if (process.env.STAN_LIVE_DEBUG === '1') {

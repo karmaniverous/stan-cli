@@ -19,11 +19,8 @@ When updated: 2025-10-09 (UTC)
 ### Completed (recent)
 
 - Patch service decomposition & policy enforcement
-  - Decomposed patch orchestrator into small helpers:
-    src/stan/patch/{input.ts,diff.ts,diagnostics.ts,editor.ts,status.ts}.
-  - FO vs Diff classification:
-    • File Ops patches are FO-only; presence of diff content is rejected.
-    • Diff patches are single-file only; multi-file diffs are rejected with a clear envelope.
+  - Decomposed patch orchestrator into small helpers: src/stan/patch/{input.ts,diff.ts,diagnostics.ts,editor.ts,status.ts}.
+  - FO vs Diff classification: • File Ops patches are FO-only; presence of diff content is rejected. • Diff patches are single-file only; multi-file diffs are rejected with a clear envelope.
   - FO-only path executes/validates File Ops (dry-run under --check) and returns concise status.
   - Persist raw patch body to .stan/patch/.patch for FO auditability.
   - Diagnostics envelopes now list declared files/targets up front for clarity.
@@ -35,15 +32,14 @@ When updated: 2025-10-09 (UTC)
   - Kept module sizes small and policy‑aligned.
 
 - Patch UX: open modified files after successful apply
-  - After a successful `stan patch` (non-`--check`), open each modified file in the configured editor
-    via `patchOpenCommand` (default `code -g {file}`), detached and best‑effort.  - Skips in tests or when `STAN_OPEN_EDITOR=0` is set; failures are ignored.
+  - After a successful `stan patch` (non-`--check`), open each modified file in the configured editor via `patchOpenCommand` (default `code -g {file}`), detached and best‑effort. - Skips in tests or when `STAN_OPEN_EDITOR=0` is set; failures are ignored.
 
 - Anchored writer: first-frame newline and stable finalization
   - First paint writes the composed body “as-is” (no CR prefix) so the frame begins with a literal leading newline after ANSI stripping (fixes alignment test).
   - Subsequent paints continue per-line CR + CSI K clears only; scrollback remains intact. Finalization persists a hintless table.
 - Tests aligned to no-bridge policy and repaint stability
   - live.footer trailing-newline test: assert at least one active (WAIT|RUN) repaint with hint (reduced sensitivity to timing), and no hint in final frame.
-  - live.restart.* tests: detect active frames via WAIT|RUN and assert a CANCELLED flush appears between restart and the next session; avoid header-only bridge expectations.
+  - live.restart.\* tests: detect active frames via WAIT|RUN and assert a CANCELLED flush appears between restart and the next session; avoid header-only bridge expectations.
 
 - Anchored Writer (extractable module) and final UX
   - Replaced log-update with a content-agnostic writer at src/anchored-writer (per-line CR+CSI K updates; no alt-screen; hides cursor).
