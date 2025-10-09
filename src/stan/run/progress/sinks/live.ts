@@ -49,46 +49,21 @@ export class LiveSink {
     this.stopped = true;
 
     try {
-      const r = this.renderer as unknown as {
-        finalize?: (k: 'full') => void;
-      };
+      const r = this.renderer as unknown as { finalize?: () => void };
       // Always finalize full; renderer will suppress hint for the final frame.
       if (typeof r?.finalize === 'function') {
         this.dbg('stop() finalize(full)');
-        r.finalize?.('full');
+        r.finalize?.();
       }
     } catch {
       /* ignore */
     }
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
-  }
-  /** Force an immediate render of the current table state (no stop/clear). */
+  } /** Force an immediate render of the current table state (no stop/clear). */
   flushNow(): void {
     try {
       this.renderer?.flush();
-    } catch {
-      /* ignore */
-    }
-  }
-
-  /** Render a deterministic header-only frame (includes the hint). */
-  showHeaderOnly(): void {
-    try {
-      (
-        this.renderer as unknown as { showHeaderOnly?: () => void }
-      )?.showHeaderOnly?.();
-    } catch {
-      /* ignore */
-    }
-  }
-
-  /** Clear immediately (used on restart). */
-  clear(): void {
-    try {
-      this.dbg('clear()');
-      (this.renderer as unknown as { clear?: () => void })?.clear?.();
-      this.renderer?.stop();
     } catch {
       /* ignore */
     }
@@ -99,6 +74,16 @@ export class LiveSink {
     try {
       this.dbg('resetForRestart()');
       (this.renderer as unknown as { resetRows?: () => void })?.resetRows?.();
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Reset elapsed-time epoch for summary timer on restart. */
+  resetElapsed(): void {
+    try {
+      (
+        this.renderer as unknown as { resetElapsed?: () => void }
+      )?.resetElapsed?.();
     } catch {
       /* ignore */
     }

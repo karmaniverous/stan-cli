@@ -6,6 +6,7 @@ import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runSelected } from '@/stan/run';
+import { stripAnsi } from '@/stan/run/live/format';
 
 // Mock tar to keep runs light-weight
 vi.mock('tar', () => ({
@@ -71,10 +72,11 @@ describe('live renderer alignment (two-space indent)', () => {
       live: true,
     });
 
-    const printed = writeSpy.mock.calls.map((c) => String(c[0])).join('');
+    const printedRaw = writeSpy.mock.calls.map((c) => String(c[0])).join('');
+    // Remove ANSI/control sequences for layout assertions
+    const printed = stripAnsi(printedRaw);
     // Leading blank line separates from the prior shell prompt
-    expect(printed.startsWith('\n')).toBe(true);
-    // Header row is flush-left (no two-space indent)
+    expect(printed.startsWith('\n')).toBe(true); // Header row is flush-left (no two-space indent)
     const hasHeader = /(?:^|\n)Type\s+Item\s+Status/m.test(printed);
     expect(hasHeader).toBe(true);
     // Summary and hint are also flush-left

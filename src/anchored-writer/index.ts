@@ -22,17 +22,19 @@ export const createAnchoredWriter = (): AnchoredWriter => {
   let lastLines = 0;
 
   const writeLines = (lines: string[]): void => {
+    let buf = '';
     // Move to the top of previous frame (beginning of line)
-    if (lastLines > 0) out.write(moveUpToBOL(lastLines));
+    if (lastLines > 0) buf += moveUpToBOL(lastLines);
     // Rewrite each line with CR + erase-to-EOL + content + newline
     for (const line of lines) {
-      out.write(`\r${eraseToEOL}${line}\n`);
+      buf += `\r${eraseToEOL}${line}\n`;
     }
     // If the new frame is shorter, blank out remaining old lines
     const extra = lastLines - lines.length;
     for (let i = 0; i < extra; i += 1) {
-      out.write(`\r${eraseToEOL}\n`);
+      buf += `\r${eraseToEOL}\n`;
     }
+    out.write(buf);
     lastLines = lines.length;
   };
 
@@ -58,10 +60,12 @@ export const createAnchoredWriter = (): AnchoredWriter => {
     clear(): void {
       try {
         // Blank the current frame area (without moving outside it)
-        if (lastLines > 0) out.write(moveUpToBOL(lastLines));
+        let buf = '';
+        if (lastLines > 0) buf += moveUpToBOL(lastLines);
         for (let i = 0; i < lastLines; i += 1) {
-          out.write(`\r${eraseToEOL}\n`);
+          buf += `\r${eraseToEOL}\n`;
         }
+        out.write(buf);
         lastLines = 0;
       } catch {
         /* best-effort */

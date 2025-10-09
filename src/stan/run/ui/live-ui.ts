@@ -119,6 +119,12 @@ export class LiveUI implements RunnerUI {
     } catch {
       /* ignore */
     }
+    // Reset elapsed timer for a subsequent restart session.
+    try {
+      (this.sink as unknown as { resetElapsed?: () => void })?.resetElapsed?.();
+    } catch {
+      /* ignore */
+    }
     try {
       if (mode === 'restart') {
         liveTrace.session.info(

@@ -1,14 +1,13 @@
 /* src/stan/run/live/renderer.ts
  * TTY live progress rendering (ProgressRenderer).
+ * Decomposed: the frame string composition is in ./frame.ts.
  */
 let __UI_COUNTER = 1;
 
 import { type AnchoredWriter, createAnchoredWriter } from '@/anchored-writer';
 import { liveTrace } from '@/stan/run/live/trace';
-import { renderSummary } from '@/stan/run/summary';
 
-import { label } from '../labels';
-import { bodyTable, fmtMs, headerCells, hintLine, stripAnsi } from './format';
+import { composeFrameBody } from './frame';
 import type { RowMeta, ScriptState } from './types';
 import { computeCounts, deriveMetaFromKey } from './util';
 
@@ -22,14 +21,12 @@ export class ProgressRenderer {
     boring: boolean;
     refreshMs: number;
   };
-  // Monotonic frame counter for correlation
   private frameNo = 0;
   private timer?: NodeJS.Timeout;
-  private readonly startedAt = now();
-  /** Anchored writer (per-line clears; no alt-screen; hides cursor). */
+  private startedAt = now();
   private writer: AnchoredWriter | null = null;
-  // Test-only: stable instance tag for restart-dedup tests (enabled when STAN_TEST_UI_TAG=1)
   private readonly uiId: number;
+
   constructor(args?: { boring?: boolean; refreshMs?: number }) {
     this.opts = {
       boring: Boolean(args?.boring),
@@ -38,30 +35,30 @@ export class ProgressRenderer {
     this.uiId = __UI_COUNTER++;
   }
 
+  /** Reset the elapsed-time epoch (used on live restart). */
+  public resetElapsed(): void {
+    this.startedAt = now();
+    this.frameNo = 0;
+  }
+
   /**
-   * Atomically persist the final frame:
-   * - stop the interval,
-   * - render the selected final body,
-   * - and signal done().
-   * Prevents a timer tick from interleaving with the last render.
+   * Persist the final frame (no hint) and stop.
+   * Stop interval first so no tick can overwrite the final frame.
    */
   public finalize(): void {
-    // Stop interval first so no tick can overwrite the final frame.
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
 
-    // Always persist the final table; UI no longer uses header-only bridges.
-    // Suppress hint in the final frame per requirements.
     this.renderFinalNoHint();
-    // Mark done.
+
     liveTrace.renderer.stop();
     liveTrace.renderer.done();
     this.writer?.done();
   }
 
-  /** Render one final frame (no stop/persist). */ public flush(): void {
+  /** Force an immediate render of the current table state (no stop/clear). */
+  public flush(): void {
     liveTrace.renderer.flush();
-    // Paint now to show current state...
     this.render();
   }
 
@@ -70,119 +67,7 @@ export class ProgressRenderer {
     this.rows.clear();
   }
 
-  // Compose and write a final frame without the hint line (leading/trailing blanks preserved).
-  private renderFinalNoHint(): void {
-    const header = headerCells();
-    const rows: string[][] = [];
-    rows.push(header);
-    if (this.rows.size === 0) {
-      const elapsed = fmtMs(now() - this.startedAt);
-      rows.push(['—', '—', this.opts.boring ? '[IDLE]' : 'idle', elapsed, '']);
-    } else {
-      const all = Array.from(this.rows.values());
-      const grouped = [
-        ...all.filter((r) => r.type === 'script'),
-        ...all.filter((r) => r.type === 'archive'),
-      ];
-      for (const row of grouped) {
-        const st = row.state;
-        let time = '';
-        if (
-          st.kind === 'running' ||
-          st.kind === 'quiet' ||
-          st.kind === 'stalled'
-        ) {
-          time = fmtMs(now() - (st as { startedAt: number }).startedAt);
-        } else if (
-          'durationMs' in st &&
-          typeof (st as { durationMs?: number }).durationMs === 'number'
-        ) {
-          time = fmtMs((st as { durationMs: number }).durationMs);
-        }
-        const out =
-          st.kind === 'done' ||
-          st.kind === 'error' ||
-          st.kind === 'timedout' ||
-          st.kind === 'cancelled' ||
-          st.kind === 'killed'
-            ? (st.outputPath ?? '')
-            : '';
-        const kind =
-          st.kind === 'warn'
-            ? 'warn'
-            : st.kind === 'waiting'
-              ? 'waiting'
-              : st.kind === 'running'
-                ? 'run'
-                : st.kind === 'quiet'
-                  ? 'quiet'
-                  : st.kind === 'stalled'
-                    ? 'stalled'
-                    : st.kind === 'done'
-                      ? 'ok'
-                      : st.kind === 'error'
-                        ? 'error'
-                        : st.kind === 'timedout'
-                          ? 'timeout'
-                          : st.kind === 'cancelled'
-                            ? 'cancelled'
-                            : 'killed';
-        rows.push([row.type, row.item, label(kind), time, out ?? '']);
-      }
-    }
-    const tableStr = bodyTable(rows);
-    const strippedTable = tableStr
-      .split('\n')
-      .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
-      .join('\n');
-    const elapsed = fmtMs(now() - this.startedAt);
-    const counts = computeCounts(this.rows.values());
-    const summary = renderSummary(elapsed, counts, this.opts.boring);
-    const raw = `${strippedTable.trimEnd()}\n\n${summary}`;
-    const body = `\n${raw}\n \n`; // leading + trailing blank/pad
-    this.writer?.write(body);
-  }
-
-  /** (Retained for completeness; UI no longer calls this.) */
-  public showHeaderOnly(): void {
-    // Render header without rows (header-only), then persist with hint (legacy path, not used).
-    liveTrace.renderer.headerOnly({});
-    this.frameNo += 1;
-    const header = headerCells();
-    const stripped = bodyTable([header])
-      .split('\n')
-      .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
-      .join('\n')
-      .trimEnd();
-    // Footer: summary + hint (adjacent), matching the regular render shape.
-    const elapsed = fmtMs(now() - this.startedAt);
-    const counts = computeCounts(this.rows.values());
-    const summary = renderSummary(elapsed, counts, this.opts.boring);
-    const hint = hintLine(this.uiId);
-
-    // Safety pad (single space) line after the hint to absorb terminal over-clear.
-    const body = `\n${stripped}\n\n${summary}\n${hint}\n \n`;
-
-    // ANSI-safe debug summary for this header-only frame
-    if (liveTrace.enabled) {
-      try {
-        const plain = stripAnsi(body);
-        const headerRe =
-          /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
-        const headerCount = (plain.match(headerRe) ?? []).length;
-        const hasHint = /Press q to cancel,\s*r to restart/.test(plain);
-        liveTrace.renderer.headerOnly({
-          frameNo: this.frameNo,
-          headerCount,
-          hasHint,
-        });
-      } catch {
-        /* ignore */
-      }
-    }
-    this.writer?.write(body);
-  }
-
+  /** Start periodic rendering. */
   start(): void {
     liveTrace.renderer.start({ refreshMs: this.opts.refreshMs });
     if (this.timer) return;
@@ -190,6 +75,7 @@ export class ProgressRenderer {
     this.writer.start();
     this.timer = setInterval(() => this.render(), this.opts.refreshMs);
   }
+
   /** Clear any rendered output without persisting it. */
   public clear(): void {
     liveTrace.renderer.clear();
@@ -269,100 +155,40 @@ export class ProgressRenderer {
     }
   }
 
+  /** Compose + write a final frame without the hint (leading/trailing blanks preserved). */
+  private renderFinalNoHint(): void {
+    const body = composeFrameBody({
+      rows: Array.from(this.rows.values()),
+      startedAt: this.startedAt,
+      boring: this.opts.boring,
+      uiId: this.uiId,
+      includeHint: false,
+    });
+    this.writer?.write(body);
+  }
+
+  /** Compose + write a normal frame (includes the hint). */
   private render(): void {
-    const header = headerCells();
-    const rows: string[][] = [];
-    rows.push(header);
-    if (this.rows.size === 0) {
-      const elapsed = fmtMs(now() - this.startedAt);
-      rows.push(['—', '—', this.opts.boring ? '[IDLE]' : 'idle', elapsed, '']);
-    } else {
-      const all = Array.from(this.rows.values());
-      const grouped = [
-        ...all.filter((r) => r.type === 'script'),
-        ...all.filter((r) => r.type === 'archive'),
-      ];
-      for (const row of grouped) {
-        const st = row.state;
-        let time = '';
-        if (
-          st.kind === 'running' ||
-          st.kind === 'quiet' ||
-          st.kind === 'stalled'
-        ) {
-          time = fmtMs(now() - st.startedAt);
-        } else if (
-          'durationMs' in st &&
-          typeof (st as { durationMs?: number }).durationMs === 'number'
-        ) {
-          time = fmtMs((st as { durationMs: number }).durationMs);
-        } else {
-          time = '';
-        }
+    const body = composeFrameBody({
+      rows: Array.from(this.rows.values()),
+      startedAt: this.startedAt,
+      boring: this.opts.boring,
+      uiId: this.uiId,
+      includeHint: true,
+    });
 
-        const out =
-          st.kind === 'done' ||
-          st.kind === 'error' ||
-          st.kind === 'timedout' ||
-          st.kind === 'cancelled' ||
-          st.kind === 'killed'
-            ? (st.outputPath ?? '')
-            : '';
-
-        const kind =
-          st.kind === 'warn'
-            ? 'warn'
-            : st.kind === 'waiting'
-              ? 'waiting'
-              : st.kind === 'running'
-                ? 'run'
-                : st.kind === 'quiet'
-                  ? 'quiet'
-                  : st.kind === 'stalled'
-                    ? 'stalled'
-                    : st.kind === 'done'
-                      ? 'ok'
-                      : st.kind === 'error'
-                        ? 'error'
-                        : st.kind === 'timedout'
-                          ? 'timeout'
-                          : st.kind === 'cancelled'
-                            ? 'cancelled'
-                            : 'killed';
-        rows.push([row.type, row.item, label(kind), time, out ?? '']);
-      }
-    }
-
-    const tableStr = bodyTable(rows);
-
-    const strippedTable = tableStr
-      .split('\n')
-      .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
-      .join('\n');
-
-    const elapsed = fmtMs(now() - this.startedAt);
-    const counts = computeCounts(this.rows.values());
-    const summary = renderSummary(elapsed, counts, this.opts.boring);
-    const hint = hintLine(this.uiId);
-    const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
-    // Safety pad: keep a non-empty blank line below the hint so the terminal
-    // cannot clip the hint when repainting/clearing.
-    const body = `\n${raw}\n \n`;
     this.frameNo += 1;
     if (liveTrace.enabled) {
       try {
-        const plain = stripAnsi(body);
-        const headerRe =
-          /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
-        const headerMatches = (plain.match(headerRe) ?? []).length;
-        const hasHint = /Press q to cancel,\s*r to restart/.test(plain);
+        // Keep basic debug info; detailed header/hint checks remain in composer.
+        const counts = computeCounts(this.rows.values());
         const keys = Array.from(this.rows.keys()).slice(0, 5);
         liveTrace.renderer.render({
           frameNo: this.frameNo,
           rowsSize: this.rows.size,
           keys,
-          headerCount: headerMatches,
-          hasHint,
+          headerCount: 1, // table composer emits exactly one header row
+          hasHint: true,
           counts,
         });
       } catch {

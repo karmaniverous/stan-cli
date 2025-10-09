@@ -258,6 +258,12 @@ export class LiveUI implements RunnerUI {
       /* ignore */
     }
     try {
+      // Reset elapsed summary timer for the next session.
+      (this.sink as unknown as { resetElapsed?: () => void })?.resetElapsed?.();
+    } catch {
+      /* ignore */
+    }
+    try {
       // Drop renderer rows so the first new frame shows the next session only.
       (
         this.sink as unknown as { resetForRestart?: () => void }
