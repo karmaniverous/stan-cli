@@ -89,9 +89,7 @@ export class LoggerUI implements RunnerUI {
     this.model.update(`script:${key}`, st, { type: 'script', item: key });
   }
   onArchiveQueued(): void {
-    // Emit a waiting row for visual parity with live.
-    // Label resolution occurs in the sink.
-    return;
+    // logger mode renders per-event lines only
   }
   onArchiveStart(kind: ArchiveKind): void {
     const item = kind === 'full' ? 'full' : 'diff';
@@ -110,14 +108,8 @@ export class LoggerUI implements RunnerUI {
       { type: 'archive', item },
     );
   }
-  onCancelled(mode?: 'cancel' | 'restart'): void {
-    void mode;
-    // no-op (session handles SIGINT; no TTY keys in logger mode)
-  }
-  installCancellation(triggerCancel: () => void): void {
-    // no-op: non-live mode relies on session-level SIGINT handling.
-    void triggerCancel;
-  }
+  onCancelled(): void {}
+  installCancellation(): void {}
   stop(): void {
     this.sink.stop();
   }
@@ -128,6 +120,8 @@ export class LiveUI implements RunnerUI {
   private control: RunnerControl | null = null;
   private readonly model = new ProgressModel();
   private readonly sink: LiveSink;
+  /** Idempotency guard for stop(). */
+  private stopped = false;
 
   constructor(private readonly opts?: { boring?: boolean }) {
     this.sink = new LiveSink(this.model, { boring: Boolean(opts?.boring) });
@@ -135,6 +129,8 @@ export class LiveUI implements RunnerUI {
 
   start(): void {
     liveTrace.ui.start();
+    // Reset idempotency guard on each session start.
+    this.stopped = false;
     if (!this.renderer) {
       this.sink.start();
       // Keep a renderer reference only for cancel/clear calls routed via sink.
@@ -227,32 +223,33 @@ export class LiveUI implements RunnerUI {
   }
   /**
    * Tear down live rendering on cancellation.
-   * - mode === 'cancel' (default): persist the final frame (do not clear).
-   * - mode === 'restart': roll back to header and persist, so the next run reuses
-   *   the same UI area without a flash.
+   * - mode === 'cancel' (default): persist a header-only bridge (with hint).
+   * - mode === 'restart': drop prior rows, render header-only bridge, keep area for next session.
    */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
     liveTrace.ui.onCancelled(mode);
-    try {
-      (
-        this.sink as unknown as { cancelPending?: () => void }
-      )?.cancelPending?.();
-    } catch {
-      /* ignore */
-    }
     try {
       if (mode === 'restart') {
         liveTrace.session.info(
           'restart: detach keys + render header-only bridge',
         );
-        // Restart: keep the same renderer/sink alive and reuse the drawing area.
-        // Detach key handlers so next session can re-attach cleanly.
+        // Restart:
+        // - Do NOT paint "cancelled" rows.
+        // - Detach key handlers so next session can re-attach cleanly.
+        // - Reset renderer rows so the next full table reflects the new session only.
         try {
           this.control?.detach();
         } catch {
           /* ignore */
         }
         this.control = null;
+        try {
+          (
+            this.sink as unknown as { resetForRestart?: () => void }
+          )?.resetForRestart?.();
+        } catch {
+          /* ignore */
+        }
         // Render a single header-only frame to bridge the restart boundary,
         // without clearing/stopping. The next session will reuse the same area.
         try {
@@ -263,9 +260,9 @@ export class LiveUI implements RunnerUI {
           /* ignore */
         }
       } else {
-        // cancel: persist final frame (log-update done via stop)
+        // cancel: persist a header-only bridge (keep area + hint)
         liveTrace.ui.stop();
-        this.sink.stop();
+        this.sink.stop({ headerOnly: true });
       }
     } catch {
       /* ignore */
@@ -288,8 +285,13 @@ export class LiveUI implements RunnerUI {
     }
   }
   stop(): void {
+    if (this.stopped) {
+      return;
+    }
+    this.stopped = true;
     liveTrace.ui.stop();
     try {
+      // Normal completion: persist final full table.
       this.sink.stop();
     } catch {
       /* ignore */

@@ -40,7 +40,7 @@ export class LiveSink {
   }
 
   /** Persist the final frame (without clearing). */
-  stop(): void {
+  stop(opts?: { headerOnly?: boolean }): void {
     // Idempotent: no-op on late/double stops (e.g., exit hook after manual cancel).
     if (this.stopped) {
       this.dbg('stop():already-stopped');
@@ -50,20 +50,22 @@ export class LiveSink {
 
     try {
       this.dbg('stop() flush+done');
-      // Two-step final persist for deterministic tests and UX:
-      // 1) flush the full table once (shows final states),
-      // 2) persist a header-only bridge with the hint so the last update body has exactly one header line.
+      // Final-frame policy:
+      // - Normal completion (default): persist the final full table (rows+summary+hint).
+      // - Cancellation paths: headerOnly=true to persist a header-only bridge with the hint.
       try {
         this.renderer?.flush();
       } catch {
         /* ignore */
       }
-      try {
-        (
-          this.renderer as unknown as { showHeaderOnly?: () => void }
-        )?.showHeaderOnly?.();
-      } catch {
-        /* ignore */
+      if (opts?.headerOnly) {
+        try {
+          (
+            this.renderer as unknown as { showHeaderOnly?: () => void }
+          )?.showHeaderOnly?.();
+        } catch {
+          /* ignore */
+        }
       }
       this.renderer?.stop();
     } catch {
@@ -79,6 +81,16 @@ export class LiveSink {
       this.dbg('clear()');
       (this.renderer as unknown as { clear?: () => void })?.clear?.();
       this.renderer?.stop();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Restart bridge: drop prior rows so the next full table reflects the new session only. */
+  resetForRestart(): void {
+    try {
+      this.dbg('resetForRestart()');
+      (this.renderer as unknown as { resetRows?: () => void })?.resetRows?.();
     } catch {
       /* ignore */
     }

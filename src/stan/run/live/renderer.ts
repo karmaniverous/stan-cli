@@ -41,10 +41,13 @@ export class ProgressRenderer {
     liveTrace.renderer.flush();
     this.render();
   }
+  /** Drop all row state (restart bridge). */
+  public resetRows(): void {
+    this.rows.clear();
+  }
   /**
    * Render only the header row and persist it (no idle row, no summary/hint).
-   * Useful for live restarts to keep the table scaffolding in place.
-   */
+   * Useful for live restarts to keep the table scaffolding in place.   */
   public showHeaderOnly(): void {
     liveTrace.renderer.headerOnly({});
     this.frameNo += 1;
