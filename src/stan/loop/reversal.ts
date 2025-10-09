@@ -25,7 +25,7 @@ export const confirmLoopReversal = async (): Promise<boolean> => {
   // - choices: always call dim(); BORING/non‑TTY yields plain text
   const token = warn('⚠︎');
   const choices = dim('(Y/n)');
-  const msg = `stan: ${token} loop reversal detected! Continue? ${choices} `;
+  const msg = `stan: ${token} Loop reversal detected! Continue? ${choices} `;
 
   const rl = readline.createInterface({
     input: process.stdin,

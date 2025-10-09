@@ -125,7 +125,7 @@ describe('live restart: no ghost end-state from previous session', () => {
       calls.filter(
         (c): c is { type: 'update'; body: string } => c.type === 'update',
       );
-    const rowRe = new RegExp(`(?:^|\\n)script\\s+${FAIL_KEY}\\s+`);
+    const rowRe = new RegExp(`(?:^|\\n)script\\s+${FAIL_KEY}\\s+`, 'i');
 
     // Wait until FAIL_KEY is running in the first session.
     await waitUntil(
@@ -146,22 +146,40 @@ describe('live restart: no ghost end-state from previous session', () => {
     // Await the full run to finish (second session completes too).
     await p;
 
-    // Analyze frames between the restart marker and the first appearance of FAIL_KEY in the new session.
+    // Analyze frames strictly between the restart marker and the first time
+    // the script is actually re-queued/re-started in the new session (WAIT or RUN).
     const ups = updates();
-    // First frame for FAIL_KEY after restart (could be [WAIT] or [RUN])
-    const idxFirstRowAfter = ups.findIndex(
-      (u, i) => i >= mark && rowRe.test(u.body),
+    const reStart = new RegExp(
+      `(?:^|\\n)script\\s+${FAIL_KEY}\\s+\\[(WAIT|RUN)\\]`,
+      'i',
     );
-    expect(idxFirstRowAfter).toBeGreaterThan(-1);
+    const reCancelled = new RegExp(
+      `(?:^|\\n)script\\s+${FAIL_KEY}\\s+\\[CANCELLED\\]`,
+      'i',
+    );
+    const reFail = new RegExp(
+      `(?:^|\\n)script\\s+${FAIL_KEY}\\s+\\[FAIL\\]`,
+      'i',
+    );
+    // First non-CANCELLED appearance (marks when the new session really begins for this script)
+    const idxFirstStart = ups.findIndex(
+      (u, i) => i >= mark && reStart.test(u.body),
+    );
+    expect(idxFirstStart).toBeGreaterThan(-1);
 
-    // In the slice strictly between restart mark and the first post-restart row frame,
-    // assert we do NOT render a [FAIL] for this script (ghost end-state).
-    const ghostFailBeforeRow = ups
-      .slice(mark, idxFirstRowAfter)
-      .some((u) => rowRe.test(u.body) && /\[FAIL\]/.test(u.body));
+    // There should be at least one CANCELLED flush between restart and the first start frame.
+    const cancelledBetween = ups
+      .slice(mark, idxFirstStart)
+      .some((u) => reCancelled.test(u.body));
+    expect(cancelledBetween).toBe(true);
+
+    // In that same window, assert we do NOT render a [FAIL] for this script (ghost end-state).
+    const ghostFailBeforeStart = ups
+      .slice(mark, idxFirstStart)
+      .some((u) => reFail.test(u.body));
 
     // EXPECTED (intended fix): false
     // CURRENT (buggy): often true, due to stale onEnd from the previous session.
-    expect(ghostFailBeforeRow).toBe(false);
+    expect(ghostFailBeforeStart).toBe(false);
   });
 });

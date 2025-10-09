@@ -1,6 +1,6 @@
 # STAN Development Plan
 
-When updated: 2025-10-05 (UTC)
+When updated: 2025-10-09 (UTC)
 
 This plan tracks near‑term and follow‑through work for the stan‑core engine only. CLI/runner tasks are managed in the stan‑cli repository.
 
@@ -16,10 +16,14 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 ---
 
 ## Completed (recent)
+- System prompt — diagnostics clarity (polish)
+  - Quick Reference rule #6 now explicitly distinguishes normal replies (patches by default; listings on request) from diagnostics replies (Full Listings only; no patches).
+  - Added a one‑sentence definition of “post‑patch listing” in the patch‑failure follow‑up: listings MUST reflect the target state implied by the failed hunks; never print the original body.
+
+-
 - System prompt — diagnostics clarity
   - Removed legacy wording that implied Full Listings are “optional on request”
-    for patch‑failure replies. Response Format now explicitly scopes “optional
-    listings” to normal replies only and makes diagnostics listings mandatory (no
+    for patch‑failure replies. Response Format now explicitly scopes “optional    listings” to normal replies only and makes diagnostics listings mandatory (no
     patches, union across envelopes, no commit message). Quick rules now call
     this out explicitly alongside the 300‑LOC decomposition pivot for listings.
 

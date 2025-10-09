@@ -3,6 +3,7 @@
 When updated: 2025-10-09 (UTC)
 
 ## This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
+
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
@@ -71,6 +72,10 @@ When updated: 2025-10-09 (UTC)
 
 ## Completed (recent)
 
+- Add failing test to pin “ghost FAIL after restart” regression
+  - New test: src/stan/run/live.restart.ghost-fail.test.ts
+  - Tightened assertion window: from the restart marker to the first post‑restart [WAIT]/[RUN] frame for the script (real start in the new session). Asserts: • a CANCELLED flush appears in that window, and • no [FAIL] appears in that window (ghost end-state).
+  - Next step: implement session‑token guard and/or restart‑time cancellation keys so stale onEnd from the previous session cannot render [FAIL] in the new session.
 - Restart UX follow-up:
   - On restart (‘r’), immediately paint all in‑flight and waiting scripts as CANCELLED and flush, keeping the table and hint visible while processes terminate (no empty table).
   - Just before the next session queues rows, clear prior rows and flush after queue so the first frame shows the new run/waiting rows nearly instantly.
