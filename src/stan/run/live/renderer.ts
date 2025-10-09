@@ -3,6 +3,7 @@
  */
 let __UI_COUNTER = 1;
 
+import { type AnchoredWriter, createAnchoredWriter } from '@/anchored-writer';
 import { liveTrace } from '@/stan/run/live/trace';
 import { renderSummary } from '@/stan/run/summary';
 
@@ -10,7 +11,6 @@ import { label } from '../labels';
 import { bodyTable, fmtMs, headerCells, hintLine, stripAnsi } from './format';
 import type { RowMeta, ScriptState } from './types';
 import { computeCounts, deriveMetaFromKey } from './util';
-import { createWriter, type Writer } from './writer';
 
 type InternalState = ScriptState & { outputPath?: string };
 type Row = RowMeta & { state: InternalState };
@@ -26,11 +26,10 @@ export class ProgressRenderer {
   private frameNo = 0;
   private timer?: NodeJS.Timeout;
   private readonly startedAt = now();
-  /** Full-clear writer (cursor-home + erase-down per frame). */
-  private writer: Writer | null = null;
+  /** Anchored writer (per-line clears; no alt-screen; hides cursor). */
+  private writer: AnchoredWriter | null = null;
   // Test-only: stable instance tag for restart-dedup tests (enabled when STAN_TEST_UI_TAG=1)
   private readonly uiId: number;
-
   constructor(args?: { boring?: boolean; refreshMs?: number }) {
     this.opts = {
       boring: Boolean(args?.boring),
@@ -46,26 +45,21 @@ export class ProgressRenderer {
    * - and signal done().
    * Prevents a timer tick from interleaving with the last render.
    */
-  public finalize(kind: 'header-only' | 'full'): void {
+  public finalize(): void {
     // Stop interval first so no tick can overwrite the final frame.
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
 
-    if (kind === 'header-only') {
-      // Render header + footer (summary+hint) bridge.
-      this.showHeaderOnly();
-    } else {
-      // Render full table + footer.
-      this.render();
-    }
+    // Always persist the final table; UI no longer uses header-only bridges.
+    // Suppress hint in the final frame per requirements.
+    this.renderFinalNoHint();
     // Mark done.
     liveTrace.renderer.stop();
     liveTrace.renderer.done();
     this.writer?.done();
   }
 
-  /** Render one final frame (no stop/persist). */
-  public flush(): void {
+  /** Render one final frame (no stop/persist). */ public flush(): void {
     liveTrace.renderer.flush();
     // Paint now to show current state...
     this.render();
@@ -76,11 +70,82 @@ export class ProgressRenderer {
     this.rows.clear();
   }
 
-  /**
-   * Render only the header row and persist it (bridge frame).
-   * Footer policy: include summary and hint together so they remain adjacent.
-   */
+  // Compose and write a final frame without the hint line (leading/trailing blanks preserved).
+  private renderFinalNoHint(): void {
+    const header = headerCells();
+    const rows: string[][] = [];
+    rows.push(header);
+    if (this.rows.size === 0) {
+      const elapsed = fmtMs(now() - this.startedAt);
+      rows.push(['—', '—', this.opts.boring ? '[IDLE]' : 'idle', elapsed, '']);
+    } else {
+      const all = Array.from(this.rows.values());
+      const grouped = [
+        ...all.filter((r) => r.type === 'script'),
+        ...all.filter((r) => r.type === 'archive'),
+      ];
+      for (const row of grouped) {
+        const st = row.state;
+        let time = '';
+        if (
+          st.kind === 'running' ||
+          st.kind === 'quiet' ||
+          st.kind === 'stalled'
+        ) {
+          time = fmtMs(now() - (st as { startedAt: number }).startedAt);
+        } else if (
+          'durationMs' in st &&
+          typeof (st as { durationMs?: number }).durationMs === 'number'
+        ) {
+          time = fmtMs((st as { durationMs: number }).durationMs);
+        }
+        const out =
+          st.kind === 'done' ||
+          st.kind === 'error' ||
+          st.kind === 'timedout' ||
+          st.kind === 'cancelled' ||
+          st.kind === 'killed'
+            ? (st.outputPath ?? '')
+            : '';
+        const kind =
+          st.kind === 'warn'
+            ? 'warn'
+            : st.kind === 'waiting'
+              ? 'waiting'
+              : st.kind === 'running'
+                ? 'run'
+                : st.kind === 'quiet'
+                  ? 'quiet'
+                  : st.kind === 'stalled'
+                    ? 'stalled'
+                    : st.kind === 'done'
+                      ? 'ok'
+                      : st.kind === 'error'
+                        ? 'error'
+                        : st.kind === 'timedout'
+                          ? 'timeout'
+                          : st.kind === 'cancelled'
+                            ? 'cancelled'
+                            : 'killed';
+        rows.push([row.type, row.item, label(kind), time, out ?? '']);
+      }
+    }
+    const tableStr = bodyTable(rows);
+    const strippedTable = tableStr
+      .split('\n')
+      .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
+      .join('\n');
+    const elapsed = fmtMs(now() - this.startedAt);
+    const counts = computeCounts(this.rows.values());
+    const summary = renderSummary(elapsed, counts, this.opts.boring);
+    const raw = `${strippedTable.trimEnd()}\n\n${summary}`;
+    const body = `\n${raw}\n \n`; // leading + trailing blank/pad
+    this.writer?.write(body);
+  }
+
+  /** (Retained for completeness; UI no longer calls this.) */
   public showHeaderOnly(): void {
+    // Render header without rows (header-only), then persist with hint (legacy path, not used).
     liveTrace.renderer.headerOnly({});
     this.frameNo += 1;
     const header = headerCells();
@@ -89,7 +154,6 @@ export class ProgressRenderer {
       .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
       .join('\n')
       .trimEnd();
-
     // Footer: summary + hint (adjacent), matching the regular render shape.
     const elapsed = fmtMs(now() - this.startedAt);
     const counts = computeCounts(this.rows.values());
@@ -122,11 +186,10 @@ export class ProgressRenderer {
   start(): void {
     liveTrace.renderer.start({ refreshMs: this.opts.refreshMs });
     if (this.timer) return;
-    if (!this.writer) this.writer = createWriter();
+    if (!this.writer) this.writer = createAnchoredWriter();
     this.writer.start();
     this.timer = setInterval(() => this.render(), this.opts.refreshMs);
   }
-
   /** Clear any rendered output without persisting it. */
   public clear(): void {
     liveTrace.renderer.clear();

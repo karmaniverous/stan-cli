@@ -222,47 +222,26 @@ export class LiveUI implements RunnerUI {
   }
   /**
    * Tear down live rendering on cancellation.
-   * - mode === 'cancel' (default): persist a header-only bridge (with hint).
-   * - mode === 'restart': paint CANCELLED immediately and flush; keep table
-   *   visible while processes terminate; rows are cleared at the next session start.
+   * - mode === 'cancel' (default): persist the final table (no hint).
+   * - mode === 'restart': paint CANCELLED immediately; keep table visible while
+   *   processes terminate; rows remain until next session overwrites them.
    */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
     liveTrace.ui.onCancelled(mode);
     try {
       if (mode === 'restart') {
         liveTrace.session.info(
-          'restart: paint CANCELLED immediately, then render header-only bridge; detach keys',
+          'restart: paint CANCELLED immediately; detach keys; table remains for overwrite',
         );
-        // Restart:
-        // - Paint current and waiting scripts as CANCELLED immediately.
-        // - Render a deterministic header-only bridge (header + hint) so tests
-        //   and users always see a stable frame between sessions.
-        // - Detach key handlers so next session can re-attach cleanly.
-        try {
-          (
-            this.sink as unknown as { cancelPending?: () => void }
-          )?.cancelPending?.();
-        } catch {
-          /* ignore */
-        }
-        try {
-          (
-            this.sink as unknown as { showHeaderOnly?: () => void }
-          )?.showHeaderOnly?.();
-        } catch {
-          /* ignore */
-        }
-        try {
-          this.control?.detach();
-        } catch {
-          /* ignore */
-        }
+        (
+          this.sink as unknown as { cancelPending?: () => void }
+        )?.cancelPending?.();
+        this.control?.detach();
         this.control = null;
-        // Rows remain until next session start; no header-only gap here.
       } else {
-        // cancel: persist a header-only bridge (keep area + hint)
+        // cancel: persist final table (renderer hides hint on finalize)
         liveTrace.ui.stop();
-        this.sink.stop({ headerOnly: true });
+        this.sink.stop();
       }
     } catch {
       /* ignore */

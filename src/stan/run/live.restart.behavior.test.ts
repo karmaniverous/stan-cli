@@ -142,7 +142,8 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
       .some((u) => headerRe.test(u) && !anyRowLineRe.test(u));
 
-    expect(cancelledBetween || headerOnlyBetween).toBe(true);
+    expect(cancelledBetween).toBe(true);
+    expect(headerOnlyBetween).toBe(false);
 
     // Sanity: at least one post-restart frame for our row carries the hint.
     const postRestartRowFrames = ups.slice(Math.max(idxFirstAfter, mark));

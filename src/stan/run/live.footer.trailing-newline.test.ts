@@ -158,8 +158,8 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
         ) ?? '';
     // Final persisted frame ends with newline.
     expect(last.endsWith('\n')).toBe(true);
-    // Hint visible after stripping ANSI.
+    // Hint is hidden after completion; ensure it's not present in final frame.
     const plain = stripAnsi(last);
-    expect(/Press q to cancel,\s*r to restart/i.test(plain)).toBe(true);
+    expect(/Press q to cancel,\s*r to restart/i.test(plain)).toBe(false);
   });
 });

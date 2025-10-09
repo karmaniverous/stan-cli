@@ -122,23 +122,14 @@ export class LiveUI implements RunnerUI {
     try {
       if (mode === 'restart') {
         liveTrace.session.info(
-          'restart: detach keys + render header-only bridge',
+          'restart: detach keys; table remains for overwrite',
         );
-        try {
-          this.control?.detach();
-        } catch {
-          /* ignore */
-        }
+        this.control?.detach();
         this.control = null;
-        try {
-          (
-            this.renderer as unknown as { showHeaderOnly?: () => void }
-          )?.showHeaderOnly?.();
-        } catch {
-          /* ignore */
-        }
+        // Do not render a header-only bridge; allow table to remain and be overwritten.
       } else {
         liveTrace.ui.stop();
+        // Persist final table; renderer will hide the hint on finalize.
         this.sink.stop();
       }
     } catch {

@@ -40,7 +40,7 @@ export class LiveSink {
   }
 
   /** Persist the final frame (without clearing). */
-  stop(opts?: { headerOnly?: boolean }): void {
+  stop(): void {
     // Idempotent: no-op on late/double stops (e.g., exit hook after manual cancel).
     if (this.stopped) {
       this.dbg('stop():already-stopped');
@@ -49,36 +49,13 @@ export class LiveSink {
     this.stopped = true;
 
     try {
-      // Prefer an atomic finalize (stop timer → render final → done) when supported.
       const r = this.renderer as unknown as {
-        finalize?: (k: 'header-only' | 'full') => void;
-        flush?: () => void;
-        showHeaderOnly?: () => void;
-        stop?: () => void;
+        finalize?: (k: 'full') => void;
       };
+      // Always finalize full; renderer will suppress hint for the final frame.
       if (typeof r?.finalize === 'function') {
-        this.dbg(
-          `stop() finalize(${opts?.headerOnly ? 'header-only' : 'full'})`,
-        );
-        r.finalize?.(opts?.headerOnly ? 'header-only' : 'full');
-      } else {
-        // Legacy fallback: render first, then stop (timer may still tick once).
-        if (opts?.headerOnly) {
-          this.dbg('stop() header-only+done (fallback)');
-          try {
-            r?.showHeaderOnly?.();
-          } catch {
-            /* ignore */
-          }
-        } else {
-          this.dbg('stop() flush+done (fallback)');
-          try {
-            r?.flush?.();
-          } catch {
-            /* ignore */
-          }
-        }
-        r?.stop?.();
+        this.dbg('stop() finalize(full)');
+        r.finalize?.('full');
       }
     } catch {
       /* ignore */
@@ -86,7 +63,6 @@ export class LiveSink {
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
   }
-
   /** Force an immediate render of the current table state (no stop/clear). */
   flushNow(): void {
     try {
