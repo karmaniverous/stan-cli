@@ -54,6 +54,15 @@ export class ProgressRenderer {
     boring: boolean;
     refreshMs: number;
   };
+  private dbg(...args: unknown[]): void {
+    try {
+      if (process.env.STAN_LIVE_DEBUG === '1') {
+        console.error('[stan:live:renderer]', ...args);
+      }
+    } catch {
+      // ignore
+    }
+  }
   private timer?: NodeJS.Timeout;
   private readonly startedAt = now();
   // Test-only: stable instance tag for restart-dedup tests (enabled when STAN_TEST_UI_TAG=1)
@@ -67,6 +76,7 @@ export class ProgressRenderer {
   }
   /** Render one final frame (no stop/persist). */
   public flush(): void {
+    this.dbg('flush()');
     this.render();
   }
   /**
@@ -74,6 +84,7 @@ export class ProgressRenderer {
    * Useful for live restarts to keep the table scaffolding in place.
    */
   public showHeaderOnly(): void {
+    this.dbg('showHeaderOnly()');
     const header = ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) =>
       bold(h),
     );
@@ -116,11 +127,13 @@ export class ProgressRenderer {
     }
   }
   start(): void {
+    this.dbg('start()', { refreshMs: this.opts.refreshMs });
     if (this.timer) return;
     this.timer = setInterval(() => this.render(), this.opts.refreshMs);
   }
   /** Clear any rendered output without persisting it. */
   public clear(): void {
+    this.dbg('clear()');
     try {
       (logUpdate as unknown as { clear?: () => void }).clear?.();
     } catch {
@@ -129,8 +142,10 @@ export class ProgressRenderer {
   }
 
   stop(): void {
+    this.dbg('stop()');
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
+    this.dbg('stop():done()');
     try {
       (logUpdate as unknown as { done?: () => void }).done?.();
     } catch {
@@ -163,8 +178,12 @@ export class ProgressRenderer {
       ...resolvedMeta,
       state: { ...(prior?.state ?? {}), ...state },
     });
+    this.dbg('update()', {
+      key,
+      kind: state.kind,
+      rowsSize: this.rows.size,
+    });
   }
-
   /**
    * Mark all non‑final rows as "cancelled", preserving final values for rows
    * that are already completed (done/error/timedout/killed). For in‑flight rows,
@@ -335,6 +354,24 @@ export class ProgressRenderer {
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
     // Add a leading blank line and remove global left indent
     const body = `\n${raw}`;
+    if (process.env.STAN_LIVE_DEBUG === '1') {
+      try {
+        const headerRe =
+          /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
+        const headerMatches = (body.match(headerRe) ?? []).length;
+        const hasHint = /Press q to cancel,\s*r to restart/.test(body);
+        const keys = Array.from(this.rows.keys()).slice(0, 5);
+        this.dbg('render()', {
+          rowsSize: this.rows.size,
+          keys,
+          headerCount: headerMatches,
+          hasHint,
+          counts,
+        });
+      } catch {
+        /* ignore */
+      }
+    }
     try {
       logUpdate(body);
     } catch {
