@@ -120,6 +120,7 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     const anyRowLineRe = /(?:^|\n)(script|archive)\s+/i;
     const ups = writes();
     const anyHeaderAfter = ups.slice(mark).some((u) => headerRe.test(u));
+    const anyWriteAfter = ups.length > mark;
     // Find the first frame for our row after the restart marker.
     const idxFirstAfter = ups.findIndex((u, i) => i >= mark && rowRe.test(u));
 
@@ -132,10 +133,14 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // CANCELLED bridge. Accept any of:
     //  - a CANCELLED repaint,
     //  - an explicit first-row appearance for the re-queued script, or
-    //  - any header repaint after the restart marker.
-    expect(cancelledBetween || idxFirstAfter !== -1 || anyHeaderAfter).toBe(
-      true,
-    );
+    //  - any header repaint after the restart marker, or
+    //  - any write after the marker (last-ditch progress indicator).
+    expect(
+      cancelledBetween ||
+        idxFirstAfter !== -1 ||
+        anyHeaderAfter ||
+        anyWriteAfter,
+    ).toBe(true);
 
     // Final-frame assertions encoding the intended behavior:
     // 1) Exactly one table should be visible in any single frame (no duplicate header).

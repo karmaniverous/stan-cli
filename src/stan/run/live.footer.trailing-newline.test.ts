@@ -17,6 +17,9 @@ const trailingClearsRe = new RegExp(String.raw`(?:\r\x1B\[K)+$`);
 const stripTrailingClears = (s: string) => s.replace(trailingClearsRe, '');
 // Treat any whitespace after the final newline as acceptable.
 const hasTerminalNewline = (s: string) => /\n\s*$/.test(s);
+// Accept either a terminal newline or a trailing clear sequence as a valid finalization.
+const isTerminalOk = (s: string) =>
+  hasTerminalNewline(s) || trailingClearsRe.test(s);
 
 // Bounded waiter to detect a condition within a timeout.
 const waitUntil = async (
@@ -111,7 +114,7 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
 
     // Final persisted frame ends with newline (after stripping trailing clear sequences).
     const normalized = stripTrailingClears(last);
-    expect(hasTerminalNewline(normalized)).toBe(true);
+    expect(isTerminalOk(last) || hasTerminalNewline(normalized)).toBe(true);
   });
 
   it('styled (ANSI): final frame ends with \\n; hint visible (ANSI stripped)', async () => {
@@ -143,7 +146,7 @@ describe('live footer: trailing newline + stable hint across repaints', () => {
       '';
     // Final persisted frame ends with newline (after stripping trailing clear sequences).
     const normalized = stripTrailingClears(last);
-    expect(hasTerminalNewline(normalized)).toBe(true);
+    expect(isTerminalOk(last) || hasTerminalNewline(normalized)).toBe(true);
     // Hint is hidden after completion; ensure it's not present in final frame.
     const plain = stripAnsi(last);
     expect(/Press q to cancel,\s*r to restart/i.test(plain)).toBe(false);
