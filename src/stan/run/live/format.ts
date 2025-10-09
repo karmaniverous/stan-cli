@@ -43,9 +43,15 @@ export const bodyTable = (rows: string[][]): string =>
       joinJoin: ``,
     },
     drawHorizontalLine: () => false,
+    // Left-align all columns so headers align with their column content.
+    // (Previously the Time column was right-aligned, which shifted the "Time"
+    // header two spaces right; Output appeared one space right.)
     columns: {
-      2: { alignment: 'left' },
-      3: { alignment: 'right' },
+      0: { alignment: 'left' }, // Type
+      1: { alignment: 'left' }, // Item
+      2: { alignment: 'left' }, // Status
+      3: { alignment: 'left' }, // Time
+      4: { alignment: 'left' }, // Output
     },
   });
 

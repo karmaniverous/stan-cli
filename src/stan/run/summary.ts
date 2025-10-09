@@ -28,11 +28,11 @@ export const renderSummary = (
       `running ${counts.running.toString()}`,
       `quiet ${counts.quiet.toString()}`,
       `stalled ${counts.stalled.toString()}`,
-      `TIMEOUT ${counts.timeout.toString()}`,
-      `OK ${counts.ok.toString()}`,
-      `WARN ${counts.warn.toString()}`,
-      `FAIL ${counts.fail.toString()}`,
-      `CANCELLED ${counts.cancelled.toString()}`,
+      `timeout ${counts.timeout.toString()}`,
+      `ok ${counts.ok.toString()}`,
+      `warn ${counts.warn.toString()}`,
+      `fail ${counts.fail.toString()}`,
+      `cancelled ${counts.cancelled.toString()}`,
     ].join(sep);
   }
   return [

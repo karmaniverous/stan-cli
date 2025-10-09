@@ -7,8 +7,13 @@ When updated: 2025-10-09 (UTC)
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
+
 <!-- trimmed; items addressed below in Completed (recent) -->
 
+- Live UI — final-frame hint persistence
+  - Ensure the hint line ("Press q to cancel, r to restart") is present in the final persisted frame on normal completion.
+  - Add a small integration test that asserts the final frame contains the hint in live mode.
+  - Investigate any ordering/timing differences between flush() and done() paths that could elide the hint at the end of a run.
 - Rewire imports to top-level @karmaniverous/stan-core
   - Replace broken imports of '@/stan/config', '../{archive,diff,imports,...}' and similar engine paths with top-level `@karmaniverous/stan-core` imports (no subpaths).
   - Inline minimal local path helpers where engine internals were previously used (e.g., output/diff paths).
@@ -71,11 +76,24 @@ When updated: 2025-10-09 (UTC)
 
 ## Completed (recent)
 
+- Loop reversal UX (BORING and wording)
+  - In BORING mode, show “[WARN]” instead of the warning glyph for the loop reversal prompt.
+  - Change prompt wording to “Abort?” (default Y). Non‑TTY and STAN_YES=1 still proceed by default.
+  - Files: src/stan/loop/reversal.ts
+
+- Summary (BORING) style
+  - Render lower‑case status labels in the summary line: timeout, ok, warn, fail, cancelled.
+  - Files: src/stan/run/summary.ts
+
+- Live UI — header alignment
+  - Left-aligned all columns in the live table so headers align with their content.
+  - Fixes "Time" header being shifted two spaces right and "Output" one space right.
+  - Files: src/stan/run/live/format.ts
+
 - Live restart hardening — epoch guard and cancelled set
-  - Implemented a per‑session epoch token in runSessionOnce; all runScripts hooks (onStart/onEnd/onHang*) now ignore callbacks from stale epochs after a restart. Prevents “ghost end‑state” updates from the prior session.
+  - Implemented a per‑session epoch token in runSessionOnce; all runScripts hooks (onStart/onEnd/onHang\*) now ignore callbacks from stale epochs after a restart. Prevents “ghost end‑state” updates from the prior session.
   - On restart, add all scheduled script keys to the cancelled set so any late onEnd/terminal events from the prior session are ignored by the UI.
   - Files: src/stan/run/session.ts
-
 - Stabilize live restart behavior test
   - Updated live.restart.behavior.test to accept either:
     - a [CANCELLED] frame between restart and the first [WAIT]/[RUN] for that row, or

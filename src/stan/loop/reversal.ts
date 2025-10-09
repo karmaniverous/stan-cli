@@ -1,9 +1,9 @@
 // src/stan/loop/reversal.ts
 /**
  * Shared loop-reversal confirmation prompt.
- * - TTY-aware; non-TTY returns true.
- * - Honors STAN_YES=1 to auto-accept.
- * - Non-BORING mode dims the choices suffix (Y/n), matching init’s UX.
+ * - TTY-aware; non-TTY returns true (proceed).
+ * - Honors STAN_YES=1 to auto-accept (proceed).
+ * - Non-BORING mode dims the choices suffix (Y/n); BORING shows plain text.
  */
 import readline from 'node:readline';
 
@@ -20,12 +20,21 @@ export const confirmLoopReversal = async (): Promise<boolean> => {
   // Global yes short-circuit
   if (process.env.STAN_YES === '1') return true;
 
+  // BORING detection mirrors util/color: BORING or non‑TTY => unstyled strings.
+  const boring =
+    process.env.STAN_BORING === '1' ||
+    process.env.NO_COLOR === '1' ||
+    process.env.FORCE_COLOR === '0' ||
+    !isTTY;
+
   // Compose styled prompt:
-  // - token: BORING handled inside color helpers
+  // - token: in BORING show [WARN]; otherwise use the warning glyph
   // - choices: always call dim(); BORING/non‑TTY yields plain text
-  const token = warn('⚠︎');
+  const token = boring ? '[WARN]' : warn('⚠︎');
   const choices = dim('(Y/n)');
-  const msg = `stan: ${token} Loop reversal detected! Continue? ${choices} `;
+  // New wording: ask to Abort? (default Yes).
+  // Return false on empty/'y' (abort); true on explicit 'n' (proceed).
+  const msg = `stan: ${token} Loop reversal detected! Abort? ${choices} `;
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -36,6 +45,10 @@ export const confirmLoopReversal = async (): Promise<boolean> => {
   const a = (await q(msg)).trim();
   rl.close();
 
-  // Default Yes: empty or starts with 'y'/'Y' proceeds
-  return a === '' || /^[yY]/.test(a);
+  // Default Yes (Abort): empty or starts with 'y'/'Y' => abort (return false).
+  // Explicit No: starts with 'n'/'N' => proceed (return true).
+  if (a === '' || /^[yY]/.test(a)) return false;
+  if (/^[nN]/.test(a)) return true;
+  // Any other answer: treat as default (abort).
+  return false;
 };

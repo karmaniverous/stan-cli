@@ -27,7 +27,7 @@ export const registerRunAction = (
     process.env.FORCE_COLOR === '0' ||
     !isTTY;
   const header = (last: string | null): void => {
-    const token = isBoring() ? '[GO] run' : go('▶︎ run');
+    const token = isBoring() ? 'run' : go('▶︎ run');
     console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
   };
   cmd.action(async (options: Record<string, unknown>) => {
