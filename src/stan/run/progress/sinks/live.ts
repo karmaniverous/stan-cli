@@ -49,24 +49,25 @@ export class LiveSink {
     this.stopped = true;
 
     try {
-      this.dbg('stop() flush+header-only+done');
-      // Final-frame policy (deterministic):
-      // - Always flush the current full table (rows + summary + hint),
-      //   then render a header-only bridge with the hint so the very last
-      //   persisted frame is guaranteed to contain the header and instructions.
-      //   This avoids terminal/TTY variations where the final full frame may
-      //   not remain visible after process exit.
-      try {
-        this.renderer?.flush();
-      } catch {
-        /* ignore */
-      }
-      try {
-        (
-          this.renderer as unknown as { showHeaderOnly?: () => void }
-        )?.showHeaderOnly?.();
-      } catch {
-        /* ignore */
+      // Final-frame policy:
+      // - Normal completion (default): persist the final full table (rows + summary + hint).
+      // - Cancellation/restart bridge: when headerOnly=true, persist a header-only frame (with hint).
+      if (opts?.headerOnly) {
+        this.dbg('stop() header-only+done');
+        try {
+          (
+            this.renderer as unknown as { showHeaderOnly?: () => void }
+          )?.showHeaderOnly?.();
+        } catch {
+          /* ignore */
+        }
+      } else {
+        this.dbg('stop() flush+done');
+        try {
+          this.renderer?.flush();
+        } catch {
+          /* ignore */
+        }
       }
       this.renderer?.stop();
     } catch {

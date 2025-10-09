@@ -76,10 +76,18 @@ When updated: 2025-10-09 (UTC)
 
 ## Completed (recent)
 
+- Live UI — normal completion keeps rows visible
+  - Restored intended final-frame policy: on normal completion, persist the full table (rows + summary + hint). Header-only persistence is used only for the cancellation/restart bridge. Fixes “table content disappears on quit”.
+  - Files: src/stan/run/progress/sinks/live.ts
+
+- Live UI — footer composition unified
+  - Render the summary and hint together in header-only frames (newline between),
+    matching regular renders so they always appear as an adjacent pair.
+  - Files: src/stan/run/live/renderer.ts
+
 - Live UI — final-frame persistence (deterministic)
   - Implemented a deterministic final-frame policy in the live sink: always flush the full table and then render a header‑only bridge (with the hint) before done(). Guarantees the last update body contains exactly one header line and the hint across terminals.
-  - Files: src/stan/run/progress/sinks/live.ts
-- Loop reversal UX (BORING and wording)
+  - Files: src/stan/run/progress/sinks/live.ts- Loop reversal UX (BORING and wording)
   - In BORING mode, show “[WARN]” instead of the warning glyph for the loop reversal prompt.
   - Change prompt wording to “Abort?” (default Y). Non‑TTY and STAN_YES=1 still proceed by default.
   - Files: src/stan/loop/reversal.ts

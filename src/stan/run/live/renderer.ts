@@ -46,8 +46,8 @@ export class ProgressRenderer {
     this.rows.clear();
   }
   /**
-   * Render only the header row and persist it (no idle row, no summary/hint).
-   * Useful for live restarts to keep the table scaffolding in place.   */
+   * Render only the header row and persist it (bridge frame).
+   * Footer policy: include summary and hint together so they remain adjacent. */
   public showHeaderOnly(): void {
     liveTrace.renderer.headerOnly({});
     this.frameNo += 1;
@@ -56,9 +56,17 @@ export class ProgressRenderer {
       .split('\n')
       .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
       .join('\n')
-      .trimEnd(); // Include the hint so the final persisted frame carries instructions as well.
+      .trimEnd();
+
+    // Footer: summary + hint (adjacent), matching the regular render shape.
+    const elapsed = fmtMs(now() - this.startedAt);
+    const counts = computeCounts(this.rows.values());
+    const summary = renderSummary(elapsed, counts, this.opts.boring);
     const hint = hintLine(this.uiId);
-    const body = `\n${stripped}\n\n${hint}`; // ANSI-safe debug summary for this header-only frame
+
+    const body = `\n${stripped}\n\n${summary}\n${hint}`;
+
+    // ANSI-safe debug summary for this header-only frame
     if (liveTrace.enabled) {
       try {
         const plain = stripAnsi(body);
