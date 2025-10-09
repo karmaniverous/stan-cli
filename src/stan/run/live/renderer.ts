@@ -27,6 +27,8 @@ export class ProgressRenderer {
   private frameNo = 0;
   private timer?: NodeJS.Timeout;
   private readonly startedAt = now();
+  /** Clear once before the next paint to avoid diff-patch clipping the footer. */
+  private hardClearNext = false;
   // Test-only: stable instance tag for restart-dedup tests (enabled when STAN_TEST_UI_TAG=1)
   private readonly uiId: number;
   constructor(args?: { boring?: boolean; refreshMs?: number }) {
@@ -68,12 +70,15 @@ export class ProgressRenderer {
   /** Render one final frame (no stop/persist). */
   public flush(): void {
     liveTrace.renderer.flush();
+    // Paint now to show current state...
     this.render();
+    // ...then force a hard clear on the next paint so the second frame resets the
+    // live area instead of diff-patching it (prevents bottom-line clipping).
+    this.hardClearNext = true;
   } /** Drop all row state (restart bridge). */
   public resetRows(): void {
     this.rows.clear();
-  }
-  /**
+  } /**
    * Render only the header row and persist it (bridge frame).
    * Footer policy: include summary and hint together so they remain adjacent. */
   public showHeaderOnly(): void {
@@ -117,6 +122,8 @@ export class ProgressRenderer {
     } catch {
       /* best-effort */
     }
+    // After a header-only bridge, reset on the next full render as well.
+    this.hardClearNext = true;
   }
   start(): void {
     liveTrace.renderer.start({ refreshMs: this.opts.refreshMs });
@@ -308,6 +315,15 @@ export class ProgressRenderer {
       } catch {
         /* ignore */
       }
+    }
+    // One-frame hard clear to avoid diff patch clipping the footer on some terminals.
+    try {
+      if (this.hardClearNext) {
+        (logUpdate as unknown as { clear?: () => void }).clear?.();
+        this.hardClearNext = false;
+      }
+    } catch {
+      /* ignore */
     }
     try {
       logUpdate(body);
