@@ -6,6 +6,8 @@
  */
 import { relative } from 'node:path';
 
+import { liveTrace } from '@/stan/run/live/trace';
+
 import { RunnerControl } from './control';
 import { ProgressRenderer } from './live/renderer';
 import { ProgressModel } from './progress/model';
@@ -122,15 +124,6 @@ export class LoggerUI implements RunnerUI {
 }
 
 export class LiveUI implements RunnerUI {
-  private dbg(...args: unknown[]): void {
-    try {
-      if (process.env.STAN_LIVE_DEBUG === '1') {
-        console.error('[stan:live:UI]', ...args);
-      }
-    } catch {
-      /* ignore */
-    }
-  }
   private renderer: ProgressRenderer | null = null;
   private control: RunnerControl | null = null;
   private readonly model = new ProgressModel();
@@ -141,7 +134,7 @@ export class LiveUI implements RunnerUI {
   }
 
   start(): void {
-    this.dbg('start()');
+    liveTrace.ui.start();
     if (!this.renderer) {
       this.sink.start();
       // Keep a renderer reference only for cancel/clear calls routed via sink.
@@ -239,7 +232,7 @@ export class LiveUI implements RunnerUI {
    *   the same UI area without a flash.
    */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
-    this.dbg('onCancelled()', { mode });
+    liveTrace.ui.onCancelled(mode);
     try {
       (
         this.sink as unknown as { cancelPending?: () => void }
@@ -249,7 +242,9 @@ export class LiveUI implements RunnerUI {
     }
     try {
       if (mode === 'restart') {
-        this.dbg('restart: detach keys + render header-only bridge');
+        liveTrace.session.info(
+          'restart: detach keys + render header-only bridge',
+        );
         // Restart: keep the same renderer/sink alive and reuse the drawing area.
         // Detach key handlers so next session can re-attach cleanly.
         try {
@@ -269,7 +264,7 @@ export class LiveUI implements RunnerUI {
         }
       } else {
         // cancel: persist final frame (log-update done via stop)
-        this.dbg('cancel: sink.stop()');
+        liveTrace.ui.stop();
         this.sink.stop();
       }
     } catch {
@@ -285,7 +280,7 @@ export class LiveUI implements RunnerUI {
   installCancellation(triggerCancel: () => void, onRestart?: () => void): void {
     try {
       this.control = new RunnerControl({ onCancel: triggerCancel, onRestart });
-      this.dbg('installCancellation(): control.attach()');
+      liveTrace.ui.installCancellation();
       this.control.attach();
     } catch {
       // best-effort
@@ -293,7 +288,7 @@ export class LiveUI implements RunnerUI {
     }
   }
   stop(): void {
-    this.dbg('stop() -> sink.stop()');
+    liveTrace.ui.stop();
     try {
       this.sink.stop();
     } catch {

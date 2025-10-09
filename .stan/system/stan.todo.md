@@ -72,14 +72,20 @@ When updated: 2025-10-08 (UTC)
 
 ## Completed (recent)
 
+- Live tracing decomposition (instrumentation seam)
+  - Extracted STAN_LIVE_DEBUG instrumentation from three large modules into a shared tracer:
+    - src/stan/run/live/trace.ts centralizes all debug emission (stderr) under well‑named methods.
+    - Updated src/stan/run/live/renderer.ts, src/stan/run/ui.ts, and src/stan/run/session.ts to call the tracer instead of inlined helpers.
+  - No functional changes; only instrumentation moved. This trims LOC in the most instrumented modules and keeps the seam clean for future diagnostics changes.
+  - Tests unchanged; tracer defaults to no‑op unless STAN_LIVE_DEBUG=1.
+
 - Live renderer trace (opt-in)
-  - Added guarded debug logging (STAN_LIVE_DEBUG=1) across LiveSink and ProgressRenderer:
-    lifecycle events, per-update state, render body meta (rows size, header count, hint present).
+  - Added guarded debug logging (STAN_LIVE_DEBUG=1) across LiveSink and ProgressRenderer: lifecycle events, per-update state, render body meta (rows size, header count, hint present).
   - Logs go to stderr and are inert by default; tests remain unaffected.
 
 - Live restart behavior — final frame policy (corrected)
   - Final persisted frame is the full table (header + rows + summary + hint). This keeps script rows visible at the end and the hint present during running.
-  - Header-only rendering is reserved for the restart bridge (“onCancelled('restart')”) to preserve the table area between sessions (no duplicate table).  - Tests still assert the final frame contains exactly one header line (no duplicates) and include the hint; this remains satisfied without a header-only final flush.
+  - Header-only rendering is reserved for the restart bridge (“onCancelled('restart')”) to preserve the table area between sessions (no duplicate table). - Tests still assert the final frame contains exactly one header line (no duplicates) and include the hint; this remains satisfied without a header-only final flush.
 - Live restart behavior — fix (UI reuse header-only bridge)
   - Create one RunnerUI per overall run in service and pass it into each runSessionOnce; remove per-session stop/spacing so service stops the UI once at the end of the overall run.
   - On restart, detach key handlers only and keep the sink/renderer alive; render a single header-only frame to bridge the restart boundary (no global clear, no duplicate table). The instructions line remains visible during running frames.

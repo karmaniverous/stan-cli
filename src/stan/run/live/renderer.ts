@@ -6,6 +6,7 @@ let __UI_COUNTER = 1;
 import logUpdate from 'log-update';
 import { table } from 'table';
 
+import { liveTrace } from '@/stan/run/live/trace';
 import { renderSummary } from '@/stan/run/summary';
 import { bold, dim } from '@/stan/util/color';
 
@@ -54,16 +55,6 @@ export class ProgressRenderer {
     boring: boolean;
     refreshMs: number;
   };
-  // Debug helper (STAN_LIVE_DEBUG=1)
-  private dbg(...args: unknown[]): void {
-    try {
-      if (process.env.STAN_LIVE_DEBUG === '1') {
-        console.error('[stan:live:renderer]', ...args);
-      }
-    } catch {
-      // ignore
-    }
-  }
   // Monotonic frame counter for correlation
   private frameNo = 0;
   private timer?: NodeJS.Timeout;
@@ -79,7 +70,7 @@ export class ProgressRenderer {
   }
   /** Render one final frame (no stop/persist). */
   public flush(): void {
-    this.dbg('flush()');
+    liveTrace.renderer.flush();
     this.render();
   }
   /**
@@ -87,7 +78,7 @@ export class ProgressRenderer {
    * Useful for live restarts to keep the table scaffolding in place.
    */
   public showHeaderOnly(): void {
-    this.dbg('showHeaderOnly()');
+    liveTrace.renderer.headerOnly({});
     this.frameNo += 1;
     const header = ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) =>
       bold(h),
@@ -125,14 +116,14 @@ export class ProgressRenderer {
     )} ${dim('to restart')}${tag}`;
     const body = `\n${stripped}\n\n${hint}`;
     // ANSI-safe debug summary for this header-only frame
-    if (process.env.STAN_LIVE_DEBUG === '1') {
+    if (liveTrace.enabled) {
       try {
         const plain = this.stripAnsi(body);
         const headerRe =
           /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
         const headerCount = (plain.match(headerRe) ?? []).length;
         const hasHint = /Press q to cancel,\s*r to restart/.test(plain);
-        this.dbg('render(header-only)', {
+        liveTrace.renderer.headerOnly({
           frameNo: this.frameNo,
           headerCount,
           hasHint,
@@ -148,13 +139,13 @@ export class ProgressRenderer {
     }
   }
   start(): void {
-    this.dbg('start()', { refreshMs: this.opts.refreshMs });
+    liveTrace.renderer.start({ refreshMs: this.opts.refreshMs });
     if (this.timer) return;
     this.timer = setInterval(() => this.render(), this.opts.refreshMs);
   }
   /** Clear any rendered output without persisting it. */
   public clear(): void {
-    this.dbg('clear()');
+    liveTrace.renderer.clear();
     try {
       (logUpdate as unknown as { clear?: () => void }).clear?.();
     } catch {
@@ -163,10 +154,10 @@ export class ProgressRenderer {
   }
 
   stop(): void {
-    this.dbg('stop()');
+    liveTrace.renderer.stop();
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
-    this.dbg('stop():done()');
+    liveTrace.renderer.done();
     try {
       (logUpdate as unknown as { done?: () => void }).done?.();
     } catch {
@@ -199,7 +190,7 @@ export class ProgressRenderer {
       ...resolvedMeta,
       state: { ...(prior?.state ?? {}), ...state },
     });
-    this.dbg('update()', {
+    liveTrace.renderer.update({
       key,
       kind: state.kind,
       rowsSize: this.rows.size,
@@ -377,7 +368,7 @@ export class ProgressRenderer {
     // Add a leading blank line and remove global left indent
     const body = `\n${raw}`;
     this.frameNo += 1;
-    if (process.env.STAN_LIVE_DEBUG === '1') {
+    if (liveTrace.enabled) {
       try {
         const plain = this.stripAnsi(body);
         const headerRe =
@@ -385,7 +376,7 @@ export class ProgressRenderer {
         const headerMatches = (plain.match(headerRe) ?? []).length;
         const hasHint = /Press q to cancel,\s*r to restart/.test(plain);
         const keys = Array.from(this.rows.keys()).slice(0, 5);
-        this.dbg('render()', {
+        liveTrace.renderer.render({
           frameNo: this.frameNo,
           rowsSize: this.rows.size,
           keys,
