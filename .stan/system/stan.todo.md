@@ -81,9 +81,16 @@ When updated: 2025-10-09 (UTC)
   - Extract session signal wiring to src/stan/run/session/signals.ts to isolate SIGINT/exit-hook handling.
   - Shrinks the largest files and clarifies seams (UI composition, formatting utilities, and signal lifecycle).
 
+- Session/renderer further decomposition + lint fixes
+  - Session: moved order-file handling, initial UI queue, and archive invocation to helpers:
+    - src/stan/run/session/order-file.ts
+    - src/stan/run/session/ui-queue.ts
+    - src/stan/run/session/invoke-archive.ts
+  - Renderer: extracted meta derivation and counts to src/stan/run/live/util.ts; removed unused locals; fixed ANSI regex to satisfy no-control-regex.
+  - Result: both src/stan/run/session.ts and src/stan/run/live/renderer.ts are shorter and clearer around their orchestration seams.
+
 - Final-frame policy fix (tests)
   - LiveSink.stop() now flushes the full table then persists a header-only bridge with the hint before calling done(). Ensures the last update body contains exactly one header line and the hint, satisfying restart tests.
-
 - Live tracing decomposition (instrumentation seam)
   - Extracted STAN_LIVE_DEBUG instrumentation from three large modules into a shared tracer:
     - src/stan/run/live/trace.ts centralizes all debug emission (stderr) under well‑named methods.    - Updated src/stan/run/live/renderer.ts, src/stan/run/ui.ts, and src/stan/run/session.ts to call the tracer instead of inlined helpers.

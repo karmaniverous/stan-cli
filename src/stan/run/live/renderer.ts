@@ -11,10 +11,10 @@ import { renderSummary } from '@/stan/run/summary';
 import { label } from '../labels';
 import { bodyTable, fmtMs, headerCells, hintLine, stripAnsi } from './format';
 import type { RowMeta, ScriptState } from './types';
+import { computeCounts, deriveMetaFromKey } from './util';
 
 type InternalState = ScriptState & { outputPath?: string };
 type Row = RowMeta & { state: InternalState };
-
 const now = (): number => Date.now();
 
 export class ProgressRenderer {
@@ -49,18 +49,13 @@ export class ProgressRenderer {
     liveTrace.renderer.headerOnly({});
     this.frameNo += 1;
     const header = headerCells();
-    const tableStr = bodyTable([header]);
-    const stripped = tableStr
+    const stripped = bodyTable([header])
       .split('\n')
       .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
       .join('\n')
-      .trimEnd();
-    // Include the hint so the final persisted frame carries instructions as well.
-    const tag =
-      process.env.STAN_TEST_UI_TAG === '1' ? ` UI#${this.uiId.toString()}` : '';
+      .trimEnd(); // Include the hint so the final persisted frame carries instructions as well.
     const hint = hintLine(this.uiId);
-    const body = `\n${stripped}\n\n${hint}`;
-    // ANSI-safe debug summary for this header-only frame
+    const body = `\n${stripped}\n\n${hint}`; // ANSI-safe debug summary for this header-only frame
     if (liveTrace.enabled) {
       try {
         const plain = stripAnsi(body);
@@ -119,7 +114,7 @@ export class ProgressRenderer {
     const prior = this.rows.get(key);
     const resolvedMeta =
       meta ??
-      this.deriveMetaFromKey(key) ??
+      deriveMetaFromKey(key) ??
       (prior?.type
         ? ({ type: prior.type, item: prior.item } as RowMeta)
         : undefined);
@@ -174,25 +169,8 @@ export class ProgressRenderer {
     }
   }
 
-  private deriveMetaFromKey(key: string): RowMeta | undefined {
-    if (key.startsWith('script:')) {
-      return {
-        type: 'script',
-        item: key.slice('script:'.length) || '(unnamed)',
-      };
-    }
-    if (key.startsWith('archive:')) {
-      return {
-        type: 'archive',
-        item: key.slice('archive:'.length) || '(unnamed)',
-      };
-    }
-    return undefined;
-  }
-
   private render(): void {
     const header = headerCells();
-
     const rows: string[][] = [];
     rows.push(header);
     if (this.rows.size === 0) {
@@ -263,7 +241,7 @@ export class ProgressRenderer {
       .join('\n');
 
     const elapsed = fmtMs(now() - this.startedAt);
-    const counts = this.counts();
+    const counts = computeCounts(this.rows.values());
     const summary = renderSummary(elapsed, counts, this.opts.boring);
     const hint = hintLine(this.uiId);
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
@@ -294,72 +272,5 @@ export class ProgressRenderer {
     } catch {
       // best-effort
     }
-  }
-  private counts(): {
-    warn: number;
-    waiting: number;
-    running: number;
-    quiet: number;
-    stalled: number;
-    ok: number;
-    cancelled: number;
-    fail: number;
-    timeout: number;
-  } {
-    let warn = 0;
-    let waiting = 0;
-    let running = 0;
-    let quiet = 0;
-    let stalled = 0;
-    let ok = 0;
-    let cancelled = 0;
-    let fail = 0;
-    let timeout = 0;
-    for (const [, row] of this.rows) {
-      const st = row.state;
-      switch (st.kind) {
-        case 'warn':
-          warn += 1;
-          break;
-        case 'waiting':
-          waiting += 1;
-          break;
-        case 'running':
-          running += 1;
-          break;
-        case 'quiet':
-          quiet += 1;
-          break;
-        case 'stalled':
-          stalled += 1;
-          break;
-        case 'done':
-          ok += 1;
-          break;
-        case 'timedout':
-          timeout += 1;
-          break;
-        case 'cancelled':
-          cancelled += 1;
-          break;
-        case 'error':
-        case 'killed':
-          fail += 1;
-          break;
-        default:
-          break;
-      }
-    }
-    return {
-      warn,
-      waiting,
-      running,
-      quiet,
-      stalled,
-      ok,
-      cancelled,
-      fail,
-      timeout,
-    };
   }
 }

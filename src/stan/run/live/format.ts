@@ -15,12 +15,11 @@ export const fmtMs = (ms: number): string => {
 
 export const stripAnsi = (s: string): string => {
   try {
-    return s.replace(/\x1B\[[0-9;]*m/g, '');
+    return s.replace(/\\u001B\[[0-9;]*m/g, '');
   } catch {
     return s;
   }
 };
-
 export const headerCells = (): string[] =>
   ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) => bold(h));
 

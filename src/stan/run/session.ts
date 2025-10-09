@@ -11,15 +11,16 @@
  *   - No-live mode prints concise status lines.
  * - Returns created artifact paths and signals cancellation or restart.
  */
-import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
 
 import { liveTrace } from '@/stan/run/live/trace';
+import { runArchivePhaseAndCollect } from '@/stan/run/session/invoke-archive';
+import { ensureOrderFile } from '@/stan/run/session/order-file';
 import { attachSessionSignals } from '@/stan/run/session/signals';
+import { queueUiRows } from '@/stan/run/session/ui-queue';
 
-import { archivePhase } from './archive';
 import { runScripts } from './exec';
 import { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, RunBehavior } from './types';
@@ -62,13 +63,11 @@ export const runSessionOnce = async (args: {
   const outRel = dirs.outputRel;
 
   // Optional order file (tests)
-  let orderFile: string | undefined;
-  if (shouldWriteOrder) {
-    orderFile = resolve(outAbs, 'order.txt');
-    if (!behavior.keep) {
-      await writeFile(orderFile, '', 'utf8');
-    }
-  }
+  const orderFile = await ensureOrderFile(
+    shouldWriteOrder,
+    outAbs,
+    Boolean(behavior.keep),
+  );
 
   // Print plan once per outer loop (delegated by caller)
   if (printPlan && planBody) {
@@ -78,17 +77,8 @@ export const runSessionOnce = async (args: {
   }
 
   ui.start();
-  // Build run list and pre-register UI rows so table shows full schedule up front
-  const toRun = (selection ?? []).filter((k) =>
-    Object.prototype.hasOwnProperty.call(config.scripts, k),
-  );
-  for (const k of toRun) {
-    ui.onScriptQueued(k);
-  }
-  if (behavior.archive) {
-    ui.onArchiveQueued('full');
-    ui.onArchiveQueued('diff');
-  }
+  // Build run list and pre-register UI rows so the table shows full schedule up front
+  const toRun = queueUiRows(ui, selection, config, Boolean(behavior.archive));
 
   // Cancellation/restart wiring
   const supervisor = new ProcessSupervisor({
@@ -315,17 +305,12 @@ export const runSessionOnce = async (args: {
   // ARCHIVE PHASE
   if (behavior.archive) {
     const includeOutputs = Boolean(behavior.combine);
-    const { archivePath, diffPath } = await archivePhase(
-      { cwd, config, includeOutputs },
-      {
-        silent: true,
-        progress: {
-          start: (kind) => ui.onArchiveStart(kind),
-          done: (kind, pathAbs, startedAt, endedAt) =>
-            ui.onArchiveEnd(kind, pathAbs, cwd, startedAt, endedAt),
-        },
-      },
-    );
+    const { archivePath, diffPath } = await runArchivePhaseAndCollect({
+      cwd,
+      config,
+      includeOutputs,
+      ui,
+    });
     created.push(archivePath, diffPath);
   }
 
