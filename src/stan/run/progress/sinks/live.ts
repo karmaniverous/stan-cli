@@ -15,12 +15,18 @@ export class LiveSink {
   }
   private renderer: ProgressRenderer | null = null;
   private unsubscribe?: () => void;
+  /** Idempotency guard for stop(). */
+  private stopped = false;
+
   constructor(
     private readonly model: ProgressModel,
     private readonly opts?: { boring?: boolean },
   ) {}
 
   start(): void {
+    // Reset idempotency guard on each (re)start.
+    this.stopped = false;
+
     if (!this.renderer) {
       this.dbg('start() renderer=create');
       this.renderer = new ProgressRenderer({
@@ -35,6 +41,13 @@ export class LiveSink {
 
   /** Persist the final frame (without clearing). */
   stop(): void {
+    // Idempotent: no-op on late/double stops (e.g., exit hook after manual cancel).
+    if (this.stopped) {
+      this.dbg('stop():already-stopped');
+      return;
+    }
+    this.stopped = true;
+
     try {
       this.dbg('stop() flush+done');
       // Two-step final persist for deterministic tests and UX:
@@ -58,7 +71,9 @@ export class LiveSink {
     }
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
-  } /** Clear immediately (used on restart). */
+  }
+
+  /** Clear immediately (used on restart). */
   clear(): void {
     try {
       this.dbg('clear()');

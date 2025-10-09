@@ -3,6 +3,7 @@
 When updated: 2025-10-09 (UTC)
 
 ## This plan tracks the stan-cli (CLI/runner) workstream. The stan-core (engine) track is managed in the stan-core repository.
+
 ## Track — stan-cli (CLI and runner)
 
 ### Next up (priority order)
@@ -71,6 +72,11 @@ When updated: 2025-10-09 (UTC)
 
 ## Completed (recent)
 
+- Exit/cancel idempotency
+  - Added an internal “stopped” guard to LiveUI.stop() and LiveSink.stop() so late/double calls no‑op.
+  - This prevents duplicate final‑frame flushes when the process exit hook fires after a manual cancel.
+  - Verified that repeated stop invocations do not emit extra frames and that exit‑hook cleanup is effectively a no‑op after detach.
+
 - UI/renderer/session decomposition (instrumentation seam and structure)
   - Split the monolithic UI into:
     - src/stan/run/ui/logger-ui.ts and src/stan/run/ui/live-ui.ts
@@ -93,7 +99,7 @@ When updated: 2025-10-09 (UTC)
   - LiveSink.stop() now flushes the full table then persists a header-only bridge with the hint before calling done(). Ensures the last update body contains exactly one header line and the hint, satisfying restart tests.
 - Live tracing decomposition (instrumentation seam)
   - Extracted STAN_LIVE_DEBUG instrumentation from three large modules into a shared tracer:
-    - src/stan/run/live/trace.ts centralizes all debug emission (stderr) under well‑named methods.    - Updated src/stan/run/live/renderer.ts, src/stan/run/ui.ts, and src/stan/run/session.ts to call the tracer instead of inlined helpers.
+    - src/stan/run/live/trace.ts centralizes all debug emission (stderr) under well‑named methods. - Updated src/stan/run/live/renderer.ts, src/stan/run/ui.ts, and src/stan/run/session.ts to call the tracer instead of inlined helpers.
   - No functional changes; only instrumentation moved. This trims LOC in the most instrumented modules and keeps the seam clean for future diagnostics changes.
   - Tests unchanged; tracer defaults to no‑op unless STAN_LIVE_DEBUG=1.
 
