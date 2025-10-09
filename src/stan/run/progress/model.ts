@@ -44,6 +44,12 @@ export class ProgressModel {
     return () => this.listeners.delete(fn);
   }
 
+  /** Drop all rows (used at session boundaries to avoid status carry‑over). */
+  clearAll(): void {
+    this.rows.clear();
+    // No emit; callers will immediately re-queue rows for the next session.
+  }
+
   /** Register or update a row. Emits a change event. */
   update(key: string, state: ScriptState, meta?: RowMeta): void {
     const prior = this.rows.get(key);

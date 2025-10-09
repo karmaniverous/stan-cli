@@ -269,6 +269,14 @@ export class LiveUI implements RunnerUI {
   /** Called just before queueing rows for a new session to remove cancelled carryover. */
   prepareForNewSession(): void {
     try {
+      // Drop any prior model state so the next session displays only fresh rows
+      // (prevents previously OK/CANCELLED rows from persisting into the new session).
+      (this.model as unknown as { clearAll?: () => void })?.clearAll?.();
+    } catch {
+      /* ignore */
+    }
+    try {
+      // Drop renderer rows so the first new frame shows the next session only.
       (
         this.sink as unknown as { resetForRestart?: () => void }
       )?.resetForRestart?.();

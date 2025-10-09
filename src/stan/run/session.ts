@@ -1,10 +1,13 @@
 // src/stan/run/session.ts
 /**
  * One-shot run session (single attempt).
+ * Session-epoch hardening:
+ * - Introduce a per-session token and ignore any late hook callbacks from a
+ *   previous session (post-restart). Prevents “ghost” updates (e.g., a waiting
+ *   script flipping to [FAIL]) after the next session begins.
  * - Windows EBUSY hardening: add a slightly longer final settle after cancellation.
  * - Wires live/no-live UI, cancellation keys (q / Ctrl+C), and restart (r in live).
- * - Schedules scripts (concurrent|sequential) and optionally runs the archive phase.
- * - Preserves all existing logging semantics:
+ * - Schedules scripts (concurrent|sequential) and optionally runs the archive phase. * - Preserves all existing logging semantics:
  *   - Plan printing is driven by the caller via printPlan + planBody.
  *   - Live mode renders the progress table; legacy "stan: start/done" archive
  *     lines remain suppressed.

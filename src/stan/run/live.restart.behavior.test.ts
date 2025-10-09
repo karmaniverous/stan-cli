@@ -171,11 +171,16 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     );
     expect(idxFirstAfter).toBeGreaterThan(-1);
 
-    // There must be at least one header-only frame between the marker and the first post-restart row frame.
-    const headerOnlyBetween = ups
+    // New policy: immediately paint CANCELLED (no header-only gap) then start the new session.
+    // Assert at least one frame between 'r' and the first post-restart row contains CANCELLED.
+    const cancelledBetween = ups
       .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
-      .some((u) => headerRe.test(u.body) && !rowRe.test(u.body));
-    expect(headerOnlyBetween).toBe(true);
+      .some(
+        (u) =>
+          /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/m.test(u.body) &&
+          /\[CANCELLED\]/.test(u.body),
+      );
+    expect(cancelledBetween).toBe(true);
 
     // Sanity: at least one post-restart frame for our row carries the hint.
     const postRestartRowFrames = ups.slice(Math.max(idxFirstAfter, mark));
