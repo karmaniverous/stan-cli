@@ -54,6 +54,7 @@ export class ProgressRenderer {
     boring: boolean;
     refreshMs: number;
   };
+  // Debug helper (STAN_LIVE_DEBUG=1)
   private dbg(...args: unknown[]): void {
     try {
       if (process.env.STAN_LIVE_DEBUG === '1') {
@@ -63,6 +64,8 @@ export class ProgressRenderer {
       // ignore
     }
   }
+  // Monotonic frame counter for correlation
+  private frameNo = 0;
   private timer?: NodeJS.Timeout;
   private readonly startedAt = now();
   // Test-only: stable instance tag for restart-dedup tests (enabled when STAN_TEST_UI_TAG=1)
@@ -85,6 +88,7 @@ export class ProgressRenderer {
    */
   public showHeaderOnly(): void {
     this.dbg('showHeaderOnly()');
+    this.frameNo += 1;
     const header = ['Type', 'Item', 'Status', 'Time', 'Output'].map((h) =>
       bold(h),
     );
@@ -120,6 +124,23 @@ export class ProgressRenderer {
       'r',
     )} ${dim('to restart')}${tag}`;
     const body = `\n${stripped}\n\n${hint}`;
+    // ANSI-safe debug summary for this header-only frame
+    if (process.env.STAN_LIVE_DEBUG === '1') {
+      try {
+        const plain = this.stripAnsi(body);
+        const headerRe =
+          /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
+        const headerCount = (plain.match(headerRe) ?? []).length;
+        const hasHint = /Press q to cancel,\s*r to restart/.test(plain);
+        this.dbg('render(header-only)', {
+          frameNo: this.frameNo,
+          headerCount,
+          hasHint,
+        });
+      } catch {
+        /* ignore */
+      }
+    }
     try {
       logUpdate(body);
     } catch {
@@ -184,6 +205,7 @@ export class ProgressRenderer {
       rowsSize: this.rows.size,
     });
   }
+
   /**
    * Mark all non‑final rows as "cancelled", preserving final values for rows
    * that are already completed (done/error/timedout/killed). For in‑flight rows,
@@ -354,14 +376,17 @@ export class ProgressRenderer {
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
     // Add a leading blank line and remove global left indent
     const body = `\n${raw}`;
+    this.frameNo += 1;
     if (process.env.STAN_LIVE_DEBUG === '1') {
       try {
+        const plain = this.stripAnsi(body);
         const headerRe =
           /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/g;
-        const headerMatches = (body.match(headerRe) ?? []).length;
-        const hasHint = /Press q to cancel,\s*r to restart/.test(body);
+        const headerMatches = (plain.match(headerRe) ?? []).length;
+        const hasHint = /Press q to cancel,\s*r to restart/.test(plain);
         const keys = Array.from(this.rows.keys()).slice(0, 5);
         this.dbg('render()', {
+          frameNo: this.frameNo,
           rowsSize: this.rows.size,
           keys,
           headerCount: headerMatches,
@@ -444,5 +469,13 @@ export class ProgressRenderer {
       fail,
       timeout,
     };
+  }
+  // Minimal ANSI-stripping to make header/hint checks reliable in TTY
+  private stripAnsi(s: string): string {
+    try {
+      return s.replace(/\\x1B\[[0-9;]*m/g, '');
+    } catch {
+      return s;
+    }
   }
 }

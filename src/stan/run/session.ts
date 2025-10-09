@@ -23,6 +23,16 @@ import { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, RunBehavior } from './types';
 import { type RunnerUI } from './ui';
 
+const dbg = (...args: unknown[]): void => {
+  try {
+    if (process.env.STAN_LIVE_DEBUG === '1') {
+      console.error('[stan:live:session]', ...args);
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
 const shouldWriteOrder =
   process.env.NODE_ENV === 'test' || process.env.STAN_WRITE_ORDER === '1';
 
@@ -153,6 +163,7 @@ export const runSessionOnce = async (args: {
   // Session-wide SIGINT → cancel (parity for live/no-live)
   const onSigint = (): void => triggerCancel();
   try {
+    dbg('install SIGINT handler');
     process.on('SIGINT', onSigint);
   } catch {
     /* ignore */
@@ -166,6 +177,7 @@ export const runSessionOnce = async (args: {
 
   // Central exit hook: best-effort teardown on real exits
   const uninstallExit = installExitHook(async () => {
+    dbg('exit hook fired: ui.stop + supervisor cancel + pause stdin');
     try {
       ui.stop();
     } catch {
@@ -189,11 +201,13 @@ export const runSessionOnce = async (args: {
   });
   const detachSignals = (): void => {
     try {
+      dbg('detach SIGINT handler');
       process.off('SIGINT', onSigint);
     } catch {
       /* ignore */
     }
     try {
+      dbg('uninstall exit hook');
       uninstallExit();
     } catch {
       /* ignore */
@@ -277,7 +291,10 @@ export const runSessionOnce = async (args: {
     // - do NOT print an extra blank line.
     // Regular cancel: preserve prior behavior (flush + trailing blank).
     try {
-      if (!restartRequested) ui.stop();
+      if (!restartRequested) {
+        dbg('cancel path: ui.stop()');
+        ui.stop();
+      }
     } catch {
       /* ignore */
     }
@@ -352,6 +369,7 @@ export const runSessionOnce = async (args: {
   }
 
   // Detach signals & exit hook before returning to caller (or restart loop)
+  dbg('normal path: detach signals, returning to caller (no ui.stop() here)');
   detachSignals();
   return { created, cancelled: false, restartRequested };
 };

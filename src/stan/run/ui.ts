@@ -122,6 +122,15 @@ export class LoggerUI implements RunnerUI {
 }
 
 export class LiveUI implements RunnerUI {
+  private dbg(...args: unknown[]): void {
+    try {
+      if (process.env.STAN_LIVE_DEBUG === '1') {
+        console.error('[stan:live:UI]', ...args);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
   private renderer: ProgressRenderer | null = null;
   private control: RunnerControl | null = null;
   private readonly model = new ProgressModel();
@@ -132,6 +141,7 @@ export class LiveUI implements RunnerUI {
   }
 
   start(): void {
+    this.dbg('start()');
     if (!this.renderer) {
       this.sink.start();
       // Keep a renderer reference only for cancel/clear calls routed via sink.
@@ -229,6 +239,7 @@ export class LiveUI implements RunnerUI {
    *   the same UI area without a flash.
    */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
+    this.dbg('onCancelled()', { mode });
     try {
       (
         this.sink as unknown as { cancelPending?: () => void }
@@ -238,6 +249,7 @@ export class LiveUI implements RunnerUI {
     }
     try {
       if (mode === 'restart') {
+        this.dbg('restart: detach keys + render header-only bridge');
         // Restart: keep the same renderer/sink alive and reuse the drawing area.
         // Detach key handlers so next session can re-attach cleanly.
         try {
@@ -257,6 +269,7 @@ export class LiveUI implements RunnerUI {
         }
       } else {
         // cancel: persist final frame (log-update done via stop)
+        this.dbg('cancel: sink.stop()');
         this.sink.stop();
       }
     } catch {
@@ -272,6 +285,7 @@ export class LiveUI implements RunnerUI {
   installCancellation(triggerCancel: () => void, onRestart?: () => void): void {
     try {
       this.control = new RunnerControl({ onCancel: triggerCancel, onRestart });
+      this.dbg('installCancellation(): control.attach()');
       this.control.attach();
     } catch {
       // best-effort
@@ -279,6 +293,7 @@ export class LiveUI implements RunnerUI {
     }
   }
   stop(): void {
+    this.dbg('stop() -> sink.stop()');
     try {
       this.sink.stop();
     } catch {
