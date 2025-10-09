@@ -18,12 +18,23 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- Patch UX: open modified files after successful apply
+  - After a successful `stan patch` (non-`--check`), open each modified file in the configured editor
+    via `patchOpenCommand` (default `code -g {file}`), detached and best‑effort.
+  - Skips in tests or when `STAN_OPEN_EDITOR=0` is set; failures are ignored.
+
+- Anchored writer: first-frame newline and stable finalization
+  - First paint writes the composed body “as-is” (no CR prefix) so the frame begins with a literal leading newline after ANSI stripping (fixes alignment test).
+  - Subsequent paints continue per-line CR + CSI K clears only; scrollback remains intact. Finalization persists a hintless table.
+- Tests aligned to no-bridge policy and repaint stability
+  - live.footer trailing-newline test: assert at least one active (WAIT|RUN) repaint with hint (reduced sensitivity to timing), and no hint in final frame.
+  - live.restart.* tests: detect active frames via WAIT|RUN and assert a CANCELLED flush appears between restart and the next session; avoid header-only bridge expectations.
+
 - Anchored Writer (extractable module) and final UX
   - Replaced log-update with a content-agnostic writer at src/anchored-writer (per-line CR+CSI K updates; no alt-screen; hides cursor).
   - Renderer uses the anchored writer only; no global clears; scrollback remains intact.
   - No header-only bridge on cancel/restart; on restart we mark in-flight rows CANCELLED and overwrite in place when the new session begins.
   - Leading/trailing blank lines preserved; final frame hides the hint per requirements.
-
 - FullClearWriter integration (eliminate log-update dependency)
   - Introduced a tiny writer abstraction (start/write/clear/done) and a FullClearWriter that uses ESC [H + ESC [J per frame with hidden cursor and a single write.
   - Renderer now uses the writer exclusively; removed diff/patch logic and one‑frame hard‑clear. Finalization is atomic (stop timer → render final → done()).

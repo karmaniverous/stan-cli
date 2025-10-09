@@ -92,24 +92,22 @@ describe('live restart behavior (instructions + header-only persistence, no glob
       archive: false,
     });
 
-    // Wait until we observe at least one [RUN] frame for this test's row.
+    // Wait until we observe at least one active frame (WAIT or RUN) for this row.
     const writes = () => writeSpy.mock.calls.map((c) => String(c[0]));
     const rowRe = new RegExp(`(?:^|\\n)script\\s+${WAIT_KEY}\\s+`);
     await waitUntil(
-      () => writes().some((u) => rowRe.test(u) && /\[RUN\]/.test(u)),
+      () => writes().some((u) => rowRe.test(u) && /\[(RUN|WAIT)\]/.test(u)),
       2500,
       25,
     );
-
     // While running, latest update frames for this row containing [RUN] must also include the hint.
-    const framesWithRun = writes().filter(
-      (u) => rowRe.test(u) && /\[RUN\]/.test(u),
+    const framesActive = writes().filter(
+      (u) => rowRe.test(u) && /\[(RUN|WAIT)\]/.test(u),
     );
-    expect(framesWithRun.length).toBeGreaterThan(0);
+    expect(framesActive.length).toBeGreaterThan(0);
     expect(
-      framesWithRun.every((f) => /Press q to cancel,\s*r to restart/i.test(f)),
-    ).toBe(true);
-    // Trigger restart ('r'); this should cause a header-only flush (persist header) and then a new session.
+      framesActive.every((f) => /Press q to cancel,\s*r to restart/i.test(f)),
+    ).toBe(true); // Trigger restart ('r'); this should cause a header-only flush (persist header) and then a new session.
     // Record the update-call index just before emitting 'r' so we can bracket the interval.
     const mark = writes().length;
     (

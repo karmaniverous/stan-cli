@@ -5,12 +5,16 @@
  * - Persist to <stanPath>/patch/.patch.
  * - Apply via stan-core pipeline (git apply cascade + jsdiff fallback).
  * - Print concise terminal status lines and source.
+ * - After a successful apply (non--check), best‑effort open modified files in the editor
+ *   configured by patchOpenCommand (default: "code -g {file}").
  */
+import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
   applyPatchPipeline,
+  DEFAULT_OPEN_COMMAND,
   detectAndCleanPatch,
   findConfigPathSync,
   loadConfigSync,
@@ -19,12 +23,14 @@ import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
 import { error as colorError, ok as colorOk } from '@/stan/util/color';
+
 type RunPatchOptions = {
   file?: string | boolean;
   defaultFile?: string;
   noFile?: boolean;
   check?: boolean;
 };
+
 const readFromFile = async (cwd: string, relOrAbs: string): Promise<string> => {
   const abs = path.isAbsolute(relOrAbs) ? relOrAbs : path.join(cwd, relOrAbs);
   return readFile(abs, 'utf8');
@@ -58,6 +64,28 @@ const statusOk = (s: string): string =>
   isBoring() ? `[OK] ${s}` : `${colorOk('✔')} ${s}`;
 const statusFail = (s: string): string =>
   isBoring() ? `[FAIL] ${s}` : `${colorError('✖')} ${s}`;
+
+/** Collect b/ target paths from a cleaned unified diff (exclude /dev/null). */
+const collectPatchedTargets = (cleaned: string): string[] => {
+  const targets = new Set<string>();
+  // Prefer +++ b/<path> lines
+  const plusRe = /^\+\+\+\s+([^\r\n]+)$/gm;
+  for (const m of cleaned.matchAll(plusRe)) {
+    const raw = (m[1] ?? '').trim();
+    if (!raw || raw === '/dev/null') continue;
+    const p = raw.replace(/^b\//, '').replace(/^\.\//, '');
+    if (p) targets.add(p);
+  }
+  // Fallback: diff --git a/<a> b/<b>
+  const dg = /^diff --git a\/([^\s]+)\s+b\/([^\s]+)$/gm;
+  for (const m of cleaned.matchAll(dg)) {
+    const b = (m[2] ?? '').trim();
+    if (!b || b === '/dev/null') continue;
+    const p = b.replace(/^b\//, '').replace(/^\.\//, '');
+    if (p) targets.add(p);
+  }
+  return Array.from(targets);
+};
 
 export const runPatch = async (
   cwd: string,
@@ -185,6 +213,51 @@ export const runPatch = async (
       const msg = check ? 'patch check passed' : 'patch applied';
       const tail = firstTarget ? ` -> ${firstTarget}` : '';
       console.log(`stan: ${statusOk(msg)}${tail}`);
+
+      // Best-effort: open modified files in the configured editor (skip in tests/disabled).
+      try {
+        if (
+          !check &&
+          process.env.STAN_OPEN_EDITOR !== '0' &&
+          process.env.NODE_ENV !== 'test'
+        ) {
+          // Resolve editor command
+          const openCmd = ((): string => {
+            try {
+              const p = findConfigPathSync(cwd);
+              if (p) {
+                const cfg = loadConfigSync(cwd);
+                const t = cfg?.patchOpenCommand;
+                if (typeof t === 'string' && t.trim().length) return t.trim();
+              }
+            } catch {
+              /* ignore */
+            }
+            return DEFAULT_OPEN_COMMAND;
+          })();
+
+          // Collect target paths from diff headers
+          const targets = collectPatchedTargets(cleaned);
+          for (const rel of targets) {
+            const cmd = openCmd.replace(/\{file\}/g, rel);
+            // Detached, shell-based invocation; ignore stdio and errors.
+            const child = spawn(cmd, {
+              cwd,
+              shell: true,
+              detached: true,
+              stdio: 'ignore',
+            });
+            try {
+              child.unref();
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+      } catch {
+        // best-effort; do not fail success path for editor issues
+      }
+
       // Visual separation from next prompt
       console.log('');
       return;

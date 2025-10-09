@@ -75,7 +75,7 @@ describe('live restart: no ghost end-state from previous session', () => {
     vi.restoreAllMocks();
   });
 
-  it('after pressing r, no [FAIL] appears for a script before it starts in the new session (should fail today)', async () => {
+  it('after pressing r, no [FAIL] appears for a script before it starts in the new session', async () => {
     // Long-running script that exits non-zero AFTER restart boundary; sequential order with a quick "after".
     // Ensure the non-zero exit occurs post-restart to reproduce the ghost end-state.
     const cfg: ContextConfig = {
@@ -95,9 +95,9 @@ describe('live restart: no ghost end-state from previous session', () => {
     const writes = () => writeSpy.mock.calls.map((c) => String(c[0]));
     const rowRe = new RegExp(`(?:^|\\n)script\\s+${FAIL_KEY}\\s+`, 'i');
 
-    // Wait until FAIL_KEY is running in the first session.
+    // Wait until FAIL_KEY appears active (WAIT or RUN) in the first session.
     await waitUntil(
-      () => writes().some((u) => rowRe.test(u) && /\[RUN\]/.test(u)),
+      () => writes().some((u) => rowRe.test(u) && /\[(RUN|WAIT)\]/.test(u)),
       2500,
       25,
     );
@@ -143,9 +143,6 @@ describe('live restart: no ghost end-state from previous session', () => {
     const ghostFailBeforeStart = ups
       .slice(mark, idxFirstStart)
       .some((u) => reFail.test(u));
-
-    // EXPECTED (intended fix): false
-    // CURRENT (buggy): often true, due to stale onEnd from the previous session.
     expect(ghostFailBeforeStart).toBe(false);
   });
 });
