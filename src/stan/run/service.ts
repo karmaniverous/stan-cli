@@ -97,9 +97,6 @@ export const runSelected = async (
     } catch {
       /* ignore */
     }
-    if (liveEnabled) {
-      console.log('');
-    }
     return created;
   }
 };

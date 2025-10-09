@@ -30,7 +30,7 @@ export const bodyTable = (rows: string[][]): string =>
   table(rows, {
     columnDefault: {
       paddingLeft: 0,
-      paddingRight: 1,
+      paddingRight: 2,
     },
     border: {
       topBody: ``,

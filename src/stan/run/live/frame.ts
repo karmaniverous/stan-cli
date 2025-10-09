@@ -84,10 +84,6 @@ export const composeFrameBody = (args: {
 
   // table: left-align all columns (configured in format.ts)
   const tableStr = bodyTable(rows);
-  const strippedTable = tableStr
-    .split('\n')
-    .map((l) => (l.startsWith(' ') ? l.slice(1) : l))
-    .join('\n');
 
   // Summary + optional hint
   const elapsed = fmtMs(Date.now() - startedAt);
@@ -97,7 +93,7 @@ export const composeFrameBody = (args: {
 
   // Leading blank line before table; exactly one blank line between table and summary;
   // final frame ends with a single newline (no extra pad lines).
-  const raw = `${strippedTable.trimEnd()}\n\n${summary}${hint}`;
+  const raw = `${tableStr.trimEnd()}\n\n${summary}${hint}`;
   const body = `\n${raw}\n`;
 
   // Minimal debug sanity when enabled (never throws)

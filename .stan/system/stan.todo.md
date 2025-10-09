@@ -19,9 +19,10 @@ When updated: 2025-10-09 (UTC)
 ### Completed (recent)
 
 - Run table fixes
-  - Headers: removed default left padding from the table renderer; combined with per‑column left alignment this keeps “Time” and “Output” flush‑left with their content.
+  - Headers: removed default left padding and ad‑hoc line trimming; with per‑column left alignment, “Time” and “Output” are now strictly flush‑left with their columns.
+  - Spacing: increased inter‑column spacing to two spaces for readability.
   - WARN rows: the Output column now displays the file path for [WARN] as it does for [OK]/[FAIL], matching logger parity.
-  - Final spacing: the live renderer clears extra trailing lines without printing newline characters, eliminating stray blank lines after the summary. With the single newline printed by the CLI after ui.stop(), there is exactly one blank line between the summary and the next prompt.
+  - Final spacing: the writer now always terminates a frame with a single newline; the CLI no longer prints an extra newline after stopping live UI, ensuring exactly one blank line after the table (with the hint hidden) before the next prompt.
   - Restart visibility: immediately flush a CANCELLED frame when ‘r’ is pressed so a CANCELLED repaint is guaranteed to appear between restart and the next session start.
 
 - Patch diagnostics & editor behavior
