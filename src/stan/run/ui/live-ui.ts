@@ -14,6 +14,8 @@ export class LiveUI implements RunnerUI {
   private control: RunnerControl | null = null;
   private readonly model = new ProgressModel();
   private readonly sink: LiveSink;
+  /** Idempotency guard for stop(). */
+  private stopped = false;
 
   constructor(private readonly opts?: { boring?: boolean }) {
     this.sink = new LiveSink(this.model, { boring: Boolean(opts?.boring) });
@@ -21,8 +23,11 @@ export class LiveUI implements RunnerUI {
 
   start(): void {
     liveTrace.ui.start();
+    // Reset idempotency guard on each session start.
+    this.stopped = false;
     if (!this.renderer) {
       this.sink.start();
+      // Keep a renderer reference only for cancel/clear calls routed via sink.
       this.renderer =
         (this.sink as unknown as { renderer?: ProgressRenderer }).renderer ??
         null;
@@ -110,29 +115,37 @@ export class LiveUI implements RunnerUI {
       { type: 'archive', item },
     );
   }
+  /**
+   * Tear down live rendering on cancellation.
+   * - mode === 'cancel': persist the final table (hint hidden by renderer on finalize).
+   * - mode === 'restart': paint CANCELLED immediately and leave table visible for overwrite.
+   */
   onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
     liveTrace.ui.onCancelled(mode);
     try {
-      (
-        this.sink as unknown as { cancelPending?: () => void }
-      )?.cancelPending?.();
+      this.sink.cancelPending();
     } catch {
       /* ignore */
     }
     // Reset elapsed timer for a subsequent restart session.
     try {
-      (this.sink as unknown as { resetElapsed?: () => void })?.resetElapsed?.();
+      this.sink.resetElapsed();
     } catch {
       /* ignore */
     }
     try {
       if (mode === 'restart') {
         liveTrace.session.info(
-          'restart: detach keys; table remains for overwrite',
+          'restart: paint CANCELLED immediately; detach keys; table remains for overwrite',
         );
+        // Force an immediate render so CANCELLED appears between restart and next session.
+        try {
+          this.sink.flushNow();
+        } catch {
+          /* ignore */
+        }
         this.control?.detach();
         this.control = null;
-        // Do not render a header-only bridge; allow table to remain and be overwritten.
       } else {
         liveTrace.ui.stop();
         // Persist final table; renderer will hide the hint on finalize.
@@ -148,6 +161,35 @@ export class LiveUI implements RunnerUI {
     }
     this.control = null;
   }
+  /** Called just before queueing rows for a new session to remove cancelled carryover. */
+  prepareForNewSession(): void {
+    try {
+      // Drop any prior model state so the next session displays only fresh rows.
+      (this.model as unknown as { clearAll?: () => void })?.clearAll?.();
+    } catch {
+      /* ignore */
+    }
+    try {
+      // Reset elapsed summary timer for the next session.
+      this.sink.resetElapsed();
+    } catch {
+      /* ignore */
+    }
+    try {
+      // Drop renderer rows so the first new frame shows the next session only.
+      this.sink.resetForRestart();
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Optional passthrough for an immediate render (used to avoid UI gaps). */
+  flushNow(): void {
+    try {
+      this.sink.flushNow();
+    } catch {
+      /* ignore */
+    }
+  }
   installCancellation(triggerCancel: () => void, onRestart?: () => void): void {
     try {
       this.control = new RunnerControl({ onCancel: triggerCancel, onRestart });
@@ -158,8 +200,13 @@ export class LiveUI implements RunnerUI {
     }
   }
   stop(): void {
+    if (this.stopped) {
+      return;
+    }
+    this.stopped = true;
     liveTrace.ui.stop();
     try {
+      // Normal completion: persist final full table.
       this.sink.stop();
     } catch {
       /* ignore */

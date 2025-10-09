@@ -18,6 +18,16 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- UI decomposition (DRY)
+  - Promoted src/stan/run/ui/\* as the canonical UI module; added prepareForNewSession and flushNow, and idempotent stop guard to LiveUI.
+  - Updated restart cancellation to paint CANCELLED immediately and detach keys before the next session.
+  - Removed the monolithic src/stan/run/ui.ts; folder barrel exports are now used by imports of './ui'.
+
+- Patch classification hardening
+  - Fixed misclassification of File Ops–only patches as file-opsdiff in stan patch.
+  - Now treats a payload as a diff only when unified‑diff headers are present (via collectPatchedTargets on the cleaned body).
+  - Added a regression test to assert FO‑only payloads succeed and are not rejected as mixed kind.
+
 - Live restart/footer tests — relax brittle assertions
   - Footer trailing newline: account for the writer’s trailing “CR + CSI K” clears by stripping those sequences before asserting the final newline.
   - Corrected ESC in the clear-sequence regex (use \x1B, not a literal “\\x1B”).

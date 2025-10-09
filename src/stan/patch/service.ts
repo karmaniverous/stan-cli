@@ -1,6 +1,7 @@
 /** src/stan/patch/service.ts
  * CLI-facing patch orchestrator.
  * - Acquire raw patch from argument/file/default/clipboard (input.ts).
+ * - Robustly classify patch kind (File Ops vs Diff): only treat as Diff when unified-diff headers are present.
  * - Recognize & enforce patch kind:
  *   • File Ops only (no diff) → execute/validate ops.
  *   • Diff only (no File Ops) → enforce single-file rule, then apply.
@@ -130,7 +131,15 @@ export const runPatch = async (
   } catch {
     cleaned = '';
   }
-  const hasDiff = cleaned.trim().length > 0;
+  // Robust diff detection: treat as a diff only when unified-diff headers are present.
+  // This avoids misclassifying a File Ops–only payload (which may still produce a non-empty "cleaned" body).
+  const hasDiff = (() => {
+    try {
+      return collectPatchedTargets(cleaned).length > 0;
+    } catch {
+      return false;
+    }
+  })();
 
   // 3) Enforce mutually exclusive kinds
   if (hasOps && hasDiff) {
