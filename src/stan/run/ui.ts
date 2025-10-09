@@ -236,6 +236,12 @@ export class LiveUI implements RunnerUI {
         (
           this.sink as unknown as { cancelPending?: () => void }
         )?.cancelPending?.();
+        // Force an immediate render so CANCELLED appears between restart and the next session.
+        try {
+          (this.sink as unknown as { flushNow?: () => void })?.flushNow?.();
+        } catch {
+          /* ignore */
+        }
         this.control?.detach();
         this.control = null;
       } else {

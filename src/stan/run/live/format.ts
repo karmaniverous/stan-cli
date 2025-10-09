@@ -28,6 +28,10 @@ export const headerCells = (): string[] =>
 
 export const bodyTable = (rows: string[][]): string =>
   table(rows, {
+    columnDefault: {
+      paddingLeft: 0,
+      paddingRight: 1,
+    },
     border: {
       topBody: ``,
       topJoin: ``,

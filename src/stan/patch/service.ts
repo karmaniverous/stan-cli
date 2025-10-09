@@ -162,7 +162,9 @@ export const runPatch = async (
       console.log('');
       try {
         await clipboardy.write(diag);
-      } catch {}
+      } catch {
+        /* ignore */
+      }
       console.log(
         'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
       );

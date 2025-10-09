@@ -18,6 +18,12 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- Run table fixes
+  - Headers: removed default left padding from the table renderer; combined with per‑column left alignment this keeps “Time” and “Output” flush‑left with their content.
+  - WARN rows: the Output column now displays the file path for [WARN] as it does for [OK]/[FAIL], matching logger parity.
+  - Final spacing: the live renderer clears extra trailing lines without printing newline characters, eliminating stray blank lines after the summary. With the single newline printed by the CLI after ui.stop(), there is exactly one blank line between the summary and the next prompt.
+  - Restart visibility: immediately flush a CANCELLED frame when ‘r’ is pressed so a CANCELLED repaint is guaranteed to appear between restart and the next session start.
+
 - Patch diagnostics & editor behavior
   - On patch failures, copy the diagnostics envelope to the system clipboard (do not print the full envelope to the console) and print a concise instruction to paste it into chat for a full, post‑patch listing.
   - Include a declarative file identification line at the top of the diagnostics envelope:

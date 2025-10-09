@@ -51,6 +51,7 @@ export const composeFrameBody = (args: {
       }
       const out =
         st.kind === 'done' ||
+        st.kind === 'warn' ||
         st.kind === 'error' ||
         st.kind === 'timedout' ||
         st.kind === 'cancelled' ||

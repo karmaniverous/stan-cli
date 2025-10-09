@@ -16,6 +16,7 @@ const hideCursor = `${CSI}?25l`;
 const showCursor = `${CSI}?25h`;
 const eraseToEOL = `${CSI}K`;
 const moveUpToBOL = (n: number) => (n > 0 ? `${CSI}${n}F` : ''); // to previous line(s), column 1
+const nextLine = `${CSI}1E`; // move cursor to next line, column 1
 
 export const createAnchoredWriter = (): AnchoredWriter => {
   const out = process.stdout as NodeJS.WriteStream;
@@ -26,13 +27,23 @@ export const createAnchoredWriter = (): AnchoredWriter => {
     // Move to the top of previous frame (beginning of line)
     if (lastLines > 0) buf += moveUpToBOL(lastLines);
     // Rewrite each line with CR + erase-to-EOL + content + newline
-    for (const line of lines) {
-      buf += `\r${eraseToEOL}${line}\n`;
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i] ?? '';
+      // Special-case the very first blank line of the very first frame so the buffer
+      // begins with a literal newline (no preceding CR/erase). This yields a true
+      // leading blank line after ANSI stripping.
+      if (lastLines === 0 && i === 0 && line === '') {
+        buf += `\n`;
+      } else {
+        buf += `\r${eraseToEOL}${line}\n`;
+      }
     }
     // If the new frame is shorter, blank out remaining old lines
     const extra = lastLines - lines.length;
+    // Clear without introducing visible blank lines by using cursor-next-line instead of '\n'
     for (let i = 0; i < extra; i += 1) {
-      buf += `\r${eraseToEOL}\n`;
+      buf += `\r${eraseToEOL}`;
+      if (i < extra - 1) buf += nextLine;
     }
     out.write(buf);
     lastLines = lines.length;
