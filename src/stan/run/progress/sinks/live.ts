@@ -49,27 +49,37 @@ export class LiveSink {
     this.stopped = true;
 
     try {
-      // Final-frame policy:
-      // - Normal completion (default): persist the final full table (rows + summary + hint).
-      // - Cancellation/restart bridge: when headerOnly=true, persist a header-only frame (with hint).
-      if (opts?.headerOnly) {
-        this.dbg('stop() header-only+done');
-        try {
-          (
-            this.renderer as unknown as { showHeaderOnly?: () => void }
-          )?.showHeaderOnly?.();
-        } catch {
-          /* ignore */
-        }
+      // Prefer an atomic finalize (stop timer → render final → done) when supported.
+      const r = this.renderer as unknown as {
+        finalize?: (k: 'header-only' | 'full') => void;
+        flush?: () => void;
+        showHeaderOnly?: () => void;
+        stop?: () => void;
+      };
+      if (typeof r?.finalize === 'function') {
+        this.dbg(
+          `stop() finalize(${opts?.headerOnly ? 'header-only' : 'full'})`,
+        );
+        r.finalize?.(opts?.headerOnly ? 'header-only' : 'full');
       } else {
-        this.dbg('stop() flush+done');
-        try {
-          this.renderer?.flush();
-        } catch {
-          /* ignore */
+        // Legacy fallback: render first, then stop (timer may still tick once).
+        if (opts?.headerOnly) {
+          this.dbg('stop() header-only+done (fallback)');
+          try {
+            r?.showHeaderOnly?.();
+          } catch {
+            /* ignore */
+          }
+        } else {
+          this.dbg('stop() flush+done (fallback)');
+          try {
+            r?.flush?.();
+          } catch {
+            /* ignore */
+          }
         }
+        r?.stop?.();
       }
-      this.renderer?.stop();
     } catch {
       /* ignore */
     }

@@ -38,6 +38,7 @@ let ACTIVE_EPOCH: symbol | null = null;
 
 const shouldWriteOrder =
   process.env.NODE_ENV === 'test' || process.env.STAN_WRITE_ORDER === '1';
+
 export const runSessionOnce = async (args: {
   cwd: string;
   config: ContextConfig;
@@ -90,24 +91,9 @@ export const runSessionOnce = async (args: {
   }
 
   ui.start();
-  // Prepare UI for a new session: drop any previous rows (e.g., cancelled from restart).
-  try {
-    (
-      ui as unknown as { prepareForNewSession?: () => void }
-    )?.prepareForNewSession?.();
-  } catch {
-    /* ignore */
-  }
-  // Build run list and pre-register UI rows so the table shows full schedule up front
-  const toRun = queueUiRows(ui, selection, config, Boolean(behavior.archive));
-  // Flush immediately so the first frame shows new waiting/run rows without delay.
-  try {
-    (ui as unknown as { flushNow?: () => void })?.flushNow?.();
-  } catch {
-    /* ignore */
-  }
 
-  // Cancellation/restart wiring
+  // Cancellation/restart wiring (define before first render so raw-mode attach
+  // cannot perturb the terminal immediately after an initial paint).
   const supervisor = new ProcessSupervisor({
     hangWarn: behavior.hangWarn,
     hangKill: behavior.hangKill,
@@ -121,10 +107,18 @@ export const runSessionOnce = async (args: {
     wakeCancelOrRestart = resolveWake;
   });
 
+  // toRun is populated just before scheduling; keep a binding available for triggers.
+  let toRun: string[] = [];
+
   const triggerCancel = (): void => {
     if (cancelled) return;
     cancelled = true;
-    for (const k of toRun) cancelledKeys.add(`script:${k}`);
+    try {
+      if (Array.isArray(toRun))
+        for (const k of toRun) cancelledKeys.add(`script:${k}`);
+    } catch {
+      /* ignore */
+    }
     try {
       ui.onCancelled('cancel');
     } catch {
@@ -154,7 +148,8 @@ export const runSessionOnce = async (args: {
     cancelled = true;
     // Mark all scheduled scripts as cancelled for stale onEnd guards.
     try {
-      for (const k of toRun) cancelledKeys.add(`script:${k}`);
+      if (Array.isArray(toRun))
+        for (const k of toRun) cancelledKeys.add(`script:${k}`);
     } catch {
       /* ignore */
     }
@@ -175,14 +170,18 @@ export const runSessionOnce = async (args: {
     }
   };
 
+  // Keys: attach BEFORE any table render to avoid raw-mode transition clipping
+  try {
+    ui.installCancellation(
+      triggerCancel,
+      liveEnabled ? triggerRestart : undefined,
+    );
+  } catch {
+    /* best-effort */
+  }
+
   // Session-wide SIGINT → cancel (parity for live/no-live)
   const onSigint = (): void => triggerCancel();
-
-  // Keys: live wires restart; logger wires SIGINT parity only
-  ui.installCancellation(
-    triggerCancel,
-    liveEnabled ? triggerRestart : undefined,
-  );
 
   // Central exit hook: best-effort teardown on real exits
   const detachSignals = attachSessionSignals(onSigint, async () => {
@@ -209,8 +208,28 @@ export const runSessionOnce = async (args: {
     }
   });
 
+  // Prepare UI for a new session: drop any previous rows (e.g., cancelled from restart).
+  try {
+    (
+      ui as unknown as { prepareForNewSession?: () => void }
+    )?.prepareForNewSession?.();
+  } catch {
+    /* ignore */
+  }
+
+  // Build run list and pre-register UI rows so the table shows full schedule up front
+  toRun = queueUiRows(ui, selection, config, Boolean(behavior.archive));
+
+  // Flush immediately so the first frame shows new waiting/run rows without delay.
+  try {
+    (ui as unknown as { flushNow?: () => void })?.flushNow?.();
+  } catch {
+    /* ignore */
+  }
+
   const created: string[] = [];
   let collectPromise: Promise<void> | null = null;
+
   // Run scripts (if any)
   if (toRun.length > 0) {
     collectPromise = runScripts(

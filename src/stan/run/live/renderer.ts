@@ -36,12 +36,40 @@ export class ProgressRenderer {
     };
     this.uiId = __UI_COUNTER++;
   }
+
+  /**
+   * Atomically persist the final frame:
+   * - stop the interval,
+   * - render the selected final body,
+   * - and signal done().
+   * Prevents a timer tick from interleaving with the last render.
+   */
+  public finalize(kind: 'header-only' | 'full'): void {
+    // Stop interval first so no tick can overwrite the final frame.
+    if (this.timer) clearInterval(this.timer);
+    this.timer = undefined;
+
+    if (kind === 'header-only') {
+      // Render header + footer (summary+hint) bridge.
+      this.showHeaderOnly();
+    } else {
+      // Render full table + footer.
+      this.render();
+    }
+    // Mark done.
+    liveTrace.renderer.stop();
+    liveTrace.renderer.done();
+    try {
+      (logUpdate as unknown as { done?: () => void }).done?.();
+    } catch {
+      // best-effort
+    }
+  }
   /** Render one final frame (no stop/persist). */
   public flush(): void {
     liveTrace.renderer.flush();
     this.render();
-  }
-  /** Drop all row state (restart bridge). */
+  } /** Drop all row state (restart bridge). */
   public resetRows(): void {
     this.rows.clear();
   }
@@ -64,7 +92,8 @@ export class ProgressRenderer {
     const summary = renderSummary(elapsed, counts, this.opts.boring);
     const hint = hintLine(this.uiId);
 
-    const body = `\n${stripped}\n\n${summary}\n${hint}\n`;
+    // Safety pad (single space) line after the hint to absorb terminal over-clear.
+    const body = `\n${stripped}\n\n${summary}\n${hint}\n \n`;
 
     // ANSI-safe debug summary for this header-only frame
     if (liveTrace.enabled) {
@@ -256,7 +285,9 @@ export class ProgressRenderer {
     const summary = renderSummary(elapsed, counts, this.opts.boring);
     const hint = hintLine(this.uiId);
     const raw = `${strippedTable.trimEnd()}\n\n${summary}\n${hint}`;
-    const body = `\n${raw}\n`;
+    // Safety pad: keep a non-empty blank line below the hint so the terminal
+    // cannot clip the hint when repainting/clearing.
+    const body = `\n${raw}\n \n`;
     this.frameNo += 1;
     if (liveTrace.enabled) {
       try {

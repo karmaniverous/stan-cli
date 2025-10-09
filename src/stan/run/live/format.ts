@@ -15,7 +15,10 @@ export const fmtMs = (ms: number): string => {
 
 export const stripAnsi = (s: string): string => {
   try {
-    return s.replace(/\\u001B\[[0-9;]*m/g, '');
+    // Remove ANSI CSI sequences (ESC [ ... @-~). Covers SGR and common cursor controls.
+    // Ref: ECMA-48. This intentionally over-matches for simplicity.
+    // eslint-disable-next-line no-control-regex
+    return s.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
   } catch {
     return s;
   }
