@@ -5,6 +5,10 @@
  * - Introduce a per-session token and ignore any late hook callbacks from a
  *   previous session (post-restart). Prevents “ghost” updates (e.g., a waiting
  *   script flipping to [FAIL]) after the next session begins.
+ *
+ * Session-epoch hardening:
+ * - Introduce a per-session token and ignore any late hook callbacks from a
+ *   previous session (post-restart). Prevents “ghost” updates (e.g., a waiting *   script flipping to [FAIL]) after the next session begins.
  * - Windows EBUSY hardening: add a slightly longer final settle after cancellation.
  * - Wires live/no-live UI, cancellation keys (q / Ctrl+C), and restart (r in live).
  * - Schedules scripts (concurrent|sequential) and optionally runs the archive phase. * - Preserves all existing logging semantics:
@@ -29,9 +33,11 @@ import { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, RunBehavior } from './types';
 import type { RunnerUI } from './ui';
 
+// Active session epoch (symbol). Callbacks from previous epochs are ignored.
+let ACTIVE_EPOCH: symbol | null = null;
+
 const shouldWriteOrder =
   process.env.NODE_ENV === 'test' || process.env.STAN_WRITE_ORDER === '1';
-
 export const runSessionOnce = async (args: {
   cwd: string;
   config: ContextConfig;
@@ -58,6 +64,10 @@ export const runSessionOnce = async (args: {
     printPlan,
     ui,
   } = args;
+
+  // Start a new session epoch; stale callbacks must not render into this session.
+  const epoch = Symbol('session-epoch');
+  ACTIVE_EPOCH = epoch;
 
   const outputAbs = resolve(cwd, config.stanPath, 'output');
   const outputRel = resolve(config.stanPath, 'output').replace(/\\/g, '/');
@@ -142,6 +152,12 @@ export const runSessionOnce = async (args: {
     if (restartRequested) return;
     restartRequested = true;
     cancelled = true;
+    // Mark all scheduled scripts as cancelled for stale onEnd guards.
+    try {
+      for (const k of toRun) cancelledKeys.add(`script:${k}`);
+    } catch {
+      /* ignore */
+    }
     try {
       ui.onCancelled('restart');
     } catch {
@@ -206,8 +222,14 @@ export const runSessionOnce = async (args: {
       mode,
       orderFile,
       {
-        onStart: (key) => ui.onScriptStart(key),
+        onStart: (key) => {
+          if (ACTIVE_EPOCH !== epoch) return;
+          ui.onScriptStart(key);
+        },
         onEnd: (key, outFileAbs, startedAt, endedAt, code, status) => {
+          // Ignore stale callbacks from previous session epochs
+          if (ACTIVE_EPOCH !== epoch) return;
+          // Ignore late completions from a cancelled session for registered keys
           if (cancelled && cancelledKeys.has(`script:${key}`)) return;
           ui.onScriptEnd(
             key,
@@ -223,7 +245,9 @@ export const runSessionOnce = async (args: {
           }
         },
         silent: true,
+        // Hang callbacks: best-effort logging in no-live; ignore if epoch changed
         onHangWarn: (key, seconds) => {
+          if (ACTIVE_EPOCH !== epoch) return;
           if (!liveEnabled) {
             console.log(
               `stan: ⏱ stalled "${key}" after ${seconds}s of inactivity`,
@@ -231,6 +255,7 @@ export const runSessionOnce = async (args: {
           }
         },
         onHangTimeout: (key, seconds) => {
+          if (ACTIVE_EPOCH !== epoch) return;
           if (!liveEnabled) {
             console.log(
               `stan: ⏱ timeout "${key}" after ${seconds}s; sending SIGTERM`,
@@ -238,6 +263,7 @@ export const runSessionOnce = async (args: {
           }
         },
         onHangKilled: (key, grace) => {
+          if (ACTIVE_EPOCH !== epoch) return;
           if (!liveEnabled) {
             console.log(`stan: ◼ killed "${key}" after ${grace}s grace`);
           }

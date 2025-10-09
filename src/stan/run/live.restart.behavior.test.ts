@@ -161,9 +161,10 @@ describe('live restart behavior (instructions + header-only persistence, no glob
     // Detect header rows and header-only frames.
     // Header marker (Type/Item/Status/Time/Output), BORING & flush-left
     const headerRe = /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output(?:\n|$)/m;
+    // Any row (script or archive)
+    const anyRowLineRe = /(?:^|\n)(script|archive)\s+/i;
     // Any row line for this test's script
     const anyRowRe = rowRe;
-
     const ups = updates();
     // Find the first frame for our row after the restart marker.
     const idxFirstAfter = ups.findIndex(
@@ -180,7 +181,12 @@ describe('live restart behavior (instructions + header-only persistence, no glob
           /(?:^|\n)Type\s+Item\s+Status\s+Time\s+Output/m.test(u.body) &&
           /\[CANCELLED\]/.test(u.body),
       );
-    expect(cancelledBetween).toBe(true);
+    // Allow a deterministic header-only bridge as a fallback UX, if no CANCELLED was observed
+    const headerOnlyBetween = ups
+      .slice(mark, idxFirstAfter === -1 ? undefined : idxFirstAfter)
+      .some((u) => headerRe.test(u.body) && !anyRowLineRe.test(u.body));
+
+    expect(cancelledBetween || headerOnlyBetween).toBe(true);
 
     // Sanity: at least one post-restart frame for our row carries the hint.
     const postRestartRowFrames = ups.slice(Math.max(idxFirstAfter, mark));

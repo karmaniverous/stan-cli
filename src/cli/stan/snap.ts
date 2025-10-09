@@ -93,7 +93,7 @@ import { applyCliSafety, tagDefault } from './cli-utils';
         process.env.FORCE_COLOR === '0' ||
         !isTTY;
       const header = (last: string | null): void => {
-        const token = isBoring() ? '[GO] snap' : go('▶︎ snap');
+        const token = isBoring() ? '[GO] snap' : go('▣ snap');
         console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
       };
       // Header + reversal guard + state update

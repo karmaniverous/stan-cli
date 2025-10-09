@@ -68,7 +68,7 @@ export const registerPatch = (cli: Command): Command => {
         process.env.FORCE_COLOR === '0' ||
         !isTTY;
       const header = (last: string | null): void => {
-        const token = isBoring() ? '[GO] patch' : go('▶︎ patch');
+        const token = isBoring() ? '[GO] patch' : go('▲ patch');
         console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
       };
 
