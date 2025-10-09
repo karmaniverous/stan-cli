@@ -29,6 +29,11 @@ When updated: 2025-10-09 (UTC)
   - Diagnostics envelopes now list declared files/targets up front for clarity.
   - Editor open retained for successful diff apply (non--check), best‑effort and detached.
 
+- Patch service follow‑through (typecheck/lint)
+  - Normalized envelope argument (js: null → undefined) to satisfy typecheck.
+  - Made editor helper synchronous; removed unused local in diagnostics.
+  - Kept module sizes small and policy‑aligned.
+
 - Patch UX: open modified files after successful apply
   - After a successful `stan patch` (non-`--check`), open each modified file in the configured editor
     via `patchOpenCommand` (default `code -g {file}`), detached and best‑effort.  - Skips in tests or when `STAN_OPEN_EDITOR=0` is set; failures are ignored.

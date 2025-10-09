@@ -10,7 +10,7 @@ imports:
     - ../stan-core/dist/types/index.d.ts
     - ../stan-core/.stan/interop/stan-cli/**
 excludes:
-  - "*.local"
+  - '*.local'
   - assets
   - CHANGELOG.md
   - docs
@@ -21,7 +21,9 @@ scripts:
   lint: npm run lint:fix
   test: npm run test -- --no-color
   build: npm run build
-  docs: npm run docs -- --emit none
+  docs:
+    script: npm run docs -- --emit none
+    warnPattern: '\\[warning\\]'
   knip: npm run knip
 patchOpenCommand: code -g {file}
 stanPath: .stan

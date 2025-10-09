@@ -89,7 +89,6 @@ export const composeDiffFailureEnvelope = (
 ): string => {
   const lines: string[] = [];
   lines.push('START PATCH DIAGNOSTICS');
-  const files = cleaned ? listFiles([]) : []; // files section handled by caller if needed
   const caps = out?.result?.captures ?? [];
   for (const c of caps) {
     const first =

@@ -4,11 +4,11 @@ import { spawn } from 'node:child_process';
 import { DEFAULT_OPEN_COMMAND } from '@karmaniverous/stan-core';
 
 /** Open a set of repo-relative files in the configured editor (best-effort). */
-export const maybeOpenFiles = async (
+export const maybeOpenFiles = (
   cwd: string,
   paths: string[],
   patchOpenCommand?: string,
-): Promise<void> => {
+): void => {
   try {
     if (!paths.length) return;
     if (process.env.STAN_OPEN_EDITOR === '0') return;

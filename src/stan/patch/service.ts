@@ -170,16 +170,16 @@ export const runPatch = async (
               return null;
             }
           })();
-          await maybeOpenFiles(
-            cwd,
-            [single.target.path],
-            cfg?.patchOpenCommand,
-          );
+          maybeOpenFiles(cwd, [single.target.path], cfg?.patchOpenCommand);
         }
         console.log('');
         return;
       }
-      const diag = composeDiffFailureEnvelope(cleaned, out);
+      const diag = composeDiffFailureEnvelope(cleaned, {
+        // Normalize shapes for the envelope composer (js: null -> undefined)
+        result: out.result,
+        js: out.js ?? undefined,
+      });
       console.log(
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
       );
