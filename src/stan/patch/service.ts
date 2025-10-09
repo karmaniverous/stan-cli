@@ -55,6 +55,49 @@ const resolveStanPath = (cwd: string): string => {
   return '.stan';
 };
 
+/** Resolve editor command once (best‑effort). */
+const getPatchOpenCommand = (cwd: string): string | undefined => {
+  try {
+    const p = findConfigPathSync(cwd);
+    const cfg = p ? loadConfigSync(cwd) : null;
+    return cfg?.patchOpenCommand;
+  } catch {
+    return undefined;
+  }
+};
+
+/** Best‑effort: open target file in editor for non‑check runs. */
+const openTargetIfNeeded = (
+  cwd: string,
+  file: string | undefined,
+  check: boolean,
+): void => {
+  if (!file || check) return;
+  const cmd = getPatchOpenCommand(cwd);
+  try {
+    maybeOpenFiles(cwd, [file], cmd);
+  } catch {
+    /* ignore */
+  }
+};
+
+/** Copy diagnostics to clipboard and print a single instruction line. */
+const reportDiagnostics = async (diag: string): Promise<void> => {
+  try {
+    await clipboardy.write(diag);
+  } catch {
+    /* ignore clipboard errors */
+  }
+  console.log(
+    'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
+  );
+};
+
+/** Print exactly one trailing blank line at the end of the command logs. */
+const finalizeLogs = (): void => {
+  console.log('');
+};
+
 export const runPatch = async (
   cwd: string,
   inputMaybe: string | undefined,
@@ -73,6 +116,7 @@ export const runPatch = async (
     source = got.source;
   } catch {
     console.log(`stan: ${statusFail('patch failed')} (unable to read source)`);
+    finalizeLogs();
     return;
   }
   console.log(`stan: patch source: ${source}`);
@@ -93,15 +137,8 @@ export const runPatch = async (
     const files = collectPatchedTargets(cleaned);
     const diag = composeInvalidFileOpsWithDiffEnvelope(opsPlan.ops, files);
     console.log(`stan: ${statusFail('patch failed')}`);
-    console.log('');
-    try {
-      await clipboardy.write(diag);
-    } catch {
-      /* ignore */
-    }
-    console.log(
-      'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
-    );
+    await reportDiagnostics(diag);
+    finalizeLogs();
     return;
   }
 
@@ -126,28 +163,21 @@ export const runPatch = async (
       if (ok) {
         const msg = check ? 'file ops check passed' : 'file ops applied';
         console.log(`stan: ${statusOk(msg)}`);
-        console.log('');
+        finalizeLogs();
         return;
       }
       const diag = composeFileOpsFailuresEnvelope(opsPlan.ops, res.results);
       console.log(
         `stan: ${statusFail(check ? 'file ops check failed' : 'file ops failed')}`,
       );
-      console.log('');
-      try {
-        await clipboardy.write(diag);
-      } catch {
-        /* ignore */
-      }
-      console.log(
-        'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
-      );
+      await reportDiagnostics(diag);
+      finalizeLogs();
       return;
     } catch {
       console.log(
         `stan: ${statusFail(check ? 'file ops check failed' : 'file ops failed')}`,
       );
-      console.log('');
+      finalizeLogs();
       return;
     }
   }
@@ -159,15 +189,8 @@ export const runPatch = async (
     if (!single.ok) {
       const diag = composeMultiFileInvalidEnvelope(single.files);
       console.log(`stan: ${statusFail('patch failed (multi-file diff)')}`);
-      console.log('');
-      try {
-        await clipboardy.write(diag);
-      } catch {
-        /* ignore */
-      }
-      console.log(
-        'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
-      );
+      await reportDiagnostics(diag);
+      finalizeLogs();
       return;
     }
     const firstTarget = parseFirstTarget(cleaned);
@@ -182,19 +205,8 @@ export const runPatch = async (
         const msg = check ? 'patch check passed' : 'patch applied';
         const tail = firstTarget ? ` -> ${firstTarget}` : '';
         console.log(`stan: ${statusOk(msg)}${tail}`);
-        // Best-effort editor open (non-check)
-        if (!check) {
-          const cfg = (() => {
-            try {
-              const p = findConfigPathSync(cwd);
-              return p ? loadConfigSync(cwd) : null;
-            } catch {
-              return null;
-            }
-          })();
-          maybeOpenFiles(cwd, [single.target.path], cfg?.patchOpenCommand);
-        }
-        console.log('');
+        openTargetIfNeeded(cwd, single.target.path, check);
+        finalizeLogs();
         return;
       }
       const diag = composeDiffFailureEnvelope(cleaned, {
@@ -205,53 +217,23 @@ export const runPatch = async (
       console.log(
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
       );
-      console.log('');
-      try {
-        await clipboardy.write(diag);
-      } catch {
-        /* ignore */
-      }
+      await reportDiagnostics(diag);
       // Open the target file on failure as well (best-effort; non-check only).
-      if (!check) {
-        const cfg = (() => {
-          try {
-            const p = findConfigPathSync(cwd);
-            return p ? loadConfigSync(cwd) : null;
-          } catch {
-            return null;
-          }
-        })();
-        maybeOpenFiles(cwd, [single.target.path], cfg?.patchOpenCommand);
-      }
-      console.log(
-        'stan: diagnostics copied to clipboard. Paste into chat for a full listing.',
-      );
+      openTargetIfNeeded(cwd, single.target.path, check);
+      finalizeLogs();
       return;
     } catch {
       console.log(
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
       );
-      console.log('');
       // Even on unexpected errors, attempt to open the target (non-check).
-      if (!check) {
-        try {
-          const cfg = (() => {
-            try {
-              const p = findConfigPathSync(cwd);
-              return p ? loadConfigSync(cwd) : null;
-            } catch {
-              return null;
-            }
-          })();
-          maybeOpenFiles(cwd, [single.target.path], cfg?.patchOpenCommand);
-        } catch {
-          /* ignore */
-        }
-      }
+      openTargetIfNeeded(cwd, single.target.path, check);
+      finalizeLogs();
       return;
     }
   }
 
   // 7) Neither kind recognized
   console.log(`stan: ${statusFail('patch failed')} (no unified diff found)`);
+  finalizeLogs();
 };
