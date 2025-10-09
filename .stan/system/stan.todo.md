@@ -23,10 +23,10 @@ When updated: 2025-10-09 (UTC)
   - Spacing: increased inter‑column spacing to two spaces for readability.
   - WARN rows: the Output column now displays the file path for [WARN] as it does for [OK]/[FAIL], matching logger parity.
   - Final spacing: the writer now always terminates a frame with a single newline; the CLI no longer prints an extra newline after stopping live UI, ensuring exactly one blank line after the table (with the hint hidden) before the next prompt.
+  - Tick stability: removed an extra newline that was appended at the end of every paint and caused the frame to “walk” down one line per tick. The cursor now returns exactly to the top of the previous frame.
   - Restart visibility: immediately flush a CANCELLED frame when ‘r’ is pressed so a CANCELLED repaint is guaranteed to appear between restart and the next session start.
 
-- Patch diagnostics & editor behavior
-  - On patch failures, copy the diagnostics envelope to the system clipboard (do not print the full envelope to the console) and print a concise instruction to paste it into chat for a full, post‑patch listing.
+- Patch diagnostics & editor behavior  - On patch failures, copy the diagnostics envelope to the system clipboard (do not print the full envelope to the console) and print a concise instruction to paste it into chat for a full, post‑patch listing.
   - Include a declarative file identification line at the top of the diagnostics envelope:
     - `file: <repo‑relative path>`
   - Open the target file in the configured editor for both successful patches and failures (non‑check).

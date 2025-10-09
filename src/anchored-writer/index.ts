@@ -45,10 +45,6 @@ export const createAnchoredWriter = (): AnchoredWriter => {
       buf += `\r${eraseToEOL}`;
       if (i < extra - 1) buf += nextLine;
     }
-    // Always terminate the write with a newline so the final frame ends with \n.
-    // This does not create an extra visible blank line; the CLI should not add
-    // any additional newline after ui.stop() in live mode.
-    buf += '\n';
     out.write(buf);
     lastLines = lines.length;
   };
