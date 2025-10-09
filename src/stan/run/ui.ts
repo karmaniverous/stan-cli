@@ -231,11 +231,12 @@ export class LiveUI implements RunnerUI {
     try {
       if (mode === 'restart') {
         liveTrace.session.info(
-          'restart: paint CANCELLED immediately, then detach keys; keep table until next session',
+          'restart: paint CANCELLED immediately, then render header-only bridge; detach keys',
         );
         // Restart:
         // - Paint current and waiting scripts as CANCELLED immediately.
-        // - Flush to show the cancelled state + hint while processes terminate.
+        // - Render a deterministic header-only bridge (header + hint) so tests
+        //   and users always see a stable frame between sessions.
         // - Detach key handlers so next session can re-attach cleanly.
         try {
           (
@@ -245,7 +246,9 @@ export class LiveUI implements RunnerUI {
           /* ignore */
         }
         try {
-          (this.sink as unknown as { flushNow?: () => void })?.flushNow?.();
+          (
+            this.sink as unknown as { showHeaderOnly?: () => void }
+          )?.showHeaderOnly?.();
         } catch {
           /* ignore */
         }

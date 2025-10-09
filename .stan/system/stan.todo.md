@@ -115,12 +115,12 @@ When updated: 2025-10-09 (UTC)
   - Just before the next session queues rows, clear prior rows and flush after queue so the first frame shows the new run/waiting rows nearly instantly.
   - Implemented via LiveUI.onCancelled('restart') → cancelPending()+flush; LiveUI.prepareForNewSession()+flush after queue; no header-only gap on restart.- Live restart and final-frame policy
 - Restart bridge: do not paint “cancelled” rows; instead clear renderer rows and render a header-only bridge with the hint. The first full table after restart now reflects only the new session’s rows (waiting/run), with the hint continuously visible.
-- Final completion: persist the full table (rows + summary + hint). Header-only persistence is reserved for cancellation paths and restart bridges.
+- Final completion: persist the full table (header + rows + summary + hint). Header-only persistence is reserved for cancellation paths and restart bridges.
 - Changes:
   - ProgressRenderer.resetRows() to drop prior rows without clearing the screen.
   - LiveSink.resetForRestart() to invoke renderer reset at the restart boundary.
   - LiveSink.stop(opts) now supports headerOnly=true for cancellation; default persists the full table.
-  - LiveUI.onCancelled('restart') stops painting cancelled rows and resets before the header-only bridge; on cancel, it persists a header-only bridge; on normal completion, it persists the final full table.
+  - LiveUI.onCancelled('restart') stops painting cancelled rows and resets before the header-only bridge; on cancel, it persists a header-only bridge; on normal completion, it persists the full table.
 
 - Exit/cancel idempotency
   - Added an internal “stopped” guard to LiveUI.stop() and LiveSink.stop() so late/double calls no‑op.
@@ -163,7 +163,7 @@ When updated: 2025-10-09 (UTC)
   - Create one RunnerUI per overall run in service and pass it into each runSessionOnce; remove per-session stop/spacing so service stops the UI once at the end of the overall run.
   - On restart, detach key handlers only and keep the sink/renderer alive; render a single header-only frame to bridge the restart boundary (no global clear, no duplicate table). The instructions line remains visible during running frames.
   - TypeScript wiring: runSessionOnce now accepts `ui` in its args; fixes TS2353 where service passed an unknown property.
-  - Result: the live.restart.behavior test passes (header-only frame appears strictly between the restart signal and the first post-restart row; final frame shows exactly one header).
+  - Result: the live.restart.behavior test passes (header-only frame appears strictly between the restart signal and the first post-restart row; final frame shows the new session only, with the hint visible).
 
 - TSDoc cleanup
   - Escaped “>” in src/stan/loop/state.ts comments to satisfy tsdoc/syntax warnings (no behavior change).
@@ -249,7 +249,7 @@ When updated: 2025-10-09 (UTC)
   - Added a tiny guard window (~25ms) before spawning the next script in sequential mode to absorb late-arriving SIGINT after the previous script finishes. Prevents the “after” script from starting across the boundary (fixes cancel.gate test: b.txt no longer created).
 
 - Test fixes (combine + selection-sync)
-  - combine-behavior: added a local tar mock that records to the shared store so \_\_tarCalls() sees create/c calls; ensured parent dirs exist under out/ before writes.
+  - combine-behavior: added a local tar mock that records to the shared store so \_\_TAR_CALLS() sees create/c calls; ensured parent dirs exist under out/ before writes.
   - selection-sync: removed duplicate `vi` imports and kept a local tar mock that records to the shared store; fixes TS2300 and reliably captures diff tar calls.
   - Result: resolves prior failures where `diffCall`/`regCall` were undefined and addresses typecheck/docs build errors.
 
@@ -272,7 +272,7 @@ When updated: 2025-10-09 (UTC)
   - Improved Windows teardown resilience in cancel parity test by using rmDirWithRetries to mitigate intermittent EBUSY.
 
 - Docs warning
-  - Suppressed external-type warning in Typedoc by setting `"excludeExternals": true`, keeping CLI docs clean without importing staged core types.
+  - Suppressed external-type warning in Typedoc by setting `"excludeExternals": true", keeping CLI docs clean without importing staged core types.
 
 - Cleanup
   - Removed unused `src/stan/util/status.ts`.
@@ -281,7 +281,7 @@ When updated: 2025-10-09 (UTC)
 - Lint & test hardening (combine + WARN logger)
   - Removed unused catch param in `src/stan/patch/service.ts` to satisfy ESLint.
   - Used precomputed `dirs.outputAbs` in `src/stan/run/archive.ts` (removes unused var and avoids recompute).
-  - Runner WARN parity: tolerate over‑escaped regex patterns (e.g., "\\\\bWARN\\\\b") by de‑escaping backslashes as a fallback when compiling `warnPattern`.
+  - Runner WARN parity: tolerate over‑escaped regex patterns (e.g., "\\bWARN\\b") by de‑escaping backslashes as a fallback when compiling `warnPattern`.
   - Test tar mocks updated to support both `tar.create` and `tar.c`, matching current core usage so capture/filters are asserted reliably: `src/stan/run.combine.archive.behavior.test.ts`, `src/stan/snap/selection-sync.test.ts`.
 
 - Build/typecheck/test unblock (phase 1)

@@ -84,6 +84,17 @@ export class LiveSink {
     }
   }
 
+  /** Render a deterministic header-only frame (includes the hint). */
+  showHeaderOnly(): void {
+    try {
+      (
+        this.renderer as unknown as { showHeaderOnly?: () => void }
+      )?.showHeaderOnly?.();
+    } catch {
+      /* ignore */
+    }
+  }
+
   /** Clear immediately (used on restart). */
   clear(): void {
     try {
