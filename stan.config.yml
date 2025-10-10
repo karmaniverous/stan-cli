@@ -20,7 +20,7 @@ scripts:
   typecheck: npm run typecheck
   lint: npm run lint:fix
   test: npm run test -- --no-color
-  build: npm run build
+  build: cross-env NO_COLOR=1 npm run build
   docs:
     script: npm run docs -- --emit none
     warnPattern: '\\[warning\\]'
