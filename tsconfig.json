@@ -13,10 +13,7 @@
     "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@karmaniverous/stan-core": [
-        ".stan/imports/stan-core"
-      ]
+      "@/*": ["src/*"]
     }
   },
   "exclude": ["coverage", "dist", "docs", "node_modules"],
