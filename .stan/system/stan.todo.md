@@ -18,6 +18,10 @@ When updated: 2025-10-09 (UTC)
 
 ### Completed (recent)
 
+- DRY fix follow‑through
+  - LoggerUI.onArchiveEnd now uses relOut(...) instead of a leftover relative(...) call.
+  - Restores typecheck, lint, and test green after the path helper consolidation.
+
 - DRY: shared UI types + centralized BORING detection
   - Introduced src/stan/run/types.ts and updated live/types, progress/model, and progress sinks to use it (removed duplicate unions).
   - Centralized BORING detection by exporting isBoring() from util/color and using it in labels.ts, loop/reversal.ts, and patch/status.ts (removing local duplicates).

@@ -62,7 +62,7 @@ export class LoggerUI implements RunnerUI {
     );
   }
   onArchiveEnd(kind: ArchiveKind, outAbs: string, cwd: string): void {
-    const rel = relative(cwd, outAbs).replace(/\\/g, '/');
+    const rel = relOut(cwd, outAbs);
     const item = kind === 'full' ? 'full' : 'diff';
     this.model.update(
       `archive:${item}`,
