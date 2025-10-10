@@ -1,8 +1,8 @@
 /* src/stan/run/progress/sinks/logger.ts */
 
 import { label } from '@/stan/run/labels';
-import type { RowMeta, ScriptState } from '@/stan/run/progress/model';
 import type { ProgressModel } from '@/stan/run/progress/model';
+import type { RowMeta, ScriptState } from '@/stan/run/types';
 
 export class LoggerSink {
   private unsubscribe?: () => void;

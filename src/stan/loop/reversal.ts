@@ -7,7 +7,7 @@
  */
 import readline from 'node:readline';
 
-import { dim, warn } from '@/stan/util/color';
+import { dim, isBoring, warn } from '@/stan/util/color';
 
 /** Return true to proceed; false to abort. */
 export const confirmLoopReversal = async (): Promise<boolean> => {
@@ -21,11 +21,7 @@ export const confirmLoopReversal = async (): Promise<boolean> => {
   if (process.env.STAN_YES === '1') return true;
 
   // BORING detection mirrors util/color: BORING or non‑TTY => unstyled strings.
-  const boring =
-    process.env.STAN_BORING === '1' ||
-    process.env.NO_COLOR === '1' ||
-    process.env.FORCE_COLOR === '0' ||
-    !isTTY;
+  const boring = isBoring();
 
   // Compose styled prompt:
   // - token: in BORING show [WARN]; otherwise use the warning glyph

@@ -1,7 +1,7 @@
 /* src/stan/run/progress/sinks/live.ts */
 import { ProgressRenderer } from '@/stan/run/live/renderer';
-import type { RowMeta, ScriptState } from '@/stan/run/progress/model';
 import type { ProgressModel } from '@/stan/run/progress/model';
+import type { RowMeta, ScriptState } from '@/stan/run/types';
 
 export class LiveSink {
   private dbg(...args: unknown[]): void {

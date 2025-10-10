@@ -7,7 +7,7 @@ import chalk from 'chalk';
 const isTTY = Boolean(
   (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
 );
-const isBoring = (): boolean => {
+export const isBoring = (): boolean => {
   return (
     process.env.STAN_BORING === '1' ||
     process.env.NO_COLOR === '1' ||

@@ -1,7 +1,16 @@
 /* src/stan/run/labels.ts
  * Shared BORING/TTY-aware status label helper for Logger and Live UIs.
  */
-import { alert, cancel, error, go, ok, stop, warn } from '@/stan/util/color';
+import {
+  alert,
+  cancel,
+  error,
+  go,
+  isBoring,
+  ok,
+  stop,
+  warn,
+} from '@/stan/util/color';
 
 export type StatusKind =
   | 'warn'
@@ -15,16 +24,6 @@ export type StatusKind =
   | 'stalled'
   | 'killed';
 
-// BORING detection mirrors other UI helpers so Live/Logger remain consistent.
-const isTTY = Boolean(
-  (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
-);
-const isBoring = (): boolean =>
-  process.env.STAN_BORING === '1' ||
-  process.env.NO_COLOR === '1' ||
-  process.env.FORCE_COLOR === '0' ||
-  !isTTY;
-
 /**
  * Render a status label suitable for table/log rows.
  * Honors BORING/TTY via util/color.
@@ -32,9 +31,7 @@ const isBoring = (): boolean =>
 export const label = (kind: StatusKind): string => {
   if (isBoring()) {
     // Bracketed tokens for BORING/non‑TTY to match Logger parity and tests.
-    if (kind === 'warn') {
-      return '[WARN]';
-    }
+    if (kind === 'warn') return '[WARN]';
     switch (kind) {
       case 'waiting':
         return '[WAIT]';

@@ -2,30 +2,7 @@
  * A tiny evented model for run progress. Sinks (live/logger) subscribe to updates.
  */
 
-export type RowMeta = { type: 'script' | 'archive'; item: string };
-
-// Copy of the live renderer's ScriptState union (kept here to avoid a hard import cycle).
-export type ScriptState =
-  | { kind: 'waiting' }
-  | { kind: 'running'; startedAt: number; lastOutputAt?: number }
-  | { kind: 'warn'; durationMs: number; outputPath?: string }
-  | {
-      kind: 'quiet';
-      startedAt: number;
-      lastOutputAt?: number;
-      quietFor: number;
-    }
-  | {
-      kind: 'stalled';
-      startedAt: number;
-      lastOutputAt: number;
-      stalledFor: number;
-    }
-  | { kind: 'done'; durationMs: number; outputPath?: string }
-  | { kind: 'error'; durationMs: number; outputPath?: string }
-  | { kind: 'timedout'; durationMs: number; outputPath?: string }
-  | { kind: 'cancelled'; durationMs?: number }
-  | { kind: 'killed'; durationMs?: number };
+import type { RowMeta, ScriptState } from '@/stan/run/types';
 
 type Row = { meta: RowMeta; state: ScriptState };
 
@@ -57,8 +34,14 @@ export class ProgressModel {
     if (!nextMeta) {
       // Derive a minimal fallback when no meta is supplied; keep keys stable.
       const derived: RowMeta = key.startsWith('archive:')
-        ? { type: 'archive', item: key.slice('archive:'.length) || '(unnamed)' }
-        : { type: 'script', item: key.replace(/^script:/, '') || '(unnamed)' };
+        ? {
+            type: 'archive',
+            item: key.slice('archive:'.length) || '(unnamed)',
+          }
+        : {
+            type: 'script',
+            item: key.replace(/^script:/, '') || '(unnamed)',
+          };
       this.rows.set(key, { meta: derived, state });
       this.emit(key, derived, state);
       return;
