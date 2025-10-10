@@ -22,7 +22,7 @@ scripts:
   test: npm run test -- --no-color
   build:
     script: cross-env NO_COLOR=1 npm run build
-    warnPattern: loaded [\\w.]+ with warnings
+    warnPattern: 'loaded [\\w.]+ with warnings(?!.*outputToFilesystem option is defaulting to true)'
   docs:
     script: npm run docs -- --emit none
     warnPattern: '\\[warning\\]'
