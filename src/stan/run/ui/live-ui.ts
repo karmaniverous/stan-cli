@@ -1,11 +1,11 @@
 // src/stan/run/ui/live-ui.ts
-import { relative } from 'node:path';
 
 import { RunnerControl } from '@/stan/run/control';
 import { ProgressRenderer } from '@/stan/run/live/renderer';
 import { liveTrace } from '@/stan/run/live/trace';
 import { ProgressModel } from '@/stan/run/progress/model';
 import { LiveSink } from '@/stan/run/progress/sinks/live';
+import { relOut } from '@/stan/run/util/path';
 
 import type { ArchiveKind, RunnerUI } from './types';
 
@@ -59,7 +59,7 @@ export class LiveUI implements RunnerUI {
     exitCode?: number,
     status?: 'ok' | 'warn' | 'error',
   ): void {
-    const rel = relative(cwd, outAbs).replace(/\\/g, '/');
+    const rel = relOut(cwd, outAbs);
     const st =
       status === 'error' || (typeof exitCode === 'number' && exitCode !== 0)
         ? {
@@ -104,7 +104,7 @@ export class LiveUI implements RunnerUI {
     endedAt: number,
   ): void {
     const item = kind === 'full' ? 'full' : 'diff';
-    const rel = relative(cwd, outAbs).replace(/\\/g, '/');
+    const rel = relOut(cwd, outAbs);
     this.model.update(
       `archive:${item}`,
       {

@@ -3,6 +3,7 @@
 import { label } from '@/stan/run/labels';
 import type { ProgressModel } from '@/stan/run/progress/model';
 import type { RowMeta, ScriptState } from '@/stan/run/types';
+import { relOut } from '@/stan/run/util/path';
 
 export class LoggerSink {
   private unsubscribe?: () => void;
@@ -40,13 +41,13 @@ export class LoggerSink {
       return;
     }
     if (state.kind === 'warn') {
-      const rel = (state.outputPath ?? '').replace(/\\/g, '/');
+      const rel = relOut(this.cwd, state.outputPath);
       console.log(`stan: ${label('warn')} "${kind}" -> ${rel}`);
       return;
     }
     if (state.kind === 'done' || state.kind === 'error') {
       const ok = state.kind === 'done';
-      const rel = (state.outputPath ?? '').replace(/\\/g, '/');
+      const rel = relOut(this.cwd, state.outputPath);
       const lbl = ok ? label('ok') : label('error');
       const tail = ok ? '' : ' (exit 1)';
       const out = rel || '';

@@ -23,6 +23,12 @@ When updated: 2025-10-09 (UTC)
   - Centralized BORING detection by exporting isBoring() from util/color and using it in labels.ts, loop/reversal.ts, and patch/status.ts (removing local duplicates).
   - No behavior changes; tests should continue to pass with consistent BORING/TTY semantics.
 
+- DRY: path/meta/counts helpers
+  - Added src/stan/run/util/path.ts (relOut/normalizeSlashes) and adopted in LiveUI and LoggerUI to normalize Output column formatting.
+  - Reused deriveMetaFromKey() for ProgressModel fallback meta derivation; removed inline duplication.
+  - Reused computeCounts() for ProgressModel.counts() to avoid maintaining two counting implementations.
+  - LoggerSink now uses relOut() instead of ad-hoc slash replacement.
+
 - UI decomposition (DRY)
   - Promoted src/stan/run/ui/\* as the canonical UI module; added prepareForNewSession and flushNow, and idempotent stop guard to LiveUI.
   - Updated restart cancellation to paint CANCELLED immediately and detach keys before the next session.

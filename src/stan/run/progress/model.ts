@@ -2,6 +2,7 @@
  * A tiny evented model for run progress. Sinks (live/logger) subscribe to updates.
  */
 
+import { computeCounts, deriveMetaFromKey } from '@/stan/run/live/util';
 import type { RowMeta, ScriptState } from '@/stan/run/types';
 
 type Row = { meta: RowMeta; state: ScriptState };
@@ -32,16 +33,19 @@ export class ProgressModel {
     const prior = this.rows.get(key);
     const nextMeta = meta ?? prior?.meta;
     if (!nextMeta) {
-      // Derive a minimal fallback when no meta is supplied; keep keys stable.
-      const derived: RowMeta = key.startsWith('archive:')
-        ? {
-            type: 'archive',
-            item: key.slice('archive:'.length) || '(unnamed)',
-          }
-        : {
-            type: 'script',
-            item: key.replace(/^script:/, '') || '(unnamed)',
-          };
+      // Prefer shared derivation; if it fails, fallback to a minimal guess.
+      const derivedMaybe = deriveMetaFromKey(key);
+      const derived: RowMeta =
+        derivedMaybe ??
+        (key.startsWith('archive:')
+          ? {
+              type: 'archive',
+              item: key.slice('archive:'.length) || '(unnamed)',
+            }
+          : {
+              type: 'script',
+              item: key.replace(/^script:/, '') || '(unnamed)',
+            });
       this.rows.set(key, { meta: derived, state });
       this.emit(key, derived, state);
       return;
@@ -72,60 +76,9 @@ export class ProgressModel {
     fail: number;
     timeout: number;
   } {
-    let warn = 0;
-    let waiting = 0;
-    let running = 0;
-    let quiet = 0;
-    let stalled = 0;
-    let ok = 0;
-    let cancelled = 0;
-    let fail = 0;
-    let timeout = 0;
-    for (const [, row] of this.rows) {
-      const st = row.state;
-      switch (st.kind) {
-        case 'warn':
-          warn += 1;
-          break;
-        case 'waiting':
-          waiting += 1;
-          break;
-        case 'running':
-          running += 1;
-          break;
-        case 'quiet':
-          quiet += 1;
-          break;
-        case 'stalled':
-          stalled += 1;
-          break;
-        case 'done':
-          ok += 1;
-          break;
-        case 'timedout':
-          timeout += 1;
-          break;
-        case 'cancelled':
-          cancelled += 1;
-          break;
-        case 'error':
-        case 'killed':
-          fail += 1;
-          break;
-        default:
-          break;
-      }
-    }
-    return {
-      warn,
-      waiting,
-      running,
-      quiet,
-      stalled,
-      ok,
-      cancelled,
-      fail,
-      timeout,
-    };
+    // Reuse the UI utility (pure) to avoid double-maintaining state counts here.
+    return computeCounts(
+      Array.from(this.rows.values()).map((r) => ({ state: r.state })),
+    );
   }
 }

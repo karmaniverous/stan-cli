@@ -1,8 +1,8 @@
 // src/stan/run/ui/logger-ui.ts
-import { relative } from 'node:path';
 
 import { ProgressModel } from '@/stan/run/progress/model';
 import { LoggerSink } from '@/stan/run/progress/sinks/logger';
+import { relOut } from '@/stan/run/util/path';
 
 import type { ArchiveKind, RunnerUI } from './types';
 
@@ -41,7 +41,7 @@ export class LoggerUI implements RunnerUI {
     _exitCode?: number,
     status?: 'ok' | 'warn' | 'error',
   ): void {
-    const rel = relative(cwd, outAbs).replace(/\\/g, '/');
+    const rel = relOut(cwd, outAbs);
     const st =
       status === 'error'
         ? ({ kind: 'error', durationMs: 0, outputPath: rel } as const)
