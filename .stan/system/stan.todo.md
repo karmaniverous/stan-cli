@@ -79,3 +79,18 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - CLI config & defaults
   - Root defaults for `debug`/`boring` respected; run defaults surfaced in help (Commander default annotations).
   - Plan printing toggles (`-p`/`-P`) honored; plan only exits without side effects.
+- Lint cleanup (tsdoc/unused/reduntant/require‑await)
+  - Fix TSDoc “escape greater‑than” in comments:
+    - src/cli/stan/cli-utils.ts (Normalize argv doc)
+    - src/stan/run/exec.ts (selection doc bullets)
+  - Remove unnecessary backslash in a TSDoc string (live renderer) to avoid tsdoc‑unnecessary‑backslash.
+  - Prompt pipeline:
+    - Simplify PromptChoice type (remove redundant union with string).
+    - Make resolvePromptSource synchronous (remove require‑await; callers may still await safely).
+  - Session:
+    - Remove unused import and variable; annotate empty catches with comments to satisfy no‑empty.
+  - Snap:
+    - Remove unused preflight import.
+
+- Lint follow‑through:
+  - Remove unnecessary `await` before `resolvePromptSource` in `src/stan/run/session.ts` to satisfy `@typescript-eslint/await-thenable`.

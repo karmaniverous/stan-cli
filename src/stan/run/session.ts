@@ -94,7 +94,7 @@ export const runSessionOnce = async (args: {
   let resolvedPromptAbs: string | null = null;
   try {
     const choice = (promptChoice ?? 'auto').trim();
-    const resolved = await resolvePromptSource(cwd, config.stanPath, choice);
+    const resolved = resolvePromptSource(cwd, config.stanPath, choice);
     // Plan header shows either "<display>" or "auto → <display>"
     resolvedPromptDisplay =
       choice === 'auto' ? `auto → ${resolved.display}` : resolved.display;
