@@ -17,7 +17,7 @@ const cwdSafe = (): string => {
 };
 const isStringArray = (v: unknown): v is readonly string[] =>
   Array.isArray(v) && v.every((t) => typeof t === 'string');
-/** Normalize argv from unit tests like ["node","stan", ...] -> [...] */
+/** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */
 export const normalizeArgv = (
   argv?: readonly string[],
 ): readonly string[] | undefined => {

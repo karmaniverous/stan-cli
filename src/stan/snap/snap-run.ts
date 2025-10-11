@@ -3,7 +3,6 @@
  */
 import { loadConfig, writeArchiveSnapshot } from '@karmaniverous/stan-core';
 
-import { preflightDocsAndVersion } from '../preflight';
 import { utcStamp } from '../util/time';
 import { captureSnapshotAndArchives } from './capture';
 import { resolveContext } from './context';

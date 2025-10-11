@@ -10,7 +10,7 @@ import {
   getPackagedSystemPromptPath,
 } from '@karmaniverous/stan-core';
 
-export type PromptChoice = 'auto' | 'local' | 'core' | string;
+export type PromptChoice = string;
 
 export type ResolvedPrompt = {
   /** absolute path to the resolved source file */
@@ -30,11 +30,11 @@ const readBytes = async (abs: string): Promise<Buffer> => {
 };
 
 /** Resolve the system prompt source based on the user's choice (auto|local|core|path). */
-export const resolvePromptSource = async (
+export const resolvePromptSource = (
   cwd: string,
   stanPath: string,
   choice: PromptChoice,
-): Promise<ResolvedPrompt> => {
+): ResolvedPrompt => {
   const localAbs = path.join(cwd, systemRel(stanPath));
   const coreAbs = getPackagedSystemPromptPath();
 

@@ -159,7 +159,7 @@ export class ProgressRenderer {
    * Compose + write a final frame without the hint (leading/trailing blanks preserved).
    * Pad one extra newline so the line count matches the prior frame when the hint
    * is removed. This prevents a trailing CSI “clear” from becoming the final
-   * character and guarantees the last byte is “\n” (required by tests),
+   * character and guarantees the last byte is a newline (required by tests),
    * without introducing the “walking down” effect between ticks.
    */
   private renderFinalNoHint(): void {

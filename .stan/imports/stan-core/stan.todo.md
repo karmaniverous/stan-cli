@@ -118,3 +118,10 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Tests and docs updated to reflect namespaced model; examples and init templates updated.
   - Interop: posted `.stan/interop/stan-cli/20251011-000000Z-config-namespacing-switch.md` with loader drop‑in and release guidance.
   - Follow‑through: remove transitional acceptance as soon as both packages publish namespaced loaders; communicate in release notes.
+
+- Core — implemented strict namespaced loader
+  - `loadConfig`/`loadConfigSync` now read only the top‑level `stan-core` section and fail fast when missing (friendly message).
+  - `configSchema` is strict inside `stan-core` (unknown keys rejected); minimal fields only.
+  - Removed CLI normalization from core (`normalizeCliDefaults`, `CliDefaults` types) and fixed TSDoc “\>” escapes to satisfy lint.
+  - Updated tests to write `stan-core` namespaced configs for JSON/YAML; added a missing‑section error case.
+  - Keeps STAN functional during release sequencing; no root‑object fallback in core.

@@ -19,7 +19,6 @@
  * - Returns created artifact paths and signals cancellation or restart.
  */
 import { resolve } from 'node:path';
-import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
 
@@ -110,13 +109,14 @@ export const runSessionOnce = async (args: {
     // Stop UI (if started) and short-circuit
     try {
       ui.stop();
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return { created: [], cancelled: true, restartRequested: false };
   }
   // Print plan once per outer loop (delegated by caller)
   if (printPlan && planBody) {
     // Inject prompt display into behavior only for plan printing.
-    const lines = planBody.split('\n');
     // Re-render the plan with a prompt line if renderRunPlan supports it via behavior.prompt
     try {
       const { renderRunPlan } = await import('@/stan/run/plan');
@@ -433,7 +433,9 @@ export const runSessionOnce = async (args: {
       console.log('');
       try {
         ui.stop();
-      } catch {}
+      } catch {
+        /* ignore */
+      }
       return { created, cancelled: true, restartRequested };
     }
     const includeOutputs = Boolean(behavior.combine);
