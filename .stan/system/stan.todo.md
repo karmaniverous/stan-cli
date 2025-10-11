@@ -8,32 +8,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
-1. Script runner environment — PATH augmentation (highest priority)
-
-- Problem:
-  - Scripts like `cross-env VAR=1 ...` fail when run via `stan run` because the child process does not see the repo’s `node_modules/.bin` on PATH.
-- Requirements:
-  - Before each script spawn, prefix the child PATH with:
-    - `<repoRoot>/node_modules/.bin`,
-    - Each ancestor `<dir>/node_modules/.bin` up to the filesystem root (nearest first).
-  - Cross‑platform: use `path.delimiter`; set `PATH` key (Windows case‑insensitive).
-  - Do not add user tools (e.g., `cross-env`) as CLI runtime dependencies; resolution must use repo installations.
-  - Keep `cwd=repoRoot`, `shell=true`, and pass through the parent env with the augmented PATH.
-  - No command rewriting (no implicit `npm exec`/`npx`); avoid quoting pitfalls.
-  - If no `.bin` directories exist (e.g., Yarn PnP), augmentation is a no‑op.
-- Implementation:
-  - Add helper: `computeBinPathChain(repoRoot): string[]` (nearest `.bin` first).
-  - In `src/stan/run/exec.ts`, build `env = { ...process.env, PATH: "<bins><delimiter><origPath>" }` and pass it to `spawn`.
-  - Deduplicate `.bin` entries while preserving nearest‑first order (optional; harmless to skip initially).
-- Tests:
-  - Unit: assert PATH contains `<repoRoot>/node_modules/.bin`.
-  - Behavioral: create a stub binary in `node_modules/.bin` and run a script that invokes it; assert success without global installs.
-  - No‑bin case: ensure no crash and that scripts still run.
-- Acceptance:
-  - Repo‑local binaries resolve without global installs.
-  - Works on Windows/macOS/Linux; monorepo ancestors honored.
-
-2. System prompt selection (run) — `-m, --prompt`
+1. System prompt selection (run) — `-m, --prompt`
 
 - Flags and defaults:
   - Accept {'auto' | 'local' | 'core' | <path>}, default 'auto'; support `cliDefaults.run.prompt`.
@@ -47,17 +22,17 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Tests:
   - All modes; early errors; plan line; diff includes prompt when changed vs snapshot.
 
-3. Remove “drift/docs changed” preflight prints from `run` and `snap`
+2. Remove “drift/docs changed” preflight prints from `run` and `snap`
 
 - Strip preflight calls/prints in these flows (retain elsewhere only if explicitly required).
 - Update affected tests (remove preflight spies/expectations).
 
-4. Archive pipeline update
+3. Archive pipeline update
 
 - Remove “packaged‑only for full” injection in `archivePhase`; instead rely on the prepared prompt for both full and diff.
 - Preserve imports staging and combine/cleanup behaviors.
 
-5. Docs & help updates
+4. Docs & help updates
 
 - CLI help: add `-m, --prompt` with `(default: auto)`.
 - Docs: CLI usage and Archives/Snapshots reflect:
@@ -97,6 +72,20 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ---
 
 ## Completed (recent)
+
+- Script runner environment — PATH augmentation
+  - Added PATH augmentation before each script spawn so repo binaries resolve without global installs.
+  - Behavior:
+    - Prefix child PATH with `<repoRoot>/node_modules/.bin` and each ancestor `<dir>/node_modules/.bin` up to the filesystem root (nearest first).
+    - Cross‑platform: use `path.delimiter`; set `PATH` (Windows case‑insensitive).
+    - No command rewriting; preserve `cwd=repoRoot`, `shell=true`; pass through parent env with augmented PATH.
+    - No runtime deps added for user tools (e.g., `cross-env`).
+    - If no `.bin` exists (e.g., Yarn PnP), augmentation is a no‑op.
+  - Implementation:
+    - Introduced `computeBinPathChain(repoRoot)` in `src/stan/run/exec.ts`.
+    - Child processes spawned with `env: { ...process.env, PATH: "<bins><delimiter><orig>" }`.
+  - Tests:
+    - Added a test to verify child PATH is prefixed with `<repoRoot>/node_modules/.bin` and visible in the script output.
 
 - Live/Logger parity and stability
   - Final‑frame newline; stable hint behavior; BORING tokens in logger.

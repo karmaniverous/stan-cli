@@ -1,14 +1,34 @@
 // src/stan/run/exec.ts
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { appendFile, readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import treeKill from 'tree-kill';
 
 import type { ProcessSupervisor } from './live/supervisor';
 import type { ExecutionMode, Selection } from './types';
+
+/** Compute nearest-first chain of node_modules/.bin directories up to filesystem root. */
+const computeBinPathChain = (repoRoot: string): string[] => {
+  const bins: string[] = [];
+  let cur = repoRoot;
+  for (;;) {
+    const bin = join(cur, 'node_modules', '.bin');
+    try {
+      if (existsSync(bin)) bins.push(bin);
+    } catch {
+      /* ignore */
+    }
+    const parent = dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
+  }
+  return bins;
+};
+
 type RunHooks = {
   onStart?: (key: string) => void;
   onEnd?: (
@@ -99,7 +119,21 @@ export const runOne = async (
   const outFile = resolve(outAbs, `${key}.txt`);
   const startedAt = Date.now();
   hooks?.onStart?.(key);
-  const child = spawn(cmd, { cwd, shell: true, windowsHide: true });
+  // Build child environment with PATH prefixed by repo/local node_modules/.bin (nearest-first).
+  const parentEnv = process.env as Record<string, string | undefined>;
+  const origPath =
+    parentEnv.PATH ?? (parentEnv as unknown as { Path?: string }).Path ?? '';
+  const binChain = computeBinPathChain(cwd);
+  const childEnv = {
+    ...parentEnv,
+    PATH: [...binChain, origPath].filter(Boolean).join(delimiter),
+  } as NodeJS.ProcessEnv;
+  const child = spawn(cmd, {
+    cwd,
+    shell: true,
+    windowsHide: true,
+    env: childEnv,
+  });
 
   const debug = process.env.STAN_DEBUG === '1';
   let combined = '';
