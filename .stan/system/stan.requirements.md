@@ -1,189 +1,259 @@
-# STAN — Requirements (Split: stan-core and stan-cli)
+# STAN — Requirements (stan‑cli)
 
-This document contains durable project requirements for the STAN system, split into two coordinated packages:
-
-- stan-core: the engine (pure services; no CLI or TTY/process concerns).
-- stan-cli: the CLI and runner (ports/adapters that orchestrate stan-core).
-
-Non‑requirements (assistant behavior, authoring policies, and process rules) belong in stan.project.md. This file defines scope, interfaces, and non‑functional constraints that should remain stable over time.
+This document defines the durable, CLI‑focused requirements for STAN’s command‑line interface and runner (“stan‑cli”). It assumes the engine (“stan‑core”) is a separate package that exposes deterministic, presentation‑free services. Where appropriate, stan‑core surfaces are referenced explicitly; stan‑cli must remain a thin adapter over those services.
 
 ---
 
-## 1) stan-core — Requirements (engine)
+## 1) Purpose
 
-### Purpose
+Provide the user‑facing CLI (Commander‑based) and runner/TTY experience (live progress table, cancellation keys, concise logs) while delegating selection, archiving/diff/snapshot, patch application, and prompt utilities to stan‑core.
 
-Provide a cohesive, dependency‑light engine that implements the durable capabilities of STAN as pure services. stan-core must be usable without a TTY, without Commander/CLI, and without direct console output.
+stan‑cli is the only place where process/TTY/clipboard/editor concerns are handled. It owns UX, composition, and orchestration; stan‑core owns data‑level decisions.
 
-### Scope
+---
 
-- Configuration
-  - Load, validate, and normalize stan.config.\* (YAML/JSON) using a strict schema with friendly errors.
-  - Provide types inferred from the schema; expose synchronous and asynchronous loaders.
-- Filesystem selection
-  - Enumerate repository files (POSIX‑normalized).
-  - Apply selection rules (default denials, .gitignore semantics, includes, excludes, reserved workspace rules).
-- Archiving and diffs
-  - Create archive.tar (full) and archive.diff.tar (changes vs snapshot).
-  - Classify files at archive time: exclude binaries; flag large text; provide a warnings body to the caller (no direct I/O).
-  - Provide a deterministic, testable interface for archive creation/filtering.
-- Snapshotting
-  - Compute content hashes for the filtered selection.
-  - Read/write the diff snapshot (.archive.snapshot.json).
-  - Provide bounded snapshot history helpers (state shape and manipulations) as pure data operations (no direct logging).
-- Patch engine
-  - Detect/clean incoming patch text (unified diff pores).
-  - Worktree‑first apply pipeline:
-    - git apply cascade (p1→p0 variants),
-    - jsdiff fallback,
-    - structured outcome (attempts, per‑file failures).
-  - File Ops (mv/cp/rm/rmdir/mkdirp): declarative structural changes with safe normalization and a dry‑run mode.
-  - Creation‑patch fast path (heuristic; see “Patch ingestion — creation fallback”).
-- Imports staging
-  - Stage labeled imports (globbed external files) under <stanPath>/imports.
-  - Preserve tail subpaths relative to glob parent.
-- Validation utilities (optional exports)
-  - Response‑format validator for assistant replies.
+## 2) Scope (CLI subcommands and behaviors)
 
-### Non‑goals
+### 2.1 Run (build & snapshot)
 
-- No UI concerns (TTY progress, key handling, cancellation orchestration).
-- No clipboard, editor spawning, or Commander/CLI parsing.
-- No console logging; return values must carry any warnings or diagnostics.
+- Invoke configured scripts (concurrent by default; sequential optionally).
+- Produce deterministic outputs under `<stanPath>/output/*.txt`.
+- Create both:
+  - `<stanPath>/output/archive.tar` — full snapshot (text files per selection rules),
+  - `<stanPath>/output/archive.diff.tar` — changed files vs snapshot (always when archiving).
+- Render a live TTY progress table or concise logger lines in non‑TTY.
+- Handle cancellation:
+  - ‘q’ (TTY) or SIGINT cancels; archives are skipped; non‑zero exit (best‑effort).
+  - Sequential scheduling gate prevents spawning further scripts after cancel.
+- Combine mode (`-c/--combine`): include `<stanPath>/output` inside archives and remove on‑disk outputs after archiving (archives remain).
+- Always restore workspace invariants on exit (TTY handlers, raw mode, cursor).
 
-### Public API (representative)
+Script execution environment (required):
+
+- CWD: Spawn scripts with `cwd` set to the repo root containing the resolved `stan.config.*`.
+- Shell: Spawn with `shell: true` (platform default shell).
+- PATH augmentation (hard requirement):
+  - Before each script spawn, stan‑cli MUST prepend the following to the child’s PATH so repo dependencies are preferred and available without global installs:
+    - `<repoRoot>/node_modules/.bin`
+    - Each ancestor `<dir>/node_modules/.bin` walking upward to the filesystem root (nearest first, then parents) — this mimics npm’s script resolution in monorepos/workspaces.
+  - Cross‑platform:
+    - Use `path.delimiter` for concatenation (`:` on POSIX, `;` on Windows).
+    - Set the environment variable key as `PATH` (Node normalizes case‑insensitively on Windows).
+  - Stability:
+    - Do not rewrite or wrap user commands (no implicit `npm exec`/`npx`); simply provide PATH so binaries like `cross-env` resolve locally.
+    - If no `node_modules/.bin` directories exist (e.g., Yarn PnP), augmentation is a no‑op; scripts may still invoke via the package manager or nested npm scripts.
+  - Non‑goals:
+    - stan‑cli MUST NOT add user toolchains (e.g., `cross-env`) as runtime dependencies; resolution must rely on the target repo’s installation.
+  - Precedence:
+    - The augmented PATH MUST ensure local `.bin` entries take precedence over global binaries.
+
+NEW — System prompt source (required; hard‑guarded):
+
+- Flags: `-m, --prompt <value>` where `<value>` ∈ {'auto' | 'local' | 'core' | <path>}, default 'auto'.
+- Resolution:
+  - ‘local’: require `<stanPath>/system/stan.system.md` to exist; error if missing.
+  - ‘core’: require packaged baseline from stan‑core (`getPackagedSystemPromptPath()`); error if missing.
+  - ‘auto’ (default): prefer ‘local’; fall back to ‘core’; error if neither is available.
+  - `<path>`: use the specified file (absolute or repo‑relative). Require readability; error if missing.
+- Materialization & diff:
+  - The resolved prompt is materialized at `<stanPath>/system/stan.system.md` for the entire archive phase (both full and diff).
+  - It is always present in the full archive, and participates in the diff like any other file (appears in `archive.diff.tar` if it changed vs snapshot).
+  - If stan‑cli writes or overwrites the file to present the chosen source, stan‑cli MUST restore prior state afterward (put original bytes back, or remove the file if it did not exist).
+- No drift/version nudges:
+  - stan‑cli MUST NOT print “drift” or “docs changed” preflight hints in `stan run`. (Those nudges belong elsewhere; the run behavior is authoritative based on the `--prompt` source.)
+- Plan header:
+  - The run plan printed by stan‑cli MUST include a single line that reflects the resolved system prompt for the run:
+    - Examples:
+      - `prompt: local (.stan/system/stan.system.md)`
+      - `prompt: core (@karmaniverous/stan-core@<version>)`
+      - `prompt: auto → local (.stan/system/stan.system.md)`
+      - `prompt: /abs/or/relative/path/to/custom.system.md`
+  - When `-P/--no-plan` is used, no plan (and thus no prompt line) is printed.
+
+Run flags (complete set; precedence = flags > cliDefaults > built‑ins):
+
+- Selection:
+  - `-s, --scripts [keys...]` (presence w/o keys => run all known scripts)
+  - `-S, --no-scripts` (conflicts with `-s`/`-x`)
+  - `-x, --except-scripts <keys...>`
+- Mode:
+  - `-q, --sequential` / `-Q, --no-sequential`
+- Archives/outputs:
+  - `-a, --archive` / `-A, --no-archive`
+  - `-c, --combine` / `-C, --no-combine` (implies archive; conflicts with `-A`)
+  - `-k, --keep` / `-K, --no-keep`
+- Plan:
+  - `-p, --plan` (plan only; exit)
+  - `-P, --no-plan` (suppress plan header; execute directly)
+- Live UI and thresholds:
+  - `-l, --live` / `-L, --no-live`
+  - `--hang-warn <seconds>` (positive int; default 120)
+  - `--hang-kill <seconds>` (positive int; default 300)
+  - `--hang-kill-grace <seconds>` (positive int; default 10)
+- System prompt:
+  - `-m, --prompt <value>` as defined above.
+- Defaults (built‑ins unless overridden by `cliDefaults.run.*`):
+  - `archive=true`, `combine=false`, `keep=false`,
+  - `sequential=false`, `live=true`,
+  - `hangWarn=120`, `hangKill=300`, `hangKillGrace=10`,
+  - `scripts=true` (when `-s` is omitted),
+  - `prompt='auto'` (new).
+
+Plan rendering (TTY and non‑TTY):
+
+- Multi‑line plan body includes:
+  - `mode`, `output`, `prompt`, `scripts`, `archive`, `combine`, `keep output dir`, `live`, and hang thresholds.
+- Plan only (`-p`): prints plan and exits with no side effects.
+
+### 2.2 Patch (discuss & apply)
+
+- Source of patch data (precedence):
+  1. [input] argument (patch text),
+  2. `-f, --file [filename]` (path explicit or from `cliDefaults.patch.file` unless `-F/--no-file`),
+  3. clipboard (default fallback).
+- Kind classification (hard rules):
+  - File Ops (“### File Ops”): structural changes only (mv/cp/rm/rmdir/mkdirp); may include many operations; dry‑run under `--check`.
+  - Diff (plain unified): exactly one file per Patch block (single‑file rule); jsdiff fallback engaged only after git‑apply cascade fails; robust EOL/whitespace handling.
+  - File Ops + Diff in the same payload: invalid (compose diagnostics envelope).
+- Persistence/audit:
+  - Save raw patch to `<stanPath>/patch/.patch`.
+  - Place rejects under `<stanPath>/patch/rejects/<UTC>/` when applicable.
+- Diagnostics:
+  - Compose compact envelope(s) with declared target paths, attempt summaries, and jsdiff reasons (if any); copy to clipboard best‑effort.
+  - On diagnostics replies from the user, the assistant must produce Full, post‑patch listings only for the affected files (no diffs), no commit message (assistant‑side rule).
+- Editor:
+  - Open modified file on success (non‑check) using `patchOpenCommand` (default `code -g {file}`), best‑effort/detached.
+
+### 2.3 Snap (share & baseline)
+
+- Write/update `<stanPath>/diff/.archive.snapshot.json`.
+- Maintain bounded undo/redo history under `<stanPath>/diff` with retention `maxUndos` (default 10).
+- Optional stash:
+  - `-s, --stash` (git stash -u then pop), `-S, --no-stash`.
+  - Success/empty stash logged concisely; on failure, abort without writing a snapshot.
+- Selection is derived from repo config (includes/excludes); snapshot fidelity matches run’s underlying selection logic.
+- No drift/version nudges: stan‑cli MUST NOT print “drift”/“docs changed” hints in `stan snap`.
+
+### 2.4 Init (project bootstrap)
+
+- Scan `package.json` scripts; prompt user (interactive) or write defaults (`--force`) to create/update `stan.config.yml|yaml|json`.
+- Preserve unknown keys and key order when rewriting existing config.
+- Ensure `.gitignore` entries for `<stanPath>/{output,diff,dist,patch}/`.
+- Write docs metadata `<stanPath>/system/.docs.meta.json` with the installed CLI version (best‑effort). Do not install a prompt monolith here.
+- Seed diff snapshot when missing (best‑effort).
+
+---
+
+## 3) Non‑goals (stan‑cli)
+
+- Engine responsibilities:
+  - No selection logic, classification, archive writing, diff/snapshot computation, or patch application logic beyond adapter mapping — stan‑core owns those.
+- No console I/O from stan‑core:
+  - Engine APIs are presentation‑free; stan‑cli MUST NOT depend on core sending logs.
+- No drift/version nudges in `run` and `snap`:
+  - Those were removed; run behavior is authoritative via `--prompt`.
+
+---
+
+## 4) Interactions with stan‑core (explicit dependencies)
+
+stan‑cli composes the following stan‑core surfaces (representative):
 
 - Config:
-  - loadConfig(cwd): Promise<ContextConfig>
-  - loadConfigSync(cwd): ContextConfig
-- Selection:
-  - listFiles(root): Promise<string[]>
-  - filterFiles(files, opts): Promise<string[]>
-- Archive/diff/snapshot:
-  - createArchive(cwd, stanPath, options): Promise<string>
-  - createArchiveDiff(options): Promise<{ diffPath: string }>
-  - writeArchiveSnapshot({ cwd, stanPath, includes, excludes }): Promise<string>
-  - classifyForArchive(cwd, relPaths): Promise<{ textFiles; excludedBinaries; largeText; warningsBody }>
-- Patch:
-  - detectAndCleanPatch(raw): string
-  - applyPatchPipeline({ cwd, patchAbs, cleaned, check }): Promise<{ ok; result; js }>
-  - executeFileOps(cwd, ops, dryRun): Promise<{ ok; results }>
-- Imports:
-  - prepareImports({ cwd, stanPath, map }): Promise<void>
-- Optional:
-  - validateResponseMessage(text): { ok; errors; warnings }
+  - `loadConfig(cwd)` / `loadConfigSync(cwd)` for repo config (ContextConfig).
+  - `ensureOutputDir(cwd, stanPath, keep)` to prepare workspace.
+- Archive & snapshot:
+  - `createArchive(cwd, stanPath, options)` → `archive.tar`
+  - `createArchiveDiff({ cwd, stanPath, baseName, includes, excludes, updateSnapshot, includeOutputDirInDiff })` → `{ diffPath }`
+  - `writeArchiveSnapshot({ cwd, stanPath, includes, excludes })`
+  - `prepareImports({ cwd, stanPath, map })` (stages imports under `<stanPath>/imports/<label>/...`)
+- Prompt helpers:
+  - `getPackagedSystemPromptPath()` to locate packaged baseline (`dist/stan.system.md`).
+- Patch engine:
+  - `detectAndCleanPatch(...)`, `parseFileOpsBlock(...)`, `executeFileOps(...)`, `applyPatchPipeline(...)` (adapter pattern only; CLI acquires sources and prints diagnostics).
 
-### Operational constraints
-
-- Determinism: archiving, selection, and snapshotting must be deterministic for the same inputs.
-- Path hygiene: all APIs accept/return POSIX‑normalized repo‑relative paths.
-- No side‑effects outside the documented filesystem paths (stanPath workspace).
-- Performance: selection/archiving should scale to large repos with streaming where practical (within the current tar interface).
-- Dependency policy:
-  - tar and fs-extra are allowed runtime dependencies.
-  - No Commander, inquirer, clipboardy, or log-update (CLI‑only).
-- Return‑values over logging:
-  - logArchiveWarnings returns a string; callers decide whether/how to print.
-  - Snapshot/history helpers return structures or lines; callers print.
-
-### Patch ingestion — creation fallback (new requirement)
-
-To improve success on “new document” patches (especially Markdown/docs) that are often malformed when provided through chat:
-
-- If the unified‑diff path fails and the patch is detected as a creation patch (i.e., headers reference /dev/null → b/<path> or equivalent “add only” hunks), perform a creation fallback:
-  1. Attempt to extract hunk content by stripping diff headers and removing leading “+” from each payload line; ignore leading “+++ b/<path>” and line‑metadata headers.
-  2. Normalize line endings to LF (preserve CRLF on write only if an existing file was present; not applicable when creating).
-  3. Create the file (ensure parent directory exists) with the decoded body.
-- This fallback is applied only when the standard apply pipeline fails and the patch is confidently identified as a new‑file creation. It MUST not run for edits of existing files.
-- The fallback MUST be implemented in stan-core (patch engine), not in CLI.
-
-### Testing
-
-- Maintain and run unit tests for all exported functions.
-- Hardening for Windows CI: no TTY/process dependencies; tests should not assume key handling or live rendering.
-- Include tests for:
-  - Creation fallback (valid/invalid diffs, nested paths, sandbox mode).
-  - Selection rules, includes vs excludes precedence, reserved path exclusions.
-  - Archive classification (binary/large) and warnings body generation.
-
-### Documentation & versioning
-
-- Semantic versioning for the package.
-- API‑level docs for public exports; clarity on return shapes (no console I/O).
-- Release notes must call out any archive/patch behavior changes.
+All core calls MUST be deterministic and presentation‑free; stan‑cli is responsible for user‑visible logs and UI.
 
 ---
 
-## 2) stan-cli — Requirements (CLI and runner)
+## 5) CLI composition & defaults
 
-### Purpose
-
-Provide the user‑facing CLI (commander subcommands) and runner/TTY experience (live table rendering, cancellation keys, status lines), delegating all engine work to stan-core.
-
-### Scope
-
-- Subcommands: run, patch, snap, init (+ version printing).
-- Runner orchestration:
-  - Live (TTY) progress, logger (non‑TTY) parity, pre/post run plan display.
-  - Cancellation via “q” and SIGINT parity; ensure archives are skipped on cancellation. Late‑cancel guard before archiving.
-- CLI composition with stan-core:
-  - Resolve config and defaults (flags > cliDefaults > built‑ins).
-  - Map selection flags into stan-core selection/archiving APIs.
-  - Present archive warnings from stan-core (no warnings files).
-- “Patch” adapter:
-  - Resolve source (clipboard/file/argument).
-  - Persist raw patch to <stanPath>/patch/.patch.
-  - Delegate to stan-core pipeline and print the unified diagnostics envelope.
-  - Open modified files via configured editor (best‑effort; detached).
-- “Snap” adapter:
-  - Resolve context, optionally stash/pop; delegate snapshot write and history capture; print concise results.
-- “Init” adapter:
-  - Prompt for config (or force mode); write stan.config with schema‑ready structure; ensure docs metadata and .gitignore entries.
-
-### Non‑goals
-
-- Implementing patch/application logic (belongs in stan-core).
-- Performing selection/archiving mechanics internally (use stan-core).
-
-### Operational constraints
-
-- TTY awareness: live rendering only on TTY; otherwise logger mode.
-- BORING mode: colorless, bracketed tokens universally available.
-- Preflight:
-  - Detect packaged prompt drift and docs version change; print nudges.
-  - Do not block execution on preflight failures.
-- Editor/clipboard actions are best‑effort and gated in tests.
-
-### Cross‑package behavior
-
-- The CLI prints archive warnings received from stan-core once per phase.
-- The CLI may inject packaged stan.system.md into the repo during the full archive phase for downstream repos and restore afterward.
-
-### Testing
-
-- Integration tests:
-  - Flags → behavior mapping, plan printing, conflict combinations.
-  - Live vs logger parity on artifacts.
-  - Cancellation path: skip archives; non‑zero exit on cancel.
-- Adapters:
-  - Patch diagnostics envelope printing, help footer defaults, stash semantics.
-
-### Documentation
-
-- CLI usage, examples, and help footers must remain accurate.
-- Release notes must call out runner UX changes (labels, parity, defaults).
+- Precedence: flags > `cliDefaults` > built‑ins.
+- Supported defaults under `cliDefaults.run`:
+  - `archive`, `combine`, `keep`, `sequential`, `plan`, `live`, `hangWarn`, `hangKill`, `hangKillGrace`, `scripts`, and `prompt` (new).
+- Supported defaults under:
+  - `cliDefaults.patch.file`, `cliDefaults.snap.stash`,
+  - Root defaults: `cliDefaults.debug`, `cliDefaults.boring`.
+- Plan header MUST reflect the effective values (including the resolved `prompt`).
 
 ---
 
-## 3) Cross‑repo coordination (requirements impacting both)
+## 6) Presentation & logs
 
-- Recommendation policy:
-  - When working in one repo, proactively recommend changes to the other whenever the desired outcome depends on engine vs adapter concerns.
-  - Examples:
-    - Engine changes (patch formats, selection semantics, imports staging) → open issues/PRs in stan-core.
-    - CLI/runner UX (keys, labels, parity, help) → open issues/PRs in stan-cli.
-- Imports bridge:
-  - Each repo SHOULD stage the other’s high‑signal docs as imports under <stanPath>/imports/<label>/… so both loops have easy access during chat.
-  - Labels:
-    - In stan-core: label “cli-docs” to stage stan-cli docs.
-    - In stan-cli: label “core-docs” to stage stan-core docs.
+- Live UI (TTY):
+  - Single table with flush‑left alignment; stable header, summary, and hint.
+  - Keys: ‘q’ (cancel), ‘r’ (restart current session only; scripts re‑queued).
+  - No alt‑screen by default; cursor hidden during updates; restored on stop.
+- Logger (non‑TTY):
+  - Concise per‑event lines with BORING tokens (`[WAIT]`, `[RUN]`, `[OK]`, `[FAIL]`, …).
+- BORING detection:
+  - Honor `STAN_BORING=1` (and `NO_COLOR=1`, `FORCE_COLOR=0`); always print stable, unstyled tokens under BORING/non‑TTY.
+
+---
+
+## 7) Error handling & guardrails
+
+- System prompt resolution error (run):
+  - stan‑cli MUST fail early (no scripts/archives) when `--prompt` cannot be resolved.
+  - One concise error line with helpful guidance (e.g., suggest `--prompt core`).
+  - Non‑zero exit code (best‑effort).
+- Archive restore:
+  - If stan‑cli changed `<stanPath>/system/stan.system.md` to present the chosen prompt, it MUST restore previous state after both full and diff phases (or on error).
+- Cancellation:
+  - SIGINT parity for live/no‑live; archives skipped on cancel path.
+  - Sequential scheduler gate MUST prevent new spawns after cancel.
+- Stability:
+  - Avoid gratuitous rewrites of the system prompt (compare bytes before writing) to prevent spurious diffs.
+
+---
+
+## 8) Testing (representative coverage)
+
+- Option parsing & plan:
+  - `-m/--prompt` present; Commander help shows `(default: auto)` (or config default).
+  - Plan includes `prompt:` line (or is suppressed by `-P`).
+- Resolution/injection/restore:
+  - `--prompt local` with present file: proceeds; no rewrite when identical.
+  - `--prompt local` missing: fails early; no artifacts.
+  - `--prompt core`: proceeds; if we injected, restore afterward.
+  - `--prompt auto`: prefers local; then core; failure when neither.
+  - `--prompt <path>`: proceeds; restore afterward.
+- Diff visibility:
+  - If prompt changes vs snapshot, `archive.diff.tar` includes it; if unchanged, it does not.
+- Removal of drift hints:
+  - No “drift” or “docs changed” prints in `run` or `snap`.
+- Cancellation:
+  - Live/no‑live parity: no archives on cancel; non‑zero exit.
+  - Sequential gate prevents post‑cancel scheduling.
+- Script runner PATH:
+  - Child PATH MUST include `<repoRoot>/node_modules/.bin` (and ancestor `.bin` directories in nearest‑first order).
+  - Behavioral test with a stub binary in `node_modules/.bin` MUST execute successfully without global installs.
+  - When `.bin` folders are absent (e.g., PnP), augmentation is a no‑op.
+
+---
+
+## 9) Documentation & versioning
+
+- CLI help and docs MUST reflect:
+  - `-m, --prompt` option and default resolution,
+  - Plan header `prompt:` line,
+  - Drift‑notice removal in `run` and `snap`,
+  - Script execution environment (PATH augmentation, CWD, shell).
+- Semantic versioning for the CLI package; changelog MUST call out:
+  - New `--prompt` behavior,
+  - Plan header prompt line,
+  - Removal of run/snap drift messages,
+  - Diff now truthfully includes prompt changes,
+  - Script runner PATH augmentation so repo devDeps resolve without globals.
+
+---
