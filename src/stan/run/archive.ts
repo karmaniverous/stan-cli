@@ -1,6 +1,4 @@
-import { existsSync } from 'node:fs';
 import { readdir, rm } from 'node:fs/promises';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path, { resolve } from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
@@ -9,7 +7,6 @@ import {
   createArchiveDiff,
   prepareImports,
 } from '@karmaniverous/stan-core';
-import { getPackagedSystemPromptPath } from '@karmaniverous/stan-core';
 
 import { alert, ok } from '@/stan/util/color';
 
@@ -47,64 +44,10 @@ const cleanupOutputsAfterCombine = async (outAbs: string): Promise<void> => {
   );
 };
 
-/**
- * Resolve the packaged system monolith (dist/stan.system.md) from this module.
- */
-const resolvePackagedSystemMonolith = (): string | null => {
-  return getPackagedSystemPromptPath();
-};
-
 const makeDirs = (cwd: string, stanPath: string) => ({
   outputAbs: path.join(cwd, stanPath, 'output'),
   patchAbs: path.join(cwd, stanPath, 'patch'),
 });
-/**
- * Write the packaged system prompt to `<stanPath>/system/stan.system.md` for
- * the duration of archiving and return a cleanup function that restores previous
- * state (or removes the file if it did not exist).
- *
- * Used for downstream repos so the full archive always contains a baseline
- * system prompt even when local prompts are managed from the package.
- *
- * @param cwd - Repository root.
- * @param stanPath - STAN workspace folder (for example, ".stan").
- * @returns Async cleanup function to restore the original file state.
- */
-const preparePackagedSystemPrompt = async (
-  cwd: string,
-  stanPath: string,
-): Promise<() => Promise<void>> => {
-  const packaged = resolvePackagedSystemMonolith();
-  if (!packaged) return async () => {};
-
-  const sysDir = path.resolve(cwd, stanPath, 'system');
-  await mkdir(sysDir, { recursive: true });
-  const dest = path.join(sysDir, 'stan.system.md');
-
-  const existed = existsSync(dest);
-  let original: string | null = null;
-  if (existed) {
-    try {
-      original = await readFile(dest, 'utf8');
-    } catch {
-      original = null;
-    }
-  }
-  const body = await readFile(packaged, 'utf8');
-  await writeFile(dest, body, 'utf8');
-
-  return async () => {
-    try {
-      if (existed) {
-        if (original !== null) await writeFile(dest, original, 'utf8');
-      } else {
-        await rm(dest, { force: true });
-      }
-    } catch {
-      // best-effort
-    }
-  };
-};
 
 /**
  * Clear `<stanPath>/patch` contents after archiving (preserve the directory).
@@ -135,9 +78,6 @@ const cleanupPatchDirAfterArchive = async (
 /**
  * Run the archive phase and produce both regular and diff archives.
  *
- * - Always injects the packaged baseline system prompt from stan-core (dist) for
- *   the full archive and restores it before computing the diff.
- *
  * @param args - Object with:
  *   - cwd: Repo root.
  *   - config: Resolved STAN configuration.
@@ -159,13 +99,6 @@ export const archivePhase = async (
   if (!silent) {
     console.log(`stan: start "${alert('archive')}"`);
   }
-
-  // Ensure the packaged system prompt is present during archiving (full archive).
-  // Always source from stan-core dist — never assemble from local parts.
-  let restore: () => Promise<void> = await preparePackagedSystemPrompt(
-    cwd,
-    config.stanPath,
-  );
 
   let archivePath = '';
   let diffPath = '';
@@ -197,19 +130,12 @@ export const archivePhase = async (
         )}`,
       );
     }
-    // Important: restore any ephemeral packaged system prompt before computing the diff.
-    // Otherwise, downstream repos (which do not maintain a local stan.system.md)
-    // will see it as a spurious change on every run because the snapshot won’t include it.
-    await restore();
-    // Prevent double-restore in the outer finally.
-    restore = async () => {};
 
     if (!silent) {
       console.log(`stan: start "${alert('archive (diff)')}"`);
     }
     opts?.progress?.start?.('diff');
     const startedDiff = Date.now();
-    // We intentionally do not force-include the system prompt in the diff archive.
     ({ diffPath } = await createArchiveDiff({
       cwd,
       stanPath: config.stanPath,
@@ -228,8 +154,7 @@ export const archivePhase = async (
       );
     }
   } finally {
-    // No-op if already restored; otherwise remove/restore ephemeral system prompt (downstream only).
-    await restore();
+    // No packaged prompt injection/restore; prompt is managed upstream for both full and diff.
   }
   if (includeOutputs) {
     await cleanupOutputsAfterCombine(dirs.outputAbs);

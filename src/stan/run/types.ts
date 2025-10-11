@@ -25,6 +25,8 @@ export type RunBehavior = {
   hangKill?: number;
   hangKillGrace?: number;
   plan?: boolean;
+  /** Plan-only display string for resolved system prompt source (when present). */
+  prompt?: string;
 };
 
 export type ScriptState =

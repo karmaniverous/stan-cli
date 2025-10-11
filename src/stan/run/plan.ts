@@ -38,6 +38,9 @@ export const renderRunPlan = (
     bold('STAN run plan'),
     `mode: ${mode === 'sequential' ? 'sequential' : 'concurrent'}`,
     `output: ${outputRel}/`,
+    ...(typeof behavior.prompt === 'string' && behavior.prompt.trim().length
+      ? [`prompt: ${behavior.prompt}`]
+      : []),
     `scripts: ${scripts.length ? scripts.join(', ') : 'none'}`,
     `archive: ${behavior.archive ? 'yes' : 'no'}`,
     `combine: ${behavior.combine ? 'yes' : 'no'}`,

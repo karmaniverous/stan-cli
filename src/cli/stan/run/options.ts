@@ -116,6 +116,13 @@ export const registerRunOptions = (
     'do not print a run plan before execution',
   );
 
+  // System prompt source
+  const optPrompt = new Option(
+    '-m, --prompt <value>',
+    'system prompt source (auto|local|core|<path>)',
+  );
+  optPrompt.default('auto');
+
   // Register options in desired order
   cmd // selection first; -S directly after -s
     .addOption(optScripts)
@@ -134,6 +141,7 @@ export const registerRunOptions = (
     // plan
     .addOption(optPlan)
     .addOption(optNoPlan)
+    .addOption(optPrompt)
     // live & thresholds
     .addOption(optLive)
     .addOption(optNoLive)
@@ -166,6 +174,9 @@ export const registerRunOptions = (
   tagDefault(eff.keep ? optKeep : optNoKeep, true);
   tagDefault(eff.sequential ? optSequential : optNoSequential, true);
   tagDefault(eff.live ? optLive : optNoLive, true);
+
+  // Show configured default for prompt (Commander will render "(default: value)")
+  optPrompt.default(eff.prompt);
 
   // Apply Commander defaults for numeric thresholds so help shows (default: N)
   optHangWarn.default(eff.hangWarn);

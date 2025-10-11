@@ -33,67 +33,19 @@ declare const DEFAULT_OPEN_COMMAND = "code -g {file}";
  */
 declare const findConfigPathSync: (cwd: string) => string | null;
 
-/** A script entry may be a raw command string or an object with an optional warnPattern. */
-type ScriptEntry = string | {
-    script: string;
-    warnPattern?: string;
-};
-type ScriptMap = Record<string, ScriptEntry>;
-type CliDefaultsRun = {
-    archive?: boolean;
-    combine?: boolean;
-    keep?: boolean;
-    sequential?: boolean;
-    live?: boolean;
-    plan?: boolean;
-    hangWarn?: number;
-    hangKill?: number;
-    hangKillGrace?: number;
-    scripts?: boolean | string[];
-};
-type CliDefaultsPatch = {
-    file?: string | null | undefined;
-};
-type CliDefaultsSnap = {
-    stash?: boolean;
-};
-type CliDefaults = {
-    debug?: boolean;
-    boring?: boolean;
-    patch?: CliDefaultsPatch;
-    run?: CliDefaultsRun;
-    snap?: CliDefaultsSnap;
-};
-/**
- * Resolved STAN configuration. * - Paths like stanPath/output and stanPath/diff are referred to without angle *   brackets to avoid confusion with HTML-like tags in TSDoc.
- */
 type ContextConfig = {
+    /** STAN workspace directory (e.g., ".stan"). */
     stanPath: string;
-    scripts: ScriptMap;
     /**
-     * Additive allow‑list globs for archiving/snapshot logic.
-     * - Augments the base selection (which applies .gitignore and default denials).
-     * - Explicit `excludes` take precedence over `includes` (i.e., excludes always win).
-     * - `includes` can bring back files ignored by `.gitignore` or default denials.
-     * - Reserved exclusions still apply: `<stanPath>/diff` is always excluded;
-     *   `<stanPath>/output` is excluded unless explicitly included by combine mode at archive time.
+     * Additive allow‑list globs for selection. Reserved workspace exclusions
+     * still apply (<stanPath>/diff and <stanPath>/patch are always excluded;
+     * <stanPath>/output is excluded unless combine mode includes it at archive time).
      */
     includes?: string[];
-    /** Paths to exclude in archiving logic (globs supported). */
+    /** Deny‑list globs (take precedence over includes). */
     excludes?: string[];
-    /** Maximum retained snapshot "undos" (history depth for snap undo/redo). */
-    maxUndos?: number /** Optional developer-mode switch to treat the current repo as the STAN dev module. */;
-    devMode?: boolean;
-    /**
-     * Staged imports (archiving only): label -\> glob(s) to copy under <stanPath>/imports/<label>/...
-     */
-    imports?: Record<string, string | string[]>;
-    /**
-     * Phase-scoped CLI defaults used by adapters when flags are omitted.
-     * Top-level (no 'opts' wrapper).   */
-    cliDefaults?: CliDefaults;
-    /** Command template to open modified files after a successful patch. */
-    patchOpenCommand?: string;
+    /** Imports mapping normalized to arrays. */
+    imports?: Record<string, string[]>;
 };
 
 /**
@@ -353,4 +305,4 @@ declare const assembleSystemMonolith: (cwd: string, stanPath: string) => Promise
 declare const CORE_VERSION: string;
 
 export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, assembleSystemMonolith, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, getPackagedSystemPromptPath, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
-export type { ApplyResult, AssembleResult, Block, BlockKind, CliDefaults, CliDefaultsPatch, CliDefaultsRun, CliDefaultsSnap, ContextConfig, CreateArchiveOptions, FileOp, FileOpsPlan, ImportsMap, JsDiffOutcome, OpResult, PipelineOutcome, ScriptEntry, ScriptMap, SnapshotUpdateMode, ValidationResult };
+export type { ApplyResult, AssembleResult, Block, BlockKind, ContextConfig, CreateArchiveOptions, FileOp, FileOpsPlan, ImportsMap, JsDiffOutcome, OpResult, PipelineOutcome, SnapshotUpdateMode, ValidationResult };

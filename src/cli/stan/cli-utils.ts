@@ -17,14 +17,16 @@ const cwdSafe = (): string => {
 };
 const isStringArray = (v: unknown): v is readonly string[] =>
   Array.isArray(v) && v.every((t) => typeof t === 'string');
-/** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */ export const normalizeArgv =
-  (argv?: readonly string[]): readonly string[] | undefined => {
-    if (!isStringArray(argv)) return undefined;
-    if (argv.length >= 2 && argv[0] === 'node' && argv[1] === 'stan') {
-      return argv.slice(2);
-    }
-    return argv;
-  };
+/** Normalize argv from unit tests like ["node","stan", ...] -> [...] */
+export const normalizeArgv = (
+  argv?: readonly string[],
+): readonly string[] | undefined => {
+  if (!isStringArray(argv)) return undefined;
+  if (argv.length >= 2 && argv[0] === 'node' && argv[1] === 'stan') {
+    return argv.slice(2);
+  }
+  return argv;
+};
 
 /** Patch parse() and parseAsync() to normalize argv before Commander parses. */
 export const patchParseMethods = (cli: Command): void => {
@@ -137,6 +139,7 @@ export const runDefaults = (
   hangWarn: number;
   hangKill: number;
   hangKillGrace: number;
+  prompt: string;
 } => {
   const cfg = loadConfigSafe(dir);
   const runIn = (cfg?.cliDefaults?.run ?? {}) as {
@@ -148,25 +151,34 @@ export const runDefaults = (
     hangWarn?: number;
     hangKill?: number;
     hangKillGrace?: number;
+    prompt?: string;
   };
   type BoolKeys = 'archive' | 'combine' | 'keep' | 'sequential' | 'live';
   const pickBool = (k: BoolKeys): boolean => {
     const v = (runIn as Record<BoolKeys, unknown>)[k];
     return typeof v === 'boolean' ? v : RUN_BASE_DEFAULTS[k];
   };
-  const pickNum = (k: 'hangWarn' | 'hangKill' | 'hangKillGrace'): number => {
-    const v = runIn[k];
-    return typeof v === 'number' && v > 0 ? v : RUN_BASE_DEFAULTS[k];
+  const pickNum = (
+    name: 'hangWarn' | 'hangKill' | 'hangKillGrace',
+    base: number,
+  ): number => {
+    if (typeof runIn[name] === 'number' && runIn[name] > 0) return runIn[name];
+    return base;
   };
+  const prompt =
+    typeof runIn.prompt === 'string' && runIn.prompt.trim().length
+      ? runIn.prompt.trim()
+      : 'auto';
   return {
     archive: pickBool('archive'),
     combine: pickBool('combine'),
     keep: pickBool('keep'),
     sequential: pickBool('sequential'),
     live: pickBool('live'),
-    hangWarn: pickNum('hangWarn'),
-    hangKill: pickNum('hangKill'),
-    hangKillGrace: pickNum('hangKillGrace'),
+    hangWarn: pickNum('hangWarn', RUN_BASE_DEFAULTS.hangWarn),
+    hangKill: pickNum('hangKill', RUN_BASE_DEFAULTS.hangKill),
+    hangKillGrace: pickNum('hangKillGrace', RUN_BASE_DEFAULTS.hangKillGrace),
+    prompt,
   };
 };
 

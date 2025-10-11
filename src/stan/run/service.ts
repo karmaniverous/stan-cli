@@ -1,7 +1,6 @@
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
-import { preflightDocsAndVersion } from '../preflight';
 import { renderRunPlan } from './plan';
 import { runSessionOnce } from './session';
 import type { ExecutionMode, RunBehavior } from './types';
@@ -31,17 +30,6 @@ export const runSelected = async (
   behaviorMaybe?: RunBehavior,
 ): Promise<string[]> => {
   const behavior: RunBehavior = behaviorMaybe ?? {};
-
-  // Preflight docs/version (non-blocking; best-effort)
-  try {
-    await preflightDocsAndVersion(cwd);
-  } catch (err) {
-    if (process.env.STAN_DEBUG === '1') {
-      const msg = err instanceof Error ? err.message : String(err);
-
-      console.error('stan: preflight failed', msg);
-    }
-  }
 
   // Ensure workspace (also manages archive.prev when keep=false)
   await ensureOutputDir(cwd, config.stanPath, Boolean(behavior.keep));

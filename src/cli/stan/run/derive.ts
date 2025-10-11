@@ -9,6 +9,7 @@ export type DerivedRun = {
   selection: string[];
   mode: ExecutionMode;
   behavior: RunBehavior;
+  promptChoice: string;
 };
 /**
  * Derive selection/mode/behavior given parsed options, the configured defaults,
@@ -75,6 +76,13 @@ export const deriveRunParameters = (args: {
     'hangKillGrace',
     RUN_BASE_DEFAULTS.hangKillGrace,
   );
+  // Prompt choice: CLI flag overrides cliDefaults; fallback to 'auto'
+  const promptChoice =
+    (src.getOptionValueSource?.('prompt') === 'cli' &&
+    typeof (options as { prompt?: unknown }).prompt === 'string'
+      ? String((options as { prompt?: unknown }).prompt)
+      : (config.cliDefaults?.run as { prompt?: string } | undefined)?.prompt) ??
+    'auto';
 
   const derivedBase = deriveRunInvocation({
     scriptsProvided,
@@ -124,5 +132,10 @@ export const deriveRunParameters = (args: {
     hangKill: hangKillFinal,
     hangKillGrace: hangKillGraceFinal,
   };
-  return { selection, mode, behavior };
+  return {
+    selection,
+    mode,
+    behavior,
+    promptChoice,
+  };
 };

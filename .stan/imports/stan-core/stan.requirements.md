@@ -29,9 +29,21 @@ Provide a cohesive, dependency‑light engine that implements the durable capabi
 
 ### Scope
 
-- Configuration
-  - Load, validate, and normalize `stan.config.*` (YAML/JSON) with a strict schema and friendly errors.
-  - Expose typed loaders: sync and async.
+- Configuration (namespaced; canonical)
+  - Config files are namespaced by consumer at the top level. Canonical keys:
+    - `stan-core`: engine‑owned object; REQUIRED by the engine.
+    - `stan-cli`: CLI‑owned object; out of scope for the engine.
+  - The engine MUST read and strictly validate only the `stan-core` block with the minimal schema:
+    - `stanPath: string (non‑empty)`,
+    - `includes?: string[]` (default `[]`),
+    - `excludes?: string[]` (default `[]`),
+    - `imports?: Record<string, string|string[]>` (normalized to arrays).
+  - Unknown keys inside `stan-core` MAY be rejected (strict schema). Unknown keys outside `stan-core` are ignored by the engine.
+  - Root‑level legacy shapes and vendor extensions (e.g., `x-stan-cli`) are not part of the canonical model. Transitional acceptance is permitted only insofar as needed to keep STAN functional while both packages release the namespaced change.
+  - Expose typed loaders (sync/async) that:
+    - resolve config path,
+    - select the `stan-core` object (error when missing),
+    - return the minimal `ContextConfig` shape.
 
 - Filesystem selection
   - Enumerate repository files (POSIX‑normalized paths).
@@ -117,6 +129,7 @@ Provide a cohesive, dependency‑light engine that implements the durable capabi
   - `CORE_VERSION: string`
 
 Notes
+
 - API must remain deterministic across runs for identical inputs.
 - Paths are POSIX repo‑relative on input and output.
 
@@ -129,6 +142,11 @@ Notes
   - Allowed at runtime: `tar`, `fs-extra`.
   - Not allowed: clipboard libraries, CLI frameworks, TTY/presentation utilities.
 
+### Cross‑repo configuration alignment (CLI perspective)
+
+- CLI MUST read and validate only the `stan-cli` top‑level object (strict schema).
+- Legacy vendor extensions (e.g., `x-stan-cli`) and legacy root keys are not canonical; any temporary acceptance is for the shortest possible transition window to keep STAN functional.
+
 ### Patch ingestion — creation fallback (engine behavior)
 
 Improve success on “new document” diffs commonly malformed in chat:
@@ -137,9 +155,9 @@ Improve success on “new document” diffs commonly malformed in chat:
   - Only after the standard pipeline fails (git + jsdiff),
   - Only when confidently identified as a creation patch (`/dev/null → b/<path>` or equivalent “add only” hunks).
 - Behavior
-  1) Extract payload by stripping diff headers and removing leading “+” from payload lines.
-  2) Normalize EOL to LF for the written file (no pre‑existing EOL to preserve).
-  3) Ensure parent directories exist and create the file atomically.
+  1. Extract payload by stripping diff headers and removing leading “+” from payload lines.
+  2. Normalize EOL to LF for the written file (no pre‑existing EOL to preserve).
+  3. Ensure parent directories exist and create the file atomically.
 - Guardrails
   - Never applies to edits of existing files.
   - Runs silently with a structured outcome; no console I/O.
@@ -147,12 +165,12 @@ Improve success on “new document” diffs commonly malformed in chat:
 ### Testing
 
 - Coverage for:
-  - Config loaders and schema error messages.
+  - Config loaders and schema error messages (namespaced `stan-core` block).
   - Selection semantics (includes vs excludes precedence; reserved workspace exclusions).
   - Archive classification (binary exclusion, large‑text flags) and warnings surfacing (returns/callback).
   - Diff archive + snapshot handling (changed/no‑changes sentinel).
   - Patch pipeline:
-    - git cascade attempts summary shape,
+    - git apply attempt captures are structured and summarized,
     - jsdiff fallback on CRLF/LF variations,
     - creation fallback (simple, nested paths, sandbox/check).
   - File Ops parsing/execution (safety checks, dry‑run).

@@ -6,6 +6,20 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 ## Next up (priority order)
 
+- Configuration namespacing (immediate)
+  - Core
+    - Loader reads `stan-core` strictly; error when missing.
+    - Remove root‑object passthrough; validate only minimal keys in `stan-core`.
+    - Normalize `imports` to arrays; keep `includes/excludes` empty‑array defaults.
+    - Tests: YAML/JSON positive cases; missing `stan-core` error case; negative schema cases.
+  - CLI (handoff to stan-cli)
+    - Loader reads `stan-cli` strictly (see interop note); early friendly error when missing.
+    - Update examples/init templates to namespaced layout; update help/docs accordingly.
+    - Tests: namespaced happy paths; early error; remove/disable x‑stan‑cli/legacy tests after both sides ship.
+  - Transition hygiene
+    - Keep STAN functional during release sequencing only; no long tail of backward‑compat behavior.
+    - Announce canonical model in docs and interop; remove transitional acceptance as soon as both packages publish.
+
 - Packaging & distribution
   - Ensure Rollup outputs ESM/CJS + `.d.ts` only (no CLI bundle).
   - Ship `dist/stan.system.md` alongside library artifacts.
@@ -14,6 +28,7 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 ---
 
 ## Completed (recent)
+
 - System prompt — dev plan logging rules
   - Completed is the final section; new entries are appended at the bottom (append‑only).
   - No edits to existing Completed items; clarifications/corrections are logged as new list entries (amendments to the list).
@@ -21,54 +36,38 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - No numbering in the dev plan (use nested bullets); a short, strictly ordered sub‑procedure may use a local numbered list when needed.
 
 - Interop (stan-cli) — core config slimming + CLI config extraction
-  - Posted `.stan/interop/stan-cli/20251010-000000Z-core-config-slimming-and-cli-config.md`
-    with the plan of attack and drop-in code:
+  - Posted `.stan/interop/stan-cli/20251010-000000Z-core-config-slimming-and-cli-config.md` with the plan of attack and drop-in code:
     - defaults (DEFAULT_OPEN_COMMAND),
-    - CLI schemas (scripts/cliDefaults/*),
+    - CLI schemas (scripts/cliDefaults/\*),
     - loader with x-stan-cli preferred and legacy top-level fallback.
   - Preserves current CLI behavior while enabling a clean, namespaced config.
 - Project policy — Zod schema/type naming
   - Adopted a project-wide convention for Zod artifacts:
     - Schemas: lowerCamelCase with “Schema” suffix (e.g., `configSchema`).
     - Derived types: PascalCase without suffix (e.g., `Config`).
-  - Documented the rule in `.stan/system/stan.project.md` under
-    “Code conventions — Zod schema and derived types.”
+  - Documented the rule in `.stan/system/stan.project.md` under “Code conventions — Zod schema and derived types.”
 - System prompt — diagnostics clarity (polish)
   - Quick Reference rule #6 now explicitly distinguishes normal replies (patches by default; listings on request) from diagnostics replies (Full Listings only; no patches).
   - Added a one‑sentence definition of “post‑patch listing” in the patch‑failure follow‑up: listings MUST reflect the target state implied by the failed hunks; never print the original body.
 
 -
 - System prompt — diagnostics clarity
-  - Removed legacy wording that implied Full Listings are “optional on request”
-    for patch‑failure replies. Response Format now explicitly scopes “optional    listings” to normal replies only and makes diagnostics listings mandatory (no
-    patches, union across envelopes, no commit message). Quick rules now call
-    this out explicitly alongside the 300‑LOC decomposition pivot for listings.
+  - Removed legacy wording that implied Full Listings are “optional on request” for patch‑failure replies. Response Format now explicitly scopes “optional listings” to normal replies only and makes diagnostics listings mandatory (no patches, union across envelopes, no commit message). Quick rules now call this out explicitly alongside the 300‑LOC decomposition pivot for listings.
 
 - System prompt — guardrails & diagnostics
-  - 300‑LOC hard gate + decomposition pivot: never emit a patch that makes a file
-    exceed 300 LOC; pivot to File Ops + multiple patches. When producing listings
-    (diagnostics), if a file would exceed 300 LOC, decompose and list the new files
-    instead of the monolith.
-  - Patch‑failure replies: always provide Full, post‑patch listings ONLY (no patches)
-    for each affected file; when multiple envelopes are pasted, list the union of
-    affected files; skip the Commit Message in diagnostics replies.
-  - No mixing: never deliver a Patch and a Full Listing for the same file in the
-    same turn; Response Format and validation text updated accordingly.
+  - 300‑LOC hard gate + decomposition pivot: never emit a patch that makes a file exceed 300 LOC; pivot to File Ops + multiple patches. When producing listings (diagnostics), if a file would exceed 300 LOC, decompose and list the new files instead of the monolith.
+  - Patch‑failure replies: always provide Full, post‑patch listings ONLY (no patches) for each affected file; when multiple envelopes are pasted, list the union of affected files; skip the Commit Message in diagnostics replies.
+  - No mixing: never deliver a Patch and a Full Listing for the same file in the same turn; Response Format and validation text updated accordingly.
 
 - Lint & docs polish
-  - Fixed tsdoc “\>” escape in creation‑fallback comment and removed a useless
-    escape in a regex character class to satisfy ESLint.
-  - Re‑exported `ApplyResult` so Typedoc includes the type referenced by
-    `PipelineOutcome.result` (eliminates the last documentation warning).
+  - Fixed tsdoc “\>” escape in creation‑fallback comment and removed a useless escape in a regex character class to satisfy ESLint.
+  - Re‑exported `ApplyResult` so Typedoc includes the type referenced by `PipelineOutcome.result` (eliminates the last documentation warning).
 
 - Patch engine fidelity
-  - Implemented creation‑patch fallback (post git+jsdiff) for confident
-    `/dev/null → b/<path>` diffs. Honors `--check` by writing to
-    `.stan/patch/.sandbox/F/<path>`; writes to repo otherwise.
+  - Implemented creation‑patch fallback (post git+jsdiff) for confident `/dev/null → b/<path>` diffs. Honors `--check` by writing to `.stan/patch/.sandbox/F/<path>`; writes to repo otherwise.
 
 - Typedoc polish
-  - Re‑exported public types referenced by top‑level APIs
-    (`PipelineOutcome`, `JsDiffOutcome`, `AssembleResult`, `FileOpsPlan`, `OpResult`, `ImportsMap`) to remove documentation warnings.
+  - Re‑exported public types referenced by top‑level APIs (`PipelineOutcome`, `JsDiffOutcome`, `AssembleResult`, `FileOpsPlan`, `OpResult`, `ImportsMap`) to remove documentation warnings.
 
 - Maintenance (knip/interop)
   - Temporarily ignored six knip‑flagged helpers in stan‑core.
@@ -112,33 +111,10 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Typedoc documents reflect engine‑only surfaces; CHANGELOG retained.
   - knip hints addressed; unused config entries pruned.
 
----
-
-## Backlog / follow‑through
-
-- Performance profiling for large repos (selection traversal and tar streaming).
-- Optional logger injection pattern (future) to support host‑provided structured logging without introducing a logging dependency into core.
-
----
-
-## Interop & imports hygiene (engine side)
-
-- Outgoing interop (local authoring): `.stan/interop/stan-cli/<UTC>-<slug>.md`
-  - Use for short, actionable coordination with stan‑cli on boundary or loader topics.
-  - Aggressively prune resolved interop files via File Ops once conclusions are reflected here.
-
-- Incoming interop (context only): `.stan/imports/stan-cli/*.md`
-  - Scan staged peer notes before proposing cross‑repo actions.
-  - Never modify or remove files under `.stan/imports/**`.
-
----
-
-## Acceptance criteria (near‑term)
-
-- No direct clipboard/editor/TTY dependencies; no console I/O in core.
-- `createArchive` / `createArchiveDiff` and `prepareImports` surface notes via return values and/or callbacks; tests updated to assert data/callbacks.
-- `CORE_VERSION` exported; prompt helpers (`getPackagedSystemPromptPath`, `assembleSystemMonolith`) available and quiet.
-- Patch engine:
-  - git apply attempt captures are structured and summarized,
-  - jsdiff fallback tolerant to LF/CRLF and whitespace,
-  - creation‑patch fallback works for confident new‑file cases and nested paths.
+- Change of direction — namespaced config (stan-core/stan-cli)
+  - Adopted top‑level namespacing in `stan.config.*`: `stan-core` for engine, `stan-cli` for CLI. Backward compatibility is not a factor beyond keeping STAN functional during the brief transition.
+  - Core: strict loader for `stan-core` (no root passthrough); minimal schema only; error when missing section.
+  - CLI: strict loader for `stan-cli`; drop `x-stan-cli`/legacy acceptance after coordinated release.
+  - Tests and docs updated to reflect namespaced model; examples and init templates updated.
+  - Interop: posted `.stan/interop/stan-cli/20251011-000000Z-config-namespacing-switch.md` with loader drop‑in and release guidance.
+  - Follow‑through: remove transitional acceptance as soon as both packages publish namespaced loaders; communicate in release notes.

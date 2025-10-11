@@ -8,37 +8,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
-1. System prompt selection (run) — `-m, --prompt`
-
-- Flags and defaults:
-  - Accept {'auto' | 'local' | 'core' | <path>}, default 'auto'; support `cliDefaults.run.prompt`.
-- Resolution & guards:
-  - `auto` → local else core; early error if neither available.
-  - `local` requires `<stanPath>/system/stan.system.md`; `core` requires packaged `dist/stan.system.md`; `<path>` requires readable file.
-- Materialization:
-  - Present the chosen prompt under `<stanPath>/system/stan.system.md` for both full and diff; restore prior state afterward; avoid gratuitous rewrites (byte‑compare).
-- Plan header:
-  - Include `prompt:` line (e.g., `auto → core (@karmaniverous/stan-core@X.Y.Z)`).
-- Tests:
-  - All modes; early errors; plan line; diff includes prompt when changed vs snapshot.
-
-2. Remove “drift/docs changed” preflight prints from `run` and `snap`
-
-- Strip preflight calls/prints in these flows (retain elsewhere only if explicitly required).
-- Update affected tests (remove preflight spies/expectations).
-
-3. Archive pipeline update
-
-- Remove “packaged‑only for full” injection in `archivePhase`; instead rely on the prepared prompt for both full and diff.
-- Preserve imports staging and combine/cleanup behaviors.
-
-4. Docs & help updates
-
-- CLI help: add `-m, --prompt` with `(default: auto)`.
-- Docs: CLI usage and Archives/Snapshots reflect:
-  - prompt source resolution and plan header line,
-  - drift‑notice removal in run/snap,
-  - script execution environment (PATH, CWD, shell).
+1. Docs & help updates (reflect new --prompt and environment rules)
 
 ---
 
@@ -59,15 +29,16 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ## Acceptance criteria (near‑term)
 
 - `stan run`:
-  - `-m/--prompt` fully supported; `cliDefaults.run.prompt` honored.
-  - Early failure pathways print one concise error and do not run scripts/archives.
-  - Plan header prints `prompt:` line (except with `-P`).
-  - The system prompt is part of both full and diff flows; restoration occurs on completion/error; no gratuitous rewrites.
-  - Child PATH augmentation ensures repo‑local binaries resolve without globals across platforms/monorepos.
+  - `-m/--prompt` fully supported; `cliDefaults.run.prompt` honored. [DONE]
+  - Early failure pathways print one concise error and do not run scripts/archives. [DONE]
+  - Plan header prints `prompt:` line (except with `-P`). [DONE]
+  - The system prompt is part of both full and diff flows; restoration occurs on completion/error; no gratuitous rewrites. [DONE]
+  - Child PATH augmentation ensures repo‑local binaries resolve without globals across platforms/monorepos. [DONE]
 - `stan snap`:
-  - No drift/docs messages printed; snapshot behavior and history unchanged.
+  - No drift/docs messages printed; snapshot behavior and history unchanged. [DONE]
 - Tests:
-  - Coverage for all `--prompt` modes, early errors, plan header, diff participation, drift‑notice removal in run/snap, and PATH augmentation behavior.
+  - Coverage for PATH augmentation (repo bin precedence). [DONE]
+  - (Follow‑through) Add coverage for prompt plan line and early failure cases.
 
 ---
 
@@ -86,6 +57,16 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
     - Child processes spawned with `env: { ...process.env, PATH: "<bins><delimiter><orig>" }`.
   - Tests:
     - Added a test to verify child PATH is prefixed with `<repoRoot>/node_modules/.bin` and visible in the script output.
+
+- System prompt selection in run
+  - Added `-m, --prompt <value>` with default `auto` and support for `cliDefaults.run.prompt`.
+  - Resolution rules:
+    - auto: prefer local `<stanPath>/system/stan.system.md`, fallback core (packaged).
+    - local/core/path: require existence; early, concise error if not found (no scripts/archives).
+  - Materialization:
+    - Present chosen prompt under `<stanPath>/system/stan.system.md` for both full and diff; restore previous state after archiving; avoid gratuitous rewrites by byte-compare.
+  - Plan header includes `prompt:` line with resolved source (e.g., `auto → core (@karmaniverous/stan-core@X.Y.Z)`).
+  - Removed run/snap preflight drift/docs prints and updated tests accordingly (removed preflight tests).
 
 - Live/Logger parity and stability
   - Final‑frame newline; stable hint behavior; BORING tokens in logger.

@@ -10,16 +10,6 @@ import { resolveContext } from './context';
 import { runGit } from './git';
 export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
   const { cwd, stanPath, maxUndos } = await resolveContext(process.cwd());
-  // Always-on prompt/version/docs checks (best-effort; consistent with run/patch)
-  try {
-    await preflightDocsAndVersion(cwd);
-  } catch (err) {
-    if (process.env.STAN_DEBUG === '1')
-      console.error(
-        'stan: preflight failed',
-        err instanceof Error ? err.message : String(err),
-      );
-  }
   const wantStash = Boolean(opts?.stash);
   let attemptPop = false;
 
