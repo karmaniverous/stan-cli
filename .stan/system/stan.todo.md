@@ -153,3 +153,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Added an early check in `src/cli/stan/run/action.ts` to emit `run.action:engine-legacy` when the config lacks a top-level `stan-core`, guarded to avoid duplicates with the later synthesis path.
   - Ensures the expected debug signal is present under `STAN_DEBUG=1` for the transitional legacy extraction test.
   - Keeps the emission to a single notice per action by tracking a local guard.
+
+- Run — honor legacy includes/excludes in archive phase
+  - Extended `RunnerConfig` to optionally carry `includes`/`excludes`/`imports`.
+  - In `run/action.ts`, populated these fields from the resolved engine `ContextConfig` (synthesized from legacy root keys when needed).
+  - The archive phase now receives selection settings and respects legacy excludes without requiring a top‑level `stan-core` block.
+  - No behavior change for namespaced configs; legacy paths only.

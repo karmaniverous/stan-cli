@@ -204,6 +204,12 @@ export const registerRunAction = (
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
       scripts: cliCfg.scripts,
+      // Propagate selection context for the archive phase (legacy-friendly).
+      // These originate from the resolved engine ContextConfig above, which may
+      // be synthesized from legacy root keys during the transitional window.
+      includes: config.includes ?? [],
+      excludes: config.excludes ?? [],
+      imports: config.imports,
     };
 
     // Loop header + reversal guard

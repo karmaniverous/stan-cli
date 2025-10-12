@@ -14,6 +14,13 @@ import type { ScriptMap } from '@/cli/config/schema';
 export type RunnerConfig = {
   stanPath: string;
   scripts: ScriptMap;
+  /**
+   * Optional engine selection context (propagated to the archive phase).
+   * When present, these are honored by createArchive/createArchiveDiff.
+   */
+  includes?: string[];
+  excludes?: string[];
+  imports?: Record<string, string[]>;
 };
 /**
  * Behavior flags controlling archive/combine/keep semantics:
