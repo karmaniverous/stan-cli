@@ -89,73 +89,80 @@ export const performInitService = async ({
   }
 
   // Interactive merge: apply only what the user directed; otherwise keep existing settings.
+  // In --dry-run, skip interactive prompts entirely (plan-only; no mutations).
   if (!force) {
-    const scriptsFromPkg = await readPackageJsonScripts(cwd);
-    const picked = await promptForConfig(
-      cwd,
-      scriptsFromPkg,
-      defaults
-        ? {
-            stanPath: defaults.stanPath ?? defaultStanPath,
-            includes: defaults.includes ?? [],
-            excludes: defaults.excludes ?? [],
-            // seed scripts for prompt from CLI config when available
-            scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
-          }
-        : undefined,
-      preserveScripts,
-    );
-
-    // Engine keys: prefer stan-core node when namespaced
-    if (namespaced) {
-      const core = ensureNsNode(base, 'stan-core');
-      core.stanPath = picked.stanPath;
-      core.includes = picked.includes;
-      core.excludes = picked.excludes;
-      // Remove any lingering legacy root copies to avoid duplication
-      delete (base as { stanPath?: unknown }).stanPath;
-      delete (base as { includes?: unknown }).includes;
-      delete (base as { excludes?: unknown }).excludes;
-    } else {
-      // Legacy layout (should be rare after migration); keep root keys
-      setKey(base, 'stanPath', picked.stanPath);
-      setKey(base, 'includes', picked.includes);
-      setKey(base, 'excludes', picked.excludes);
-    }
-
-    // scripts (respect 'preserve scripts' behavior)
-    const preserving =
-      (picked as { preserveScripts?: boolean }).preserveScripts === true ||
-      preserveScripts === true;
-    if (namespaced) {
-      const cli = ensureNsNode(base, 'stan-cli');
-      if (!preserving) {
-        cli.scripts = picked.scripts;
-      } else if (!hasOwn(cli, 'scripts')) {
-        cli.scripts = picked.scripts;
+    if (!dryRun) {
+      const scriptsFromPkg = await readPackageJsonScripts(cwd);
+      const picked = await promptForConfig(
+        cwd,
+        scriptsFromPkg,
+        defaults
+          ? {
+              stanPath: defaults.stanPath ?? defaultStanPath,
+              includes: defaults.includes ?? [],
+              excludes: defaults.excludes ?? [],
+              // seed scripts for prompt from CLI config when available
+              scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
+            }
+          : undefined,
+        preserveScripts,
+      );
+      // Apply picked values (interactive mode only)
+      // Engine keys: prefer stan-core node when namespaced
+      if (namespaced) {
+        const core = ensureNsNode(base, 'stan-core');
+        core.stanPath = picked.stanPath;
+        core.includes = picked.includes;
+        core.excludes = picked.excludes;
+        // Remove any lingering legacy root copies to avoid duplication
+        delete (base as { stanPath?: unknown }).stanPath;
+        delete (base as { includes?: unknown }).includes;
+        delete (base as { excludes?: unknown }).excludes;
+      } else {
+        // Legacy layout (should be rare after migration); keep root keys
+        setKey(base, 'stanPath', picked.stanPath);
+        setKey(base, 'includes', picked.includes);
+        setKey(base, 'excludes', picked.excludes);
       }
-      // Ensure we do not reintroduce a legacy root scripts key
-      if (hasOwn(base, 'scripts')) delete base.scripts;
-    } else {
-      if (!preserving) {
-        setKey(base, 'scripts', picked.scripts);
-      } else if (!Object.prototype.hasOwnProperty.call(base, 'scripts')) {
-        setKey(base, 'scripts', picked.scripts);
-      }
-    }
 
-    // patchOpenCommand: keep existing when present; otherwise ensure a sensible default
-    const poc =
-      cliCfg?.patchOpenCommand && typeof cliCfg.patchOpenCommand === 'string'
-        ? cliCfg.patchOpenCommand
-        : 'code -g {file}';
-    if (namespaced) {
-      const cli = ensureNsNode(base, 'stan-cli');
-      if (!hasOwn(cli, 'patchOpenCommand')) cli.patchOpenCommand = poc;
-      // Remove any legacy root copy to avoid duplication
-      if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
-    } else if (!Object.prototype.hasOwnProperty.call(base, 'patchOpenCommand'))
-      ensureKey(base, 'patchOpenCommand', poc);
+      // scripts (respect 'preserve scripts' behavior)
+      const preserving =
+        (picked as { preserveScripts?: boolean }).preserveScripts === true ||
+        preserveScripts === true;
+      if (namespaced) {
+        const cli = ensureNsNode(base, 'stan-cli');
+        if (!preserving) {
+          cli.scripts = picked.scripts;
+        } else if (!hasOwn(cli, 'scripts')) {
+          cli.scripts = picked.scripts;
+        }
+        // Ensure we do not reintroduce a legacy root scripts key
+        if (hasOwn(base, 'scripts')) delete base.scripts;
+      } else {
+        if (!preserving) {
+          setKey(base, 'scripts', picked.scripts);
+        } else if (!Object.prototype.hasOwnProperty.call(base, 'scripts')) {
+          setKey(base, 'scripts', picked.scripts);
+        }
+      }
+
+      // patchOpenCommand: keep existing when present; otherwise ensure a sensible default
+      const poc =
+        cliCfg?.patchOpenCommand && typeof cliCfg.patchOpenCommand === 'string'
+          ? cliCfg.patchOpenCommand
+          : 'code -g {file}';
+      if (namespaced) {
+        const cli = ensureNsNode(base, 'stan-cli');
+        if (!hasOwn(cli, 'patchOpenCommand')) cli.patchOpenCommand = poc;
+        // Remove any legacy root copy to avoid duplication
+        if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
+      } else if (
+        !Object.prototype.hasOwnProperty.call(base, 'patchOpenCommand')
+      )
+        ensureKey(base, 'patchOpenCommand', poc);
+    } else {
+      // dry-run: do not prompt or mutate config
+    }
   } else {
     // --force: be non-destructive when a config already exists.
     // Only ensure required keys. If no config exists, create a minimal one.
@@ -169,38 +176,11 @@ export const performInitService = async ({
       };
     } else {
       // For existing configs, avoid overwriting user settings.
-      // Ensure minimally-required keys exist.
+      // Ensure minimally-required keys exist only for legacy layout.
+      // Idempotency: when already namespaced, make no changes.
       if (namespaced) {
-        const core = ensureNsNode(base, 'stan-core');
-        if (!hasOwn(core, 'stanPath'))
-          core.stanPath = defaults?.stanPath ?? defaultStanPath;
-        if (!hasOwn(core, 'includes')) {
-          const inc =
-            isObj(core) &&
-            Array.isArray((core as { includes?: unknown }).includes)
-              ? (core as { includes?: string[] }).includes
-              : [];
-          core.includes = inc;
-        }
-        if (!hasOwn(core, 'excludes')) {
-          const exc =
-            isObj(core) &&
-            Array.isArray((core as { excludes?: unknown }).excludes)
-              ? (core as { excludes?: string[] }).excludes
-              : [];
-          core.excludes = exc;
-        }
-        const cli = ensureNsNode(base, 'stan-cli');
-        if (!hasOwn(cli, 'scripts')) cli.scripts = cliCfg?.scripts ?? {};
-        if (!hasOwn(cli, 'patchOpenCommand')) {
-          cli.patchOpenCommand = cliCfg?.patchOpenCommand ?? 'code -g {file}';
-        }
-        // Remove any legacy root duplicates that may have been present
-        delete (base as { stanPath?: unknown }).stanPath;
-        delete (base as { includes?: unknown }).includes;
-        delete (base as { excludes?: unknown }).excludes;
-        if (hasOwn(base, 'scripts')) delete base.scripts;
-        if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
+        // No-op for already namespaced configs under --force.
+        // (Avoid injecting defaults like patchOpenCommand; keep file unchanged.)
       } else {
         ensureKey(base, 'stanPath', defaults?.stanPath ?? defaultStanPath);
         ensureKey(

@@ -126,3 +126,10 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Interop — request to core
   - Posted `.stan/interop/stan-core/20251012-000000Z-cli-namespacing-adopted.md` asking core to prune resolved interop notes so we can remove imports of core interop threads from this repo and keep archives lean.
+
+- Init — make --dry-run non-interactive and idempotent on namespaced configs
+  - Skipped interactive prompts entirely during `--dry-run` (plan-only; no inquirer, no mutations).
+  - Ensured `--force` on an already namespaced config is a true no-op (do not inject defaults such as `patchOpenCommand`); preserves exact file content for idempotency test.
+
+- Run — ensure legacy engine-config notice under strict/accepting cores
+  - After a successful `loadConfig`, detect missing `stan-core` in the raw config and emit `run.action:engine-legacy` debugFallback (under STAN_DEBUG=1). This guarantees tests see the expected notice even when the engine accepts legacy root keys.

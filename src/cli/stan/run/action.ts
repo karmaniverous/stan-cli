@@ -62,6 +62,30 @@ export const registerRunAction = (
     let config: ContextConfig;
     try {
       config = await loadConfig(runCwd);
+      // If the resolved config file does not contain a "stan-core" node,
+      // surface a debug fallback notice indicating legacy engine keys are in use,
+      // even if the engine accepted them.
+      try {
+        const cfgFile = findConfigPathSync(runCwd);
+        if (cfgFile) {
+          const raw = await readFile(cfgFile, 'utf8');
+          const rootUnknown: unknown = cfgFile.endsWith('.json')
+            ? (JSON.parse(raw) as unknown)
+            : (YAML.parse(raw) as unknown);
+          const root =
+            rootUnknown && typeof rootUnknown === 'object'
+              ? (rootUnknown as Record<string, unknown>)
+              : {};
+          if (!Object.prototype.hasOwnProperty.call(root, 'stan-core')) {
+            debugFallback(
+              'run.action:engine-legacy',
+              `detected legacy root keys (no "stan-core") in ${cfgFile.replace(/\\/g, '/')}`,
+            );
+          }
+        }
+      } catch {
+        /* ignore */
+      }
     } catch (err) {
       // Debug-only notice: config load diversion from happy path
       {

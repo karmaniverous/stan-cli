@@ -125,3 +125,13 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Removed CLI normalization from core (`normalizeCliDefaults`, `CliDefaults` types) and fixed TSDoc “\>” escapes to satisfy lint.
   - Updated tests to write `stan-core` namespaced configs for JSON/YAML; added a missing‑section error case.
   - Keeps STAN functional during release sequencing; no root‑object fallback in core.
+
+- Interop housekeeping — prune resolved notes (config swing)
+  - Removed resolved interop messages under `.stan/interop/stan-cli/` now that CLI has adopted top‑level namespacing:
+    - `20251010-000000Z-core-config-slimming-and-cli-config.md`
+    - `20251011-000000Z-config-namespacing-switch.md`
+  - This enables stan-cli to drop imports of core interop threads and keeps archives lean.
+  - Current state:
+    - Core: strict `stan-core` loader in place; tests/docs aligned.
+    - CLI: strict `stan-cli` loader adopted with a short transitional legacy extractor to keep the loop green during sequencing (per CLI requirements).
+  - Follow‑through: remove any remaining transitional acceptance paths once both packages are fully released on the namespaced model.
