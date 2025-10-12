@@ -141,3 +141,12 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Archive warnings surfaced via `surfaceArchiveWarnings` in `src/stan/archive/util.ts`; used by archive and diff.
   - Config loader uses shared helpers in `src/stan/config/common.ts` (formatZodError/parseRoot/normalizeImports) to reduce duplication.
   - Tests remain green; no public API changes.
+
+- Docs — alignment with namespaced engine config and env switches
+  - README: updated config section to reference the top‑level `stan-core` block and replaced outdated `cliDefaults/scripts` references with the minimal engine `ContextConfig` fields (`stanPath`, `includes`, `excludes`, `imports`).
+  - New ENVIRONMENT.md: enumerates all environment variables observed by the engine, test harness, and release scripts (scope/values/examples).
+  - typedoc.json: added ENVIRONMENT.md to `projectDocuments` so the page is published with the generated site.
+
+- Typedoc — zero warnings
+  - Re‑exported `AttemptCapture` from the patch barrel so Typedoc includes the
+    referenced type used by `ApplyResult.captures`.
