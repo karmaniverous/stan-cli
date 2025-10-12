@@ -65,23 +65,17 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ## Completed (recent)
 
 - Run — emit legacy engine notice once per action
-  - Kept a single `run.action:engine-legacy` debugFallback emission in the run
-    preAction hook; removed duplicate notices from the loader and run action.
-  - Prevents duplicate logs while preserving the required test signal under
-    `STAN_DEBUG=1`.
+  - Kept a single `run.action:engine-legacy` debugFallback emission in the run preAction hook; removed duplicate notices from the loader and run action.
+  - Prevents duplicate logs while preserving the required test signal under `STAN_DEBUG=1`.
 
 - Defaults — remove local DEFAULT_OPEN_COMMAND duplicate
-  - Updated CLI config loader to import `DEFAULT_OPEN_COMMAND` from
-    `@karmaniverous/stan-core` and deleted `src/cli/config/defaults.ts`.
+  - Updated CLI config loader to import `DEFAULT_OPEN_COMMAND` from `@karmaniverous/stan-core` and deleted `src/cli/config/defaults.ts`.
 
 - Tests — harden snap stash success teardown on Windows
-  - Updated src/cli/stan/snap.stash.success.test.ts to pause stdin, add a short
-    settle, and remove temp dirs via rmDirWithRetries. Prevents intermittent
-    ENOTEMPTY on out/diff and eliminates the timeout.
+  - Updated src/cli/stan/snap.stash.success.test.ts to pause stdin, add a short settle, and remove temp dirs via rmDirWithRetries. Prevents intermittent ENOTEMPTY on out/diff and eliminates the timeout.
 
 - Run — guarantee engine-legacy debugFallback under STAN_DEBUG=1
-  - Added a secondary `run.action:engine-legacy` debugFallback emission inside the
-    CLI-config legacy fallback path when `stan-core` is absent at the top level.
+  - Added a secondary `run.action:engine-legacy` debugFallback emission inside the CLI-config legacy fallback path when `stan-core` is absent at the top level.
   - Ensures tests observe the required notice alongside the existing `cli.config:loadSync` message.
 
 - Init — force idempotency guard and legacy→namespaced migration
@@ -145,3 +139,12 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Interop — request to core
   - Posted `.stan/interop/stan-core/20251012-000000Z-cli-namespacing-adopted.md` asking core to prune resolved interop notes so we can remove imports of core interop threads from this repo and keep archives lean.
+
+- Run — import debugFallback to restore debug notice path and fix typecheck/lint
+  - Added `import { debugFallback } from '@/stan/util/debug'` in `src/cli/stan/run/action.ts`.
+  - Resolves TS2304 (“Cannot find name 'debugFallback'”) and associated lint errors.
+  - Unblocks tests that assert presence of the legacy‑config notice under `STAN_DEBUG=1`.
+
+- Patch — use engine DEFAULT_OPEN_COMMAND (DRY)
+  - Updated `src/stan/patch/service.ts` to import `DEFAULT_OPEN_COMMAND` from `@karmaniverous/stan-core`.
+  - Removes dependency on the deleted local defaults module and fixes module‑resolution failures in tests.

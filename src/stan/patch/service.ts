@@ -21,10 +21,10 @@ import {
   loadConfig,
   parseFileOpsBlock,
 } from '@karmaniverous/stan-core';
+import { DEFAULT_OPEN_COMMAND } from '@karmaniverous/stan-core';
 import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
-import { DEFAULT_OPEN_COMMAND } from '@/cli/config/defaults';
 import { loadCliConfigSync } from '@/cli/config/load';
 import {
   composeDiffFailureEnvelope,

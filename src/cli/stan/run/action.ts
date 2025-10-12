@@ -20,6 +20,7 @@ import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
 import type { RunnerConfig } from '@/stan/run/types';
 import { go } from '@/stan/util/color';
+import { debugFallback } from '@/stan/util/debug';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
