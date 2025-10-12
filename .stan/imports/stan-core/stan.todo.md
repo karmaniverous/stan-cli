@@ -6,24 +6,24 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 ## Next up (priority order)
 
-- Configuration namespacing (immediate)
-  - Core
-    - Loader reads `stan-core` strictly; error when missing.
-    - Remove root‑object passthrough; validate only minimal keys in `stan-core`.
-    - Normalize `imports` to arrays; keep `includes/excludes` empty‑array defaults.
-    - Tests: YAML/JSON positive cases; missing `stan-core` error case; negative schema cases.
-  - CLI (handoff to stan-cli)
-    - Loader reads `stan-cli` strictly (see interop note); early friendly error when missing.
-    - Update examples/init templates to namespaced layout; update help/docs accordingly.
-    - Tests: namespaced happy paths; early error; remove/disable x‑stan‑cli/legacy tests after both sides ship.
-  - Transition hygiene
-    - Keep STAN functional during release sequencing only; no long tail of backward‑compat behavior.
-    - Announce canonical model in docs and interop; remove transitional acceptance as soon as both packages publish.
+- Docs (namespaced model only)
+  - Update README and examples to show the namespaced `stan-core`/`stan-cli` layout exclusively.
+  - Add a brief migration note pointing users to “stan init” (CLI).
 
-- Packaging & distribution
-  - Ensure Rollup outputs ESM/CJS + `.d.ts` only (no CLI bundle).
-  - Ship `dist/stan.system.md` alongside library artifacts.
-  - Keep `tar` and `fs-extra` as runtime externals; preserve tree‑shaking.
+- Config tests (strict engine loader)
+  - Add a unit test that rejects unknown keys inside `stan-core` (negative case).
+  - Add a JSON-path variant of the missing-section error.
+
+- Typedoc (zero warnings)
+  - Resolve the remaining AttemptCapture warning by exporting the type or adjusting the reference.
+
+- DRY test scaffolding
+  - Introduce shared `writeStanConfigYaml/Json` and `withMockTarCapture` helpers.
+  - Adopt incrementally in a few suites.
+
+- Optional DRY set (later)
+  - Hoist additional small shared helpers if duplication appears during CLI alignment.
+  - Keep modules ≤ 300 LOC.
 
 ---
 
@@ -35,17 +35,7 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Prune Completed entries not needed to understand work in flight; keep minimal context only.
   - No numbering in the dev plan (use nested bullets); a short, strictly ordered sub‑procedure may use a local numbered list when needed.
 
-- Interop (stan-cli) — core config slimming + CLI config extraction
-  - Posted `.stan/interop/stan-cli/20251010-000000Z-core-config-slimming-and-cli-config.md` with the plan of attack and drop-in code:
-    - defaults (DEFAULT_OPEN_COMMAND),
-    - CLI schemas (scripts/cliDefaults/\*),
-    - loader with x-stan-cli preferred and legacy top-level fallback.
-  - Preserves current CLI behavior while enabling a clean, namespaced config.
-- Project policy — Zod schema/type naming
-  - Adopted a project-wide convention for Zod artifacts:
-    - Schemas: lowerCamelCase with “Schema” suffix (e.g., `configSchema`).
-    - Derived types: PascalCase without suffix (e.g., `Config`).
-  - Documented the rule in `.stan/system/stan.project.md` under “Code conventions — Zod schema and derived types.”
+-
 - System prompt — diagnostics clarity (polish)
   - Quick Reference rule #6 now explicitly distinguishes normal replies (patches by default; listings on request) from diagnostics replies (Full Listings only; no patches).
   - Added a one‑sentence definition of “post‑patch listing” in the patch‑failure follow‑up: listings MUST reflect the target state implied by the failed hunks; never print the original body.
@@ -56,7 +46,7 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 - System prompt — guardrails & diagnostics
   - 300‑LOC hard gate + decomposition pivot: never emit a patch that makes a file exceed 300 LOC; pivot to File Ops + multiple patches. When producing listings (diagnostics), if a file would exceed 300 LOC, decompose and list the new files instead of the monolith.
-  - Patch‑failure replies: always provide Full, post‑patch listings ONLY (no patches) for each affected file; when multiple envelopes are pasted, list the union of affected files; skip the Commit Message in diagnostics replies.
+  - Patch‑failure replies: always provide Full, post‑patch listings ONLY (no patches) for each affected file; when multiple envelopes are pasted, list the union of all referenced files; skip the Commit Message in diagnostics replies.
   - No mixing: never deliver a Patch and a Full Listing for the same file in the same turn; Response Format and validation text updated accordingly.
 
 - Lint & docs polish
@@ -126,6 +116,7 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Updated tests to write `stan-core` namespaced configs for JSON/YAML; added a missing‑section error case.
   - Keeps STAN functional during release sequencing; no root‑object fallback in core.
 
+-
 - Interop housekeeping — prune resolved notes (config swing)
   - Removed resolved interop messages under `.stan/interop/stan-cli/` now that CLI has adopted top‑level namespacing:
     - `20251010-000000Z-core-config-slimming-and-cli-config.md`
@@ -149,4 +140,4 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Validator now imports `toPosix` from `src/stan/path/repo.ts` and removes a duplicated doc line.
   - Archive warnings surfaced via `surfaceArchiveWarnings` in `src/stan/archive/util.ts`; used by archive and diff.
   - Config loader uses shared helpers in `src/stan/config/common.ts` (formatZodError/parseRoot/normalizeImports) to reduce duplication.
-  - Tests remain green; no public API changes.
+  - Tests remain green; no public API changes.

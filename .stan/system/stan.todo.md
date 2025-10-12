@@ -64,6 +64,16 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
+- Run — emit legacy engine notice once per action
+  - Kept a single `run.action:engine-legacy` debugFallback emission in the run
+    preAction hook; removed duplicate notices from the loader and run action.
+  - Prevents duplicate logs while preserving the required test signal under
+    `STAN_DEBUG=1`.
+
+- Defaults — remove local DEFAULT_OPEN_COMMAND duplicate
+  - Updated CLI config loader to import `DEFAULT_OPEN_COMMAND` from
+    `@karmaniverous/stan-core` and deleted `src/cli/config/defaults.ts`.
+
 - Tests — harden snap stash success teardown on Windows
   - Updated src/cli/stan/snap.stash.success.test.ts to pause stdin, add a short
     settle, and remove temp dirs via rmDirWithRetries. Prevents intermittent

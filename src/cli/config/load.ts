@@ -6,10 +6,10 @@ import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
 import { findConfigPathSync } from '@karmaniverous/stan-core';
+import { DEFAULT_OPEN_COMMAND } from '@karmaniverous/stan-core';
 import YAML from 'yaml';
 import { ZodError } from 'zod';
 
-import { DEFAULT_OPEN_COMMAND } from '@/cli/config/defaults';
 import {
   type CliConfig,
   cliConfigSchema,
@@ -103,29 +103,6 @@ export const loadCliConfig = async (cwd: string): Promise<LoadedCliConfig> => {
       'cli.config:load',
       `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,
     );
-    // Guarantee an early engine-legacy notice for the run path under STAN_DEBUG=1.
-    // If the raw config lacks a top-level "stan-core" node, emit the run.action message
-    // so tests observe it alongside the CLI-config legacy notice.
-    try {
-      const hasStanCore =
-        root && typeof root === 'object'
-          ? Object.prototype.hasOwnProperty.call(
-              root as Record<string, unknown>,
-              'stan-core',
-            )
-          : false;
-      if (!hasStanCore) {
-        debugFallback(
-          'run.action:engine-legacy',
-          `detected legacy root keys (no "stan-core") in ${cfgPath.replace(
-            /\\/g,
-            '/',
-          )}`,
-        );
-      }
-    } catch {
-      /* ignore */
-    }
     return parseCliNode(legacy, cfgPath);
   }
   // Nothing configured; return empty-scripts baseline
@@ -151,27 +128,6 @@ export const loadCliConfigSync = (cwd: string): LoadedCliConfig => {
       'cli.config:loadSync',
       `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,
     );
-    // Mirror the async loader: emit engine-legacy notice if stan-core is absent.
-    try {
-      const hasStanCore =
-        root && typeof root === 'object'
-          ? Object.prototype.hasOwnProperty.call(
-              root as Record<string, unknown>,
-              'stan-core',
-            )
-          : false;
-      if (!hasStanCore) {
-        debugFallback(
-          'run.action:engine-legacy',
-          `detected legacy root keys (no "stan-core") in ${cfgPath.replace(
-            /\\/g,
-            '/',
-          )}`,
-        );
-      }
-    } catch {
-      /* ignore */
-    }
     return parseCliNode(legacy, cfgPath);
   }
   return { scripts: {}, patchOpenCommand: DEFAULT_OPEN_COMMAND };

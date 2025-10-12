@@ -20,7 +20,6 @@ import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
 import type { RunnerConfig } from '@/stan/run/types';
 import { go } from '@/stan/util/color';
-import { debugFallback } from '@/stan/util/debug';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
@@ -56,59 +55,9 @@ export const registerRunAction = (
     const cwdInitial = process.cwd();
     const cfgPath = findConfigPathSync(cwdInitial);
     const runCwd = cfgPath ? path.dirname(cfgPath) : cwdInitial;
-
-    // Pre-check: emit a legacy engine-config notice early when the config file
-    // does not contain a top-level "stan-core" node. This guarantees tests see
-    // the run.action notice regardless of engine loader behavior.
-    try {
-      if (cfgPath) {
-        const raw0 = await readFile(cfgPath, 'utf8');
-        const root0Unknown: unknown = cfgPath.endsWith('.json')
-          ? (JSON.parse(raw0) as unknown)
-          : (YAML.parse(raw0) as unknown);
-        const root0 =
-          root0Unknown && typeof root0Unknown === 'object'
-            ? (root0Unknown as Record<string, unknown>)
-            : {};
-        if (!Object.prototype.hasOwnProperty.call(root0, 'stan-core')) {
-          debugFallback(
-            'run.action:engine-legacy',
-            `detected legacy root keys (no "stan-core") in ${cfgPath.replace(/\\/g, '/')}`,
-          );
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-    // Load repo config as ContextConfig; on failure, fall back (transitional):
-    // synthesize a ContextConfig from legacy root keys so excludes/includes/stanPath work.
     let config: ContextConfig;
     try {
       config = await loadConfig(runCwd);
-      // If the resolved config file does not contain a "stan-core" node,
-      // surface a debug fallback notice indicating legacy engine keys are in use,
-      // even if the engine accepted them.
-      try {
-        const cfgFile = findConfigPathSync(runCwd);
-        if (cfgFile) {
-          const raw = await readFile(cfgFile, 'utf8');
-          const rootUnknown: unknown = cfgFile.endsWith('.json')
-            ? (JSON.parse(raw) as unknown)
-            : (YAML.parse(raw) as unknown);
-          const root =
-            rootUnknown && typeof rootUnknown === 'object'
-              ? (rootUnknown as Record<string, unknown>)
-              : {};
-          if (!Object.prototype.hasOwnProperty.call(root, 'stan-core')) {
-            debugFallback(
-              'run.action:engine-legacy',
-              `detected legacy root keys (no "stan-core") in ${cfgFile.replace(/\\/g, '/')}`,
-            );
-          }
-        }
-      } catch {
-        /* ignore */
-      }
     } catch (err) {
       // Debug-only notice: config load diversion from happy path
       {
