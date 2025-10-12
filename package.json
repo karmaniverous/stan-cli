@@ -24,7 +24,8 @@
     "signal-exit": "^4.1.0",
     "table": "^6.9.0",
     "tree-kill": "^1.2.2",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "zod": "^4.1.12"
   },
   "description": "STAN is a CLI that bridges your IDE with your favorite LLM and drives a rapid, powerful, low-friction, design-first iterative development process. Real-world AI-assisted development for professional engineers!",
   "devDependencies": {
