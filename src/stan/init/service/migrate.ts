@@ -70,7 +70,7 @@ const backupConfig = async (existingPath?: string | null): Promise<void> => {
  *
  * @param base - Parsed config object (mutable).
  * @param existingPath - Absolute path to the config file (for .bak).
- * @param opts - { force?: boolean } — when false, prompts the user to confirm.
+ * @param opts - Options controlling migration (when force is false, prompts the user to confirm).
  * @returns The same (possibly mutated) base object.
  */
 export const maybeMigrateLegacyToNamespaced = async (
@@ -146,5 +146,3 @@ export const maybeMigrateLegacyToNamespaced = async (
   attachNode(base, 'stan-cli', cliNode);
   return base;
 };
-
-export default maybeMigrateLegacyToNamespaced;

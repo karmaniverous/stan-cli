@@ -97,4 +97,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Fixed unsafe error handling in service/index.ts catch blocks (lint clean).
   - Updated init behavior tests to the namespaced model (stan-core/stan-cli); removed assumptions about legacy top‑level cliDefaults/scripts and root key order.
   - Kept unknown root keys intact and avoided re‑adding legacy keys when namespaces exist; migration remains idempotent and writes a .bak in force/confirmed paths.
-
+
+  - Post‑fix: init/service now avoids writing legacy root keys when stan-core/stan-cli nodes exist.
+    - Interactive and --force branches write engine keys to stan-core and CLI keys to stan-cli.
+    - Root duplication of scripts/stanPath/includes/excludes/patchOpenCommand eliminated.
+    - Snapshot selection derives includes/excludes from stan-core when present; stanPath resolution prefers stan-core.
+    - Tests refined to assert absence of root keys using root-anchored regexes only (no false positives for nested keys).

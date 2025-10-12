@@ -65,8 +65,8 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
       /^\s*stan-cli:([\s\S]*?)\n\s*scripts:\s*\n\s* {2}a:\s*echo a/m,
     );
     // Legacy root keys removed (no duplicates at root)
-    expect(after).not.toMatch(/^\s*scripts:\s/m);
-    expect(after).not.toMatch(/^\s*stanPath:\s/m);
+    expect(after).not.toMatch(/^scripts:\s*$/m);
+    expect(after).not.toMatch(/^stanPath:\s*$/m);
     // Log message references the exact file name
     const logs = logSpy.mock.calls.map((c) => String(c[0])).join('\n');
     expect(logs).toMatch(/stan: wrote stan\.config\.yml/);
@@ -95,7 +95,7 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     // opts.cliDefaults removed; opts removed if empty; no top-level cliDefaults
     expect(after).not.toMatch(/^\s*opts:\s*$/m);
     expect(after).not.toMatch(/^\s*opts:\s*\n\s*cliDefaults:/m);
-    expect(after).not.toMatch(/^\s*cliDefaults:\s*$/m);
+    expect(after).not.toMatch(/^cliDefaults:\s*$/m);
   });
 
   it('migrates legacy opts.cliDefaults → stan-cli.cliDefaults and writes JSON back to JSON', async () => {

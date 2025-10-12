@@ -1,4 +1,5 @@
 /* src/stan/init/service/index.ts */
+import type { PathLike } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -18,6 +19,21 @@ import { ensureDocs } from '../docs';
 import { ensureStanGitignore } from '../gitignore';
 import { promptForConfig, readPackageJsonScripts } from '../prompts';
 import { maybeMigrateLegacyToNamespaced } from './migrate';
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === 'object';
+
+const hasOwn = (o: Record<string, unknown>, k: string): boolean =>
+  Object.prototype.hasOwnProperty.call(o, k);
+
+/** Ensure a namespaced node exists on base and return it (preserves insertion order best‑effort). */
+const ensureNsNode = (
+  base: Record<string, unknown>,
+  key: 'stan-core' | 'stan-cli',
+): Record<string, unknown> => {
+  if (!isObj(base[key])) base[key] = {};
+  return base[key] as Record<string, unknown>;
+};
 
 /**
  * Initialize or update STAN configuration and workspace assets.
@@ -63,6 +79,7 @@ export const performInitService = async ({
 
   // Offer migration to namespaced layout (stan-core / stan-cli); idempotent when already namespaced.
   base = await maybeMigrateLegacyToNamespaced(base, existingPath, { force });
+  const namespaced = isObj(base['stan-core']) || isObj(base['stan-cli']);
 
   // Typed/defaulted view used for prompting and path resolution (best-effort)
   let defaults: Partial<ContextConfig> | undefined;
@@ -118,32 +135,56 @@ export const performInitService = async ({
       preserveScripts,
     );
 
-    // stanPath (explicit choice)
-    setKey(base, 'stanPath', picked.stanPath);
-
-    // includes/excludes (explicitly returned by prompt, derived from answers/defaults)
-    setKey(base, 'includes', picked.includes);
-    setKey(base, 'excludes', picked.excludes);
+    // Engine keys: prefer stan-core node when namespaced
+    if (namespaced) {
+      const core = ensureNsNode(base, 'stan-core');
+      core.stanPath = picked.stanPath;
+      core.includes = picked.includes;
+      core.excludes = picked.excludes;
+      // Remove any lingering legacy root copies to avoid duplication
+      delete (base as { stanPath?: unknown }).stanPath;
+      delete (base as { includes?: unknown }).includes;
+      delete (base as { excludes?: unknown }).excludes;
+    } else {
+      // Legacy layout (should be rare after migration); keep root keys
+      setKey(base, 'stanPath', picked.stanPath);
+      setKey(base, 'includes', picked.includes);
+      setKey(base, 'excludes', picked.excludes);
+    }
 
     // scripts (respect 'preserve scripts' behavior)
     const preserving =
       (picked as { preserveScripts?: boolean }).preserveScripts === true ||
       preserveScripts === true;
-    if (!preserving) {
-      setKey(base, 'scripts', picked.scripts);
-    } else if (!Object.prototype.hasOwnProperty.call(base, 'scripts')) {
-      // No existing scripts; seed from picked when present
-      setKey(base, 'scripts', picked.scripts);
+    if (namespaced) {
+      const cli = ensureNsNode(base, 'stan-cli');
+      if (!preserving) {
+        cli.scripts = picked.scripts;
+      } else if (!hasOwn(cli, 'scripts')) {
+        cli.scripts = picked.scripts;
+      }
+      // Ensure we do not reintroduce a legacy root scripts key
+      if (hasOwn(base, 'scripts')) delete base.scripts;
+    } else {
+      if (!preserving) {
+        setKey(base, 'scripts', picked.scripts);
+      } else if (!Object.prototype.hasOwnProperty.call(base, 'scripts')) {
+        setKey(base, 'scripts', picked.scripts);
+      }
     }
 
     // patchOpenCommand: keep existing when present; otherwise ensure a sensible default
-    if (!Object.prototype.hasOwnProperty.call(base, 'patchOpenCommand')) {
-      const poc =
-        cliCfg?.patchOpenCommand && typeof cliCfg.patchOpenCommand === 'string'
-          ? cliCfg.patchOpenCommand
-          : 'code -g {file}';
+    const poc =
+      cliCfg?.patchOpenCommand && typeof cliCfg.patchOpenCommand === 'string'
+        ? cliCfg.patchOpenCommand
+        : 'code -g {file}';
+    if (namespaced) {
+      const cli = ensureNsNode(base, 'stan-cli');
+      if (!hasOwn(cli, 'patchOpenCommand')) cli.patchOpenCommand = poc;
+      // Remove any legacy root copy to avoid duplication
+      if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
+    } else if (!Object.prototype.hasOwnProperty.call(base, 'patchOpenCommand'))
       ensureKey(base, 'patchOpenCommand', poc);
-    }
   } else {
     // --force: be non-destructive when a config already exists.
     // Only ensure required keys. If no config exists, create a minimal one.
@@ -158,27 +199,60 @@ export const performInitService = async ({
     } else {
       // For existing configs, avoid overwriting user settings.
       // Ensure minimally-required keys exist.
-      ensureKey(base, 'stanPath', defaults?.stanPath ?? defaultStanPath);
-      ensureKey(
-        base,
-        'includes',
-        Array.isArray((base as { includes?: unknown }).includes)
-          ? (base as { includes?: string[] }).includes
-          : [],
-      );
-      ensureKey(
-        base,
-        'excludes',
-        Array.isArray((base as { excludes?: unknown }).excludes)
-          ? (base as { excludes?: string[] }).excludes
-          : [],
-      );
-      ensureKey(base, 'scripts', cliCfg?.scripts ?? {});
-      ensureKey(
-        base,
-        'patchOpenCommand',
-        cliCfg?.patchOpenCommand ?? 'code -g {file}',
-      );
+      if (namespaced) {
+        const core = ensureNsNode(base, 'stan-core');
+        if (!hasOwn(core, 'stanPath'))
+          core.stanPath = defaults?.stanPath ?? defaultStanPath;
+        if (!hasOwn(core, 'includes')) {
+          const inc =
+            isObj(core) &&
+            Array.isArray((core as { includes?: unknown }).includes)
+              ? (core as { includes?: string[] }).includes
+              : [];
+          core.includes = inc;
+        }
+        if (!hasOwn(core, 'excludes')) {
+          const exc =
+            isObj(core) &&
+            Array.isArray((core as { excludes?: unknown }).excludes)
+              ? (core as { excludes?: string[] }).excludes
+              : [];
+          core.excludes = exc;
+        }
+        const cli = ensureNsNode(base, 'stan-cli');
+        if (!hasOwn(cli, 'scripts')) cli.scripts = cliCfg?.scripts ?? {};
+        if (!hasOwn(cli, 'patchOpenCommand')) {
+          cli.patchOpenCommand = cliCfg?.patchOpenCommand ?? 'code -g {file}';
+        }
+        // Remove any legacy root duplicates that may have been present
+        delete (base as { stanPath?: unknown }).stanPath;
+        delete (base as { includes?: unknown }).includes;
+        delete (base as { excludes?: unknown }).excludes;
+        if (hasOwn(base, 'scripts')) delete base.scripts;
+        if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
+      } else {
+        ensureKey(base, 'stanPath', defaults?.stanPath ?? defaultStanPath);
+        ensureKey(
+          base,
+          'includes',
+          Array.isArray((base as { includes?: unknown }).includes)
+            ? (base as { includes?: string[] }).includes
+            : [],
+        );
+        ensureKey(
+          base,
+          'excludes',
+          Array.isArray((base as { excludes?: unknown }).excludes)
+            ? (base as { excludes?: string[] }).excludes
+            : [],
+        );
+        ensureKey(base, 'scripts', cliCfg?.scripts ?? {});
+        ensureKey(
+          base,
+          'patchOpenCommand',
+          cliCfg?.patchOpenCommand ?? 'code -g {file}',
+        );
+      }
     }
   }
 
@@ -194,12 +268,18 @@ export const performInitService = async ({
     await writeFile(targetPath, yml, 'utf8');
   }
 
-  // Resolve effective stanPath from the merged object
-  const stanPath =
-    typeof (base as { stanPath?: unknown }).stanPath === 'string' &&
-    (base as { stanPath: string }).stanPath.trim().length
-      ? (base as { stanPath: string }).stanPath.trim()
-      : defaultStanPath;
+  // Resolve effective stanPath from the merged object (prefer stan-core)
+  const stanPath = (() => {
+    const core = (base['stan-core'] ?? {}) as Record<string, unknown>;
+    const sp =
+      isObj(core) &&
+      typeof (core as { stanPath?: unknown }).stanPath === 'string'
+        ? String((core as { stanPath: string }).stanPath).trim()
+        : typeof (base as { stanPath?: unknown }).stanPath === 'string'
+          ? String((base as { stanPath: string }).stanPath).trim()
+          : '';
+    return sp.length ? sp : defaultStanPath;
+  })();
 
   await ensureStanGitignore(cwd, stanPath);
   await ensureDocs(cwd, stanPath);
@@ -214,12 +294,31 @@ export const performInitService = async ({
   const snapPath = path.join(cwd, stanPath, 'diff', '.archive.snapshot.json');
   const snapExists = existsSync(snapPath);
 
+  // Compute includes/excludes from stan-core when namespaced; fall back to root
+  const resolveSelection = (): { includes: string[]; excludes: string[] } => {
+    const core = (base['stan-core'] ?? {}) as Record<string, unknown>;
+    if (isObj(core)) {
+      const inc = Array.isArray((core as { includes?: unknown }).includes)
+        ? ((core as { includes?: string[] }).includes ?? [])
+        : [];
+      const exc = Array.isArray((core as { excludes?: unknown }).excludes)
+        ? ((core as { excludes?: string[] }).excludes ?? [])
+        : [];
+      return { includes: inc, excludes: exc };
+    }
+    return {
+      includes: (base as { includes?: string[] }).includes ?? [],
+      excludes: (base as { excludes?: string[] }).excludes ?? [],
+    };
+  };
+
   const writeSnap = async (): Promise<void> => {
+    const sel = resolveSelection();
     await writeArchiveSnapshot({
       cwd,
       stanPath,
-      includes: (base as { includes?: string[] }).includes ?? [],
-      excludes: (base as { excludes?: string[] }).excludes ?? [],
+      includes: sel.includes,
+      excludes: sel.excludes,
     });
   };
 
