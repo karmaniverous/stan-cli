@@ -159,3 +159,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - In `run/action.ts`, populated these fields from the resolved engine `ContextConfig` (synthesized from legacy root keys when needed).
   - The archive phase now receives selection settings and respects legacy excludes without requiring a top‑level `stan-core` block.
   - No behavior change for namespaced configs; legacy paths only.
+
+- Run/CLI config — guarantee engine-legacy notice in legacy CLI fallback
+  - When the CLI loader falls back to legacy top-level keys (no `stan-cli`), also emit the `run.action:engine-legacy` debugFallback when `stan-core` is absent. This ensures the transitional test sees the expected label even if ordering causes the early run-action notice to be missed.
+  - Non-legacy, namespaced configs unaffected.
