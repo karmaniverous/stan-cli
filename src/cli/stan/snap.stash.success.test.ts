@@ -1,11 +1,12 @@
 import { EventEmitter } from 'node:events';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { rmDirWithRetries } from '@/test/helpers';
 // Mock diff.writeArchiveSnapshot in the module actually used by handleSnap
 vi.mock('@/stan/diff', () => ({
   __esModule: true,
@@ -64,7 +65,14 @@ describe('snap CLI (-s) logs stash/pop confirmations on success', () => {
     } catch {
       // ignore
     }
-    await rm(dir, { recursive: true, force: true });
+    // Windows safety: release handles and retry removal to avoid ENOTEMPTY.
+    try {
+      (process.stdin as unknown as { pause?: () => void }).pause?.();
+    } catch {
+      // ignore
+    }
+    await new Promise((r) => setTimeout(r, 100));
+    await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
 

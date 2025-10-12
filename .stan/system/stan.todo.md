@@ -64,6 +64,11 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
+- Tests — harden snap stash success teardown on Windows
+  - Updated src/cli/stan/snap.stash.success.test.ts to pause stdin, add a short
+    settle, and remove temp dirs via rmDirWithRetries. Prevents intermittent
+    ENOTEMPTY on out/diff and eliminates the timeout.
+
 - Run — guarantee engine-legacy debugFallback under STAN_DEBUG=1
   - Added a secondary `run.action:engine-legacy` debugFallback emission inside the
     CLI-config legacy fallback path when `stan-core` is absent at the top level.
