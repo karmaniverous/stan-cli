@@ -25,6 +25,10 @@ export const deriveRunParameters = (args: {
   const src = args.cmd as unknown as {
     getOptionValueSource?: (name: string) => string | undefined;
   };
+  const root = (args.cmd.parent ?? args.cmd) as unknown as {
+    getOptionValueSource?: (name: string) => string | undefined;
+    opts?: () => { debug?: boolean };
+  };
 
   const scriptsOpt = (options as { scripts?: unknown }).scripts;
   const exceptOpt = (options as { exceptScripts?: unknown }).exceptScripts;
@@ -35,23 +39,30 @@ export const deriveRunParameters = (args: {
 
   const valSrc = (name: string) => src.getOptionValueSource?.(name) === 'cli';
   const eff = runDefaults();
-  const boolFinal = (
-    name: 'archive' | 'combine' | 'keep' | 'sequential' | 'live',
-    base: boolean,
-  ): boolean => {
+  // Avoid unsafe Record casts; pick exact subsets we need.
+  const effBools = {
+    archive: eff.archive,
+    combine: eff.combine,
+    keep: eff.keep,
+    sequential: eff.sequential,
+    live: eff.live,
+  } as const;
+  const effNums = {
+    hangWarn: eff.hangWarn,
+    hangKill: eff.hangKill,
+    hangKillGrace: eff.hangKillGrace,
+  } as const;
+  const boolFinal = (name: keyof typeof effBools, base: boolean): boolean => {
     if (valSrc(name)) return Boolean(options[name]);
-    return (eff as Record<string, boolean>)[name] ?? base;
+    return effBools[name] ?? base;
   };
-  const numFinal = (
-    name: 'hangWarn' | 'hangKill' | 'hangKillGrace',
-    base: number,
-  ): number => {
+  const numFinal = (name: keyof typeof effNums, base: number): number => {
     if (valSrc(name)) {
       const raw = options[name];
       const n = typeof raw === 'number' ? raw : Number(raw);
       return Number.isFinite(n) && n > 0 ? n : base;
     }
-    const fromEff = (eff as Record<string, number>)[name];
+    const fromEff = effNums[name];
     return typeof fromEff === 'number' && fromEff > 0 ? fromEff : base;
   };
 
@@ -59,7 +70,7 @@ export const deriveRunParameters = (args: {
   const combine = boolFinal('combine', RUN_BASE_DEFAULTS.combine);
   const keep = boolFinal('keep', RUN_BASE_DEFAULTS.keep);
   const sequential = boolFinal('sequential', RUN_BASE_DEFAULTS.sequential);
-  const live = boolFinal('live', RUN_BASE_DEFAULTS.live);
+  let live = boolFinal('live', RUN_BASE_DEFAULTS.live);
   let archive = boolFinal('archive', RUN_BASE_DEFAULTS.archive);
   // Explicit -A from CLI always wins
   if (valSrc('archive') && (options as { archive?: boolean }).archive === false)
@@ -80,6 +91,24 @@ export const deriveRunParameters = (args: {
     typeof (options as { prompt?: unknown }).prompt === 'string'
       ? String((options as { prompt?: unknown }).prompt)
       : eff.prompt) ?? 'auto';
+
+  // Option C: --debug forces --no-live (strict).
+  // Warning when both --debug and --live were explicitly provided.
+  const debugActive = process.env.STAN_DEBUG === '1';
+  if (debugActive) {
+    const liveFromCli = src.getOptionValueSource?.('live') === 'cli';
+    const debugFromCli = root.getOptionValueSource?.('debug') === 'cli';
+    const liveFlagVal =
+      typeof (options as { live?: unknown }).live === 'boolean'
+        ? Boolean((options as { live?: unknown }).live)
+        : undefined;
+
+    if (debugFromCli && liveFromCli && liveFlagVal === true) {
+      // Force no-live and inform the user that --live is ignored.
+      console.warn('stan: --debug forces --no-live; ignoring --live');
+    }
+    live = false;
+  }
 
   const derivedBase = deriveRunInvocation({
     scriptsProvided,

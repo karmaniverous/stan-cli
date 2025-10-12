@@ -1,5 +1,4 @@
 cliDefaults:
-  debug: true
   run:
     plan: false
     sequential: true

@@ -32,6 +32,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Docs/site
   - Expand troubleshooting for “system prompt not found” and PATH issues with suggestions (`--prompt core`, install missing devDeps, or invoke via package manager).
+- Live view debugging (graceful)
+  - Explore an approach to surface debug traces alongside the live table without corrupting its layout (e.g., a reserved log pane, a toggleable overlay, or a ring buffer dumped on finalize). Aim to preserve readability and avoid cursor/control sequence conflicts.
 
 ---
 
@@ -106,3 +108,16 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Applied to the exec module:
     - Removed `src/stan/run/exec.ts` (legacy barrel).
     - Added `src/stan/run/exec/index.ts` that re‑exports from `runner.ts`.
+  - Applied to other duplicates:
+    - Replaced `src/cli/stan/runner.ts` with `src/cli/stan/runner/index.ts` (barrel).
+    - Moved CLI bootstrap from `src/cli/stan/stan.ts` to `src/cli/bin/stan.ts` to avoid a sibling file/folder conflict and follow the convention.
+    - Updated Rollup to prefer a single CLI entry (`src/cli/bin/stan.ts`) and updated the dev script (`npm run stan`) accordingly.
+
+Notes:
+
+- The large session orchestrator remains in `src/stan/run/session.ts`. Converting it to `session/index.ts` will be handled as a follow‑up split (file exceeds the long‑file threshold; requires a decomposition plan).
+
+- Debug/live interaction (Option C)
+  - Decided that `--debug` forces `--no-live` strictly to avoid live table corruption by debug messages.
+  - Implementation: on `stan run`, when debug is active, always set `live=false`. If both `--debug` and `--live` are explicitly passed, print a warning and ignore `--live`.
+  - Tests/docs follow‑through planned alongside the live view debugging exploration.

@@ -1,10 +1,10 @@
-/* src/cli/stan/runner.ts
+/* src/cli/stan/runner/index.ts
  * Thin registration shell for "stan run".
  */
 import type { Command } from 'commander';
 
-import { registerRunAction } from './run/action';
-import { registerRunOptions } from './run/options';
+import { registerRunAction } from '../run/action';
+import { registerRunOptions } from '../run/options';
 
 /**
  * Register the `run` subcommand on the provided root CLI.

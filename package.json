@@ -157,7 +157,7 @@
     "release": "dotenvx run -f .env.local -- release-it",
     "release:pre": "npm run release -- --no-git.requireBranch --github.prerelease --preRelease",
     "relink": "npm uninstall -g @karmaniverous/stan-cli && npm run build && npm link",
-    "stan": "tsx src/cli/stan/stan.ts",
+    "stan": "tsx src/cli/bin/stan.ts",
     "test": "vitest --run --coverage --silent",
     "typecheck": "tsc"
   },
