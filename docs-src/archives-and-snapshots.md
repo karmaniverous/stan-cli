@@ -54,6 +54,18 @@ stan run -c
 Regular archive includes `<stanPath>/output` (excluding the archive files themselves).
 Diff archive excludes `<stanPath>/diff` and both archive files.
 
+### System prompt (diff vs full)
+
+- The full archive always contains the system prompt used for the run at
+  `<stanPath>/system/stan.system.md` (materialized temporarily when needed).
+- Diffs suppress `stan.system.md` in steady state when the effective prompt is
+  sourced from an ephemeral location (`--prompt core` or a custom path) and has
+  not changed since the last `stan snap`.
+- When the effective prompt changes (e.g., the packaged core prompt updates or
+  your custom prompt path changes), the prompt is included exactly once in the
+  next `archive.diff.tar` so downstream assistants can see the change.
+- Local prompts (`--prompt local`) participate in diffs via normal snapshot rules.
+
 ## Snapshot policy
 
 `stan snap` writes `<stanPath>/diff/.archive.snapshot.json` and maintains an

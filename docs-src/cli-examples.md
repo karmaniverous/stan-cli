@@ -48,6 +48,13 @@ Flags (presented in the same order as `stan run --help`):
 - -x, --except-scripts <keys...>
   - Exclude these keys. If -s is present, reduces the -s selection; otherwise reduces from the full set of known scripts.
 
+- -m, --prompt <value>
+  - System prompt source: `auto` (default), `local`, `core`, or a file `<path>`.
+  - `auto`: prefer a local prompt at `<stanPath>/system/stan.system.md`; fall back to the packaged core prompt.
+  - `core`: use the packaged baseline from `@karmaniverous/stan-core`.
+  - `<path>`: use the specified file (absolute or repo‑relative).
+  - Diffs suppress `stan.system.md` in steady state for `core`/`<path>` sources (the full archive always contains the prompt for the run). When the effective prompt changes since the last `stan snap`, it appears exactly once in `archive.diff.tar`.
+
 - -q, --sequential / -Q, --no-sequential
   - Run sequentially (preserves -s order) or concurrently (default).
 
