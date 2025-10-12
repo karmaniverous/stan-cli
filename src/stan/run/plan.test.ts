@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { runSelected } from './run';
+import { runSelected } from '@/stan/run';
 
 describe('run plan header', () => {
   let dir: string;

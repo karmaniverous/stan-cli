@@ -121,3 +121,9 @@ Notes:
   - Decided that `--debug` forces `--no-live` strictly to avoid live table corruption by debug messages.
   - Implementation: on `stan run`, when debug is active, always set `live=false`. If both `--debug` and `--live` are explicitly passed, print a warning and ignore `--live`.
   - Tests/docs follow‑through planned alongside the live view debugging exploration.
+
+- Decomposed session orchestrator (directory + index.ts)
+  - Replaced `src/stan/run/session.ts` with `src/stan/run/session/index.ts` (orchestrator ≤300 LOC).
+  - Introduced `src/stan/run/session/types.ts`, `cancel-controller.ts`, and `scripts-phase.ts` to keep the orchestrator small and testable.
+  - Existing helpers (`prompt-plan`, `archive-stage`, `signals`, `ui-queue`) reused intact.
+  - Fixed a lingering test import (`src/stan/run/plan.test.ts`) to the run barrel.
