@@ -5,10 +5,6 @@
  * - Introduce a per-session token and ignore any late hook callbacks from a
  *   previous session (post-restart). Prevents “ghost” updates (e.g., a waiting
  *   script flipping to [FAIL]) after the next session begins.
- *
- * Session-epoch hardening:
- * - Introduce a per-session token and ignore any late hook callbacks from a
- *   previous session (post-restart). Prevents “ghost” updates (e.g., a waiting *   script flipping to [FAIL]) after the next session begins.
  * - Windows EBUSY hardening: add a slightly longer final settle after cancellation.
  * - Wires live/no-live UI, cancellation keys (q / Ctrl+C), and restart (r in live).
  * - Schedules scripts (concurrent|sequential) and optionally runs the archive phase. * - Preserves all existing logging semantics:
@@ -21,12 +17,12 @@
 import { resolve } from 'node:path';
 
 import { liveTrace } from '@/stan/run/live/trace';
-import {
-  preparePromptForArchive,
-  resolvePromptSource,
-} from '@/stan/run/prompt';
-import { runArchivePhaseAndCollect } from '@/stan/run/session/invoke-archive';
+import { runArchiveStage } from '@/stan/run/session/archive-stage';
 import { ensureOrderFile } from '@/stan/run/session/order-file';
+import {
+  printPlanWithPrompt,
+  resolvePromptOrThrow,
+} from '@/stan/run/session/prompt-plan';
 import { attachSessionSignals } from '@/stan/run/session/signals';
 import { queueUiRows } from '@/stan/run/session/ui-queue';
 import type { RunnerConfig } from '@/stan/run/types';
@@ -88,24 +84,20 @@ export const runSessionOnce = async (args: {
     Boolean(behavior.keep),
   );
 
-  // Resolve the system prompt source up front for the plan header.
+  // Resolve the system prompt source up front for the plan header (or fail early).
   let resolvedPromptDisplay = '';
   let resolvedPromptAbs: string | null = null;
   try {
-    const choice = (promptChoice ?? 'auto').trim();
-    const resolved = resolvePromptSource(cwd, config.stanPath, choice);
-    // Plan header shows either "<display>" or "auto → <display>"
-    resolvedPromptDisplay =
-      choice === 'auto' ? `auto → ${resolved.display}` : resolved.display;
-    resolvedPromptAbs = resolved.abs;
+    const rp = resolvePromptOrThrow(cwd, config.stanPath, promptChoice);
+    resolvedPromptDisplay = rp.display;
+    resolvedPromptAbs = rp.abs;
   } catch (e) {
-    // Early failure: do not proceed with scripts or archives
     const msg =
       e instanceof Error ? e.message : typeof e === 'string' ? e : String(e);
+
     console.error(`stan: error: unable to resolve system prompt (${msg})`);
-    // Visual spacing parity with other early exits
+
     console.log('');
-    // Stop UI (if started) and short-circuit
     try {
       ui.stop();
     } catch {
@@ -115,22 +107,15 @@ export const runSessionOnce = async (args: {
   }
   // Print plan once per outer loop (delegated by caller)
   if (printPlan && planBody) {
-    // Inject prompt display into behavior only for plan printing.
-    // Re-render the plan with a prompt line if renderRunPlan supports it via behavior.prompt
-    try {
-      const { renderRunPlan } = await import('@/stan/run/plan');
-      const planWithPrompt = renderRunPlan(cwd, {
-        selection,
-        config,
-        mode,
-        behavior: { ...behavior, prompt: resolvedPromptDisplay },
-      });
-      ui.onPlan(planWithPrompt);
-    } catch {
-      ui.onPlan(planBody);
-    }
-    // Preserve a trailing blank line after the plan (legacy spacing)
-    console.log('');
+    printPlanWithPrompt(cwd, {
+      selection,
+      config,
+      mode,
+      behavior,
+      planBody,
+      ui,
+      promptDisplay: resolvedPromptDisplay,
+    });
   }
 
   ui.start();
@@ -409,50 +394,19 @@ export const runSessionOnce = async (args: {
 
   // ARCHIVE PHASE
   if (behavior.archive) {
-    // Present the resolved prompt for both full and diff and restore afterward.
-    let promptRestore: null | (() => Promise<void>) = null;
-    try {
-      if (resolvedPromptAbs) {
-        const { restore } = await preparePromptForArchive(
-          cwd,
-          config.stanPath,
-          {
-            abs: resolvedPromptAbs,
-            display: resolvedPromptDisplay,
-            // choose kind is not needed for materialization logic here
-            kind: 'path',
-          },
-        );
-        promptRestore = restore;
-      }
-    } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : typeof e === 'string' ? e : String(e);
-      console.error(`stan: error: failed to prepare system prompt (${msg})`);
-      console.log('');
-      try {
-        ui.stop();
-      } catch {
-        /* ignore */
-      }
+    const a = await runArchiveStage({
+      cwd,
+      config,
+      behavior,
+      ui,
+      promptAbs: resolvedPromptAbs,
+      promptDisplay: resolvedPromptDisplay,
+    });
+    if (a.cancelled) {
+      detachSignals();
       return { created, cancelled: true, restartRequested };
     }
-    const includeOutputs = Boolean(behavior.combine);
-    try {
-      const { archivePath, diffPath } = await runArchivePhaseAndCollect({
-        cwd,
-        config,
-        includeOutputs,
-        ui,
-      });
-      created.push(archivePath, diffPath);
-    } finally {
-      try {
-        await promptRestore?.();
-      } catch {
-        /* ignore */
-      }
-    }
+    created.push(...a.created);
   }
 
   // Detach signals & exit hook before returning

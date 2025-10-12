@@ -2,6 +2,7 @@ import type { Command } from 'commander';
 
 import type { ExecutionMode, RunBehavior } from '@/stan/run';
 
+import { runDefaults } from '../cli-utils';
 import { deriveRunInvocation } from '../run-args';
 import { RUN_BASE_DEFAULTS } from './defaults';
 export type DerivedRun = {
@@ -33,8 +34,6 @@ export const deriveRunParameters = (args: {
     Array.isArray(exceptOpt) && (exceptOpt as unknown[]).length > 0;
 
   const valSrc = (name: string) => src.getOptionValueSource?.(name) === 'cli';
-  // Use baseline defaults and CLI defaults (via runDefaults()) for booleans/numbers.
-  const { runDefaults } = await import('../cli-utils');
   const eff = runDefaults();
   const boolFinal = (
     name: 'archive' | 'combine' | 'keep' | 'sequential' | 'live',
