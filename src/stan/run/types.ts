@@ -9,6 +9,12 @@ export type Selection = string[] | null;
 /** Execution strategy for running scripts. */
 export type ExecutionMode = 'concurrent' | 'sequential';
 
+// Runner-local config (CLI-owned scripts + engine stanPath)
+import type { ScriptMap } from '@/cli/config/schema';
+export type RunnerConfig = {
+  stanPath: string;
+  scripts: ScriptMap;
+};
 /**
  * Behavior flags controlling archive/combine/keep semantics:
  * - `archive`: create archive.tar and archive.diff.tar.

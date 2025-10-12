@@ -1,15 +1,20 @@
-// src/stan/run/exec.ts
+/* src/stan/run/exec.ts
+ * Script execution and scheduling helpers.
+ * - Spawns scripts with PATH augmented to prefer repo-local node_modules/.bin (nearest-first).
+ * - Supports sequential and concurrent modes.
+ * - Provides hang detection (warn/timeout/graceful kill) hooks.
+ * - Writes combined stdout/stderr for each script to <stanPath>/output/<key>.txt.
+ */
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { appendFile, readFile } from 'node:fs/promises';
 import { delimiter, dirname, join, resolve } from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import treeKill from 'tree-kill';
 
 import type { ProcessSupervisor } from './live/supervisor';
-import type { ExecutionMode, Selection } from './types';
+import type { ExecutionMode, RunnerConfig, Selection } from './types';
 
 /** Compute nearest-first chain of node_modules/.bin directories up to filesystem root. */
 const computeBinPathChain = (repoRoot: string): string[] => {
@@ -62,20 +67,20 @@ const waitForStreamClose = (stream: NodeJS.WritableStream): Promise<void> =>
     );
   });
 
-const configOrder = (config: ContextConfig): string[] =>
+const configOrder = (config: RunnerConfig): string[] =>
   Object.keys(config.scripts);
 
 /**
  * Normalize selection to config order.
  * - When selection is null/undefined, return all config keys.
  * - When selection exists:
- *   - [] =\> run nothing
- *   - non-empty =\> order by config order
+ *   - [] => run nothing
+ *   - non-empty => order by config order
  */
 export const normalizeSelection = (
   selection: Selection | undefined | null,
-  config: ContextConfig,
-): string[] => {
+  config: RunnerConfig,
+(): string[] => {
   const all = configOrder(config);
   if (!selection) return all;
   if (selection.length === 0) return [];
@@ -111,7 +116,7 @@ export const runOne = async (
     hangWarn?: number;
     hangKill?: number;
     hangKillGrace?: number;
-    /** Optional warn regexes compiled from config; any match across output+error (exit=0) =\> warn. */
+    /** Optional warn regexes compiled from config; any match across output+error (exit=0) => warn. */
     warnPatterns?: RegExp[];
   },
   supervisor?: ProcessSupervisor,
@@ -221,7 +226,7 @@ export const runOne = async (
     status = 'error';
   } else if (opts?.warnPatterns && opts.warnPatterns.length > 0) {
     // Robust WARN detection (any-of across patterns and sources):
-    // - Test all compiled variants against the in‑memory combined body.
+    // - Test all compiled variants against the in-memory combined body.
     // - Also test the persisted output body to avoid rare flush/order edges.
     const anyMatch = (rxs: RegExp[], s: string): boolean =>
       rxs.some((r) => {
@@ -252,16 +257,18 @@ export const runOne = async (
   }
   return outFile;
 };
+
 /**
  * Run a set of scripts concurrently or sequentially.
- * * @param cwd - Working directory for child processes.
+ * @param cwd - Working directory for child processes.
  * @param outAbs - Absolute output directory.
  * @param outRel - Relative output directory (for logs).
- * @param config - Resolved configuration.
+ * @param config - Runner configuration (stanPath + CLI-owned scripts).
  * @param toRun - Keys to run (must be present in config).
  * @param mode - Execution mode.
  * @param orderFile - Optional order file path (when present, records execution order).
  * @returns Absolute paths to generated output files.
+ * @param hooks - Optional lifecycle hooks and flags.
  * @param opts - Optional execution options (e.g., silent logging).
  * @param shouldContinue - Optional gate to stop scheduling new scripts when false (sequential mode).
  * @param supervisor - Optional process supervisor for child tracking/termination.
@@ -270,7 +277,7 @@ export const runScripts = async (
   cwd: string,
   outAbs: string,
   outRel: string,
-  config: ContextConfig,
+  config: RunnerConfig,
   toRun: string[],
   mode: ExecutionMode,
   orderFile?: string,
@@ -298,8 +305,8 @@ export const runScripts = async (
       typeof entry === 'string'
         ? entry
         : typeof entry === 'object' &&
-            entry &&
-            'script' in (entry as Record<string, unknown>)
+          entry &&
+          'script' in (entry as Record<string, unknown>)
           ? String((entry as { script: string }).script)
           : '';
     // Compile warn pattern variants:

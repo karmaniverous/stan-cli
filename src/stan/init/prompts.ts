@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { ContextConfig, ScriptMap } from '@karmaniverous/stan-core';
+import type { ScriptMap } from '@/cli/config/schema';
 
 const parseCsv = (v: string): string[] =>
   v
@@ -22,16 +22,23 @@ export const readPackageJsonScripts = async (
   }
 };
 
-type Picked = Pick<
-  ContextConfig,
-  'stanPath' | 'includes' | 'excludes' | 'scripts'
->;
+type Picked = {
+  stanPath: string;
+  includes: string[];
+  excludes: string[];
+  scripts: ScriptMap;
+};
 
 /** Ask user for config values; preserve script set optionally. */
 export const promptForConfig = async (
   cwd: string,
   pkgScripts: Record<string, string>,
-  defaults?: Partial<ContextConfig>,
+  defaults?: Partial<{
+    stanPath: string;
+    includes: string[];
+    excludes: string[];
+    scripts: ScriptMap;
+  }>,
   preserveScriptsFromDefaults?: boolean,
 ): Promise<Picked> => {
   const { default: inquirer } = (await import('inquirer')) as {

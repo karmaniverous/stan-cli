@@ -1,5 +1,6 @@
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { ensureOutputDir } from '@karmaniverous/stan-core';
+
+import type { RunnerConfig } from '@/stan/run/types';
 
 import { renderRunPlan } from './plan';
 import { runSessionOnce } from './session';
@@ -24,7 +25,7 @@ import { LiveUI, LoggerUI, type RunnerUI } from './ui';
  */
 export const runSelected = async (
   cwd: string,
-  config: ContextConfig,
+  config: RunnerConfig,
   selection: string[] | null = null,
   mode: ExecutionMode = 'concurrent',
   behaviorMaybe?: RunBehavior,

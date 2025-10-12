@@ -16,6 +16,7 @@ import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
+import type { RunnerConfig } from '@/stan/run/types';
 import { go } from '@/stan/util/color';
 import { debugFallback } from '@/stan/util/debug';
 
@@ -77,11 +78,15 @@ export const registerRunAction = (
           'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
         );
       }
-      // NOTE: scripts are CLI concern; legacy placeholder remains empty here.
-      // Cast is intentional until CLI config loader is wired.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      config = { stanPath: stanPathFallback, scripts: {} } as any;
+      config = { stanPath: stanPathFallback } as ContextConfig;
     }
+
+    // CLI defaults and scripts for runner config/derivation
+    const cliCfg = loadCliConfigSync(runCwd);
+    const runnerConfig: RunnerConfig = {
+      stanPath: config.stanPath,
+      scripts: cliCfg.scripts,
+    };
 
     // Loop header + reversal guard
     try {
@@ -106,11 +111,16 @@ export const registerRunAction = (
     }
 
     // Derive run parameters
-    const derived = deriveRunParameters({ options, cmd, config });
+    const derived = deriveRunParameters({
+      options,
+      cmd,
+      scripts: cliCfg.scripts,
+      scriptsDefault: cliCfg.cliDefaults?.run?.scripts,
+    });
 
     const planBody = renderRunPlan(runCwd, {
       selection: derived.selection,
-      config,
+      config: runnerConfig,
       mode: derived.mode,
       behavior: derived.behavior,
     });
@@ -159,7 +169,7 @@ export const registerRunAction = (
 
     await runSelected(
       runCwd,
-      config,
+      runnerConfig,
       derived.selection,
       derived.mode,
       derived.behavior,

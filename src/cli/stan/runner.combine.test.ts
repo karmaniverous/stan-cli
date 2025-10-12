@@ -1,10 +1,9 @@
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { describe, expect, it } from 'vitest';
 
 import { deriveRunInvocation } from './run-args';
 
 describe('CLI -c/--combine, -k/--keep, -a/--archive (new flags)', () => {
-  const cfg: ContextConfig = {
+  const cfg = {
     stanPath: 'stan',
     scripts: { test: 'echo test', lint: 'echo lint' },
   };

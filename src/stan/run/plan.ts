@@ -1,8 +1,7 @@
 // src/stan/run/plan.ts
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
-
+import type { RunnerConfig } from '@/stan/run/types';
 import { bold } from '@/stan/util/color';
 
 import type { ExecutionMode, RunBehavior, Selection } from './types';
@@ -22,7 +21,7 @@ export const renderRunPlan = (
   cwd: string,
   args: {
     selection: Selection;
-    config: ContextConfig;
+    config: RunnerConfig;
     mode: ExecutionMode;
     behavior: RunBehavior;
   },

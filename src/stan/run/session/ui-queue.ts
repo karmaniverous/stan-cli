@@ -1,6 +1,5 @@
 // src/stan/run/session/ui-queue.ts
-import type { ContextConfig } from '@karmaniverous/stan-core';
-
+import type { RunnerConfig } from '@/stan/run/types';
 import type { RunnerUI } from '@/stan/run/ui';
 
 /**
@@ -11,7 +10,7 @@ import type { RunnerUI } from '@/stan/run/ui';
 export const queueUiRows = (
   ui: RunnerUI,
   selection: string[] | null | undefined,
-  config: ContextConfig,
+  config: RunnerConfig,
   includeArchives: boolean,
 ): string[] => {
   const toRun = (selection ?? []).filter((k) =>

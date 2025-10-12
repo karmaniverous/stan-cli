@@ -1,4 +1,3 @@
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
 import type { ExecutionMode, RunBehavior } from '@/stan/run';
@@ -18,9 +17,10 @@ export type DerivedRun = {
 export const deriveRunParameters = (args: {
   options: Record<string, unknown>;
   cmd: Command;
-  config: ContextConfig;
+  scripts: Record<string, unknown>;
+  scriptsDefault?: boolean | string[];
 }): DerivedRun => {
-  const { options, config } = args;
+  const { options, scripts, scriptsDefault } = args;
   const src = args.cmd as unknown as {
     getOptionValueSource?: (name: string) => string | undefined;
   };
@@ -33,15 +33,15 @@ export const deriveRunParameters = (args: {
     Array.isArray(exceptOpt) && (exceptOpt as unknown[]).length > 0;
 
   const valSrc = (name: string) => src.getOptionValueSource?.(name) === 'cli';
-  const cfgRun = (config.cliDefaults ?? {}).run ?? {};
+  // Use baseline defaults and CLI defaults (via runDefaults()) for booleans/numbers.
+  const { runDefaults } = await import('../cli-utils');
+  const eff = runDefaults();
   const boolFinal = (
     name: 'archive' | 'combine' | 'keep' | 'sequential' | 'live',
     base: boolean,
   ): boolean => {
     if (valSrc(name)) return Boolean(options[name]);
-    if (typeof (cfgRun as Record<string, unknown>)[name] === 'boolean')
-      return Boolean((cfgRun as Record<string, unknown>)[name]);
-    return base;
+    return (eff as Record<string, boolean>)[name] ?? base;
   };
   const numFinal = (
     name: 'hangWarn' | 'hangKill' | 'hangKillGrace',
@@ -52,9 +52,8 @@ export const deriveRunParameters = (args: {
       const n = typeof raw === 'number' ? raw : Number(raw);
       return Number.isFinite(n) && n > 0 ? n : base;
     }
-    const fromCfg = (cfgRun as Record<string, unknown>)[name];
-    if (typeof fromCfg === 'number' && fromCfg > 0) return fromCfg;
-    return base;
+    const fromEff = (eff as Record<string, number>)[name];
+    return typeof fromEff === 'number' && fromEff > 0 ? fromEff : base;
   };
 
   // Booleans (from CLI when provided; else config; else baseline)
@@ -81,8 +80,7 @@ export const deriveRunParameters = (args: {
     (src.getOptionValueSource?.('prompt') === 'cli' &&
     typeof (options as { prompt?: unknown }).prompt === 'string'
       ? String((options as { prompt?: unknown }).prompt)
-      : (config.cliDefaults?.run as { prompt?: string } | undefined)?.prompt) ??
-    'auto';
+      : eff.prompt) ?? 'auto';
 
   const derivedBase = deriveRunInvocation({
     scriptsProvided,
@@ -93,20 +91,18 @@ export const deriveRunParameters = (args: {
     combine,
     keep,
     archive,
-    config,
+    config: { scripts },
   });
 
   const noScripts = (options as { scripts?: unknown }).scripts === false;
-  const allKeys = Object.keys(config.scripts);
+  const allKeys = Object.keys(scripts ?? {});
   let selection: string[] = [];
   if (noScripts) {
     selection = [];
   } else if (scriptsProvided) {
     selection = derivedBase.selection;
   } else {
-    const sdef = (
-      (config.cliDefaults ?? {}) as { run?: { scripts?: boolean | string[] } }
-    ).run?.scripts;
+    const sdef = scriptsDefault;
     let base: string[] = [];
     if (sdef === false) base = [];
     else if (sdef === true || typeof sdef === 'undefined') base = [...allKeys];

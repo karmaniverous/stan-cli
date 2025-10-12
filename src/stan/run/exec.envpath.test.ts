@@ -2,7 +2,6 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path, { delimiter } from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runSelected } from '@/stan/run';
@@ -23,7 +22,7 @@ describe('script runner PATH augmentation (repo-local node_modules/.bin preceden
   });
 
   it('prefixes PATH with <repoRoot>/node_modules/.bin for child scripts', async () => {
-    const cfg: ContextConfig = {
+    const cfg = {
       stanPath: 'out',
       scripts: {
         // Print PATH deterministically; capture in out/output
@@ -43,7 +42,7 @@ describe('script runner PATH augmentation (repo-local node_modules/.bin preceden
   it('still runs when .bin is absent (augmentation no-op)', async () => {
     // Remove .bin to simulate PnP/no-node_modules scenario
     await rm(path.join(dir, 'node_modules'), { recursive: true, force: true });
-    const cfg: ContextConfig = {
+    const cfg = {
       stanPath: 'out',
       scripts: {
         hello: 'node -e "process.stdout.write(`ok`)"',

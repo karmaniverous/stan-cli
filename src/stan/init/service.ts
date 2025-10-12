@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { ContextConfig, ScriptMap } from '@karmaniverous/stan-core';
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import {
   ensureOutputDir,
   findConfigPathSync,
@@ -12,9 +12,13 @@ import {
 } from '@karmaniverous/stan-core';
 import YAML from 'yaml';
 
+import { loadCliConfig } from '@/cli/config/load';
+
 import { ensureDocs } from './docs';
 import { ensureStanGitignore } from './gitignore';
-import { promptForConfig, readPackageJsonScripts } from './prompts'; /**
+import { promptForConfig, readPackageJsonScripts } from './prompts';
+
+/**
  * Initialize or update STAN configuration and workspace assets.
  *
  * Behavior:
@@ -26,7 +30,8 @@ import { promptForConfig, readPackageJsonScripts } from './prompts'; /**
  * - Snapshot behavior: keep existing snapshot by default; create when missing.
  *
  * @param opts - Options `{ cwd, force, preserveScripts }`.
- * @returns Absolute path to the written `stan.config.yml`, or `null` on failure. */
+ * @returns Absolute path to the written `stan.config.yml`, or `null` on failure.
+ */
 export const performInitService = async ({
   cwd = process.cwd(),
   force = false,
@@ -57,19 +62,19 @@ export const performInitService = async ({
 
   // Non-destructive migration: opts.cliDefaults -> cliDefaults
   try {
-    const opts = (base.opts ?? null) as null | {
+    const optsNode = (base.opts ?? null) as null | {
       cliDefaults?: unknown;
       [k: string]: unknown;
     };
     const hasTop = Object.prototype.hasOwnProperty.call(base, 'cliDefaults');
     if (
-      opts &&
-      Object.prototype.hasOwnProperty.call(opts, 'cliDefaults') &&
+      optsNode &&
+      Object.prototype.hasOwnProperty.call(optsNode, 'cliDefaults') &&
       !hasTop
     ) {
-      base.cliDefaults = opts.cliDefaults;
-      delete opts.cliDefaults;
-      if (Object.keys(opts).length === 0) delete base.opts;
+      base.cliDefaults = optsNode.cliDefaults;
+      delete optsNode.cliDefaults;
+      if (Object.keys(optsNode).length === 0) delete base.opts;
     }
   } catch {
     // best-effort migration
@@ -81,6 +86,16 @@ export const performInitService = async ({
     defaults = await loadConfig(cwd);
   } catch {
     defaults = undefined;
+  }
+
+  // Also read CLI config for scripts/patchOpenCommand seeds (best-effort)
+  let cliCfg:
+    | { scripts?: Record<string, unknown>; patchOpenCommand?: string }
+    | undefined;
+  try {
+    cliCfg = await loadCliConfig(cwd);
+  } catch {
+    cliCfg = undefined;
   }
 
   // Merge strategy helpers (preserve insertion order; modify in place)
@@ -107,7 +122,14 @@ export const performInitService = async ({
     const picked = await promptForConfig(
       cwd,
       scriptsFromPkg,
-      defaults,
+      defaults
+        ? {
+            stanPath: defaults.stanPath ?? defaultStanPath,
+            includes: defaults.includes ?? [],
+            excludes: defaults.excludes ?? [],
+            scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
+          }
+        : undefined,
       preserveScripts,
     );
 
@@ -132,9 +154,8 @@ export const performInitService = async ({
     // patchOpenCommand: keep existing when present; otherwise ensure a sensible default
     if (!Object.prototype.hasOwnProperty.call(base, 'patchOpenCommand')) {
       const poc =
-        defaults?.patchOpenCommand &&
-        typeof defaults.patchOpenCommand === 'string'
-          ? defaults.patchOpenCommand
+        cliCfg?.patchOpenCommand && typeof cliCfg.patchOpenCommand === 'string'
+          ? cliCfg.patchOpenCommand
           : 'code -g {file}';
       ensureKey(base, 'patchOpenCommand', poc);
     }
@@ -146,7 +167,7 @@ export const performInitService = async ({
         excludes: [],
         includes: [],
         patchOpenCommand: 'code -g {file}',
-        scripts: {} as ScriptMap,
+        scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
         stanPath: defaultStanPath,
       };
     } else {
@@ -167,11 +188,11 @@ export const performInitService = async ({
           ? (base as { excludes?: string[] }).excludes
           : [],
       );
-      ensureKey(base, 'scripts', defaults?.scripts ?? {});
+      ensureKey(base, 'scripts', cliCfg?.scripts ?? {});
       ensureKey(
         base,
         'patchOpenCommand',
-        defaults?.patchOpenCommand ?? 'code -g {file}',
+        cliCfg?.patchOpenCommand ?? 'code -g {file}',
       );
     }
   }

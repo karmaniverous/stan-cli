@@ -20,8 +20,6 @@
  */
 import { resolve } from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
-
 import { liveTrace } from '@/stan/run/live/trace';
 import {
   preparePromptForArchive,
@@ -31,6 +29,7 @@ import { runArchivePhaseAndCollect } from '@/stan/run/session/invoke-archive';
 import { ensureOrderFile } from '@/stan/run/session/order-file';
 import { attachSessionSignals } from '@/stan/run/session/signals';
 import { queueUiRows } from '@/stan/run/session/ui-queue';
+import type { RunnerConfig } from '@/stan/run/types';
 
 import { runScripts } from './exec';
 import { ProcessSupervisor } from './live/supervisor';
@@ -45,7 +44,7 @@ const shouldWriteOrder =
 
 export const runSessionOnce = async (args: {
   cwd: string;
-  config: ContextConfig;
+  config: RunnerConfig;
   selection: string[];
   mode: ExecutionMode;
   behavior: RunBehavior;
