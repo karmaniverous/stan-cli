@@ -142,6 +142,76 @@ Plan rendering (TTY and non‑TTY):
 - Write docs metadata `<stanPath>/system/.docs.meta.json` with the installed CLI version (best‑effort). Do not install a prompt monolith here.
 - Seed diff snapshot when missing (best‑effort).
 
+### 2.5 Interactions with stan‑core (explicit dependencies)
+
+stan‑cli composes the following stan‑core surfaces (representative):
+
+- Config:
+  - `loadConfig(cwd)` / `loadConfigSync(cwd)` for repo config (ContextConfig).
+  - `ensureOutputDir(cwd, stanPath, keep)` to prepare workspace.
+
+- Archive & snapshot:
+  - `createArchive(cwd, stanPath, options)` → `archive.tar`
+  - `createArchiveDiff({ cwd, stanPath, baseName, includes, excludes, updateSnapshot, includeOutputDirInDiff })` → `{ diffPath }`
+  - `writeArchiveSnapshot({ cwd, stanPath, includes, excludes })`
+  - `prepareImports({ cwd, stanPath, map })` (stages imports under `<stanPath>/imports/<label>/...`)
+
+- Prompt helpers:
+  - `getPackagedSystemPromptPath()` to locate packaged baseline (`dist/stan.system.md`).
+
+- Patch engine:
+  - `detectAndCleanPatch(...)`, `parseFileOpsBlock(...)`, `executeFileOps(...)`, `applyPatchPipeline(...)` (adapter pattern only; CLI acquires sources and prints diagnostics).
+
+- Metadata:
+  - `CORE_VERSION` (for banners/compat checks in the CLI).
+
+All core calls MUST be deterministic and presentation‑free; stan‑cli is responsible for user‑visible logs and UI.
+
+### 2.6 Configuration ingestion & migration (namespaced; transitional legacy support)
+
+Canonical layout (effective now)
+
+- Top‑level namespacing in stan.config.\*:
+  - stan-core: engine keys (required by the engine)
+    - stanPath: string
+    - includes?: string[]
+    - excludes?: string[]
+    - imports?: Record<string, string|string[]>
+  - stan-cli: CLI keys (required by the CLI)
+    - scripts: Record<string, string | { script: string; warnPattern?: string }>
+    - cliDefaults: phase‑scoped defaults (run/patch/snap) and root defaults (debug, boring)
+    - patchOpenCommand?: string
+    - maxUndos?: number
+    - devMode?: boolean
+
+Loaders and responsibility
+
+- stan-core (engine) loads stan-core strictly and errors early when missing (friendly message).
+- stan-cli (CLI) loads stan-cli and MUST NOT rely on engine loaders for CLI keys.
+
+Transitional legacy behavior (temporary)
+
+- Legacy = engine/CLI keys at the config root (pre‑namespacing).
+- stan run/snap MUST continue to honor legacy engine keys for a short transition window:
+  - If engine loader fails due to missing “stan-core”, stan-cli SHALL synthesize a ContextConfig by reading stanPath/includes/excludes/imports from legacy root keys and pass that to engine APIs (ensureOutputDir, createArchive\*, writeArchiveSnapshot, …).
+  - Log a concise, opt‑in debugFallback notice when the legacy extractor is used (under STAN_DEBUG=1).
+- stan init MUST detect legacy and offer to refactor to the namespaced layout:
+  - Migrate only known keys to stan-core/stan-cli.
+  - Preserve unknown keys at the root.
+  - Keep file format/filename; write a .bak before rewriting; support --dry-run.
+  - Idempotent: do nothing when already namespaced.
+
+Deprecation timeline (CLI)
+
+- Phase 1 (migration lands): keep legacy extractor + loader fallback; emit debugFallback notices when used; recommend “stan init” to migrate.
+- Phase 2: place legacy acceptance behind an env switch (e.g., STAN_ACCEPT_LEGACY=1). Without it, print a clear, early error instructing the user to run “stan init”.
+- Phase 3: remove legacy acceptance entirely; stan-cli requires top‑level stan-cli; stan-core requires top‑level stan-core (already strict).
+
+Docs & UX
+
+- Examples and Getting Started show the namespaced layout exclusively; legacy appears only in a short “Migration” appendix pointing to “stan init”.
+- Error messages for missing namespaces are concise and actionable (“Run ‘stan init’ to migrate your config.”).
+
 ---
 
 ## 3) Non‑goals (stan‑cli)

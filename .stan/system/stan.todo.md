@@ -8,16 +8,29 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
-1. Silent fallback audit and debug logging
-   - Add debug logging (enabled when STAN_DEBUG=1) to every code path that diverts from the happy path via a fallback (e.g., config load fallback, stanPath resolution fallback, CLI defaults derivation fallback, prompt source resolution fallback, snapshotless diff/archiving fallbacks, archive warning fallbacks, etc.).
-   - Introduce a tiny centralized helper to record fallback origin (module:function) and succinct reason, ensuring consistent formatting and easy grepping.
-   - No behavior change in normal mode; only emit these notices under debug.
+1. Config migration (legacy → namespaced) in init
+   - Detect legacy root keys; migrate known engine keys to stan-core and known CLI keys to stan-cli.
+   - Preserve unknown root keys; keep format/filename; write a .bak; support --dry-run; idempotent.
+   - Interactive prompt (default Yes); --force migrates without prompt.
 
-2. Default stanPath fallback hygiene
-   - Replace any 'stan' literal fallback with DEFAULT_STAN_PATH (".stan") or resolveStanPathSync() across the CLI surfaces (run/patch/snap/init/helpers).
-   - Add a unit test to assert that fallback stanPath is ".stan" and that no unexpected "stan" directory is created on failure paths.
+2. Transitional engine-config extraction (honor legacy excludes/includes)
+   - In run/snap: if stan-core loader fails due to missing “stan-core”, synthesize ContextConfig from legacy root keys (stanPath/includes/excludes/imports) and pass to engine APIs.
+   - Emit a debugFallback notice (STAN_DEBUG=1) indicating legacy extraction was used.
+   - Add focused tests: legacy config present → excludes/includes applied (via synthesized config).
 
-3. Docs & help updates (reflect new --prompt and environment rules)
+3. Deprecation staging for config ingestion
+   - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
+   - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
+   - Phase 3: strict stan-cli only (remove legacy acceptance).
+
+4. Docs & help updates
+   - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
+   - Getting Started/CLI Usage: namespaced examples; note prompt flag and PATH augmentation (already covered).
+   - Init help: mention migration and .bak/--dry-run.
+
+5. Silent fallback audit (narrowed to config/migration scope)
+   - Ensure debugFallback is used on: legacy engine extraction; legacy CLI loader fallback; DEFAULT_STAN_PATH resolution.
+   - Tests assert no debug output unless STAN_DEBUG=1 (behavior unchanged otherwise).
 
 ---
 
@@ -31,7 +44,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Optional alt‑screen mode (opt‑in; disabled by default).
 
 - Docs/site
-  - Expand troubleshooting for “system prompt not found” and PATH issues with suggestions (`--prompt core`, install missing devDeps, or invoke via package manager).
+  - Expand troubleshooting for “system prompt not found” and PATH issues with suggestions (`--prompt core`, install missing devDeps, or invoke via package manager). (ongoing)
+
 - Live view debugging (graceful)
   - Explore an approach to surface debug traces alongside the live table without corrupting its layout (e.g., a reserved log pane, a toggleable overlay, or a ring buffer dumped on finalize). Aim to preserve readability and avoid cursor/control sequence conflicts.
 
@@ -47,80 +61,18 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Child PATH augmentation ensures repo‑local binaries resolve without globals across platforms/monorepos. [DONE]
 - `stan snap`:
   - No drift/docs messages printed; snapshot behavior and history unchanged. [DONE]
-- Tests:
-  - Coverage for PATH augmentation (repo bin precedence). [DONE]
-  - (Follow‑through) Add coverage for prompt plan line and early failure cases.
+- Config swing:
+  - stan init migrates legacy → namespaced; backup + dry-run supported. [PENDING]
+  - Legacy engine keys honored via synthesized ContextConfig during transition; debugFallback notice only. [PENDING]
+  - Deprecation phases implemented (env‑gated, then strict). [PENDING]
+- Tests/docs:
+  - Migration tests (YAML/JSON/mixed; idempotent; backups; dry-run). [PENDING]
+  - Transitional extraction tests (legacy excludes/includes honored). [PENDING]
+  - Docs updated (namespaced examples; migration appendix; init help). [PENDING]
 
 ---
 
 ## Completed (recent)
-
-- Script runner environment — PATH augmentation
-  - Added PATH augmentation before each script spawn so repo binaries resolve without global installs.
-  - Behavior:
-    - Prefix child PATH with `<repoRoot>/node_modules/.bin` and each ancestor `<dir>/node_modules/.bin` up to the filesystem root (nearest first).
-    - Cross‑platform: use `path.delimiter`; set `PATH` (Windows case‑insensitive).
-    - No command rewriting; preserve `cwd=repoRoot`, `shell=true`; pass through parent env with augmented PATH.
-    - No runtime deps added for user tools (e.g., `cross-env`).
-    - If no `.bin` exists (e.g., Yarn PnP), augmentation is a no‑op.
-  - Tests:
-    - Added a test to verify child PATH is prefixed with `<repoRoot>/node_modules/.bin` and visible in the script output.
-
-- System prompt selection in run
-  - Added `-m, --prompt <value>` with default `auto` and support for `cliDefaults.run.prompt`.
-  - Resolution rules:
-    - auto: prefer local `<stanPath>/system/stan.system.md`, fallback core (packaged).
-    - local/core/path: require existence; early, concise error if not found (no scripts/archives).
-  - Materialization:
-    - Present chosen prompt under `<stanPath>/system/stan.system.md` for both full and diff; restore previous state after archiving; avoid gratuitous rewrites by byte-compare.
-  - Plan header includes `prompt:` line with resolved source (e.g., `auto → core (@karmaniverous/stan-core@X.Y.Z)`).
-  - Removed run/snap preflight drift/docs prints and updated tests accordingly (removed preflight tests).
-
-- Live/Logger parity and stability
-  - Final‑frame newline; stable hint behavior; BORING tokens in logger.
-  - Sequential scheduler gate prevents post‑cancel spawns; archives skipped on cancel; non‑zero exit.
-  - Anchored writer ensures in‑place updates without scrollback loss; hides/shows cursor reliably.
-
-- Patch classification and diagnostics hardening
-  - File Ops vs Diff split with FO‑only acceptance; single‑file diff enforcement; diagnostics envelopes with declared paths and attempt summaries; editor open on success (non‑check); `.patch` persisted for audit.
-
-- CLI config & defaults
-  - Root defaults for `debug`/`boring` respected; run defaults surfaced in help (Commander default annotations).
-  - Plan printing toggles (`-p`/`-P`) honored; plan only exits without side effects.
-- Lint cleanup (tsdoc/unused/reduntant/require‑await)
-  - Fix TSDoc “escape greater‑than” in comments:
-    - src/cli/stan/cli-utils.ts (Normalize argv doc)
-    - src/stan/run/exec.ts (selection doc bullets)
-  - Remove unnecessary backslash in a TSDoc string (live renderer) to avoid tsdoc‑unnecessary‑backslash.
-  - Prompt pipeline:
-    - Simplify PromptChoice type (remove redundant union with string).
-    - Make resolvePromptSource synchronous (remove require‑await; callers may still await safely).
-  - Session:
-    - Remove unused import and variable; annotate empty catches with comments to satisfy no‑empty.
-  - Snap:
-    - Remove unused preflight import.
-
-- Lint follow‑through:
-  - Remove unnecessary `await` before `resolvePromptSource` in `src/stan/run/session.ts` to satisfy `@typescript-eslint/await-thenable`.
-
-- Module decomposition convention (directory + index.ts barrel)
-  - Adopted a project‑level directive: when decomposing a file `X.ts`, create `X/` with decomposed modules and `X/index.ts` re‑exports; delete `X.ts`. This preserves import paths (`./X`).
-  - Applied to the exec module:
-    - Removed `src/stan/run/exec.ts` (legacy barrel).
-    - Added `src/stan/run/exec/index.ts` that re‑exports from `runner.ts`.
-  - Applied to other duplicates:
-    - Replaced `src/cli/stan/runner.ts` with `src/cli/stan/runner/index.ts` (barrel).
-    - Moved CLI bootstrap from `src/cli/stan/stan.ts` to `src/cli/bin/stan.ts` to avoid a sibling file/folder conflict and follow the convention.
-    - Updated Rollup to prefer a single CLI entry (`src/cli/bin/stan.ts`) and updated the dev script (`npm run stan`) accordingly.
-
-Notes:
-
-- The large session orchestrator remains in `src/stan/run/session.ts`. Converting it to `session/index.ts` will be handled as a follow‑up split (file exceeds the long‑file threshold; requires a decomposition plan).
-
-- Debug/live interaction (Option C)
-  - Decided that `--debug` forces `--no-live` strictly to avoid live table corruption by debug messages.
-  - Implementation: on `stan run`, when debug is active, always set `live=false`. If both `--debug` and `--live` are explicitly passed, print a warning and ignore `--live`.
-  - Tests/docs follow‑through planned alongside the live view debugging exploration.
 
 - Decomposed session orchestrator (directory + index.ts)
   - Replaced `src/stan/run/session.ts` with `src/stan/run/session/index.ts` (orchestrator ≤300 LOC).
@@ -131,4 +83,8 @@ Notes:
 - Snap tests — namespaced config alignment
   - Updated snapshot/selection tests to write a namespaced `stan.config.yml` (`stan-core` for engine keys; `stan-cli` for CLI keys).
   - Fixed failures caused by stan-core’s strict loader (“missing ‘stan-core’ section”) and a mismatched `stanPath` during history navigation.
-  - Tests now target the correct `out/diff` state and pass deterministically under the new config model.
+  - Tests now target the correct `out/diff` state and pass deterministically under the new config model.
+
+- Config interop swing
+  - Requirements now codify namespaced ingestion, transitional legacy engine‑config extraction, and staged deprecation.
+  - Ready to ask stan-core to prune resolved interop notes; remove our import of core interop files after core prunes them.
