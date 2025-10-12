@@ -4,7 +4,7 @@
  * NEW SELECTION MODEL:
  * - -s, --scripts [keys...]: optional variadic.
  *   - if provided with keys: select those keys (filtered/deduped to known).
- *   - if provided with no keys: select all known keys.
+ *   - if provided with no keys: select all known scripts.
  *   - if NOT provided: initial selection is [] (no scripts).
  * - -x, --except-scripts <keys...>: variadic, requires at least one key.
  *   - if -s is provided: reduce the -s selection by these keys.
@@ -17,7 +17,6 @@
  * Behavior:
  * - combine, keep, archive are mapped directly to booleans; runner validates constraints.
  */
-import type { ContextConfig } from '@karmaniverous/stan-core';
 
 import type { ExecutionMode, RunBehavior } from '@/stan/run';
 
@@ -65,8 +64,8 @@ export const deriveRunInvocation = (args: {
   keep?: unknown;
   archive?: unknown;
 
-  // config
-  config: ContextConfig;
+  // config (CLI-owned scripts only)
+  config: { scripts?: Record<string, unknown> };
 }): DerivedRunInvocation => {
   const {
     scriptsProvided = false,
@@ -80,7 +79,7 @@ export const deriveRunInvocation = (args: {
     config,
   } = args;
 
-  const allKeys = Object.keys(config.scripts);
+  const allKeys = Object.keys(config?.scripts ?? {});
   const known = new Set(allKeys);
 
   const scriptsList = dedupePreserve(

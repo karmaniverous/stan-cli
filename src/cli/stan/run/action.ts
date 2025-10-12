@@ -11,6 +11,7 @@ import {
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
+import { loadCliConfigSync } from '@/cli/config/load';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runSelected } from '@/stan/run';
@@ -122,13 +123,14 @@ export const registerRunAction = (
     const noPlanFlag = Boolean((options as { noPlan?: unknown }).noPlan);
 
     // Default print-plan behavior from config
-    const cfgRun = (
-      (config.cliDefaults ?? {}) as {
-        run?: { plan?: boolean };
-      }
-    ).run;
-    const defaultPrintPlan =
-      typeof cfgRun?.plan === 'boolean' ? cfgRun.plan : true;
+    let defaultPrintPlan = true;
+    try {
+      const cliCfg = loadCliConfigSync(runCwd);
+      const planMaybe = cliCfg.cliDefaults?.run?.plan;
+      defaultPrintPlan = typeof planMaybe === 'boolean' ? planMaybe : true;
+    } catch {
+      /* keep built-in true */
+    }
 
     const noScripts = (options as { scripts?: unknown }).scripts === false;
     if (noScripts && derived.behavior.archive === false) {

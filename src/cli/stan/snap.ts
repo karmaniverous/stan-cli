@@ -129,11 +129,8 @@ import { applyCliSafety, tagDefault } from './cli-utils';
         const fromCli = src.getOptionValueSource?.('stash') === 'cli';
         if (fromCli) stashFinal = Boolean(opts?.stash);
         else {
-          const p = findConfigPathSync(process.cwd());
-          if (p) {
-            const cfg = loadConfigSync(process.cwd());
-            stashFinal = Boolean(cfg.cliDefaults?.snap?.stash ?? false);
-          }
+          const cli = loadCliConfigSync(process.cwd());
+          stashFinal = Boolean(cli.cliDefaults?.snap?.stash ?? false);
         }
       } catch {
         /* ignore */

@@ -1,4 +1,5 @@
 cliDefaults:
+  debug: true
   run:
     plan: false
     sequential: true
@@ -10,7 +11,7 @@ imports:
     - ../stan-core/dist/types/index.d.ts
     - ../stan-core/.stan/interop/stan-cli/**
 excludes:
-  - "*.local"
+  - '*.local'
   - assets
   - CHANGELOG.md
   - docs
@@ -22,8 +23,7 @@ scripts:
   test: npm run test -- --no-color
   build:
     script: cross-env NO_COLOR=1 npm run build
-    warnPattern: loaded [\\w.]+ with warnings(?!.*outputToFilesystem option is
-      defaulting to true)
+    warnPattern: loaded [\\w.]+ with warnings(?!.*outputToFilesystem option is defaulting to true)
   docs:
     script: npm run docs -- --emit none
     warnPattern: \\[warning\\]

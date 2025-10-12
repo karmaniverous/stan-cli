@@ -13,7 +13,6 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { ContextConfig, ScriptMap } from '@karmaniverous/stan-core';
 import {
   applyPatchPipeline,
   detectAndCleanPatch,
@@ -25,6 +24,8 @@ import {
 import clipboardy from 'clipboardy';
 import { ensureDir } from 'fs-extra';
 
+import { DEFAULT_OPEN_COMMAND } from '@/cli/config/defaults';
+import { loadCliConfigSync } from '@/cli/config/load';
 import {
   composeDiffFailureEnvelope,
   composeFileOpsFailuresEnvelope,
@@ -47,24 +48,15 @@ export type RunPatchOptions = {
   check?: boolean;
 };
 
-const resolveStanPath = (cwd: string): string => {
-  try {
-    const p = findConfigPathSync(cwd);
-    if (p) return (JSON.parse('null') as unknown as ContextConfig) && ''; // placeholder to satisfy TS
-  } catch {
-    /* ignore */
-  }
-  return '.stan';
-};
-
 /** Resolve editor command once (best‑effort). */
 const getPatchOpenCommand = (cwd: string): string | undefined => {
   try {
     const p = findConfigPathSync(cwd);
-    const cfg = p ? (JSON.parse('null') as unknown as ContextConfig) : null;
-    return (cfg as unknown as { patchOpenCommand?: string })?.patchOpenCommand;
+    if (!p) return DEFAULT_OPEN_COMMAND;
+    const cli = loadCliConfigSync(cwd);
+    return cli.patchOpenCommand ?? DEFAULT_OPEN_COMMAND;
   } catch {
-    return undefined;
+    return DEFAULT_OPEN_COMMAND;
   }
 };
 
