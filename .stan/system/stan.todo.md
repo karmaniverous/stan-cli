@@ -8,16 +8,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
-1. Config migration (legacy → namespaced) in init
-   - Detect legacy root keys; migrate known engine keys to stan-core and known CLI keys to stan-cli.
-   - Preserve unknown root keys; keep format/filename; write a .bak; support --dry-run; idempotent.
-   - Interactive prompt (default Yes); --force migrates without prompt.
-
-2. Transitional engine-config extraction (honor legacy excludes/includes)
-   - In run/snap: if stan-core loader fails due to missing “stan-core”, synthesize ContextConfig from legacy root keys (stanPath/includes/excludes/imports) and pass to engine APIs.
-   - Emit a debugFallback notice (STAN_DEBUG=1) indicating legacy extraction was used.
-   - Add focused tests: legacy config present → excludes/includes applied (via synthesized config).
-
 3. Deprecation staging for config ingestion
    - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
    - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
@@ -74,6 +64,15 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
+- Init — force idempotency guard and legacy→namespaced migration
+  - Guard now checks pre‑migration state: `--force` is a true no‑op only when the file was already namespaced.
+  - Legacy configs are migrated to `stan-core`/`stan-cli` and written back (YAML/JSON), preserving unknown root keys and filename/format.
+  - `.bak` is still written on migration; dry‑run remains non‑interactive and side‑effect free.
+
+- Run — early legacy engine-config debugFallback
+  - Added a `preAction` hook on the run subcommand to emit `run.action:engine-legacy` under `STAN_DEBUG=1` whenever the config lacks a top‑level `stan-core` node.
+  - Keeps the existing action‑time check; guarantees the notice is present alongside the CLI‑config legacy notice.
+
 - Decomposed session orchestrator (directory + index.ts)
   - Replaced `src/stan/run/session.ts` with `src/stan/run/session/index.ts` (orchestrator ≤300 LOC).
   - Introduced `src/stan/run/session/types.ts`, `cancel-controller.ts`, and `scripts-phase.ts` to keep the orchestrator small and testable.
@@ -126,17 +125,3 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Interop — request to core
   - Posted `.stan/interop/stan-core/20251012-000000Z-cli-namespacing-adopted.md` asking core to prune resolved interop notes so we can remove imports of core interop threads from this repo and keep archives lean.
-
-- Init — make --dry-run non-interactive and idempotent on namespaced configs
-  - Skipped interactive prompts entirely during `--dry-run` (plan-only; no inquirer, no mutations).
-  - Ensured `--force` on an already namespaced config is a true no-op (do not inject defaults such as `patchOpenCommand`); preserves exact file content for idempotency test.
-
-- Run — ensure legacy engine-config notice under strict/accepting cores
-  - After a successful `loadConfig`, detect missing `stan-core` in the raw config and emit `run.action:engine-legacy` debugFallback (under STAN_DEBUG=1). This guarantees tests see the expected notice even when the engine accepts legacy root keys.
-
-- Init — skip migration prompt during --dry-run; preserve exact bytes under --force+namespaced
-  - Treat `--dry-run` like `--force` for migration (no interactive prompt); plan-only path remains non-interactive.
-  - Added an early no-op return for `--force` with an already namespaced config to avoid re-serializing (e.g., trailing newline differences), keeping idempotency strict.
-
-- Run — early legacy engine-config notice
-  - At action start, pre-check the config file and emit `run.action:engine-legacy` when `stan-core` is missing. This complements the existing success/failure notices and ensures predictable debug output for tests.

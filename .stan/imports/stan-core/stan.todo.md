@@ -134,4 +134,11 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Current state:
     - Core: strict `stan-core` loader in place; tests/docs aligned.
     - CLI: strict `stan-cli` loader adopted with a short transitional legacy extractor to keep the loop green during sequencing (per CLI requirements).
-  - Follow‑through: remove any remaining transitional acceptance paths once both packages are fully released on the namespaced model.
+  - Follow‑through: remove any remaining transitional acceptance paths once both packages are fully released on the namespaced model.
+
+- DRY set 1 — shared helpers and micro‑consolidations (no behavior changes)
+  - File Ops: introduced a shared extractor at `src/stan/patch/common/file-ops.ts` and updated both the File Ops parser and the response validator to use it.
+  - Repo paths: added `src/stan/path/repo.ts` with `normalizeRepoPath`, `isAbsolutePosix`, `toPosix`, and `resolveWithin`. File Ops parser and validator now share the same safety rules.
+  - jsdiff writes: replaced ad‑hoc mkdir logic with the existing `ensureParentDir` helper for both repo and sandbox targets.
+  - Archive composition: centralized inclusion of `<stanPath>/output` via `composeFilesWithOutput` in `src/stan/archive/util.ts`; used by archive and diff.
+  - Tests: no behavior changes expected; kept coverage stable.

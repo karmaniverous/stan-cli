@@ -138,6 +138,8 @@ declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes,
  *
  * Also validates optional "### File Ops" pre-ops block (verbs/arity/path rules).
  *
+ * Also validates optional "### File Ops" pre-ops block (verbs/arity/path rules).
+ *
  * Checks (initial):
  * - One Patch per file.
  * - Each Patch block contains exactly one "diff --git a/<path> b/<path>" header.

@@ -67,6 +67,8 @@ export const performInitService = async ({
   }
 
   // Offer migration to namespaced layout (stan-core / stan-cli); idempotent when already namespaced.
+  // Track pre‑migration state to distinguish “already namespaced” from “just migrated”.
+  const wasNamespaced = isObj(base['stan-core']) || isObj(base['stan-cli']);
   base = await maybeMigrateLegacyToNamespaced(base, existingPath, {
     force: force || dryRun,
   });
@@ -92,7 +94,9 @@ export const performInitService = async ({
 
   // Idempotency guard: under --force with an existing, already namespaced config,
   // do not re-serialize the file (preserve exact bytes/formatting).
-  if (force && existingPath && namespaced) {
+  // IMPORTANT: only treat as “already namespaced” when that was true BEFORE migration.
+  // If we just migrated legacy → namespaced, we must write the transformed file.
+  if (force && existingPath && namespaced && wasNamespaced) {
     // Still ensure workspace when not dry-run (done above).
     // Skip gitignore/docs/snapshot/prompts; pure no-op for the config file.
     return existingPath;

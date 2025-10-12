@@ -1,6 +1,11 @@
+import { readFileSync } from 'node:fs';
+
+import { findConfigPathSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
+import YAML from 'yaml';
 
 import { renderAvailableScriptsHelp } from '@/stan/help';
+import { debugFallback } from '@/stan/util/debug';
 
 import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
 
@@ -8,7 +13,8 @@ export type FlagPresence = {
   sawNoScriptsFlag: boolean;
   sawScriptsFlag: boolean;
   sawExceptFlag: boolean;
-}; /**
+};
+/**
  * Register the `run` subcommand options and default tagging.
  * Returns the configured subcommand and a getter for raw flag presence.
  */
@@ -164,6 +170,31 @@ export const registerRunOptions = (
   });
 
   applyCliSafety(cmd);
+
+  // Early legacy engine-config notice (preAction, STAN_DEBUG=1):
+  // Emit once per invocation if the config file lacks top-level "stan-core".
+  cmd.hook('preAction', () => {
+    try {
+      const p = findConfigPathSync(process.cwd());
+      if (!p) return;
+      const raw = readFileSync(p, 'utf8');
+      const rootUnknown: unknown = p.endsWith('.json')
+        ? (JSON.parse(raw) as unknown)
+        : (YAML.parse(raw) as unknown);
+      const root =
+        rootUnknown && typeof rootUnknown === 'object'
+          ? (rootUnknown as Record<string, unknown>)
+          : {};
+      if (!Object.prototype.hasOwnProperty.call(root, 'stan-core')) {
+        debugFallback(
+          'run.action:engine-legacy',
+          `detected legacy root keys (no "stan-core") in ${p.replace(/\\/g, '/')}`,
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  });
 
   // Effective defaults from config (cliDefaults.run) over baseline
   const eff = runDefaults(process.cwd());
