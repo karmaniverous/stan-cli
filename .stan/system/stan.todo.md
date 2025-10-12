@@ -126,4 +126,9 @@ Notes:
   - Replaced `src/stan/run/session.ts` with `src/stan/run/session/index.ts` (orchestrator ≤300 LOC).
   - Introduced `src/stan/run/session/types.ts`, `cancel-controller.ts`, and `scripts-phase.ts` to keep the orchestrator small and testable.
   - Existing helpers (`prompt-plan`, `archive-stage`, `signals`, `ui-queue`) reused intact.
-  - Fixed a lingering test import (`src/stan/run/plan.test.ts`) to the run barrel.
+  - Fixed a lingering test import (`src/stan/run/plan.test.ts`) to the run barrel.
+
+- Snap tests — namespaced config alignment
+  - Updated snapshot/selection tests to write a namespaced `stan.config.yml` (`stan-core` for engine keys; `stan-cli` for CLI keys).
+  - Fixed failures caused by stan-core’s strict loader (“missing ‘stan-core’ section”) and a mismatched `stanPath` during history navigation.
+  - Tests now target the correct `out/diff` state and pass deterministically under the new config model.

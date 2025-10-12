@@ -90,7 +90,9 @@ describe('snap CLI (stash, history, undo/redo/info)', () => {
     // config with stanPath
     await writeFile(
       path.join(dir, 'stan.config.yml'),
-      ['stanPath: out', 'scripts: {}'].join('\n'),
+      ['stan-core:', '  stanPath: out', 'stan-cli:', '  scripts: {}'].join(
+        '\n',
+      ),
       'utf8',
     );
 
@@ -107,10 +109,16 @@ describe('snap CLI (stash, history, undo/redo/info)', () => {
   });
 
   it('snap creates history, set/undo/redo navigate, new snap after undo clears redos, and history trims to maxUndos', async () => {
-    // config with stanPath and maxUndos = 2
+    // config with stanPath and maxUndos = 2 (namespaced)
     await writeFile(
       path.join(dir, 'stan.config.yml'),
-      ['stanPath: out', 'maxUndos: 2', 'scripts: {}'].join('\n'),
+      [
+        'stan-core:',
+        '  stanPath: out',
+        'stan-cli:',
+        '  maxUndos: 2',
+        '  scripts: {}',
+      ].join('\n'),
       'utf8',
     );
 

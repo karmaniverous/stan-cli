@@ -50,14 +50,17 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
   });
 
   it('snap includes re-included sub-packages so diff shows no phantom files', async () => {
-    // Repo config: re-include a default-excluded nested sub-package
+    // Repo config (namespaced): engine keys under "stan-core"; CLI scripts under "stan-cli".
+    // Re-include a default-excluded nested sub-package via includes.
     const yml = [
-      'stanPath: out',
-      'includes:',
-      "  - 'services/**'",
-      'excludes:',
-      "  - '**/.tsbuild/**'",
-      'scripts: {}',
+      'stan-core:',
+      '  stanPath: out',
+      '  includes:',
+      "    - 'services/**'",
+      '  excludes:',
+      "    - '**/.tsbuild/**'",
+      'stan-cli:',
+      '  scripts: {}',
     ].join('\n');
     await writeFile(path.join(dir, 'stan.config.yml'), yml, 'utf8');
     // Nested sub-package (default excluded): should be brought back by includes
