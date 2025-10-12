@@ -132,4 +132,12 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Reused the resolved `stanPath` from the UI defaults for downstream steps.
 
 - Tests — fix false‑positive root‑level scripts check in init migration test
-  - Tightened regex to match only a root‑level `scripts:` line, avoiding nested matches under `stan-cli`.
+  - Tightened regex to match only a root‑level `scripts:` line, avoiding nested matches under `stan-cli`.
+
+- Run — include‑on‑change for ephemeral system prompt (quiet diffs on steady state)
+  - For `--prompt core|<path>`, compare the effective prompt hash against the baseline recorded at snap.
+  - When changed, inject before diff so the prompt appears exactly once in archive.diff.tar; otherwise create the diff first without injection and inject only for the full archive. Always restore original bytes afterward (no persistent overwrite).
+
+- Snap — record effective prompt identity for baseline
+  - Compute the effective prompt (cliDefaults.run.prompt | auto), hash its bytes, and update `.stan/system/.docs.meta.json` with `prompt: { source, hash, path? }` (best‑effort; preserves unknown keys).
+  - New helpers: `src/stan/util/hash.ts`, `src/stan/system/docs-meta.ts`.

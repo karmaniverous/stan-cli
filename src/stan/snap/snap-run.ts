@@ -3,6 +3,11 @@
  */
 import { loadConfig, writeArchiveSnapshot } from '@karmaniverous/stan-core';
 
+import { loadCliConfig } from '@/cli/config/load';
+import { resolvePromptSource } from '@/stan/run/prompt';
+import { updateDocsMetaPrompt } from '@/stan/system/docs-meta';
+import { sha256File } from '@/stan/util/hash';
+
 import { utcStamp } from '../util/time';
 import { captureSnapshotAndArchives } from './capture';
 import { resolveContext } from './context';
@@ -59,6 +64,32 @@ export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
     // Visual separation from next prompt
     console.log('');
     return;
+  }
+
+  // Record effective prompt identity (baseline-at-snap): source/hash/path?
+  try {
+    const cli = await loadCliConfig(cwd);
+    const choice =
+      typeof cli.cliDefaults?.run?.prompt === 'string' &&
+      cli.cliDefaults.run.prompt.trim().length
+        ? cli.cliDefaults.run.prompt.trim()
+        : 'auto';
+    const rp = resolvePromptSource(cwd, stanPath, choice);
+    // Hash the effective source bytes
+    let hash: string | undefined;
+    try {
+      hash = await sha256File(rp.abs);
+    } catch {
+      hash = undefined;
+    }
+    const pathForMeta = rp.kind === 'path' ? rp.abs : undefined;
+    await updateDocsMetaPrompt(cwd, stanPath, {
+      source: rp.kind,
+      hash,
+      path: pathForMeta,
+    });
+  } catch {
+    // best-effort; missing hash/path is acceptable
   }
 
   const ts = utcStamp();
