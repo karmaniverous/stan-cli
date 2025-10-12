@@ -42,6 +42,7 @@ export const registerRunAction = (
     console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
   };
   cmd.action(async (options: Record<string, unknown>) => {
+    let legacyWarned = false;
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
       getFlagPresence();
     // Authoritative conflict handling: -S cannot be combined with -s/-x
@@ -56,6 +57,30 @@ export const registerRunAction = (
     const cwdInitial = process.cwd();
     const cfgPath = findConfigPathSync(cwdInitial);
     const runCwd = cfgPath ? path.dirname(cfgPath) : cwdInitial;
+
+    // Early legacy-engine notice (debug-only): emit once per action if config lacks "stan-core".
+    try {
+      const pEarly = findConfigPathSync(runCwd);
+      if (pEarly) {
+        const rawEarly = await readFile(pEarly, 'utf8');
+        const rootUnknownEarly: unknown = pEarly.endsWith('.json')
+          ? (JSON.parse(rawEarly) as unknown)
+          : (YAML.parse(rawEarly) as unknown);
+        const rootEarly =
+          rootUnknownEarly && typeof rootUnknownEarly === 'object'
+            ? (rootUnknownEarly as Record<string, unknown>)
+            : {};
+        if (!Object.prototype.hasOwnProperty.call(rootEarly, 'stan-core')) {
+          debugFallback(
+            'run.action:engine-legacy',
+            `detected legacy root keys (no "stan-core") in ${pEarly.replace(/\\/g, '/')}`,
+          );
+          legacyWarned = true;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
     let config: ContextConfig;
     try {
       config = await loadConfig(runCwd);
@@ -120,10 +145,13 @@ export const registerRunAction = (
                 : undefined;
 
             config = { stanPath, includes, excludes, imports } as ContextConfig;
-            debugFallback(
-              'run.action:engine-legacy',
-              `synthesized engine config from legacy root keys in ${p.replace(/\\/g, '/')}`,
-            );
+            if (!legacyWarned) {
+              debugFallback(
+                'run.action:engine-legacy',
+                `synthesized engine config from legacy root keys in ${p.replace(/\\/g, '/')}`,
+              );
+              legacyWarned = true;
+            }
           } else {
             // Fallback (rare): use stan-core.stanPath if present; otherwise default
             const sp = stanCore['stanPath'];

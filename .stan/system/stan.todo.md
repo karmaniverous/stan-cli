@@ -148,3 +148,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Patch — use engine DEFAULT_OPEN_COMMAND (DRY)
   - Updated `src/stan/patch/service.ts` to import `DEFAULT_OPEN_COMMAND` from `@karmaniverous/stan-core`.
   - Removes dependency on the deleted local defaults module and fixes module‑resolution failures in tests.
+
+- Run — guarantee early legacy-engine debugFallback once per action
+  - Added an early check in `src/cli/stan/run/action.ts` to emit `run.action:engine-legacy` when the config lacks a top-level `stan-core`, guarded to avoid duplicates with the later synthesis path.
+  - Ensures the expected debug signal is present under `STAN_DEBUG=1` for the transitional legacy extraction test.
+  - Keeps the emission to a single notice per action by tracking a local guard.
