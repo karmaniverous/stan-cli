@@ -27,14 +27,14 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     vi.restoreAllMocks();
   });
 
-  it('force on existing YAML: preserves unknown keys and relative key order; appends defaults only', async () => {
+  it('force on existing YAML: migrates legacy to namespaced, preserves unknown root keys, does not duplicate legacy keys', async () => {
     const p = path.join(dir, 'stan.config.yml');
-    // Baseline YAML with a stable order
+    // Baseline legacy YAML (pre-namespacing)
     const body = [
       'stanPath: .stan',
       'includes: [src]',
       'excludes: []',
-      'cliDefaults:',
+      'cliDefaults:', // legacy root key (will migrate under stan-cli)
       '  run:',
       '    archive: false',
       'customAlpha:',
@@ -51,22 +51,28 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     expect(out).toBe(p);
 
     const after = await readUtf8(p);
-    // Unknown key preserved
+    // Unknown root key preserved
     expect(after.includes('customAlpha:')).toBe(true);
     expect(after.includes('keep: me')).toBe(true);
-    // Relative order among existing keys maintained (stanPath before cliDefaults before scripts)
-    const iStan = after.indexOf('stanPath:');
-    const iCli = after.indexOf('cliDefaults:');
-    const iScripts = after.indexOf('scripts:');
-    expect(iStan).toBeGreaterThan(-1);
-    expect(iCli).toBeGreaterThan(iStan);
-    expect(iScripts).toBeGreaterThan(iCli);
+    // Namespaced blocks present
+    expect(after).toMatch(/^\s*stan-core:\s*$/m);
+    expect(after).toMatch(/^\s*stan-cli:\s*$/m);
+    // Engine keys live under stan-core
+    expect(after).toMatch(/^\s*stan-core:\s*\n\s*stanPath:\s*\.stan/m);
+    expect(after).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*excludes:\s*\[\]/m);
+    // CLI keys live under stan-cli (scripts migrated)
+    expect(after).toMatch(
+      /^\s*stan-cli:([\s\S]*?)\n\s*scripts:\s*\n\s* {2}a:\s*echo a/m,
+    );
+    // Legacy root keys removed (no duplicates at root)
+    expect(after).not.toMatch(/^\s*scripts:\s/m);
+    expect(after).not.toMatch(/^\s*stanPath:\s/m);
     // Log message references the exact file name
     const logs = logSpy.mock.calls.map((c) => String(c[0])).join('\n');
     expect(logs).toMatch(/stan: wrote stan\.config\.yml/);
   });
 
-  it('migrates legacy opts.cliDefaults → top-level cliDefaults (YAML)', async () => {
+  it('migrates legacy opts.cliDefaults → stan-cli.cliDefaults (YAML)', async () => {
     const p = path.join(dir, 'stan.config.yml');
     const legacy = [
       'stanPath: .stan',
@@ -81,14 +87,18 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
 
     await performInitService({ cwd: dir, force: true });
     const after = await readUtf8(p);
-    expect(after).toMatch(/^\s*cliDefaults:/m);
-    expect(after).toMatch(/run:\s*\n\s*archive:\s*false/m);
-    // opts.cliDefaults removed; opts removed if empty
+    // Namespaced target
+    expect(after).toMatch(/^\s*stan-cli:\s*$/m);
+    expect(after).toMatch(
+      /^\s*stan-cli:([\s\S]*?)\n\s*cliDefaults:\s*\n\s* {2}run:\s*\n\s* {4}archive:\s*false/m,
+    );
+    // opts.cliDefaults removed; opts removed if empty; no top-level cliDefaults
     expect(after).not.toMatch(/^\s*opts:\s*$/m);
     expect(after).not.toMatch(/^\s*opts:\s*\n\s*cliDefaults:/m);
+    expect(after).not.toMatch(/^\s*cliDefaults:\s*$/m);
   });
 
-  it('migrates legacy opts.cliDefaults → top-level cliDefaults and writes JSON back to JSON', async () => {
+  it('migrates legacy opts.cliDefaults → stan-cli.cliDefaults and writes JSON back to JSON', async () => {
     const p = path.join(dir, 'stan.config.json');
     const legacy = {
       stanPath: '.stan',
@@ -106,16 +116,20 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     expect(out).toBe(p);
 
     const after = JSON.parse(await readUtf8(p)) as {
-      stanPath?: string;
-      cliDefaults?: unknown;
+      ['stan-core']?: { stanPath?: string };
+      ['stan-cli']?: { cliDefaults?: unknown; scripts?: unknown };
       opts?: unknown;
-      scripts?: unknown;
     };
-    expect(after.cliDefaults).toBeTruthy();
+    // JSON is preserved; cliDefaults migrated under stan-cli
+    expect(after['stan-cli']?.cliDefaults).toBeTruthy();
     expect(
-      (after.cliDefaults as { run?: { archive?: boolean } }).run?.archive,
+      (
+        (after['stan-cli']?.cliDefaults ?? {}) as {
+          run?: { archive?: boolean };
+        }
+      ).run?.archive,
     ).toBe(false);
-    // opts removed when empty
+    // opts removed when empty; no top-level cliDefaults/scripts
     expect(after.opts).toBeUndefined();
 
     const logs = logSpy.mock.calls.map((c) => String(c[0])).join('\n');

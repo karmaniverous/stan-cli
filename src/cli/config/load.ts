@@ -16,6 +16,7 @@ import {
   ensureNoReservedScriptKeys,
   type ScriptMap,
 } from '@/cli/config/schema';
+import { debugFallback } from '@/stan/util/debug';
 
 const formatZodError = (e: unknown): string =>
   e instanceof ZodError
@@ -96,7 +97,14 @@ export const loadCliConfig = async (cwd: string): Promise<LoadedCliConfig> => {
   }
   // Transitional: legacy top-level keys only (no "stan-cli")
   const legacy = pickLegacyCliSection(root);
-  if (Object.keys(legacy).length > 0) return parseCliNode(legacy, cfgPath);
+  if (Object.keys(legacy).length > 0) {
+    // Debug-visible notice to help users migrate via `stan init`
+    debugFallback(
+      'cli.config:load',
+      `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,
+    );
+    return parseCliNode(legacy, cfgPath);
+  }
   // Nothing configured; return empty-scripts baseline
   return { scripts: {}, patchOpenCommand: DEFAULT_OPEN_COMMAND };
 };
@@ -115,6 +123,12 @@ export const loadCliConfigSync = (cwd: string): LoadedCliConfig => {
     return parseCliNode(root['stan-cli'], cfgPath);
   }
   const legacy = pickLegacyCliSection(root);
-  if (Object.keys(legacy).length > 0) return parseCliNode(legacy, cfgPath);
+  if (Object.keys(legacy).length > 0) {
+    debugFallback(
+      'cli.config:loadSync',
+      `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,
+    );
+    return parseCliNode(legacy, cfgPath);
+  }
   return { scripts: {}, patchOpenCommand: DEFAULT_OPEN_COMMAND };
 };

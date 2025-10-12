@@ -88,3 +88,13 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Config interop swing
   - Requirements now codify namespaced ingestion, transitional legacy engine‑config extraction, and staged deprecation.
   - Ready to ask stan-core to prune resolved interop notes; remove our import of core interop files after core prunes them.
+
+### Completed (recent)
+
+- Init/service decomposition (finish) and namespaced migration helper
+  - Added src/stan/init/service/migrate.ts and rewired performInitService to use it.
+  - Removed legacy src/stan/init/service.ts to eliminate duplication and TS7053.
+  - Fixed unsafe error handling in service/index.ts catch blocks (lint clean).
+  - Updated init behavior tests to the namespaced model (stan-core/stan-cli); removed assumptions about legacy top‑level cliDefaults/scripts and root key order.
+  - Kept unknown root keys intact and avoided re‑adding legacy keys when namespaces exist; migration remains idempotent and writes a .bak in force/confirmed paths.
+

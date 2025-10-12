@@ -1,4 +1,5 @@
 /// src/cli/stan/run/action.ts
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
@@ -10,6 +11,7 @@ import {
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
+import YAML from 'yaml';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
@@ -22,6 +24,7 @@ import { debugFallback } from '@/stan/util/debug';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
+
 export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
@@ -40,7 +43,8 @@ export const registerRunAction = (
   };
   cmd.action(async (options: Record<string, unknown>) => {
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
-      getFlagPresence(); // Authoritative conflict handling: -S cannot be combined with -s/-x
+      getFlagPresence();
+    // Authoritative conflict handling: -S cannot be combined with -s/-x
     if (sawNoScriptsFlag && (sawScriptsFlag || sawExceptFlag)) {
       throw new CommanderError(
         1,
@@ -53,7 +57,8 @@ export const registerRunAction = (
     const cfgPath = findConfigPathSync(cwdInitial);
     const runCwd = cfgPath ? path.dirname(cfgPath) : cwdInitial;
 
-    // Load repo config as ContextConfig; on failure, fall back to sane minimal defaults.
+    // Load repo config as ContextConfig; on failure, fall back (transitional):
+    // synthesize a ContextConfig from legacy root keys so excludes/includes/stanPath work.
     let config: ContextConfig;
     try {
       config = await loadConfig(runCwd);
@@ -68,17 +73,105 @@ export const registerRunAction = (
               : String(err);
         debugFallback('run.action:loadConfig', msg);
       }
-      // Resolve stanPath via core helper; if that also fails, use DEFAULT_STAN_PATH (".stan").
-      let stanPathFallback = DEFAULT_STAN_PATH;
-      try {
-        stanPathFallback = resolveStanPathSync(runCwd);
-      } catch {
-        debugFallback(
-          'run.action:stanPath',
-          'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
-        );
+      const p = findConfigPathSync(runCwd);
+      if (p) {
+        try {
+          const raw = await readFile(p, 'utf8');
+          const rootUnknown: unknown = p.endsWith('.json')
+            ? (JSON.parse(raw) as unknown)
+            : (YAML.parse(raw) as unknown);
+          const obj =
+            rootUnknown && typeof rootUnknown === 'object'
+              ? (rootUnknown as Record<string, unknown>)
+              : {};
+
+          const stanCore =
+            obj['stan-core'] && typeof obj['stan-core'] === 'object'
+              ? (obj['stan-core'] as Record<string, unknown>)
+              : null;
+
+          if (!stanCore) {
+            const stanPathRaw = obj['stanPath'];
+            const includesRaw = obj['includes'];
+            const excludesRaw = obj['excludes'];
+            const importsRaw = obj['imports'];
+
+            const stanPath =
+              typeof stanPathRaw === 'string' && stanPathRaw.trim().length
+                ? stanPathRaw
+                : (() => {
+                    try {
+                      return resolveStanPathSync(runCwd);
+                    } catch {
+                      debugFallback(
+                        'run.action:stanPath',
+                        'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
+                      );
+                      return DEFAULT_STAN_PATH;
+                    }
+                  })();
+
+            const includes = Array.isArray(includesRaw)
+              ? includesRaw.filter((s): s is string => typeof s === 'string')
+              : [];
+            const excludes = Array.isArray(excludesRaw)
+              ? excludesRaw.filter((s): s is string => typeof s === 'string')
+              : [];
+            const imports =
+              importsRaw && typeof importsRaw === 'object'
+                ? (importsRaw as Record<string, string | string[]>)
+                : undefined;
+
+            config = { stanPath, includes, excludes, imports } as ContextConfig;
+            debugFallback(
+              'run.action:engine-legacy',
+              `synthesized engine config from legacy root keys in ${p.replace(/\\/g, '/')}`,
+            );
+          } else {
+            // Fallback (rare): use stan-core.stanPath if present; otherwise default
+            const sp = stanCore['stanPath'];
+            const stanPath =
+              typeof sp === 'string' && sp.trim().length
+                ? sp
+                : (() => {
+                    try {
+                      return resolveStanPathSync(runCwd);
+                    } catch {
+                      debugFallback(
+                        'run.action:stanPath',
+                        'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
+                      );
+                      return DEFAULT_STAN_PATH;
+                    }
+                  })();
+            config = { stanPath } as ContextConfig;
+          }
+        } catch {
+          // Ultimate fallback: stanPath only
+          let stanPathFallback = DEFAULT_STAN_PATH;
+          try {
+            stanPathFallback = resolveStanPathSync(runCwd);
+          } catch {
+            debugFallback(
+              'run.action:stanPath',
+              'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
+            );
+          }
+          config = { stanPath: stanPathFallback } as ContextConfig;
+        }
+      } else {
+        // No config file found — default stanPath
+        let stanPathFallback = DEFAULT_STAN_PATH;
+        try {
+          stanPathFallback = resolveStanPathSync(runCwd);
+        } catch {
+          debugFallback(
+            'run.action:stanPath',
+            'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
+          );
+        }
+        config = { stanPath: stanPathFallback } as ContextConfig;
       }
-      config = { stanPath: stanPathFallback } as ContextConfig;
     }
 
     // CLI defaults and scripts for runner config/derivation
@@ -126,17 +219,14 @@ export const registerRunAction = (
     });
 
     // Resolve plan semantics:
-    // -p/--plan => print the plan and exit (plan-only)
-    // -P/--no-plan => execute without printing plan first
-    // Otherwise: default from cliDefaults.run.plan (fallback true)
     const planOpt = (options as { plan?: unknown }).plan;
     const noPlanFlag = Boolean((options as { noPlan?: unknown }).noPlan);
 
     // Default print-plan behavior from config
     let defaultPrintPlan = true;
     try {
-      const cliCfg = loadCliConfigSync(runCwd);
-      const planMaybe = cliCfg.cliDefaults?.run?.plan;
+      const cliCfg2 = loadCliConfigSync(runCwd);
+      const planMaybe = cliCfg2.cliDefaults?.run?.plan;
       defaultPrintPlan = typeof planMaybe === 'boolean' ? planMaybe : true;
     } catch {
       /* keep built-in true */
@@ -157,10 +247,6 @@ export const registerRunAction = (
       return;
     }
 
-    // Determine whether to print the plan header before execution.
-    // CLI flags override config defaults:
-    // -P/--no-plan or --plan=false => suppress
-    // otherwise: use cliDefaults.run.plan (default true)
     let printPlan = defaultPrintPlan;
     if (noPlanFlag || planOpt === false) {
       printPlan = false;

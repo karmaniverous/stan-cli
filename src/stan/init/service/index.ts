@@ -1,4 +1,4 @@
-/* src/stan/init/service.ts */
+/* src/stan/init/service/index.ts */
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -14,9 +14,10 @@ import YAML from 'yaml';
 
 import { loadCliConfig } from '@/cli/config/load';
 
-import { ensureDocs } from './docs';
-import { ensureStanGitignore } from './gitignore';
-import { promptForConfig, readPackageJsonScripts } from './prompts';
+import { ensureDocs } from '../docs';
+import { ensureStanGitignore } from '../gitignore';
+import { promptForConfig, readPackageJsonScripts } from '../prompts';
+import { maybeMigrateLegacyToNamespaced } from './migrate';
 
 /**
  * Initialize or update STAN configuration and workspace assets.
@@ -30,7 +31,7 @@ import { promptForConfig, readPackageJsonScripts } from './prompts';
  * - Snapshot behavior: keep existing snapshot by default; create when missing.
  *
  * @param opts - Options `{ cwd, force, preserveScripts }`.
- * @returns Absolute path to the written `stan.config.yml`, or `null` on failure.
+ * @returns Absolute path to the written config, or `null` on failure.
  */
 export const performInitService = async ({
   cwd = process.cwd(),
@@ -60,25 +61,8 @@ export const performInitService = async ({
     }
   }
 
-  // Non-destructive migration: opts.cliDefaults -> cliDefaults
-  try {
-    const optsNode = (base.opts ?? null) as null | {
-      cliDefaults?: unknown;
-      [k: string]: unknown;
-    };
-    const hasTop = Object.prototype.hasOwnProperty.call(base, 'cliDefaults');
-    if (
-      optsNode &&
-      Object.prototype.hasOwnProperty.call(optsNode, 'cliDefaults') &&
-      !hasTop
-    ) {
-      base.cliDefaults = optsNode.cliDefaults;
-      delete optsNode.cliDefaults;
-      if (Object.keys(optsNode).length === 0) delete base.opts;
-    }
-  } catch {
-    // best-effort migration
-  }
+  // Offer migration to namespaced layout (stan-core / stan-cli); idempotent when already namespaced.
+  base = await maybeMigrateLegacyToNamespaced(base, existingPath, { force });
 
   // Typed/defaulted view used for prompting and path resolution (best-effort)
   let defaults: Partial<ContextConfig> | undefined;
@@ -127,6 +111,7 @@ export const performInitService = async ({
             stanPath: defaults.stanPath ?? defaultStanPath,
             includes: defaults.includes ?? [],
             excludes: defaults.excludes ?? [],
+            // seed scripts for prompt from CLI config when available
             scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
           }
         : undefined,
@@ -161,7 +146,7 @@ export const performInitService = async ({
     }
   } else {
     // --force: be non-destructive when a config already exists.
-    // Only ensure required keys or migrate obsolete ones. If no config exists, create a minimal one.
+    // Only ensure required keys. If no config exists, create a minimal one.
     if (!existingPath) {
       base = {
         excludes: [],
