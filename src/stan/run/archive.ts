@@ -109,7 +109,7 @@ export const archivePhase = async (
         await prepareImports({
           cwd,
           stanPath: config.stanPath,
-          map: config.imports as Record<string, string[]>,
+          map: config.imports,
         });
       }
     } catch {

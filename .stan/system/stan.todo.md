@@ -1,6 +1,6 @@
 # STAN Development Plan
 
-When updated: 2025-10-11 (UTC)
+When updated: 2025-10-12 (UTC)
 
 This plan tracks near‑term and follow‑through work for the stan‑cli package (CLI and runner). The stan‑core split is complete; engine work is tracked in the stan‑core repository.
 
@@ -8,7 +8,16 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
-1. Docs & help updates (reflect new --prompt and environment rules)
+1. Silent fallback audit and debug logging
+   - Add debug logging (enabled when STAN_DEBUG=1) to every code path that diverts from the happy path via a fallback (e.g., config load fallback, stanPath resolution fallback, CLI defaults derivation fallback, prompt source resolution fallback, snapshotless diff/archiving fallbacks, archive warning fallbacks, etc.).
+   - Introduce a tiny centralized helper to record fallback origin (module:function) and succinct reason, ensuring consistent formatting and easy grepping.
+   - No behavior change in normal mode; only emit these notices under debug.
+
+2. Default stanPath fallback hygiene
+   - Replace any 'stan' literal fallback with DEFAULT_STAN_PATH (".stan") or resolveStanPathSync() across the CLI surfaces (run/patch/snap/init/helpers).
+   - Add a unit test to assert that fallback stanPath is ".stan" and that no unexpected "stan" directory is created on failure paths.
+
+3. Docs & help updates (reflect new --prompt and environment rules)
 
 ---
 
