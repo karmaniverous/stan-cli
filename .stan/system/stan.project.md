@@ -3,11 +3,23 @@
 This document augments the system prompt with repo‑specific guidance for developing stan-core (engine) and stan-cli (CLI/runner) together using a published STAN baseline. It contains only instructions to the assistant. It is not a repository for project requirements or the dev plan.
 
 The goals:
+
 - Keep engine/CLI responsibilities clean: the CLI acquires/presents; the core decides/processes.
 - Make multi‑repo context predictable and safe when archives ingest imports from other STAN instances.
 - Provide a lightweight, deterministic interop channel for cross‑repo coordination (multi‑file, aggressively pruned).
 
 ---
+
+## Module decomposition policy (directory + index.ts barrel)
+
+When decomposing a file named `X.ts`:
+
+- Create a directory `X/` and place the decomposed modules inside it.
+- Add `X/index.ts` that re‑exports the public surface for the module (barrel).
+- Delete the original `X.ts`.
+- Preserve import stability: existing imports such as `import {...} from './X'` must continue to resolve (to `./X/index.ts`).
+
+This convention keeps module boundaries clear, avoids duplicate barrels (file and folder), and makes refactors predictable. Apply this consistently for new decompositions and when regularizing legacy ones.
 
 ## 1) Multi‑instance imports and disambiguation (authoritative vs contextual)
 

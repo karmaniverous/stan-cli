@@ -61,9 +61,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
     - No command rewriting; preserve `cwd=repoRoot`, `shell=true`; pass through parent env with augmented PATH.
     - No runtime deps added for user tools (e.g., `cross-env`).
     - If no `.bin` exists (e.g., Yarn PnP), augmentation is a no‑op.
-  - Implementation:
-    - Introduced `computeBinPathChain(repoRoot)` in `src/stan/run/exec.ts`.
-    - Child processes spawned with `env: { ...process.env, PATH: "<bins><delimiter><orig>" }`.
   - Tests:
     - Added a test to verify child PATH is prefixed with `<repoRoot>/node_modules/.bin` and visible in the script output.
 
@@ -103,3 +100,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Lint follow‑through:
   - Remove unnecessary `await` before `resolvePromptSource` in `src/stan/run/session.ts` to satisfy `@typescript-eslint/await-thenable`.
+
+- Module decomposition convention (directory + index.ts barrel)
+  - Adopted a project‑level directive: when decomposing a file `X.ts`, create `X/` with decomposed modules and `X/index.ts` re‑exports; delete `X.ts`. This preserves import paths (`./X`).
+  - Applied to the exec module:
+    - Removed `src/stan/run/exec.ts` (legacy barrel).
+    - Added `src/stan/run/exec/index.ts` that re‑exports from `runner.ts`.
