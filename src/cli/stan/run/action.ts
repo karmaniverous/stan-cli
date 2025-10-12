@@ -2,7 +2,12 @@
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
-import { findConfigPathSync, loadConfig } from '@karmaniverous/stan-core';
+import {
+  DEFAULT_STAN_PATH,
+  findConfigPathSync,
+  loadConfig,
+  resolveStanPathSync,
+} from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
@@ -11,6 +16,7 @@ import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
 import { go } from '@/stan/util/color';
+import { debugFallback } from '@/stan/util/debug';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
@@ -50,16 +56,30 @@ export const registerRunAction = (
     try {
       config = await loadConfig(runCwd);
     } catch (err) {
-      if (process.env.STAN_DEBUG === '1') {
+      // Debug-only notice: config load diversion from happy path
+      {
         const msg =
           err instanceof Error
             ? err.message
             : typeof err === 'string'
               ? err
               : String(err);
-        console.error('stan: failed to load config', msg);
+        debugFallback('run.action:loadConfig', msg);
       }
-      config = { stanPath: 'stan', scripts: {} };
+      // Resolve stanPath via core helper; if that also fails, use DEFAULT_STAN_PATH (".stan").
+      let stanPathFallback = DEFAULT_STAN_PATH;
+      try {
+        stanPathFallback = resolveStanPathSync(runCwd);
+      } catch {
+        debugFallback(
+          'run.action:stanPath',
+          'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
+        );
+      }
+      // NOTE: scripts are CLI concern; legacy placeholder remains empty here.
+      // Cast is intentional until CLI config loader is wired.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      config = { stanPath: stanPathFallback, scripts: {} } as any;
     }
 
     // Loop header + reversal guard
