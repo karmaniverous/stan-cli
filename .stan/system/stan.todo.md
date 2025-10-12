@@ -125,3 +125,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Run/CLI config — guarantee engine-legacy notice in legacy CLI fallback
   - When the CLI loader falls back to legacy top-level keys (no `stan-cli`), also emit the `run.action:engine-legacy` debugFallback when `stan-core` is absent. This ensures the transitional test sees the expected label even if ordering causes the early run-action notice to be missed.
   - Non-legacy, namespaced configs unaffected.
+
+- Init — preserve‑scripts prompt during legacy upgrade
+  - Seeded interactive defaults for `stan init` from the migrated config and CLI loader instead of engine loader (which fails pre‑migration).
+  - Ensures the “Preserve existing scripts?” confirm appears when upgrading legacy configs, and that existing `stan-cli.scripts` are retained when preserved.
+  - Reused the resolved `stanPath` from the UI defaults for downstream steps.

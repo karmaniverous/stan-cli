@@ -66,7 +66,7 @@ export const performInitService = async ({
     }
   }
 
-  // Offer migration to namespaced layout (stan-core / stan-cli); idempotent when already namespaced.
+  // Offer migration to namespaced layout (stan-core / stan-cli); idempotent when already namespaced).
   // Track pre‑migration state to distinguish “already namespaced” from “just migrated”.
   const wasNamespaced = isObj(base['stan-core']) || isObj(base['stan-cli']);
   base = await maybeMigrateLegacyToNamespaced(base, existingPath, {
@@ -74,7 +74,7 @@ export const performInitService = async ({
   });
   const namespaced = isObj(base['stan-core']) || isObj(base['stan-cli']);
 
-  // Typed/defaulted view used for prompting and path resolution (best-effort)
+  // Best‑effort typed view for engine (not authoritative for UI defaults)
   let defaults: Partial<ContextConfig> | undefined;
   try {
     defaults = await loadConfig(cwd);
@@ -82,15 +82,35 @@ export const performInitService = async ({
     defaults = undefined;
   }
 
-  // Also read CLI config for scripts/patchOpenCommand seeds (best-effort)
+  // Also read CLI config for scripts/patchOpenCommand seeds (best‑effort)
   let cliCfg:
-    | { scripts?: Record<string, unknown>; patchOpenCommand?: string }
+    | {
+        scripts?: Record<string, unknown>;
+        patchOpenCommand?: string;
+      }
     | undefined;
   try {
     cliCfg = await loadCliConfig(cwd);
   } catch {
     cliCfg = undefined;
   }
+
+  // Derive UI defaults from the (possibly migrated) in‑memory config so prompts
+  // work even when the engine loader couldn't read legacy shapes yet.
+  const uiStanPath = resolveEffectiveStanPath(base, defaultStanPath);
+  const uiSel = resolveIncludesExcludes(base);
+  const uiScripts: Record<string, string> = (() => {
+    try {
+      const cliNode = isObj(base['stan-cli']) ? base['stan-cli'] : null;
+      if (cliNode && isObj(cliNode.scripts)) {
+        const s = cliNode.scripts;
+        if (Object.keys(s).length > 0) return s as Record<string, string>;
+      }
+    } catch {
+      /* ignore */
+    }
+    return (cliCfg?.scripts as Record<string, string>) ?? {};
+  })();
 
   // Idempotency guard: under --force with an existing, already namespaced config,
   // do not re-serialize the file (preserve exact bytes/formatting).
@@ -107,18 +127,16 @@ export const performInitService = async ({
   if (!force) {
     if (!dryRun) {
       const scriptsFromPkg = await readPackageJsonScripts(cwd);
+      // Always seed UI defaults from migrated base + CLI loader to enable preserve‑scripts on legacy upgrades.
       const picked = await promptForConfig(
         cwd,
         scriptsFromPkg,
-        defaults
-          ? {
-              stanPath: defaults.stanPath ?? defaultStanPath,
-              includes: defaults.includes ?? [],
-              excludes: defaults.excludes ?? [],
-              // seed scripts for prompt from CLI config when available
-              scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
-            }
-          : undefined,
+        {
+          stanPath: uiStanPath,
+          includes: uiSel.includes,
+          excludes: uiSel.excludes,
+          scripts: uiScripts,
+        },
         preserveScripts,
       );
 
@@ -134,7 +152,7 @@ export const performInitService = async ({
         delete (base as { includes?: unknown }).includes;
         delete (base as { excludes?: unknown }).excludes;
       } else {
-        // Legacy layout (should be rare after migration); keep root keys
+        // Legacy layout (should be rare after migration confirmation); keep root keys
         setKey(base, 'stanPath', picked.stanPath);
         setKey(base, 'includes', picked.includes);
         setKey(base, 'excludes', picked.excludes);
@@ -149,6 +167,7 @@ export const performInitService = async ({
         if (!preserving) {
           cli.scripts = picked.scripts;
         } else if (!hasOwn(cli, 'scripts')) {
+          // If migration did not populate scripts, seed from picked defaults.
           cli.scripts = picked.scripts;
         }
         // Ensure we do not reintroduce a legacy root scripts key
@@ -173,8 +192,9 @@ export const performInitService = async ({
         if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
       } else if (
         !Object.prototype.hasOwnProperty.call(base, 'patchOpenCommand')
-      )
+      ) {
         ensureKey(base, 'patchOpenCommand', poc);
+      }
     } else {
       // dry-run: do not prompt or mutate config
     }
@@ -236,8 +256,8 @@ export const performInitService = async ({
     }
   }
 
-  // Resolve effective stanPath (prefer stan-core)
-  const stanPath = resolveEffectiveStanPath(base, defaultStanPath);
+  // Resolve effective stanPath (prefer stan-core); reuse UI resolution.
+  const stanPath = uiStanPath;
 
   if (!dryRun) {
     await ensureStanGitignore(cwd, stanPath);
