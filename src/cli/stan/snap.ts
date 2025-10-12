@@ -1,7 +1,10 @@
 /* src/cli/stan/snap.ts
  * CLI adapter for "stan snap" — Commander wiring only.
  */
-import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
+import {
+  findConfigPathSync,
+  resolveStanPathSync,
+} from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { Command as Commander, Option } from 'commander';
 
@@ -18,11 +21,11 @@ import { handleSnap } from '@/stan/snap/snap-run';
 import { go } from '@/stan/util/color';
 
 import { applyCliSafety, tagDefault } from './cli-utils';
+
 /** * Register the `snap` subcommand on the provided root CLI.
  * * @param cli - Commander root command.
- * @returns The same root command for chaining. */ export const registerSnap = (
-  cli: Commander,
-): Command => {
+ * @returns The same root command for chaining. */
+export const registerSnap = (cli: Commander): Command => {
   applyCliSafety(cli);
   const sub = cli
     .command('snap')
@@ -99,10 +102,15 @@ import { applyCliSafety, tagDefault } from './cli-utils';
       };
       // Header + reversal guard + state update
       try {
-        const p = findConfigPathSync(process.cwd());
-        const cfg = p ? loadConfigSync(process.cwd()) : null;
-        const stanPath = cfg?.stanPath ?? '.stan';
-        const st = await readLoopState(process.cwd(), stanPath);
+        const cwd = process.cwd();
+        // Resolve stanPath robustly even when engine config is missing/strict.
+        let stanPath = '.stan';
+        try {
+          stanPath = resolveStanPathSync(cwd);
+        } catch {
+          /* keep default */
+        }
+        const st = await readLoopState(cwd, stanPath).catch(() => null);
         header(st?.last ?? null);
         if (st?.last && isBackward(st.last, 'snap')) {
           const proceed = await confirmLoopReversal();
@@ -111,12 +119,7 @@ import { applyCliSafety, tagDefault } from './cli-utils';
             return;
           }
         }
-        await writeLoopState(
-          process.cwd(),
-          stanPath,
-          'snap',
-          new Date().toISOString(),
-        );
+        await writeLoopState(cwd, stanPath, 'snap', new Date().toISOString());
       } catch {
         /* ignore guard failures */
       }

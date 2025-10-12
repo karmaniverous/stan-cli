@@ -1,7 +1,10 @@
 /** src/cli/stan/patch.ts
  * CLI adapter for "stan patch" — Commander wiring only.
  */
-import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
+import {
+  findConfigPathSync,
+  resolveStanPathSync,
+} from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
@@ -76,10 +79,14 @@ export const registerPatch = (cli: Command): Command => {
       // Header + reversal guard + state update
       try {
         const cwd = process.cwd();
-        const p = findConfigPathSync(cwd);
-        const cfg = p ? loadConfigSync(cwd) : null;
-        const stanPath = cfg?.stanPath ?? '.stan';
-        const st = await readLoopState(cwd, stanPath);
+        // Resolve stanPath robustly even when engine config is missing/strict.
+        let stanPath = '.stan';
+        try {
+          stanPath = resolveStanPathSync(cwd);
+        } catch {
+          /* keep default */
+        }
+        const st = await readLoopState(cwd, stanPath).catch(() => null);
         header(st?.last ?? null);
         if (st?.last && isBackward(st.last, 'patch')) {
           const proceed = await confirmLoopReversal();
