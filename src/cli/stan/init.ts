@@ -18,7 +18,12 @@ import { applyCliSafety } from './cli-utils';
  */
 export const performInit = (
   cli: Command,
-  opts: { cwd?: string; force?: boolean; preserveScripts?: boolean },
+  opts: {
+    cwd?: string;
+    force?: boolean;
+    preserveScripts?: boolean;
+    dryRun?: boolean;
+  },
 ) => performInitService(opts);
 
 export const registerInit = (cli: Commander): Command => {
@@ -37,17 +42,25 @@ export const registerInit = (cli: Commander): Command => {
       '-f, --force',
       'Create stan.config.yml with defaults (stanPath=stan).',
     )
+    .option('-n, --dry-run', 'Do not write any changes (plan only).')
     .option(
       '--preserve-scripts',
       'Keep existing scripts from stan.config.* when present.',
     );
 
-  sub.action(async (opts: { force?: boolean; preserveScripts?: boolean }) => {
-    await performInit(cli, {
-      force: Boolean(opts.force),
-      preserveScripts: Boolean(opts.preserveScripts),
-    });
-  });
+  sub.action(
+    async (opts: {
+      force?: boolean;
+      preserveScripts?: boolean;
+      dryRun?: boolean;
+    }) => {
+      await performInit(cli, {
+        force: Boolean(opts.force),
+        preserveScripts: Boolean(opts.preserveScripts),
+        dryRun: Boolean(opts.dryRun),
+      });
+    },
+  );
 
   return cli;
 };

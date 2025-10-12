@@ -12,14 +12,16 @@ This guide explains every configuration key, how STAN finds your config, how fil
 Minimal YAML example:
 
 ```yaml
-stanPath: .stan
-includes: []
-excludes: []
-scripts:
-  build: npm run build
-  lint: npm run lint
-  test: npm run test
-  typecheck: npm run typecheck
+stan-core:
+  stanPath: .stan
+  includes: []
+  excludes: []
+stan-cli:
+  scripts:
+    build: npm run build
+    lint: npm run lint
+    test: npm run test
+    typecheck: npm run typecheck
 ```
 
 ## Resolution rules (where STAN reads config)
@@ -30,7 +32,11 @@ scripts:
 
 ## Top‑level keys
 
-### stanPath (string)
+### stan-core (engine)
+
+Keys in this section are owned by the engine and control file selection and workspace paths.
+
+#### stanPath (string)
 
 Workspace folder for STAN’s operational files.
 
@@ -42,26 +48,7 @@ Workspace folder for STAN’s operational files.
   - `patch/` — canonical patch workspace
   - `dist/` — dev build area for internal tasks (not published)
 
-### scripts (object of string)
-
-Map of script keys to shell commands that STAN executes during `stan run`. The combined stdout/stderr of each command is written to `<stanPath>/output/<key>.txt`.
-
-Example:
-
-```yaml
-scripts:
-  build: npm run build
-  lint: npm run lint
-  test: npm run test
-  typecheck: npm run typecheck
-```
-
-Notes:
-
-- Keys are free‑form (e.g., `build`, `docs`, `lint`).
-- Disallowed keys: `archive`, `init` (reserved by STAN).
-
-### includes (string[])
+#### includes (string[])
 
 Additive allow‑list of glob patterns. Matches are ADDED back to the base selection even if they would otherwise be excluded by `.gitignore` or default denials.
 
@@ -78,7 +65,7 @@ includes:
   - 'docs/**'
 ```
 
-### excludes (string[])
+#### excludes (string[])
 
 Deny‑list of glob/prefix patterns applied to the base selection in addition to default denials and `.gitignore`.
 
@@ -96,7 +83,31 @@ excludes:
 
 Tip: Use excludes to reduce archive noise (tool state folders, large generated code) and use includes to bring back specific assets you want to share.
 
-### maxUndos (number)
+### stan-cli (CLI)
+
+Keys in this section are owned by the CLI (runner and adapters).
+
+#### scripts (object of string | object)
+
+Map of script keys to shell commands that STAN executes during `stan run`. The combined stdout/stderr of each command is written to `<stanPath>/output/<key>.txt`.
+
+Example:
+
+```yaml
+stan-cli:
+  scripts:
+    build: npm run build
+    lint: npm run lint
+    test: npm run test
+    typecheck: npm run typecheck
+```
+
+Notes:
+
+- Keys are free‑form (e.g., `build`, `docs`, `lint`).
+- Disallowed keys: `archive`, `init` (reserved by STAN).
+
+#### maxUndos (number)
 
 Retention for snapshot history (`stan snap undo|redo|set`). Default: `10`.
 
@@ -104,7 +115,7 @@ Retention for snapshot history (`stan snap undo|redo|set`). Default: `10`.
 maxUndos: 10
 ```
 
-### patchOpenCommand (string)
+#### patchOpenCommand (string)
 
 Editor command template used to open modified files after a successful `stan patch`. The token `{file}` expands to a repo‑relative path.
 
@@ -117,7 +128,7 @@ Editor command template used to open modified files after a successful `stan pat
 patchOpenCommand: 'code -g {file}'
 ```
 
-### devMode (boolean) [optional]
+#### devMode (boolean) [optional]
 
 Developer‑mode switch used by STAN’s own repo to detect when local development is happening (affects prompt assembly and preflight nudges). Consumers typically do not set this.
 
@@ -125,7 +136,7 @@ Developer‑mode switch used by STAN’s own repo to detect when local developme
 devMode: false
 ```
 
-### cliDefaults (object)
+#### cliDefaults (object)
 
 Phase‑scoped defaults used when CLI flags are omitted. Precedence: flags > cliDefaults > built‑ins.
 
@@ -144,7 +155,8 @@ cliDefaults:
     plan: true # print the run plan header before execution when -p/-P not specified
     live: true # -l / -L
     hangWarn: 120
-    hangKill: 300    hangKillGrace: 10
+    hangKill: 300
+    hangKillGrace: 10
     # default script selection when neither -s nor -S is provided:
     #   true  => all scripts,
     #   false => none,
@@ -202,12 +214,6 @@ STAN selects files in two passes:
 - Patterns in `includes` ADD matched files back into the selection even if excluded by `.gitignore` or default denials.
 - Explicit `excludes` still win over `includes`.
 
-Combine mode (`stan run -c`) behavior:
-
-- Regular archive includes `<stanPath>/output` (but not the archive files themselves).
-- Diff archive excludes `<stanPath>/diff` and both `archive.tar`/`archive.diff.tar`.
-- After archiving in combine mode, on‑disk outputs are removed; the archives remain.
-
 ### Default sub‑package exclusion
 
 STAN excludes nested sub‑packages by default to reduce noise:
@@ -264,16 +270,18 @@ stan run -P   # execute without printing the plan first
 - YAML with glob excludes and additive includes:
 
 ```yaml
-stanPath: .stan
-excludes:
-  - '**/.tsbuild/**'
-  - '**/generated/**'
-includes:
-  - 'docs/**' # bring docs back even if ignored
-  - '**/*.md'
-scripts:
-  lint: npm run lint
-  test: npm run test
+stan-core:
+  stanPath: .stan
+  excludes:
+    - '**/.tsbuild/**'
+    - '**/generated/**'
+  includes:
+    - 'docs/**' # bring docs back even if ignored
+    - '**/*.md'
+stan-cli:
+  scripts:
+    lint: npm run lint
+    test: npm run test
 maxUndos: 10
 patchOpenCommand: 'code -g {file}'
 cliDefaults:
@@ -289,36 +297,40 @@ cliDefaults:
 
 ```json
 {
-  "stanPath": ".stan",
-  "includes": [],
-  "excludes": ["**/.tsbuild/**", "**/generated/**"],
-  "scripts": {
-    "build": "npm run build",
-    "lint": "npm run lint",
-    "test": "npm run test",
-    "typecheck": "npm run typecheck"
+  "stan-core": {
+    "stanPath": ".stan",
+    "includes": [],
+    "excludes": ["**/.tsbuild/**", "**/generated/**"]
   },
-  "maxUndos": 10,
-  "patchOpenCommand": "code -g {file}",
-  "cliDefaults": {
-    "debug": false,
-    "boring": false,
-    "run": {
-      "archive": true,
-      "combine": false,
-      "keep": false,
-      "sequential": false,
-      "live": true,
-      "hangWarn": 120,
-      "hangKill": 300,
-      "hangKillGrace": 10,
-      "scripts": true
+  "stan-cli": {
+    "scripts": {
+      "build": "npm run build",
+      "lint": "npm run lint",
+      "test": "npm run test",
+      "typecheck": "npm run typecheck"
     },
-    "patch": {
-      "file": ".stan/patch/last.patch"
-    },
-    "snap": {
-      "stash": false
+    "maxUndos": 10,
+    "patchOpenCommand": "code -g {file}",
+    "cliDefaults": {
+      "debug": false,
+      "boring": false,
+      "run": {
+        "archive": true,
+        "combine": false,
+        "keep": false,
+        "sequential": false,
+        "live": true,
+        "hangWarn": 120,
+        "hangKill": 300,
+        "hangKillGrace": 10,
+        "scripts": true
+      },
+      "patch": {
+        "file": ".stan/patch/last.patch"
+      },
+      "snap": {
+        "stash": false
+      }
     }
   }
 }

@@ -78,6 +78,10 @@ export const runOne = async (
   const startedAt = Date.now();
   hooks?.onStart?.(key);
 
+  // Create the output stream up front so the file exists even if the process
+  // is cancelled before producing any output.
+  const stream = createWriteStream(outFile, { encoding: 'utf8' });
+
   const child = spawn(cmd, {
     cwd,
     shell: true,
@@ -109,7 +113,6 @@ export const runOne = async (
   } catch {
     /* ignore */
   }
-  const stream = createWriteStream(outFile, { encoding: 'utf8' });
   child.stdout.on('data', (d: Buffer) => {
     stream.write(d);
     combined += d.toString('utf8');

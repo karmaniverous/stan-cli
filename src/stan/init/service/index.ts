@@ -1,5 +1,4 @@
 /* src/stan/init/service/index.ts */
-import type { PathLike } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -18,22 +17,10 @@ import { loadCliConfig } from '@/cli/config/load';
 import { ensureDocs } from '../docs';
 import { ensureStanGitignore } from '../gitignore';
 import { promptForConfig, readPackageJsonScripts } from '../prompts';
+import { ensureKey, ensureNsNode, hasOwn, isObj, setKey } from './helpers';
 import { maybeMigrateLegacyToNamespaced } from './migrate';
-
-const isObj = (v: unknown): v is Record<string, unknown> =>
-  v !== null && typeof v === 'object';
-
-const hasOwn = (o: Record<string, unknown>, k: string): boolean =>
-  Object.prototype.hasOwnProperty.call(o, k);
-
-/** Ensure a namespaced node exists on base and return it (preserves insertion order best‑effort). */
-const ensureNsNode = (
-  base: Record<string, unknown>,
-  key: 'stan-core' | 'stan-cli',
-): Record<string, unknown> => {
-  if (!isObj(base[key])) base[key] = {};
-  return base[key] as Record<string, unknown>;
-};
+import { resolveIncludesExcludes } from './selection';
+import { resolveEffectiveStanPath } from './stanpath';
 
 /**
  * Initialize or update STAN configuration and workspace assets.
@@ -53,15 +40,17 @@ export const performInitService = async ({
   cwd = process.cwd(),
   force = false,
   preserveScripts = false,
+  dryRun = false,
 }: {
   cwd?: string;
   force?: boolean;
   preserveScripts?: boolean;
+  dryRun?: boolean;
 }): Promise<string | null> => {
   const existingPath = findConfigPathSync(cwd);
 
   const defaultStanPath = '.stan';
-  await ensureOutputDir(cwd, defaultStanPath, true);
+  if (!dryRun) await ensureOutputDir(cwd, defaultStanPath, true);
 
   // Load existing config (raw) preserving key order; fallback to empty object.
   let base: Record<string, unknown> = {};
@@ -98,24 +87,6 @@ export const performInitService = async ({
   } catch {
     cliCfg = undefined;
   }
-
-  // Merge strategy helpers (preserve insertion order; modify in place)
-  const ensureKey = <T>(
-    obj: Record<string, unknown>,
-    key: string,
-    value: T,
-  ): void => {
-    if (!Object.prototype.hasOwnProperty.call(obj, key))
-      obj[key] = value as unknown;
-  };
-
-  const setKey = <T>(
-    obj: Record<string, unknown>,
-    key: string,
-    value: T,
-  ): void => {
-    obj[key] = value as unknown; // replace value without reordering the key itself
-  };
 
   // Interactive merge: apply only what the user directed; otherwise keep existing settings.
   if (!force) {
@@ -260,31 +231,28 @@ export const performInitService = async ({
   const targetPath = existingPath ?? path.join(cwd, 'stan.config.yml');
 
   // Serialize honoring the existing file’s format
-  if (existingPath && existingPath.endsWith('.json')) {
-    const json = JSON.stringify(base, null, 2);
-    await writeFile(targetPath, json, 'utf8');
-  } else {
-    const yml = YAML.stringify(base);
-    await writeFile(targetPath, yml, 'utf8');
+  if (!dryRun) {
+    if (existingPath && existingPath.endsWith('.json')) {
+      const json = JSON.stringify(base, null, 2);
+      await writeFile(targetPath, json, 'utf8');
+    } else {
+      const yml = YAML.stringify(base);
+      await writeFile(targetPath, yml, 'utf8');
+    }
   }
 
-  // Resolve effective stanPath from the merged object (prefer stan-core)
-  const stanPath = (() => {
-    const core = (base['stan-core'] ?? {}) as Record<string, unknown>;
-    const sp =
-      isObj(core) &&
-      typeof (core as { stanPath?: unknown }).stanPath === 'string'
-        ? String((core as { stanPath: string }).stanPath).trim()
-        : typeof (base as { stanPath?: unknown }).stanPath === 'string'
-          ? String((base as { stanPath: string }).stanPath).trim()
-          : '';
-    return sp.length ? sp : defaultStanPath;
-  })();
+  // Resolve effective stanPath (prefer stan-core)
+  const stanPath = resolveEffectiveStanPath(base, defaultStanPath);
 
-  await ensureStanGitignore(cwd, stanPath);
-  await ensureDocs(cwd, stanPath);
-
-  console.log(`stan: wrote ${path.basename(targetPath)}`);
+  if (!dryRun) {
+    await ensureStanGitignore(cwd, stanPath);
+    await ensureDocs(cwd, stanPath);
+    console.log(`stan: wrote ${path.basename(targetPath)}`);
+  } else {
+    console.log(
+      `stan: init (dry-run): would write ${path.basename(targetPath)}`,
+    );
+  }
 
   // Snapshot behavior:
   // - If no snapshot exists, do not prompt; create it.
@@ -294,64 +262,64 @@ export const performInitService = async ({
   const snapPath = path.join(cwd, stanPath, 'diff', '.archive.snapshot.json');
   const snapExists = existsSync(snapPath);
 
-  // Compute includes/excludes from stan-core when namespaced; fall back to root
-  const resolveSelection = (): { includes: string[]; excludes: string[] } => {
-    const core = (base['stan-core'] ?? {}) as Record<string, unknown>;
-    if (isObj(core)) {
-      const inc = Array.isArray((core as { includes?: unknown }).includes)
-        ? ((core as { includes?: string[] }).includes ?? [])
-        : [];
-      const exc = Array.isArray((core as { excludes?: unknown }).excludes)
-        ? ((core as { excludes?: string[] }).excludes ?? [])
-        : [];
-      return { includes: inc, excludes: exc };
-    }
-    return {
-      includes: (base as { includes?: string[] }).includes ?? [],
-      excludes: (base as { excludes?: string[] }).excludes ?? [],
-    };
-  };
-
   const writeSnap = async (): Promise<void> => {
-    const sel = resolveSelection();
-    await writeArchiveSnapshot({
-      cwd,
-      stanPath,
-      includes: sel.includes,
-      excludes: sel.excludes,
-    });
+    const sel = resolveIncludesExcludes(base);
+    if (!dryRun) {
+      await writeArchiveSnapshot({
+        cwd,
+        stanPath,
+        includes: sel.includes,
+        excludes: sel.excludes,
+      });
+    }
   };
 
   if (!snapExists) {
     // No snapshot present — create it without asking.
-    await writeSnap();
-    console.log('stan: snapshot updated');
+    if (!dryRun) {
+      await writeSnap();
+      console.log('stan: snapshot updated');
+    } else {
+      console.log('stan: snapshot unchanged (dry-run)');
+    }
   } else {
     if (force) {
       // Keep snapshot by default in --force mode.
-      console.log('stan: snapshot unchanged');
+      console.log(
+        dryRun
+          ? 'stan: snapshot unchanged (dry-run)'
+          : 'stan: snapshot unchanged',
+      );
     } else {
       try {
-        const { default: inquirer } = (await import('inquirer')) as {
-          default: { prompt: (qs: unknown[]) => Promise<unknown> };
-        };
-        const ans = (await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'keep',
-            message: 'Keep existing snapshot?',
-            default: true,
-          },
-        ])) as { keep?: boolean };
-        if (ans.keep === false) {
-          await writeSnap();
-          console.log('stan: snapshot updated');
+        if (!dryRun) {
+          const { default: inquirer } = (await import('inquirer')) as {
+            default: { prompt: (qs: unknown[]) => Promise<unknown> };
+          };
+          const ans = (await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'keep',
+              message: 'Keep existing snapshot?',
+              default: true,
+            },
+          ])) as { keep?: boolean };
+          if (ans.keep === false) {
+            await writeSnap();
+            console.log('stan: snapshot updated');
+          } else {
+            console.log('stan: snapshot unchanged');
+          }
         } else {
-          console.log('stan: snapshot unchanged');
+          console.log('stan: snapshot unchanged (dry-run)');
         }
       } catch {
         // If prompting fails for any reason, err on the side of safety and keep the snapshot.
-        console.log('stan: snapshot unchanged');
+        console.log(
+          dryRun
+            ? 'stan: snapshot unchanged (dry-run)'
+            : 'stan: snapshot unchanged',
+        );
       }
     }
   }

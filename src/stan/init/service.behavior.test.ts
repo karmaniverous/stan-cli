@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -134,5 +135,32 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
 
     const logs = logSpy.mock.calls.map((c) => String(c[0])).join('\n');
     expect(logs).toMatch(/stan: wrote stan\.config\.json/);
+  });
+
+  it('writes a .bak on migration (YAML)', async () => {
+    const p = path.join(dir, 'stan.config.yml');
+    const legacy = ['stanPath: .stan', 'scripts:', '  a: echo a'].join('\n');
+    await writeUtf8(p, legacy);
+
+    await performInitService({ cwd: dir, force: true });
+    expect(existsSync(p + '.bak')).toBe(true);
+  });
+
+  it('idempotent on already namespaced config (no-op)', async () => {
+    const p = path.join(dir, 'stan.config.yml');
+    const namespaced = [
+      'stan-core:',
+      '  stanPath: .stan',
+      '  includes: []',
+      '  excludes: []',
+      'stan-cli:',
+      '  scripts:',
+      '    a: echo a',
+    ].join('\n');
+    await writeUtf8(p, namespaced);
+    const before = await readUtf8(p);
+    await performInitService({ cwd: dir, force: true });
+    const after = await readUtf8(p);
+    expect(after).toBe(before);
   });
 });
