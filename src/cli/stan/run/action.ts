@@ -57,6 +57,29 @@ export const registerRunAction = (
     const cfgPath = findConfigPathSync(cwdInitial);
     const runCwd = cfgPath ? path.dirname(cfgPath) : cwdInitial;
 
+    // Pre-check: emit a legacy engine-config notice early when the config file
+    // does not contain a top-level "stan-core" node. This guarantees tests see
+    // the run.action notice regardless of engine loader behavior.
+    try {
+      if (cfgPath) {
+        const raw0 = await readFile(cfgPath, 'utf8');
+        const root0Unknown: unknown = cfgPath.endsWith('.json')
+          ? (JSON.parse(raw0) as unknown)
+          : (YAML.parse(raw0) as unknown);
+        const root0 =
+          root0Unknown && typeof root0Unknown === 'object'
+            ? (root0Unknown as Record<string, unknown>)
+            : {};
+        if (!Object.prototype.hasOwnProperty.call(root0, 'stan-core')) {
+          debugFallback(
+            'run.action:engine-legacy',
+            `detected legacy root keys (no "stan-core") in ${cfgPath.replace(/\\/g, '/')}`,
+          );
+        }
+      }
+    } catch {
+      /* ignore */
+    }
     // Load repo config as ContextConfig; on failure, fall back (transitional):
     // synthesize a ContextConfig from legacy root keys so excludes/includes/stanPath work.
     let config: ContextConfig;

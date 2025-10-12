@@ -67,7 +67,9 @@ export const performInitService = async ({
   }
 
   // Offer migration to namespaced layout (stan-core / stan-cli); idempotent when already namespaced.
-  base = await maybeMigrateLegacyToNamespaced(base, existingPath, { force });
+  base = await maybeMigrateLegacyToNamespaced(base, existingPath, {
+    force: force || dryRun,
+  });
   const namespaced = isObj(base['stan-core']) || isObj(base['stan-cli']);
 
   // Typed/defaulted view used for prompting and path resolution (best-effort)
@@ -86,6 +88,14 @@ export const performInitService = async ({
     cliCfg = await loadCliConfig(cwd);
   } catch {
     cliCfg = undefined;
+  }
+
+  // Idempotency guard: under --force with an existing, already namespaced config,
+  // do not re-serialize the file (preserve exact bytes/formatting).
+  if (force && existingPath && namespaced) {
+    // Still ensure workspace when not dry-run (done above).
+    // Skip gitignore/docs/snapshot/prompts; pure no-op for the config file.
+    return existingPath;
   }
 
   // Interactive merge: apply only what the user directed; otherwise keep existing settings.

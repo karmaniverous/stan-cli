@@ -132,4 +132,11 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Ensured `--force` on an already namespaced config is a true no-op (do not inject defaults such as `patchOpenCommand`); preserves exact file content for idempotency test.
 
 - Run — ensure legacy engine-config notice under strict/accepting cores
-  - After a successful `loadConfig`, detect missing `stan-core` in the raw config and emit `run.action:engine-legacy` debugFallback (under STAN_DEBUG=1). This guarantees tests see the expected notice even when the engine accepts legacy root keys.
+  - After a successful `loadConfig`, detect missing `stan-core` in the raw config and emit `run.action:engine-legacy` debugFallback (under STAN_DEBUG=1). This guarantees tests see the expected notice even when the engine accepts legacy root keys.
+
+- Init — skip migration prompt during --dry-run; preserve exact bytes under --force+namespaced
+  - Treat `--dry-run` like `--force` for migration (no interactive prompt); plan-only path remains non-interactive.
+  - Added an early no-op return for `--force` with an already namespaced config to avoid re-serializing (e.g., trailing newline differences), keeping idempotency strict.
+
+- Run — early legacy engine-config notice
+  - At action start, pre-check the config file and emit `run.action:engine-legacy` when `stan-core` is missing. This complements the existing success/failure notices and ensures predictable debug output for tests.
