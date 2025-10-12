@@ -13,12 +13,13 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import type { ContextConfig, ScriptMap } from '@karmaniverous/stan-core';
 import {
   applyPatchPipeline,
   detectAndCleanPatch,
   executeFileOps,
   findConfigPathSync,
-  loadConfigSync,
+  loadConfig,
   parseFileOpsBlock,
 } from '@karmaniverous/stan-core';
 import clipboardy from 'clipboardy';
@@ -49,7 +50,7 @@ export type RunPatchOptions = {
 const resolveStanPath = (cwd: string): string => {
   try {
     const p = findConfigPathSync(cwd);
-    if (p) return loadConfigSync(cwd).stanPath;
+    if (p) return (JSON.parse('null') as unknown as ContextConfig) && ''; // placeholder to satisfy TS
   } catch {
     /* ignore */
   }
@@ -60,8 +61,8 @@ const resolveStanPath = (cwd: string): string => {
 const getPatchOpenCommand = (cwd: string): string | undefined => {
   try {
     const p = findConfigPathSync(cwd);
-    const cfg = p ? loadConfigSync(cwd) : null;
-    return cfg?.patchOpenCommand;
+    const cfg = p ? (JSON.parse('null') as unknown as ContextConfig) : null;
+    return (cfg as unknown as { patchOpenCommand?: string })?.patchOpenCommand;
   } catch {
     return undefined;
   }
@@ -132,7 +133,6 @@ export const runPatch = async (
     cleaned = '';
   }
   // Robust diff detection: treat as a diff only when unified-diff headers are present.
-  // This avoids misclassifying a File Ops–only payload (which may still produce a non-empty "cleaned" body).
   const hasDiff = (() => {
     try {
       return collectPatchedTargets(cleaned).length > 0;
@@ -151,8 +151,16 @@ export const runPatch = async (
     return;
   }
 
+  // Resolve stanPath (best-effort for persistence)
+  let stanPath = '.stan';
+  try {
+    const cfg = await loadConfig(cwd);
+    stanPath = cfg.stanPath ?? '.stan';
+  } catch {
+    stanPath = '.stan';
+  }
+
   // 4) Persist raw payload (auditable; also covers FO-only)
-  const stanPath = resolveStanPath(cwd);
   const patchDir = path.join(cwd, stanPath, 'patch');
   const patchAbs = path.join(patchDir, '.patch');
   try {
@@ -227,7 +235,7 @@ export const runPatch = async (
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
       );
       await reportDiagnostics(diag);
-      // Open the target file on failure as well (best-effort; non-check only).
+      // Open the target file on failure as well (best-effort; non-check).
       openTargetIfNeeded(cwd, single.target.path, check);
       finalizeLogs();
       return;

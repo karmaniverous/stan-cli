@@ -6,6 +6,8 @@ import type { ContextConfig } from '@karmaniverous/stan-core';
 import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import type { Command, Option } from 'commander';
 
+import { loadCliConfigSync } from '@/cli/config/load';
+
 import { RUN_BASE_DEFAULTS } from './run/defaults';
 
 const cwdSafe = (): string => {
@@ -98,7 +100,7 @@ export const tagDefault = (opt: Option, on: boolean): void => {
   }
 };
 
-/** Load config synchronously with best-effort safety (null on failure). */
+/** Load engine config synchronously with best-effort safety (null on failure). */
 export const loadConfigSafe = (dir = cwdSafe()): ContextConfig | null => {
   try {
     const p = findConfigPathSync(dir);
@@ -112,19 +114,19 @@ export const loadConfigSafe = (dir = cwdSafe()): ContextConfig | null => {
 export const rootDefaults = (
   dir = cwdSafe(),
 ): { debugDefault: boolean; boringDefault: boolean; yesDefault: boolean } => {
-  const cfg = loadConfigSafe(dir);
-  const cli = cfg?.cliDefaults;
-  const debugDefault = Boolean(
-    typeof cli?.debug === 'boolean' ? cli.debug : false,
-  );
-  const boringDefault = Boolean(
-    typeof cli?.boring === 'boolean' ? cli.boring : false,
-  );
-  const yesDefault = Boolean(
-    typeof (cli as { yes?: boolean } | undefined)?.yes === 'boolean'
-      ? (cli as { yes?: boolean }).yes
-      : false,
-  );
+  // Read from stan-cli only; fall back to built-ins when absent.
+  let debugDefault = false;
+  let boringDefault = false;
+  let yesDefault = false;
+  try {
+    const cli = loadCliConfigSync(dir).cliDefaults;
+    debugDefault = Boolean(cli?.debug ?? false);
+    boringDefault = Boolean(cli?.boring ?? false);
+    // "yes" is not part of the canonical schema; keep a permissive read for transition.
+    yesDefault = Boolean((cli as { yes?: boolean } | undefined)?.yes ?? false);
+  } catch {
+    // built-ins only
+  }
   return { debugDefault, boringDefault, yesDefault };
 };
 /** Run-phase defaults merged from config over baseline RUN_BASE_DEFAULTS. */
@@ -141,8 +143,7 @@ export const runDefaults = (
   hangKillGrace: number;
   prompt: string;
 } => {
-  const cfg = loadConfigSafe(dir);
-  const runIn = (cfg?.cliDefaults?.run ?? {}) as {
+  let runIn: {
     archive?: boolean;
     combine?: boolean;
     keep?: boolean;
@@ -152,7 +153,12 @@ export const runDefaults = (
     hangKill?: number;
     hangKillGrace?: number;
     prompt?: string;
-  };
+  } = {};
+  try {
+    runIn = (loadCliConfigSync(dir).cliDefaults?.run ?? {}) as typeof runIn;
+  } catch {
+    // keep empty; use baselines
+  }
   type BoolKeys = 'archive' | 'combine' | 'keep' | 'sequential' | 'live';
   const pickBool = (k: BoolKeys): boolean => {
     const v = (runIn as Record<BoolKeys, unknown>)[k];
@@ -184,7 +190,11 @@ export const runDefaults = (
 
 /** Default patch file path from config (cliDefaults.patch.file), if set. */
 export const patchDefaultFile = (dir = cwdSafe()): string | undefined => {
-  const cfg = loadConfigSafe(dir);
-  const p = cfg?.cliDefaults?.patch?.file;
+  let p: unknown;
+  try {
+    p = loadCliConfigSync(dir).cliDefaults?.patch?.file;
+  } catch {
+    p = undefined;
+  }
   return typeof p === 'string' && p.trim().length ? p.trim() : undefined;
 };
