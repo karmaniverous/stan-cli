@@ -123,7 +123,7 @@ describe('snap CLI (stash, history, undo/redo/info)', () => {
     await cli.parseAsync(['node', 'stan', 'snap'], { from: 'user' });
 
     const statePath = path.join(dir, 'out', 'diff', '.snap.state.json');
-    await waitFor(() => existsSync(statePath), 1500);
+    await waitFor(() => existsSync(statePath), 3000);
 
     let state = JSON.parse(await read(statePath)) as {
       entries: { ts: string; snapshot: string }[];

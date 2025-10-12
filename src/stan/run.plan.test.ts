@@ -2,8 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { RunnerConfig } from '@/stan/run';
 
 import { runSelected } from './run';
 
@@ -19,7 +20,7 @@ describe('run plan header', () => {
   });
 
   it('prints a multi-line plan with mode/output/scripts flags', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: {}, // no scripts; plan should show "scripts: none"
     };

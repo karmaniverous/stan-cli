@@ -3,9 +3,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RunnerConfig } from '@/stan/run';
 import { runSelected } from '@/stan/run';
 // Windows teardown helper
 import { rmDirWithRetries } from '@/test/helpers';
@@ -62,7 +62,7 @@ describe('TTY key handler (q) cancels run', () => {
     vi.restoreAllMocks();
   });
   it('pressing q cancels and skips archive', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: {
         wait: 'node -e "setTimeout(()=>{}, 10000)"',

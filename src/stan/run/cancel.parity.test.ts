@@ -3,9 +3,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RunnerConfig } from '@/stan/run';
 import { runSelected } from '@/stan/run';
 import { rmDirWithRetries } from '@/test/helpers';
 
@@ -58,7 +58,7 @@ describe('cancel parity: no-live mode responds to SIGINT (no archives; non-zero 
     vi.restoreAllMocks();
   });
   it('sequential scheduling stops and archives are skipped after SIGINT', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: {
         quick: 'node -e "process.stdout.write(`ok`)"',

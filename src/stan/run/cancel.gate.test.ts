@@ -3,9 +3,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RunnerConfig } from '@/stan/run';
 import { runSelected } from '@/stan/run';
 
 // Keep tar lightweight
@@ -62,7 +62,7 @@ describe('sequential gate: do not schedule next script after SIGINT boundary', (
   });
 
   it('emits SIGINT after first completes; second must not run', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: {
         a: 'node a.js',

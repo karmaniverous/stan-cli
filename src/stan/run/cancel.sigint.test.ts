@@ -3,9 +3,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RunnerConfig } from '@/stan/run';
 import { runSelected } from '@/stan/run';
 // Windows teardown helper
 import { rmDirWithRetries } from '@/test/helpers';
@@ -57,7 +57,7 @@ describe('SIGINT cancellation skips archive and restores state', () => {
     vi.restoreAllMocks();
   });
   it('emits SIGINT to cancel run and does not create archives', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: {
         // Busy-wait a bit so we can signal during execution

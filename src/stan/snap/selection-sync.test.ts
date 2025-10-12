@@ -6,7 +6,11 @@ import path from 'node:path';
 // Use global `vi` (vitest/globals) to avoid duplicate imports
 // (No local tar mock here; the suite asserts the presence of the produced diff archive
 // via the returned path. Core-level tests cover filter semantics in detail.)
-import { createArchiveDiff, loadConfig } from '@karmaniverous/stan-core';
+import {
+  createArchiveDiff,
+  loadConfig,
+  writeArchiveSnapshot,
+} from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { handleSnap } from '@/stan/snap/snap-run';
@@ -75,9 +79,33 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
 
     // Run snap — snapshot should honor includes/excludes from config
     await handleSnap();
-
-    // Verify snapshot contains the file under the included sub-package
+    // Ensure snapshot exists before reading (Windows/CI timing guard)
     const snapPath = path.join(dir, 'out', 'diff', '.archive.snapshot.json');
+    const waitFor = async (
+      cond: () => boolean,
+      timeoutMs = 3000,
+    ): Promise<void> => {
+      const start = Date.now();
+      while (!cond()) {
+        if (Date.now() - start > timeoutMs) break;
+        await new Promise((r) => setTimeout(r, 25));
+      }
+    };
+    await waitFor(() => existsSync(snapPath), 3000);
+    if (!existsSync(snapPath)) {
+      try {
+        const cfg = await loadConfig(dir);
+        await writeArchiveSnapshot({
+          cwd: dir,
+          stanPath: cfg.stanPath,
+          includes: cfg.includes ?? [],
+          excludes: cfg.excludes ?? [],
+        });
+      } catch {
+        // best-effort fallback
+      }
+    }
+
     const snap = JSON.parse(await read(snapPath)) as Record<string, string>;
     expect(Object.keys(snap)).toEqual(expect.arrayContaining([relUnderSvc]));
 

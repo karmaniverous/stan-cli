@@ -2,9 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RunnerConfig } from '@/stan/run';
 import { runSelected } from '@/stan/run';
 
 // Keep tar lightweight (avoid real archiving)
@@ -31,7 +31,7 @@ describe('warn status (logger UI)', () => {
   });
 
   it('prints [WARN] when warnPattern matches combined output for exit=0', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'out',
       scripts: {
         hello: {

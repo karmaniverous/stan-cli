@@ -3,8 +3,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import type { RunnerConfig } from '@/stan/run';
 
 import { runSelected } from './run';
 
@@ -22,7 +23,7 @@ describe('script execution', () => {
   });
 
   it('writes <key>.txt for a single requested script key and captures stderr', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'out',
       scripts: {
         hello: 'node -e "console.error(123);process.stdout.write(`ok`)"',
@@ -48,7 +49,7 @@ describe('script execution', () => {
       'utf8',
     );
 
-    const cfg1: ContextConfig = {
+    const cfg1: RunnerConfig = {
       stanPath: 'out',
       scripts: { a: 'node a.js', b: 'node b.js' },
     };
@@ -64,7 +65,7 @@ describe('script execution', () => {
   });
 
   it('unknown key resolves with no artifacts', async () => {
-    const cfg: ContextConfig = { stanPath: 'out', scripts: {} };
+    const cfg: RunnerConfig = { stanPath: 'out', scripts: {} };
     const created = await runSelected(dir, cfg, ['nope']);
     expect(created).toEqual([]);
   });
