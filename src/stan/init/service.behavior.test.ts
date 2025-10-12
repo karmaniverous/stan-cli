@@ -10,6 +10,13 @@ import { performInitService } from '@/stan/init/service';
 const readUtf8 = (p: string) => readFile(p, 'utf8');
 const writeUtf8 = (p: string, s: string) => writeFile(p, s, 'utf8');
 
+// Mock inquirer for interactive tests
+const promptMock = vi.fn();
+vi.mock('inquirer', () => ({
+  __esModule: true,
+  default: { prompt: (...args: unknown[]) => promptMock(...args) },
+}));
+
 describe('init service behavior (preserve config, migrate opts.cliDefaults, same path/format)', () => {
   let dir: string;
 
@@ -162,5 +169,42 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     await performInitService({ cwd: dir, force: true });
     const after = await readUtf8(p);
     expect(after).toBe(before);
+  });
+
+  it('interactive legacy upgrade: asks to preserve scripts and keeps them when confirmed', async () => {
+    const p = path.join(dir, 'stan.config.yml');
+    // Legacy top-level scripts and engine keys
+    const legacy = [
+      'stanPath: .stan',
+      'includes: []',
+      'excludes: []',
+      'scripts:',
+      '  a: echo a',
+      '',
+    ].join('\n');
+    await writeUtf8(p, legacy);
+
+    // Simulate answers: keep stanPath, preserve scripts, no extra selections
+    promptMock.mockResolvedValue({
+      stanPath: '.stan',
+      includes: '',
+      excludes: '',
+      preserveScripts: true,
+      selectedScripts: [],
+    });
+
+    const out = await performInitService({ cwd: dir, force: false });
+    expect(out).toBe(p);
+
+    const after = await readUtf8(p);
+    // Scripts should live under stan-cli after migration and remain unchanged
+    expect(after).toMatch(/^\s*stan-cli:\s*$/m);
+    expect(after).toMatch(
+      /^\s*stan-cli:([\s\S]*?)\n\s*scripts:\s*\n\s* {2}a:\s*echo a/m,
+    );
+    // No lingering root-level scripts key
+    expect(after).not.toMatch(/^\s*scripts:\s*$/m);
+    // Ensure we actually prompted (mock consumed)
+    expect(promptMock).toHaveBeenCalled();
   });
 });

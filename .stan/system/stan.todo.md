@@ -84,7 +84,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - `.bak` is still written on migration; dry‑run remains non‑interactive and side‑effect free.
 
 - Run — early legacy engine-config debugFallback
-  - Added a `preAction` hook on the run subcommand to emit `run.action:engine-legacy` under `STAN_DEBUG=1` whenever the config lacks a top‑level `stan-core` node.
+  - Added a `preAction` hook on the run subcommand to emit `run.action:engine-legacy` under `STAN_DEBUG=1` whenever the config lacks a top-level `stan-core` node.
   - Keeps the existing action‑time check; guarantees the notice is present alongside the CLI‑config legacy notice.
 
 - Decomposed session orchestrator (directory + index.ts)
@@ -101,44 +101,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Config interop swing
   - Requirements now codify namespaced ingestion, transitional legacy engine‑config extraction, and staged deprecation.
   - Ready to ask stan-core to prune resolved interop notes; remove our import of core interop files after core prunes them.
-
-### Completed (recent)
-
-- Init/service decomposition (finish) and namespaced migration helper
-  - Added src/stan/init/service/migrate.ts and rewired performInitService to use it.
-  - Removed legacy src/stan/init/service.ts to eliminate duplication and TS7053.
-  - Fixed unsafe error handling in service/index.ts catch blocks (lint clean).
-  - Updated init behavior tests to the namespaced model (stan-core/stan-cli); removed assumptions about legacy top‑level cliDefaults/scripts and root key order.
-  - Kept unknown root keys intact and avoided re‑adding legacy keys when namespaces exist; migration remains idempotent and writes a .bak in force/confirmed paths.
-
-  - Post‑fix: init/service now avoids writing legacy root keys when stan-core/stan-cli nodes exist.
-    - Interactive and --force branches write engine keys to stan-core and CLI keys to stan-cli.
-    - Root duplication of scripts/stanPath/includes/excludes/patchOpenCommand eliminated.
-    - Snapshot selection derives includes/excludes from stan-core when present; stanPath resolution prefers stan-core.
-    - Tests refined to assert absence of root keys using root-anchored regexes only (no false positives for nested keys).
-
-- Init/service decomposition (helpers; no new subdir)
-  - Extracted shared helpers to src/stan/init/service/helpers.ts (isObj/hasOwn/ensureNsNode/ensureKey/setKey).
-  - Extracted resolveEffectiveStanPath to stanpath.ts and includes/excludes resolver to selection.ts.
-  - Cleaned index.ts to import helpers and removed unused type imports.
-  - No new folder was created; files live alongside index.ts per directive.
-
-- Init — dry-run + .bak + idempotency
-  - Added `--dry-run` to `stan init` (no writes; plan-only output); guarded service writes (config/.gitignore/docs meta/snapshot).
-  - Added assertion that a `.bak` is written on migration (YAML path) and a test for idempotency (already namespaced config is a no-op).
-
-- Transitional legacy engine-config extraction (test)
-  - Added a test that a legacy-only config (root engine keys; no `stan-core`) triggers the debugFallback extraction path in `stan run -p` under `STAN_DEBUG=1`.
-  - Keeps the loop green during release sequencing while exercising the synthesis code-path.
-
-- Runner — stabilize sequential cancel gate
-  - Ensured output files are created up front by moving the output stream open before spawn in `run-one.ts`. This guarantees `<key>.txt` exists even when cancellation occurs immediately after spawn, fixing the failing gate test.
-
-- Docs — namespaced configuration
-  - Updated the Configuration guide to show the namespaced layout exclusively and adjusted section headings (`stan-core` / `stan-cli`).
-
-- Interop — request to core
-  - Posted `.stan/interop/stan-core/20251012-000000Z-cli-namespacing-adopted.md` asking core to prune resolved interop notes so we can remove imports of core interop threads from this repo and keep archives lean.
 
 - Run — import debugFallback to restore debug notice path and fix typecheck/lint
   - Added `import { debugFallback } from '@/stan/util/debug'` in `src/cli/stan/run/action.ts`.

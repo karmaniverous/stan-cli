@@ -121,6 +121,7 @@ export const performInitService = async ({
           : undefined,
         preserveScripts,
       );
+
       // Apply picked values (interactive mode only)
       // Engine keys: prefer stan-core node when namespaced
       if (namespaced) {
