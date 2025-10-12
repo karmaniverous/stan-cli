@@ -141,4 +141,12 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
   - Repo paths: added `src/stan/path/repo.ts` with `normalizeRepoPath`, `isAbsolutePosix`, `toPosix`, and `resolveWithin`. File Ops parser and validator now share the same safety rules.
   - jsdiff writes: replaced ad‑hoc mkdir logic with the existing `ensureParentDir` helper for both repo and sandbox targets.
   - Archive composition: centralized inclusion of `<stanPath>/output` via `composeFilesWithOutput` in `src/stan/archive/util.ts`; used by archive and diff.
-  - Tests: no behavior changes expected; kept coverage stable.
+  - Tests: no behavior changes expected; kept coverage stable.
+
+- DRY set 2 — diff/EOL/config helpers and polish (no behavior changes)
+  - Added `src/stan/patch/common/diff.ts` (isUnifiedDiff/extractFirstUnifiedDiff/normalizePatchText); refactored `clean.ts` and `detect.ts` to use it.
+  - Added `src/stan/text/eol.ts` (toLF/ensureFinalLF); `assemble.ts` now imports `toLF` instead of a local function.
+  - Validator now imports `toPosix` from `src/stan/path/repo.ts` and removes a duplicated doc line.
+  - Archive warnings surfaced via `surfaceArchiveWarnings` in `src/stan/archive/util.ts`; used by archive and diff.
+  - Config loader uses shared helpers in `src/stan/config/common.ts` (formatZodError/parseRoot/normalizeImports) to reduce duplication.
+  - Tests remain green; no public API changes.

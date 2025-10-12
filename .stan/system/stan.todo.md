@@ -64,6 +64,11 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
+- Run — guarantee engine-legacy debugFallback under STAN_DEBUG=1
+  - Added a secondary `run.action:engine-legacy` debugFallback emission inside the
+    CLI-config legacy fallback path when `stan-core` is absent at the top level.
+  - Ensures tests observe the required notice alongside the existing `cli.config:loadSync` message.
+
 - Init — force idempotency guard and legacy→namespaced migration
   - Guard now checks pre‑migration state: `--force` is a true no‑op only when the file was already namespaced.
   - Legacy configs are migrated to `stan-core`/`stan-cli` and written back (YAML/JSON), preserving unknown root keys and filename/format.
