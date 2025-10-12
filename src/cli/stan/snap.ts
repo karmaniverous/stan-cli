@@ -1,10 +1,11 @@
 /* src/cli/stan/snap.ts
  * CLI adapter for "stan snap" — Commander wiring only.
  */
-import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
+import { findConfigPathSync } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { Command as Commander, Option } from 'commander';
 
+import { loadCliConfigSync } from '@/cli/config/load';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import {
@@ -72,7 +73,7 @@ import { applyCliSafety, tagDefault } from './cli-utils';
   // Determine effective default (config overrides > built-ins)
   try {
     const p = findConfigPathSync(process.cwd());
-    const cfg = p ? loadConfigSync(process.cwd()) : null;
+    const cfg = p ? loadCliConfigSync(process.cwd()) : null;
     const stashDef = Boolean(cfg?.cliDefaults?.snap?.stash ?? false);
     tagDefault(stashDef ? optStash : optNoStash, true);
   } catch {

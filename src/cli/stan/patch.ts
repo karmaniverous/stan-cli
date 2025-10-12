@@ -4,6 +4,7 @@
 import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 
+import { loadCliConfigSync } from '@/cli/config/load';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runPatch } from '@/stan/patch/service';
@@ -33,7 +34,7 @@ export const registerPatch = (cli: Command): Command => {
   try {
     const p = findConfigPathSync(process.cwd());
     if (p) {
-      const cfg = loadConfigSync(process.cwd());
+      const cfg = loadCliConfigSync(process.cwd());
       const df = cfg.cliDefaults?.patch?.file;
       if (typeof df === 'string' && df.trim().length > 0) {
         optFile.description = `${optFile.description} (DEFAULT: ${df.trim()})`;
@@ -92,17 +93,14 @@ export const registerPatch = (cli: Command): Command => {
         /* ignore guard failures */
       }
 
-      // Resolve default patch file from config (opts.cliDefaults.patch.file)
+      // Resolve default patch file from CLI config (cliDefaults.patch.file)
       let defaultFile: string | undefined;
       try {
-        const { loadConfigSync, findConfigPathSync } = await import(
-          '@karmaniverous/stan-core'
-        );
         const cwd = process.cwd();
         const p = findConfigPathSync(cwd);
         if (p) {
-          const cfg = loadConfigSync(cwd);
-          const fromCfg = cfg.cliDefaults?.patch?.file;
+          const cliCfg = loadCliConfigSync(cwd);
+          const fromCfg = cliCfg.cliDefaults?.patch?.file;
           if (typeof fromCfg === 'string' && fromCfg.trim().length > 0) {
             defaultFile = fromCfg.trim();
           }

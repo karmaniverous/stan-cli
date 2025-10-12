@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { loadConfigSync, resolveStanPathSync } from '@karmaniverous/stan-core';
 import { packageDirectorySync } from 'package-directory';
 
+import { loadCliConfigSync } from '@/cli/config/load';
+
 export type VersionInfo = {
   packageVersion: string | null;
   nodeVersion: string;
@@ -90,9 +92,9 @@ export const getVersionInfo = async (cwd: string): Promise<VersionInfo> => {
   // Optional config override for dev mode
   let devModeFromConfig: boolean | undefined;
   try {
-    const cfg = loadConfigSync(repoRoot);
+    const cli = loadCliConfigSync(repoRoot);
     devModeFromConfig =
-      typeof cfg.devMode === 'boolean' ? cfg.devMode : undefined;
+      typeof cli.devMode === 'boolean' ? cli.devMode : undefined;
   } catch {
     devModeFromConfig = undefined;
   }

@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { findConfigPathSync, loadConfig } from '@karmaniverous/stan-core';
 
+import { loadCliConfig } from '@/cli/config/load';
+
 /**
  * Resolve the effective execution context for snapshot operations. *
  * Starting from `cwd0`, locates the nearest `stan.config.*` and returns:
@@ -22,8 +24,14 @@ export const resolveContext = async (
   const cwd = cfgPath ? path.dirname(cfgPath) : cwd0;
   let cfg: { stanPath: string; maxUndos?: number };
   try {
-    const loaded = await loadConfig(cwd);
-    cfg = { stanPath: loaded.stanPath, maxUndos: loaded.maxUndos };
+    const [engine, cli] = await Promise.all([
+      loadConfig(cwd),
+      loadCliConfig(cwd),
+    ]);
+    cfg = {
+      stanPath: engine.stanPath,
+      maxUndos: cli.maxUndos,
+    };
   } catch {
     cfg = { stanPath: '.stan', maxUndos: 10 };
   }

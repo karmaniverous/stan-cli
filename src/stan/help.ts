@@ -1,4 +1,4 @@
-import { loadConfigSync } from '@karmaniverous/stan-core';
+import { loadCliConfigSync } from '@/cli/config/load';
 
 /**
  * Render a help footer that lists available script keys and examples. *
@@ -11,8 +11,8 @@ import { loadConfigSync } from '@karmaniverous/stan-core';
  */
 export const renderAvailableScriptsHelp = (cwd: string): string => {
   try {
-    const cfg = loadConfigSync(cwd);
-    const keys = Object.keys(cfg.scripts);
+    const cfg = loadCliConfigSync(cwd);
+    const keys = Object.keys(cfg.scripts ?? {});
     if (!keys.length) return '';
     const example = keys[0] ?? 'lint';
     return [
