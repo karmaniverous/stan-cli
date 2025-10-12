@@ -3,9 +3,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RunnerConfig } from '@/stan/run';
 import { runSelected } from '@/stan/run';
 
 // Lightweight tar mock to keep runs deterministic
@@ -53,7 +53,7 @@ describe('UI parity (live vs no-live): artifacts are identical', () => {
   };
 
   it('produces the same outputs and archive decisions', async () => {
-    const cfg: ContextConfig = {
+    const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: { hello: 'node hello.js' },
     };
