@@ -130,3 +130,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Seeded interactive defaults for `stan init` from the migrated config and CLI loader instead of engine loader (which fails pre‑migration).
   - Ensures the “Preserve existing scripts?” confirm appears when upgrading legacy configs, and that existing `stan-cli.scripts` are retained when preserved.
   - Reused the resolved `stanPath` from the UI defaults for downstream steps.
+
+- Tests — fix false‑positive root‑level scripts check in init migration test
+  - Tightened regex to match only a root‑level `scripts:` line, avoiding nested matches under `stan-cli`.

@@ -202,8 +202,8 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     expect(after).toMatch(
       /^\s*stan-cli:([\s\S]*?)\n\s*scripts:\s*\n\s* {2}a:\s*echo a/m,
     );
-    // No lingering root-level scripts key
-    expect(after).not.toMatch(/^\s*scripts:\s*$/m);
+    // No lingering root-level scripts key (allow nested under stan-cli)
+    expect(after).not.toMatch(/^scripts:\s*$/m);
     // Ensure we actually prompted (mock consumed)
     expect(promptMock).toHaveBeenCalled();
   });

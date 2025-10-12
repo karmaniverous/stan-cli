@@ -1,31 +1,34 @@
-cliDefaults:
-  run:
-    plan: false
-    sequential: true
-includes: []
-imports:
-  stan-core:
-    - ../stan-core/.stan/system/stan.requirements.md
-    - ../stan-core/.stan/system/stan.todo.md
-    - ../stan-core/dist/types/index.d.ts
-    - ../stan-core/.stan/interop/stan-cli/**
-excludes:
-  - '*.local'
-  - assets
-  - CHANGELOG.md
-  - docs
-  - diagrams/**
-  - package-lock.json
-scripts:
-  typecheck: npm run typecheck
-  lint: npm run lint:fix
-  test: npm run test -- --no-color
-  build:
-    script: cross-env NO_COLOR=1 npm run build
-    warnPattern: loaded [\\w.]+ with warnings(?!.*outputToFilesystem option is defaulting to true)
-  docs:
-    script: npm run docs -- --emit none
-    warnPattern: \\[warning\\]
-  knip: npm run knip
-patchOpenCommand: code -g {file}
-stanPath: .stan
+stan-core:
+  stanPath: .stan
+  includes: []
+  excludes:
+    - "*.local"
+    - assets
+    - CHANGELOG.md
+    - docs
+    - diagrams/**
+    - package-lock.json
+  imports:
+    stan-core:
+      - ../stan-core/.stan/system/stan.requirements.md
+      - ../stan-core/.stan/system/stan.todo.md
+      - ../stan-core/dist/types/index.d.ts
+      - ../stan-core/.stan/interop/stan-cli/**
+stan-cli:
+  scripts:
+    typecheck: npm run typecheck
+    lint: npm run lint:fix
+    test: npm run test -- --no-color
+    build:
+      script: cross-env NO_COLOR=1 npm run build
+      warnPattern: loaded [\\w.]+ with warnings(?!.*outputToFilesystem option is
+        defaulting to true)
+    docs:
+      script: npm run docs -- --emit none
+      warnPattern: \\[warning\\]
+    knip: npm run knip
+  cliDefaults:
+    run:
+      plan: false
+      sequential: true
+  patchOpenCommand: code -g {file}
