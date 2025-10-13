@@ -14,6 +14,10 @@
 <li>Ensures documentation metadata under <code>.stan/system/</code> and creates required directories. The project prompt (<code>.stan/system/stan.project.md</code>) is created on demand by STAN when repo‑specific requirements emerge (no template is installed).</li>
 <li>Writes an initial diff snapshot to <code>.stan/diff/.archive.snapshot.json</code>.</li>
 </ul>
+<p>Migration and safety notes:</p>
+<ul>
+<li>On upgrade from legacy (root‑key) configs, <code>stan init</code> migrates to the namespaced layout, writes a <code>.bak</code> next to your config, and supports a plan‑only mode via <code>--dry-run</code>.</li>
+</ul>
 <p>You can re-run <code>stan init</code> safely. Use <code>--force</code> to accept defaults; otherwise you’ll be prompted.</p>
 <h2 id="3-understand-stanconfigyml" class="tsd-anchor-link">3) Understand stan.config.yml<a href="#3-understand-stanconfigyml" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Minimal example:</p>
 <pre><code class="yaml"><span class="hl-7">stanPath</span><span class="hl-1">: </span><span class="hl-8">.stan</span><br/><span class="hl-7">includes</span><span class="hl-1">: []</span><br/><span class="hl-7">excludes</span><span class="hl-1">: []</span><br/><span class="hl-7">scripts</span><span class="hl-1">:</span><br/><span class="hl-1">  </span><span class="hl-7">build</span><span class="hl-1">: </span><span class="hl-8">npm run stan:build</span><br/><span class="hl-1">  </span><span class="hl-7">lint</span><span class="hl-1">: </span><span class="hl-8">npm run lint</span><br/><span class="hl-1">  </span><span class="hl-7">test</span><span class="hl-1">: </span><span class="hl-8">npm run test</span><br/><span class="hl-1">  </span><span class="hl-7">typecheck</span><span class="hl-1">: </span><span class="hl-8">npm run typecheck</span>
@@ -37,10 +41,10 @@
 
 <p>This:</p>
 <ul>
-<li>Runs configured scripts (in parallel by default).</li>
-<li>Writes outputs to <code>.stan/output/*.txt</code>.</li>
-<li>Creates <code>.stan/output/archive.tar</code> (full snapshot of text files) and <code>.stan/output/archive.diff.tar</code> (changed files).</li>
-<li>Logs a concise “archive warnings” summary to the console (binary exclusions, large text call‑outs).</li>
+<li>Runs configured scripts (parallel by default).</li>
+<li>Writes deterministic outputs under <code>.stan/output/*.txt</code>.</li>
+<li>Creates <code>.stan/output/archive.tar</code> and <code>.stan/output/archive.diff.tar</code>.</li>
+<li>Prints concise “archive warnings” (binaries excluded, large text call‑outs).</li>
 </ul>
 <p>To update the baseline snapshot without writing archives:</p>
 <pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">snap</span>
@@ -50,9 +54,10 @@
 <pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">patch</span><span class="hl-1">              </span><span class="hl-5"># read unified diff from clipboard</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">patch</span><span class="hl-1"> </span><span class="hl-6">--check</span><span class="hl-1">      </span><span class="hl-5"># validate only (writes to sandbox)</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">patch</span><span class="hl-1"> </span><span class="hl-6">-f</span><span class="hl-1"> </span><span class="hl-4">fix.patch</span><span class="hl-1"> </span><span class="hl-5"># read from a file</span>
 </code><button type="button">Copy</button></pre>
 
-<p>On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste it into chat to get a corrected diff.</p>
+<p>On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste that into chat to get a corrected diff.</p>
 <p>Tips:</p>
 <ul>
+<li>Child PATH augmentation: <code>stan run</code> automatically prefixes the child process PATH with <code>&lt;repoRoot&gt;/node_modules/.bin</code> (and ancestor <code>.bin</code> folders) so repo‑local binaries resolve without global installs.</li>
 <li>Use <code>stan run -p</code> to print the plan and exit; use <code>stan run -P</code> to execute without printing the plan first.</li>
 <li>Use <code>-q</code> for sequential execution (preserves <code>-s</code> order).</li>
 <li>Use <code>-c</code> to include outputs inside archives and remove them from disk (combine mode).</li>
