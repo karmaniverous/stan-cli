@@ -8,10 +8,10 @@ import {
 import { Command, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
+import { printHeader } from '@/cli/stan/header';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runPatch } from '@/stan/patch/service';
-import { go } from '@/stan/util/color';
 
 import { applyCliSafety } from './cli-utils';
 
@@ -63,19 +63,6 @@ export const registerPatch = (cli: Command): Command => {
       inputMaybe?: string,
       opts?: { file?: string | boolean; check?: boolean; noFile?: boolean },
     ) => {
-      const isTTY = Boolean(
-        (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
-      );
-      const isBoring = (): boolean =>
-        process.env.STAN_BORING === '1' ||
-        process.env.NO_COLOR === '1' ||
-        process.env.FORCE_COLOR === '0' ||
-        !isTTY;
-      const header = (last: string | null): void => {
-        const token = isBoring() ? 'patch' : go('▲ patch');
-        console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
-      };
-
       // Header + reversal guard + state update
       try {
         const cwd = process.cwd();
@@ -87,7 +74,7 @@ export const registerPatch = (cli: Command): Command => {
           /* keep default */
         }
         const st = await readLoopState(cwd, stanPath).catch(() => null);
-        header(st?.last ?? null);
+        printHeader('patch', st?.last ?? null);
         if (st?.last && isBackward(st.last, 'patch')) {
           const proceed = await confirmLoopReversal();
           if (!proceed) {

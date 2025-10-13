@@ -63,6 +63,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ---
 
 ## Completed (recent)
+
 - DRY — archive helpers consolidated
   - Extracted shared helpers to `src/stan/run/archive/util.ts`:
     - `stageImports()` (best‑effort wrapper around prepareImports),
@@ -149,3 +150,10 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Snap — record effective prompt identity for baseline
   - Compute the effective prompt (cliDefaults.run.prompt | auto), hash its bytes, and update `.stan/system/.docs.meta.json` with `prompt: { source, hash, path? }` (best‑effort; preserves unknown keys).
   - New helpers: `src/stan/util/hash.ts`, `src/stan/system/docs-meta.ts`.
+
+- DRY — unify CLI command headers
+  - Added `src/cli/stan/header.ts` to centralize BORING/TTY-aware header printing.
+  - Updated:
+    - `src/cli/stan/run/action.ts`,
+    - `src/cli/stan/snap.ts`,
+    - `src/cli/stan/patch.ts` to use the shared helper (removed local isBoring/header duplication).

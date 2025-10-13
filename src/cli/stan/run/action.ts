@@ -14,12 +14,12 @@ import { CommanderError } from 'commander';
 import YAML from 'yaml';
 
 import { loadCliConfigSync } from '@/cli/config/load';
+import { printHeader } from '@/cli/stan/header';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import { runSelected } from '@/stan/run';
 import { renderRunPlan } from '@/stan/run/plan';
 import type { RunnerConfig } from '@/stan/run/types';
-import { go } from '@/stan/util/color';
 import { debugFallback } from '@/stan/util/debug';
 
 import { deriveRunParameters } from './derive';
@@ -29,18 +29,6 @@ export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
 ): void => {
-  const isTTY = Boolean(
-    (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
-  );
-  const isBoring = (): boolean =>
-    process.env.STAN_BORING === '1' ||
-    process.env.NO_COLOR === '1' ||
-    process.env.FORCE_COLOR === '0' ||
-    !isTTY;
-  const header = (last: string | null): void => {
-    const token = isBoring() ? 'run' : go('▶︎ run');
-    console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
-  };
   cmd.action(async (options: Record<string, unknown>) => {
     let legacyWarned = false;
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
@@ -215,7 +203,7 @@ export const registerRunAction = (
     // Loop header + reversal guard
     try {
       const st = await readLoopState(runCwd, config.stanPath);
-      header(st?.last ?? null);
+      printHeader('run', st?.last ?? null);
       if (st?.last && isBackward(st.last, 'run')) {
         const proceed = await confirmLoopReversal();
         if (!proceed) {

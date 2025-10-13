@@ -9,6 +9,7 @@ import type { Command } from 'commander';
 import { Command as Commander, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
+import { printHeader } from '@/cli/stan/header';
 import { confirmLoopReversal } from '@/stan/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/stan/loop/state';
 import {
@@ -18,7 +19,6 @@ import {
   handleUndo,
 } from '@/stan/snap/history';
 import { handleSnap } from '@/stan/snap/snap-run';
-import { go } from '@/stan/util/color';
 
 import { applyCliSafety, tagDefault } from './cli-utils';
 
@@ -88,18 +88,6 @@ export const registerSnap = (cli: Commander): Command => {
     .addOption(optStash)
     .addOption(optNoStash)
     .action(async (opts?: { stash?: boolean }) => {
-      const isTTY = Boolean(
-        (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
-      );
-      const isBoring = (): boolean =>
-        process.env.STAN_BORING === '1' ||
-        process.env.NO_COLOR === '1' ||
-        process.env.FORCE_COLOR === '0' ||
-        !isTTY;
-      const header = (last: string | null): void => {
-        const token = isBoring() ? 'snap' : go('▣ snap');
-        console.log(`stan: ${token} (last command: ${last ?? 'none'})`);
-      };
       // Header + reversal guard + state update
       try {
         const cwd = process.cwd();
@@ -111,7 +99,7 @@ export const registerSnap = (cli: Commander): Command => {
           /* keep default */
         }
         const st = await readLoopState(cwd, stanPath).catch(() => null);
-        header(st?.last ?? null);
+        printHeader('snap', st?.last ?? null);
         if (st?.last && isBackward(st.last, 'snap')) {
           const proceed = await confirmLoopReversal();
           if (!proceed) {
