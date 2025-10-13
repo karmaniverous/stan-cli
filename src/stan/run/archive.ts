@@ -1,8 +1,7 @@
-import path from 'node:path';
-
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 
+import { stanDirs } from '@/stan/paths';
 import {
   cleanupOutputsAfterCombine,
   cleanupPatchDirAfterArchive,
@@ -28,11 +27,6 @@ type ArchiveProgress = {
     endedAt: number,
   ) => void;
 };
-const makeDirs = (cwd: string, stanPath: string) => ({
-  outputAbs: path.join(cwd, stanPath, 'output'),
-  patchAbs: path.join(cwd, stanPath, 'patch'),
-});
-
 /**
  * Run the archive phase and produce both regular and diff archives.
  *
@@ -52,7 +46,7 @@ export const archivePhase = async (
 ): Promise<{ archivePath: string; diffPath: string }> => {
   const { cwd, config, includeOutputs } = args;
   const silent = Boolean(opts?.silent);
-  const dirs = makeDirs(cwd, config.stanPath);
+  const dirs = stanDirs(cwd, config.stanPath);
 
   if (!silent) {
     console.log(`stan: start "${alert('archive')}"`);
@@ -105,7 +99,7 @@ export const archivePhase = async (
     // No packaged prompt injection/restore; prompt is managed upstream for both full and diff.
   }
   if (includeOutputs) {
-    await cleanupOutputsAfterCombine(dirs.outputAbs);
+    await cleanupOutputsAfterCombine(dirs.output);
   }
   await cleanupPatchDirAfterArchive(cwd, config.stanPath);
 

@@ -63,10 +63,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ---
 
 ## Completed (recent)
+
 - DRY — version helper uses shared docs-meta reader
-  - Replaced ad-hoc `.docs.meta.json` parsing in `src/stan/version.ts` with
-    `readDocsMeta(...)` from `src/stan/system/docs-meta.ts` to centralize access
-    and types.
+  - Replaced ad-hoc `.docs.meta.json` parsing in `src/stan/version.ts` with `readDocsMeta(...)` from `src/stan/system/docs-meta.ts` to centralize access and types.
 
 - DRY — archive helpers consolidated
   - Extracted shared helpers to `src/stan/run/archive/util.ts`:
@@ -161,3 +160,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
     - `src/cli/stan/run/action.ts`,
     - `src/cli/stan/snap.ts`,
     - `src/cli/stan/patch.ts` to use the shared helper (removed local isBoring/header duplication).
+
+- DRY — centralized STAN workspace paths
+  - Added `src/stan/paths.ts` (`stanDirs(cwd, stanPath)`) to compute common paths: system/output/diff/patch and the system prompt file.
+  - Refactored:
+    - `src/stan/run/archive.ts`
+    - `src/stan/run/session/archive-stage.ts` to use it.

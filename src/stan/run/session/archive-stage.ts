@@ -6,6 +6,7 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 
+import { stanDirs } from '@/stan/paths';
 import {
   cleanupOutputsAfterCombine,
   cleanupPatchDirAfterArchive,
@@ -30,7 +31,8 @@ export const runArchiveStage = async (args: {
   const { cwd, config, behavior, ui, promptAbs, promptDisplay } = args;
   const created: string[] = [];
 
-  const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
+  const dirs = stanDirs(cwd, config.stanPath);
+  const systemAbs = dirs.systemFile;
 
   // Ephemeral = non-local source file (e.g., core/path) provided for this run
   const isEphemeralPrompt =
@@ -211,8 +213,7 @@ export const runArchiveStage = async (args: {
     }
 
     if (behavior.combine) {
-      const outAbs = path.join(cwd, config.stanPath, 'output');
-      await cleanupOutputsAfterCombine(outAbs);
+      await cleanupOutputsAfterCombine(dirs.output);
     }
     await cleanupPatchDirAfterArchive(cwd, config.stanPath);
     return { created, cancelled: false };
