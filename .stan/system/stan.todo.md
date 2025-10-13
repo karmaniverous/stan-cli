@@ -11,8 +11,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
   - Cut next patch release once docs are updated.
-- CLI docs sanity pass
-  - Re‑check -m/--prompt examples and steady‑state diff behavior; ensure examples align with the new plan header “prompt:” line.
 
 - Deprecation staging for config ingestion
   - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
@@ -205,4 +203,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Docs — Migration note and typedoc wiring
   - Added docs-src/migration.md describing the namespaced layout and how to migrate via `stan init` (with .bak and `--dry-run`).
-  - Registered the page in typedoc.json and linked it from README.
+  - Registered the page in typedoc.json and linked it from README.
+
+- Docs — CLI plan/prompt and init flags
+  - Clarified that the run plan header includes a `prompt:` line in CLI docs.
+  - Added init migration notes (.bak, `--dry-run`) to Getting Started.

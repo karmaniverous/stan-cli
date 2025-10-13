@@ -71,6 +71,11 @@ Flags (presented in the same order as `stan run --help`):
 - -P, --no-plan
   - Execute without printing the run plan first.
 
+Plan header contents:
+
+- The plan includes a `prompt:` line that reflects the resolved system prompt source for the run (for example, `auto → local (.stan/system/stan.system.md)` or `@karmaniverous/stan-core@<version>` when `--prompt core` is used).
+- This mirrors the effective prompt used during archiving and helps keep logs self‑describing.
+
 - -l, --live / -L, --no-live
   - Enable/disable a live progress table in TTY. Built‑in default: enabled.
   - Non‑TTY runs (tests/CI) are unaffected and keep line‑per‑event logs.

@@ -33,6 +33,9 @@ What this does:
 - Ensures documentation metadata under `.stan/system/` and creates required directories. The project prompt (`.stan/system/stan.project.md`) is created on demand by STAN when repo‑specific requirements emerge (no template is installed).
 - Writes an initial diff snapshot to `.stan/diff/.archive.snapshot.json`.
 
+Migration and safety notes:
+- On upgrade from legacy (root‑key) configs, `stan init` migrates to the namespaced layout, writes a `.bak` next to your config, and supports a plan‑only mode via `--dry-run`.
+
 You can re-run `stan init` safely. Use `--force` to accept defaults; otherwise you’ll be prompted.
 
 ## 3) Understand stan.config.yml
