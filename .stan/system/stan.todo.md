@@ -11,10 +11,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
   - Cut next patch release once docs are updated.
-
-- Migration / UX docs
-  - Short “Migration” note: namespaced config only; advise running “stan init” to migrate; mention .bak and --dry-run.
-
 - CLI docs sanity pass
   - Re‑check -m/--prompt examples and steady‑state diff behavior; ensure examples align with the new plan header “prompt:” line.
 
@@ -206,3 +202,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Updated imports to reference canonical sources directly:
     - Top-level `src/index.ts` now exports from `./stan/help` and `./stan/run` directly, and consolidates type re-exports (`ScriptMap`, `ScriptEntry`).
     - Live renderer/util/frame import `RowMeta`/`ScriptState` from `@/stan/run/types` instead of the removed `live/types` indirection.
+
+- Docs — Migration note and typedoc wiring
+  - Added docs-src/migration.md describing the namespaced layout and how to migrate via `stan init` (with .bak and `--dry-run`).
+  - Registered the page in typedoc.json and linked it from README.

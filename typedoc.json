@@ -34,6 +34,7 @@
     "./docs-src/case-studies/rrstack.md",
     "./contributing.md",
     "./docs-src/faq.md",
+    "./docs-src/migration.md",
     "./CHANGELOG.md"
   ],
   "navigationLinks": {
