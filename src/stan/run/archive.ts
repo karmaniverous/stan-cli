@@ -1,13 +1,13 @@
-import { readdir, rm } from 'node:fs/promises';
-import path, { resolve } from 'node:path';
+import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
-import {
-  createArchive,
-  createArchiveDiff,
-  prepareImports,
-} from '@karmaniverous/stan-core';
+import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 
+import {
+  cleanupOutputsAfterCombine,
+  cleanupPatchDirAfterArchive,
+  stageImports,
+} from '@/stan/run/archive/util';
 import { alert, ok } from '@/stan/util/color';
 
 // Progress callbacks for live renderer integration
@@ -28,52 +28,10 @@ type ArchiveProgress = {
     endedAt: number,
   ) => void;
 };
-/**
- * Remove on‑disk script outputs after combine mode archived them.
- * Keeps `archive.tar` and `archive.diff.tar` in place.
- * @param outAbs - Absolute path to `<stanPath>/output`.
- */
-const cleanupOutputsAfterCombine = async (outAbs: string): Promise<void> => {
-  const entries = await readdir(outAbs, { withFileTypes: true });
-  const keepNames = new Set(['archive.tar', 'archive.diff.tar']);
-  await Promise.all(
-    entries.map(async (e) => {
-      if (keepNames.has(e.name)) return;
-      await rm(resolve(outAbs, e.name), { recursive: true, force: true });
-    }),
-  );
-};
-
 const makeDirs = (cwd: string, stanPath: string) => ({
   outputAbs: path.join(cwd, stanPath, 'output'),
   patchAbs: path.join(cwd, stanPath, 'patch'),
 });
-
-/**
- * Clear `<stanPath>/patch` contents after archiving (preserve the directory).
- *
- * Removes files under the patch workspace so subsequent archives include
- * a clean patch directory while preserving the directory itself.
- *
- * @param cwd - Repository root.
- * @param stanPath - STAN workspace folder.
- */
-const cleanupPatchDirAfterArchive = async (
-  cwd: string,
-  stanPath: string,
-): Promise<void> => {
-  const dirs = makeDirs(cwd, stanPath);
-  try {
-    const entries = await readdir(dirs.patchAbs, { withFileTypes: true });
-    await Promise.all(
-      entries.map((e) =>
-        rm(resolve(dirs.patchAbs, e.name), { recursive: true, force: true }),
-      ),
-    );
-  } catch {
-    // best-effort
-  }
-};
 
 /**
  * Run the archive phase and produce both regular and diff archives.
@@ -104,17 +62,7 @@ export const archivePhase = async (
   let diffPath = '';
   try {
     // Stage imports (if any) so they are included in both archives.
-    try {
-      if (config.imports && typeof config.imports === 'object') {
-        await prepareImports({
-          cwd,
-          stanPath: config.stanPath,
-          map: config.imports,
-        });
-      }
-    } catch {
-      // best‑effort; continue without imports on failure
-    }
+    await stageImports(cwd, config.stanPath, config.imports);
     opts?.progress?.start?.('full');
     const startedFull = Date.now();
     archivePath = await createArchive(cwd, config.stanPath, {

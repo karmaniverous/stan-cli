@@ -63,6 +63,14 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ---
 
 ## Completed (recent)
+- DRY — archive helpers consolidated
+  - Extracted shared helpers to `src/stan/run/archive/util.ts`:
+    - `stageImports()` (best‑effort wrapper around prepareImports),
+    - `cleanupOutputsAfterCombine()` and `cleanupPatchDirAfterArchive()`.
+  - Refactored callers in:
+    - `src/stan/run/archive.ts`,
+    - `src/stan/run/session/archive-stage.ts`.
+  - Behavior unchanged; reduces duplication and centralizes best‑effort handling.
 
 - Run — emit legacy engine notice once per action
   - Kept a single `run.action:engine-legacy` debugFallback emission in the run preAction hook; removed duplicate notices from the loader and run action.
