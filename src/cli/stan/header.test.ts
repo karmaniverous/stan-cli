@@ -38,14 +38,29 @@ describe('printHeader (BORING/TTY)', () => {
 
   it('prints styled token in TTY (arrow present after stripping ANSI)', () => {
     delete process.env.STAN_BORING;
+    // Ensure color/styling is allowed
+    delete process.env.NO_COLOR;
+    delete process.env.FORCE_COLOR;
     try {
       (process.stdout as unknown as { isTTY?: boolean }).isTTY = true;
     } catch {
       /* ignore */
     }
     printHeader('run', 'snap');
-    const raw = String(logSpy.mock.calls[0]?.[0] ?? '');
-    const plain = stripAnsi(raw);
+    // Safely collect console args without triggering base-to-string lint
+    const firstCall = logSpy.mock.calls[0] ?? [];
+    const rawJoined = firstCall
+      .map((v) =>
+        typeof v === 'string'
+          ? v
+          : v instanceof Error
+            ? v.message
+            : typeof v === 'number' || typeof v === 'boolean'
+              ? String(v)
+              : '',
+      )
+      .join(' ');
+    const plain = stripAnsi(rawJoined);
     expect(plain).toContain('▶︎ run');
     expect(plain).toContain('(last command: snap)');
   });

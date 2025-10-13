@@ -175,4 +175,11 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Added a focused test for `stanDirs` path helper (`src/stan/paths.test.ts`).
 
 - Docs — Getting Started
-  - Noted PATH augmentation for child scripts so repo‑local binaries resolve without globals.
+  - Noted PATH augmentation for child scripts so repo‑local binaries resolve without globals.
+
+- Tests — stabilize header test and fix lint
+  - Cleared NO_COLOR/FORCE_COLOR alongside STAN_BORING to exercise styled TTY branch.
+  - Replaced unsafe String(...) usage with safe argument joining to satisfy @typescript-eslint/no-base-to-string.
+
+- Typedoc — include ScriptEntry
+  - Re‑exported `ScriptEntry` in `src/index.ts` to resolve the reference warning from `ScriptMap`.

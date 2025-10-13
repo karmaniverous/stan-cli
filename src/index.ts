@@ -4,3 +4,4 @@
 export * from './stan';
 // Re‑export for documentation completeness (Typedoc warning fix).
 export type { ScriptMap } from './cli/config/schema';
+export type { ScriptEntry } from './cli/config/schema';
