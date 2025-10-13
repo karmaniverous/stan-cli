@@ -4,15 +4,16 @@
  */
 import chalk from 'chalk';
 
-const isTTY = Boolean(
-  (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
-);
 export const isBoring = (): boolean => {
+  // Compute TTY dynamically so tests and callers can toggle isTTY/env reliably.
+  const tty = Boolean(
+    (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
+  );
   return (
     process.env.STAN_BORING === '1' ||
     process.env.NO_COLOR === '1' ||
     process.env.FORCE_COLOR === '0' ||
-    !isTTY
+    !tty
   );
 };
 

@@ -183,3 +183,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Typedoc — include ScriptEntry
   - Re‑exported `ScriptEntry` in `src/index.ts` to resolve the reference warning from `ScriptMap`.
+
+- Tests — fix styled TTY header branch by making TTY detection dynamic
+  - Updated `src/stan/util/color.ts` so `isBoring()` computes TTY on each call instead of capturing it at module import. This allows tests to toggle TTY and ensures runtime honors current TTY and env flags consistently.
