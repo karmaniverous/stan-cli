@@ -69,10 +69,10 @@ stan run
 
 This:
 
-- Runs configured scripts (in parallel by default).
-- Writes outputs to `.stan/output/*.txt`.
-- Creates `.stan/output/archive.tar` (full snapshot of text files) and `.stan/output/archive.diff.tar` (changed files).
-- Logs a concise “archive warnings” summary to the console (binary exclusions, large text call‑outs).
+- Runs configured scripts (parallel by default).
+- Writes deterministic outputs under `.stan/output/*.txt`.
+- Creates `.stan/output/archive.tar` and `.stan/output/archive.diff.tar`.
+- Prints concise “archive warnings” (binaries excluded, large text call‑outs).
 
 To update the baseline snapshot without writing archives:
 
@@ -88,10 +88,11 @@ stan patch --check      # validate only (writes to sandbox)
 stan patch -f fix.patch # read from a file
 ```
 
-On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste it into chat to get a corrected diff.
+On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste that into chat to get a corrected diff.
 
 Tips:
 
+- Child PATH augmentation: `stan run` automatically prefixes the child process PATH with `<repoRoot>/node_modules/.bin` (and ancestor `.bin` folders) so repo‑local binaries resolve without global installs.
 - Use `stan run -p` to print the plan and exit; use `stan run -P` to execute without printing the plan first.
 - Use `-q` for sequential execution (preserves `-s` order).
 - Use `-c` to include outputs inside archives and remove them from disk (combine mode).

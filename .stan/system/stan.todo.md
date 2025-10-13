@@ -166,3 +166,13 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Refactored:
     - `src/stan/run/archive.ts`
     - `src/stan/run/session/archive-stage.ts` to use it.
+
+- Typedoc — include ScriptMap in docs
+  - Re‑exported `ScriptMap` from the library entry so Typedoc includes the referenced type used by `RunnerConfig.scripts`, eliminating the prior warning.
+
+- Tests — small unit coverage
+  - Added header unit tests for BORING/TTY branches (`src/cli/stan/header.test.ts`).
+  - Added a focused test for `stanDirs` path helper (`src/stan/paths.test.ts`).
+
+- Docs — Getting Started
+  - Noted PATH augmentation for child scripts so repo‑local binaries resolve without globals.
