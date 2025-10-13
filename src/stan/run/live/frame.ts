@@ -1,9 +1,10 @@
 // src/stan/run/live/frame.ts
 // Compose a full frame body from rows + options (content-only; no I/O).
+import type { ScriptState } from '@/stan/run/types';
+
 import { label } from '../labels';
 import { renderSummary } from '../summary';
 import { bodyTable, fmtMs, headerCells, hintLine, stripAnsi } from './format';
-import type { ScriptState } from './types';
 import { computeCounts } from './util';
 
 type InternalState = ScriptState & {

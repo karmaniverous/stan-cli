@@ -1,5 +1,5 @@
 // src/stan/run/live/util.ts
-import type { RowMeta, ScriptState } from './types';
+import type { RowMeta, ScriptState } from '@/stan/run/types';
 
 export const deriveMetaFromKey = (key: string): RowMeta | undefined => {
   if (key.startsWith('script:')) {

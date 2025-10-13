@@ -186,3 +186,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Tests — fix styled TTY header branch by making TTY detection dynamic
   - Updated `src/stan/util/color.ts` so `isBoring()` computes TTY on each call instead of capturing it at module import. This allows tests to toggle TTY and ensures runtime honors current TTY and env flags consistently.
+
+  - DRY — remove redundant barrels and realign imports
+  - Deleted `src/stan/index.ts` (barrel-of-barrel under top-level index), `src/stan/run/exec/index.ts` (unused exec barrel), and `src/stan/run/live/types.ts` (re-export-only types).
+  - Updated imports to reference canonical sources directly:
+    - Top-level `src/index.ts` now exports from `./stan/help` and `./stan/run` directly, and consolidates type re-exports (`ScriptMap`, `ScriptEntry`).
+    - Live renderer/util/frame import `RowMeta`/`ScriptState` from `@/stan/run/types` instead of the removed `live/types` indirection.

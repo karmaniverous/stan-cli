@@ -6,9 +6,9 @@ let __UI_COUNTER = 1;
 
 import { type AnchoredWriter, createAnchoredWriter } from '@/anchored-writer';
 import { liveTrace } from '@/stan/run/live/trace';
+import type { RowMeta, ScriptState } from '@/stan/run/types';
 
 import { composeFrameBody } from './frame';
-import type { RowMeta, ScriptState } from './types';
 import { computeCounts, deriveMetaFromKey } from './util';
 
 type InternalState = ScriptState & { outputPath?: string };
