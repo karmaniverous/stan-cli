@@ -1,6 +1,6 @@
 # STAN Development Plan
 
-When updated: 2025-10-12 (UTC)
+When updated: 2025-10-13 (UTC)
 
 This plan tracks near‑term and follow‑through work for the stan‑cli package (CLI and runner). The stan‑core split is complete; engine work is tracked in the stan‑core repository.
 
@@ -8,19 +8,33 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
-3. Deprecation staging for config ingestion
-   - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
-   - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
-   - Phase 3: strict stan-cli only (remove legacy acceptance).
+- Changelog / release notes
+  - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
+  - Cut next patch release once docs are updated.
 
-4. Docs & help updates
-   - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
-   - Getting Started/CLI Usage: namespaced examples; note prompt flag and PATH augmentation (already covered).
-   - Init help: mention migration and .bak/--dry-run.
+- Migration / UX docs
+  - Short “Migration” note: namespaced config only; advise running “stan init” to migrate; mention .bak and --dry-run.
 
-5. Silent fallback audit (narrowed to config/migration scope)
-   - Ensure debugFallback is used on: legacy engine extraction; legacy CLI loader fallback; DEFAULT_STAN_PATH resolution.
-   - Tests assert no debug output unless STAN_DEBUG=1 (behavior unchanged otherwise).
+- CLI docs sanity pass
+  - Re‑check -m/--prompt examples and steady‑state diff behavior; ensure examples align with the new plan header “prompt:” line.
+
+- Deprecation staging for config ingestion
+  - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
+  - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
+  - Phase 3: strict stan-cli only (remove legacy acceptance).
+
+- Docs & help updates
+  - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
+  - Getting Started/CLI Usage: namespaced examples; note prompt flag and PATH augmentation (already covered).
+  - Init help: mention migration and .bak/--dry-run.
+
+- Silent fallback audit (narrowed to config/migration scope)
+  - Ensure debugFallback is used on: legacy engine extraction; legacy CLI loader fallback; DEFAULT_STAN_PATH resolution.
+  - Tests assert no debug output unless STAN_DEBUG=1 (behavior unchanged otherwise).
+
+- Test follow‑through
+  - Add small parity checks for include‑on‑change on Windows/POSIX (core|path sources).
+  - Consider a quick unit around top‑level index exports to guard against accidental re‑introduction of barrel‑of‑barrel.
 
 ---
 
