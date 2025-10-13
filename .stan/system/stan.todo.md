@@ -63,6 +63,10 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 ---
 
 ## Completed (recent)
+- DRY — version helper uses shared docs-meta reader
+  - Replaced ad-hoc `.docs.meta.json` parsing in `src/stan/version.ts` with
+    `readDocsMeta(...)` from `src/stan/system/docs-meta.ts` to centralize access
+    and types.
 
 - DRY — archive helpers consolidated
   - Extracted shared helpers to `src/stan/run/archive/util.ts`:

@@ -12,6 +12,7 @@ import { loadConfigSync, resolveStanPathSync } from '@karmaniverous/stan-core';
 import { packageDirectorySync } from 'package-directory';
 
 import { loadCliConfigSync } from '@/cli/config/load';
+import { readDocsMeta } from '@/stan/system/docs-meta';
 
 export type VersionInfo = {
   packageVersion: string | null;
@@ -101,7 +102,6 @@ export const getVersionInfo = async (cwd: string): Promise<VersionInfo> => {
 
   const dirs = makeDirs(repoRoot, stanPath);
   const localSystem = path.join(dirs.systemAbs, 'stan.system.md');
-  const docsMetaPath = path.join(dirs.systemAbs, '.docs.meta.json');
 
   // Module/package version
   let packageVersion: string | null = null;
@@ -137,7 +137,12 @@ export const getVersionInfo = async (cwd: string): Promise<VersionInfo> => {
   const inSync =
     !!localHash && !!baselineHash ? localHash === baselineHash : false;
 
-  const docsMeta = await readJson<{ version?: string }>(docsMetaPath);
+  // Read docs metadata via shared helper; preserve only the version in the public shape.
+  const docsMetaFull = await readDocsMeta(repoRoot, stanPath);
+  const docsMeta =
+    docsMetaFull && typeof docsMetaFull.version === 'string'
+      ? ({ version: docsMetaFull.version } as { version?: string })
+      : null;
 
   // Realpath-hardened, name-agnostic detection
   const [realModule, realRepo] = await Promise.all([
@@ -175,7 +180,7 @@ export const getVersionInfo = async (cwd: string): Promise<VersionInfo> => {
       localHash,
       baselineHash,
     },
-    docsMeta: docsMeta ?? null,
+    docsMeta,
   };
 };
 
