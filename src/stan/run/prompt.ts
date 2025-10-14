@@ -5,10 +5,10 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import {
-  CORE_VERSION,
-  getPackagedSystemPromptPath,
-} from '@karmaniverous/stan-core';
+import { CORE_VERSION } from '@karmaniverous/stan-core';
+
+// Robust core prompt resolution (engine helper + fallback for global CLI + nested core)
+import { resolveCorePromptPath } from '@/stan/prompt/resolve';
 
 export type PromptChoice = string;
 
@@ -36,7 +36,7 @@ export const resolvePromptSource = (
   choice: PromptChoice,
 ): ResolvedPrompt => {
   const localAbs = path.join(cwd, systemRel(stanPath));
-  const coreAbs = getPackagedSystemPromptPath();
+  const coreAbs = resolveCorePromptPath();
 
   if (choice === 'local') {
     if (!existsSync(localAbs)) {

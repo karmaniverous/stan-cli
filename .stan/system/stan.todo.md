@@ -72,6 +72,15 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
+- Prompt resolution (core fallback) — helper + tests scaffolded and integrated
+  - Added src/stan/prompt/resolve.ts with primary engine helper + createRequire fallback (space‑safe).
+  - Updated src/stan/run/prompt.ts to use the helper for ‘core’/‘auto’ resolution.
+  - Added unit tests:
+    - primary path when engine helper returns a readable file,
+    - fallback path covering spaces in the resolved package root.
+  - Added a plan‑level check to assert the prompt line prints “core” when local is absent.
+  - Follow‑through: optional guarded STAN_DEBUG line; prune interop after merge; remove imports of stale core interop threads.
+
 - DRY — version helper uses shared docs-meta reader
   - Replaced ad-hoc `.docs.meta.json` parsing in `src/stan/version.ts` with `readDocsMeta(...)` from `src/stan/system/docs-meta.ts` to centralize access and types.
 
@@ -211,3 +220,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Run — plan-only prints resolved prompt
   - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails. Commit Message
+
+- Prompt resolver follow‑through — stabilize tests & TSDoc
+  - Adjusted fallback test to return a minimal NodeJS.Require with resolve from the mocked createRequire, ensuring the fallback path is exercised.
+  - Removed the lone any cast in the test (no-explicit-any).
+  - Escaped @ reference in resolve.ts TSDoc to satisfy tsdoc/syntax.
