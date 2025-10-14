@@ -208,3 +208,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Docs — CLI plan/prompt and init flags
   - Clarified that the run plan header includes a `prompt:` line in CLI docs.
   - Added init migration notes (.bak, `--dry-run`) to Getting Started.
+
+- Run — plan-only prints resolved prompt
+  - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails. Commit Message

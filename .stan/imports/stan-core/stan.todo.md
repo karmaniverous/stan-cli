@@ -29,6 +29,14 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 ## Completed (recent)
 
+- Interop (stan-cli) — prompt resolution tests & fallback
+  - Posted `.stan/interop/stan-cli/20251013-170500Z-prompt-resolution-tests.md`
+    proposing a robust `resolveCorePromptPath` helper, unit tests for local/core
+    selection (including fallback with spaces), and a plan-only integration test.
+---
+
+## Completed (recent)
+
 - Core — implemented strict namespaced loader
   - `loadConfig`/`loadConfigSync` now read only the top‑level `stan-core` section and fail fast when missing (friendly message).
   - `configSchema` is strict inside `stan-core` (unknown keys rejected); minimal fields only.
@@ -68,3 +76,6 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 - Typedoc — zero warnings
   - Re‑exported `AttemptCapture` from the patch barrel so Typedoc includes the referenced type used by `ApplyResult.captures`.
+
+- Tests — packaged prompt resolution independent of cwd
+  - Added `src/stan/module.cwd.test.ts` to assert `getPackagedSystemPromptPath` returns the packaged prompt path even when `process.cwd()` is unrelated to the module root (mirrors global CLI → nested core geometry).
