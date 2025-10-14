@@ -225,3 +225,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Adjusted fallback test to return a minimal NodeJS.Require with resolve from the mocked createRequire, ensuring the fallback path is exercised.
   - Removed the lone any cast in the test (no-explicit-any).
   - Escaped @ reference in resolve.ts TSDoc to satisfy tsdoc/syntax.
+
+- Tests — fix TS2741 in mocked createRequire.resolve and stabilize fallback path
+  - Updated src/stan/prompt/resolve.test.ts to provide a proper NodeJS.RequireResolve for the mocked createRequire().resolve, including the required `.paths` method.
+  - Ensures typecheck/docs builds pass (Typedoc no longer trips over test types) and that the fallback branch deterministically resolves to the temp “core” root (Windows paths with spaces).
+  - Keeps the strict equality assertion to the temp prompt path and verifies the tail `dist/stan.system.md`.

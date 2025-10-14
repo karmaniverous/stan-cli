@@ -67,13 +67,16 @@ describe('resolveCorePromptPath (primary + fallback)', () => {
       return {
         ...actual,
         createRequire: () => {
-          // Build a minimal NodeJS.Require‑like object with a resolve method.
+          // Minimal NodeJS.Require with a proper RequireResolve (including .paths).
           const fakeReq = ((id: string) => id) as unknown as NodeJS.Require;
-          fakeReq.resolve = (id: string) => {
+          const fakeResolve = ((id: string) => {
             if (id === '@karmaniverous/stan-core/package.json') return pkgJson;
             // Delegate other resolutions to Node’s default resolver
             return require.resolve(id);
-          };
+          }) as NodeJS.RequireResolve;
+          // Satisfy the typing contract; returning null is acceptable.
+          fakeResolve.paths = (_request: string) => null;
+          fakeReq.resolve = fakeResolve;
           return fakeReq;
         },
       };
