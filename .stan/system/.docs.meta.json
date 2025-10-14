@@ -1,7 +1,3 @@
 {
-  "version": "0.9.0",
-  "prompt": {
-    "source": "core",
-    "hash": "6f0f51ad76f7142ae27257de2e16aaf43c5ebf18117e9dc79218775fa8a04be7"
-  }
+  "version": "0.10.1"
 }
