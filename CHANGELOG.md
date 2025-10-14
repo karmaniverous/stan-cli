@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.10.1](https://github.com/karmaniverous/stan-cli/compare/0.10.0...0.10.1)
+
+- ingest interop note [`1c3fea7`](https://github.com/karmaniverous/stan-cli/commit/1c3fea790359f494077b8df43f6c419ee9ce4fa9)
+- chore: ack core interop; plan prompt-resolution helper + tests [`0b565ff`](https://github.com/karmaniverous/stan-cli/commit/0b565ff04a2f2cbe68673dda6ce467728d6d83c6)
+- chore(todo): prune Completed (recent) to last items [`6846fa7`](https://github.com/karmaniverous/stan-cli/commit/6846fa7e1f37f7c2a202ba0173703d73c6c69325)
+- test(resolve): avoid package.json exports in fallback assertion [`7f70946`](https://github.com/karmaniverous/stan-cli/commit/7f70946274968f2a5d2966eeaa28b9777b76241d)
+- test(resolve): accept installed core dist path in fallback assertion [`a92de6e`](https://github.com/karmaniverous/stan-cli/commit/a92de6ee9f79e0e4b8cb99909953c55a37d154c5)
+- fix(test): satisfy NodeJS.RequireResolve in fallback test [`2d67341`](https://github.com/karmaniverous/stan-cli/commit/2d673417225ae40b91b7255cd5db9e5c9e361632)
+
 #### [0.10.0](https://github.com/karmaniverous/stan-cli/compare/0.9.0...0.10.0)
+
+> 14 October 2025
 
 - fix(init): ask to preserve scripts during legacy upgrade; skip selection when preserved [`c36ad31`](https://github.com/karmaniverous/stan-cli/commit/c36ad31422e9100bc3379ababede6b6598b141bc)
 - plan: audit silent fallbacks (debug logs) and fix default stanPath fallback [`6779f3e`](https://github.com/karmaniverous/stan-cli/commit/6779f3e31d04e741d5ac70a81298625182779aa6)
@@ -13,6 +24,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor(init): split service index into helpers and resolvers (no new subdir) [`aa6b648`](https://github.com/karmaniverous/stan-cli/commit/aa6b648b5662f6ba5aea3a46649baca298824cbe)
 - feat(config): add namespaced ingestion contract; plan init migration and legacy engine fallback [`1566f2c`](https://github.com/karmaniverous/stan-cli/commit/1566f2c5af4ca06d31a165843ab83b87f62dd5e5)
 - feat(config): init migrates legacy → namespaced; honor legacy engine keys during transition [`6d2fc89`](https://github.com/karmaniverous/stan-cli/commit/6d2fc892b1bc92345b87e004a09eb743122b0676)
+- chore: release v0.10.0 [`99e9d65`](https://github.com/karmaniverous/stan-cli/commit/99e9d658277465d54bad3eb5d3d2bc8e100e14ff)
 - fix(run): always emit engine-legacy debugFallback under STAN_DEBUG=1 [`ad61c82`](https://github.com/karmaniverous/stan-cli/commit/ad61c829a5c0c8572fcd00506c245efc1b7513a2)
 - feat(run): include-on-change ephemeral prompt; snap records prompt hash [`4c983ff`](https://github.com/karmaniverous/stan-cli/commit/4c983ff2636f0ced927e0ba772c11fa50e6859e0)
 - test(snap): fix Windows teardown flake in stash success test [`b465402`](https://github.com/karmaniverous/stan-cli/commit/b46540226198cf53f1d70a38238c231c55ca7f8e)

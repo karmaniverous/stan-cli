@@ -2,102 +2,102 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
 		<loc>https://docs.karmanivero.us/stan/index.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/modules.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/hierarchy.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Getting_Started.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/The_STAN_Loop.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/CLI_Usage___Examples.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Stan_Configuration.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Patch_Workflow___FEEDBACK.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Archives___Snapshots.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Tutorial_%E2%80%94_Quickstart_(End%E2%80%91to%E2%80%91End).html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Why_STAN_Over_Alternatives_.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Case_Study_%E2%80%94_rrstack.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Contributing_%E2%80%94_Dev_Quickstart.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/FAQ.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/Migration_%E2%80%94_Namespaced_Configuration.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/documents/CHANGELOG.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/modules/index.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/types/index.ExecutionMode.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/types/index.RunBehavior.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/types/index.RunnerConfig.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/types/index.ScriptEntry.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/types/index.ScriptMap.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/types/index.Selection.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/functions/index.renderAvailableScriptsHelp.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan/functions/index.runSelected.html</loc>
-		<lastmod>2025-10-13T18:58:01.774Z</lastmod>
+		<lastmod>2025-10-14T12:08:15.592Z</lastmod>
 	</url>
 </urlset>
