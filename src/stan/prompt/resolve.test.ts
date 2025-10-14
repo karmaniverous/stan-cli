@@ -1,4 +1,5 @@
 // src/stan/prompt/resolve.test.ts
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -86,24 +87,18 @@ describe('resolveCorePromptPath (primary + fallback)', () => {
       // Re-import with mocked createRequire
       const { resolveCorePromptPath } = await import('@/stan/prompt/resolve');
       const out = resolveCorePromptPath();
-      // Compute the installed-path fallback using the real node:module to allow either outcome.
-      const mod =
-        await vi.importActual<typeof import('node:module')>('node:module');
-      const installed = path.join(
-        path.dirname(
-          mod
-            .createRequire(import.meta.url)
-            .resolve('@karmaniverous/stan-core/package.json'),
-        ),
-        'dist',
-        'stan.system.md',
-      );
-      // Accept either our temp fake prompt or the installed fallback path; both prove the fallback path is used.
-      expect([prompt, installed]).toContain(out);
-      // And the tail must always be dist/stan.system.md
+      // Path should exist and end with dist/stan.system.md
+      expect(out && existsSync(out)).toBe(true);
       expect(out && out.endsWith(path.join('dist', 'stan.system.md'))).toBe(
         true,
       );
+      // Accept either our temp fake prompt path or an installed core path.
+      const outNorm = String(out).replace(/\\+/g, '/');
+      const baseNorm = base.replace(/\\+/g, '/');
+      const looksInstalled = outNorm.includes(
+        '/node_modules/@karmaniverous/stan-core/',
+      );
+      expect(outNorm.includes(baseNorm) || looksInstalled).toBe(true);
     } finally {
       vi.resetModules();
       await rm(base, { recursive: true, force: true });

@@ -234,4 +234,10 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Tests — relax fallback strict equality to allow installed core path
   - In environments where the mock is bypassed or resolved differently, accept either the temp fake prompt path or the real installed
     `@karmaniverous/stan-core/dist/stan.system.md` path. Still asserts the path suffix and existence to validate the fallback logic.
-  - Unblocks the remaining failing unit test across dev setups.
+  - Unblocks the remaining failing unit test across dev setups.
+
+- Tests — avoid package.json exports in fallback check
+  - Removed reliance on resolving '@karmaniverous/stan-core/package.json' (may
+    be excluded by exports). Assert the resolved path exists, ends with
+    'dist/stan.system.md', and is either under the temp fake base or under the
+    installed node_modules/@karmaniverous/stan-core tree.
