@@ -1,8 +1,7 @@
 // src/stan/run/ui/live-ui.ts
 
 import { RunnerControl } from '@/runner/run/control';
-import { ProgressRenderer } from '@/runner/run/live/renderer';
-import { liveTrace } from '@/runner/run/live/trace';
+import { liveTrace, ProgressRenderer } from '@/runner/run/live';
 import { ProgressModel } from '@/runner/run/progress/model';
 import { LiveSink } from '@/runner/run/progress/sinks/live';
 import { relOut } from '@/runner/run/util/path';

@@ -266,6 +266,7 @@ export const runSessionOnce = async (args: {
 
 // Barrel re-exports for internal consumers/tests (avoid deep subpath imports).
 export { CancelController } from './cancel-controller';
+export { runArchivePhaseAndCollect } from './invoke-archive';
 export { ensureOrderFile } from './order-file';
 export { printPlanWithPrompt, resolvePromptOrThrow } from './prompt-plan';
 export { runScriptsPhase } from './scripts-phase';

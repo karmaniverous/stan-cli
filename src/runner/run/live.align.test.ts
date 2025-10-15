@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
-import { stripAnsi } from '@/runner/run/live/format';
+import { stripAnsi } from '@/runner/run/live';
 
 describe('live renderer alignment (two-space indent)', () => {
   let dir: string;

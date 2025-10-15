@@ -14,8 +14,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Remove any residual direct createArchive/createArchiveDiff calls reachable at runtime and de‑duplicate stageImports usage.
 
 - Imports hygiene — add and adopt barrels
-  - Provide small barrels under src/runner/run/session that re‑export local helpers (ui‑queue, signals, scripts‑phase, prompt‑plan, cancel‑controller) to discourage deep internal imports.
-  - Replace deep paths in tests and code with '@/runner/run/live' and '@/runner/run/session'; run knip to ensure no orphaned deep paths remain.
+  - Provide small barrels under src/runner/run/session that re‑export local helpers (ui‑queue, signals, scripts‑phase, prompt‑plan, cancel‑controller) to discourage deep internal imports. [partially DONE — session barrel extended with invoke-archive]
+  - Replace deep paths in tests and code with '@/runner/run/live' and '@/runner/run/session' (begun: live-ui, archive-stage, live alignment test).
+  - Follow‑through: expand adoption across remaining modules and run knip to catch any orphaned deep imports.
 
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
@@ -167,3 +168,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Lint — escape “>” in TSDoc for archive row printable
   - Escaped greater‑than in src/runner/run/archive/printable.ts TSDoc list to satisfy tsdoc/syntax.
   - Keeps lint clean (no warnings) while preserving comment intent.
+
+- Imports hygiene — adopt barrels in code/tests (phase 1)
+  - Exported runArchivePhaseAndCollect from the session barrel.
+  - Switched live-ui and archive-stage to import from barrels; updated a live renderer test to use the live barrel.
+  - Next: broaden adoption and run knip to confirm no deep subpath stragglers.
