@@ -16,7 +16,7 @@ import {
   ensureNoReservedScriptKeys,
   type ScriptMap,
 } from '@/cli/config/schema';
-import { debugFallback } from '@/stan/util/debug';
+import { debugFallback } from '@/runner/util/debug';
 
 const formatZodError = (e: unknown): string =>
   e instanceof ZodError

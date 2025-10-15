@@ -1,6 +1,6 @@
 {
   "entry": ["src/**/index.ts"],
-  "ignore": ["src/cli/stan/stan.ts", ".stan/**"],
+  "ignore": [".stan/**"],
   "ignoreDependencies": ["@types/eslint-config-prettier", "cross-env"],
   "project": ["*/**", "!docs/**"],
   "rules": {

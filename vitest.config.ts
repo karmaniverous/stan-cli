@@ -32,12 +32,12 @@ export default defineConfig({
         '**/*.d.ts',
         // Exclude trivial barrels and types-only modules from coverage noise
         'src/index.ts',
-        'src/stan/index.ts',
-        'src/stan/config/index.ts',
-        'src/stan/run/index.ts',
-        'src/stan/patch/index.ts',
-        'src/stan/config/types.ts',
-        'src/stan/run/types.ts',
+        'src/runner/index.ts',
+        'src/runner/config/index.ts',
+        'src/runner/run/index.ts',
+        'src/runner/patch/index.ts',
+        'src/runner/config/types.ts',
+        'src/runner/run/types.ts',
       ],
     },
     reporters: [

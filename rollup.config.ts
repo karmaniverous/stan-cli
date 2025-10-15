@@ -104,8 +104,8 @@ export const buildLibrary = (dest: string): RollupOptions => ({
 const discoverCliEntries = (): string[] => {
   const candidates = [
     'src/cli/bin/stan.ts',     // preferred: single bootstrap
-    'src/cli/stan/stan.ts',    // legacy fallback (should not exist post‑cleanup)
-    'src/cli/stan/index.ts',   // last resort (library factory only)
+    'src/cli/stan.ts',    // legacy fallback (should not exist post‑cleanup)
+    'src/cli/index.ts',   // last resort (library factory only)
   ];
   const found = candidates.filter((p) => fs.existsSync(p));
   // Prefer a single CLI entry to avoid duplicate bundles.
