@@ -21,6 +21,7 @@ import { LiveUI, LoggerUI, type RunnerUI } from './ui';
  * @param selection - Explicit list of script keys (or `null` to run all).
  * @param mode - Execution mode (`concurrent` by default).
  * @param behaviorMaybe - Archive/combine/keep flags.
+ * @param promptChoice - System prompt choice (auto|local|core|<path>) to honor during the run.
  * @returns Absolute paths to created artifacts (script outputs and/or archives).
  */
 export const runSelected = async (
@@ -29,6 +30,7 @@ export const runSelected = async (
   selection: string[] | null = null,
   mode: ExecutionMode = 'concurrent',
   behaviorMaybe?: RunBehavior,
+  promptChoice?: string,
 ): Promise<string[]> => {
   const behavior: RunBehavior = behaviorMaybe ?? {};
 
@@ -69,6 +71,8 @@ export const runSelected = async (
       planBody,
       printPlan: !printedPlan && behavior.plan !== false,
       ui,
+      // Honor CLI/system choice for prompt resolution within the session.
+      promptChoice,
     });
     printedPlan = true;
 

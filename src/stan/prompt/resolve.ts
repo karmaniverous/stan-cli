@@ -1,9 +1,9 @@
 /** src/stan/prompt/resolve.ts
  * Resolve the packaged core prompt path with robust fallbacks.
  * Order:
- *   1) @karmaniverous/stan-core.getPackagedSystemPromptPath()
- *   2) createRequire(import.meta.url).resolve('@karmaniverous/stan-core') → walk up to module root → dist/stan.system.md
- *   3) createRequire(import.meta.url).resolve('@karmaniverous/stan-core/dist/stan.system.md')
+ *   1) \@karmaniverous/stan-core.getPackagedSystemPromptPath()
+ *   2) createRequire(import.meta.url).resolve('\@karmaniverous/stan-core') → walk up to module root → dist/stan.system.md
+ *   3) createRequire(import.meta.url).resolve('\@karmaniverous/stan-core/dist/stan.system.md')
  *
  * Note: CLI fallback (dist/stan.system.md within this package) is handled upstream as kind='path'
  * via getCliPackagedSystemPromptPath() and should not be returned from this resolver.

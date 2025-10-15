@@ -1,6 +1,6 @@
 # STAN Development Plan
 
-When updated: 2025-10-13 (UTC)
+When updated: 2025-10-15 (UTC)
 
 This plan tracks near‑term and follow‑through work for the stan‑cli package (CLI and runner). The stan‑core split is complete; engine work is tracked in the stan‑core repository.
 
@@ -85,4 +85,13 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
    - Adjust fallback test to a minimal NodeJS.Require; remove the lone any; escape @ in TSDoc to satisfy tsdoc/syntax.
 
  - Run — plan-only prints resolved prompt
-   - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails.
+   - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails.
+
+ - Run — wire --prompt end‑to‑end; add debug trace; fix TSDoc
+   - CLI → runner → session now pass the prompt choice so `-m core|local|<path>` is honored during the run,
+     not just for plan formatting.
+   - Planning phase resolves the prompt and injects `prompt:` into the plan; early resolution failure aborts
+     with a single concise error (no scripts/archives).
+   - Under `STAN_DEBUG=1`, exactly one diagnostic line is written to stderr before archiving:
+     `stan: debug: prompt: <source> <absolute-path>`.
+   - Resolved TSDoc warnings by escaping “@” sequences in comments.

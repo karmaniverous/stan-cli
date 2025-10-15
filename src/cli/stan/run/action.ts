@@ -278,6 +278,11 @@ export const registerRunAction = (
       derived.selection,
       derived.mode,
       derived.behavior,
+      // Ensure the session honors the user/config prompt choice:
+      //   - 'auto' (default) or an explicit 'local'|'core'|<path>
+      //   - The session will print a single debug line under STAN_DEBUG=1
+      //     identifying the chosen source/path.
+      derived.promptChoice,
     );
   });
 };
