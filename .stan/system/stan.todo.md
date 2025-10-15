@@ -72,41 +72,43 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
- - Tests — avoid package.json exports in fallback check
-   - Removed reliance on resolving '@karmaniverous/stan-core/package.json' (may be excluded by exports). Assert the resolved path exists, ends with 'dist/stan.system.md', and is either under the temp fake base or under the installed node_modules/@karmaniverous/stan-core tree.
+- Tests — avoid package.json exports in fallback check
+  - Removed reliance on resolving '@karmaniverous/stan-core/package.json' (may be excluded by exports). Assert the resolved path exists, ends with 'dist/stan.system.md', and is either under the temp fake base or under the installed node_modules/@karmaniverous/stan-core tree.
 
- - Tests — relax fallback strict equality to allow installed core path
-   - Accept either the temp fake prompt path or the real installed `@karmaniverous/stan-core/dist/stan.system.md` path. Still asserts the path suffix and existence to validate the fallback logic. Unblocks the unit test across dev setups.
+- Tests — relax fallback strict equality to allow installed core path
+  - Accept either the temp fake prompt path or the real installed `@karmaniverous/stan-core/dist/stan.system.md` path. Still asserts the path suffix and existence to validate the fallback logic. Unblocks the unit test across dev setups.
 
- - Cleanup — remove unused preflight module and test
-   - Deleted `src/runner/preflight.ts` and `src/runner/preflight.tty.test.ts`; callers no longer import it.
-   - Updated `src/runner/snap/selection-sync.test.ts` to stop mocking `@/runner/preflight`.
+- Cleanup — remove unused preflight module and test
+  - Deleted `src/runner/preflight.ts` and `src/runner/preflight.tty.test.ts`; callers no longer import it.
+  - Updated `src/runner/snap/selection-sync.test.ts` to stop mocking `@/runner/preflight`.
 
- - DX — add live UI barrel (internal convenience)
-   - Created `src/runner/run/live/index.ts` to re‑export commonly used live helpers for index‑based internal imports. No behavior changes.
+- DX — add live UI barrel (internal convenience)
+  - Created `src/runner/run/live/index.ts` to re‑export commonly used live helpers for index‑based internal imports. No behavior changes.
 
- - Tests — fix TS2741 in mocked createRequire.resolve and stabilize fallback path
-   - Provide a proper NodeJS.RequireResolve (with `.paths`) in the mocked createRequire().resolve to satisfy TS/Typedoc; stabilizes fallback behavior on Windows paths with spaces.
- - Prompt resolver follow‑through — stabilize tests & TSDoc
-   - Adjust fallback test to a minimal NodeJS.Require; remove the lone any; escape @ in TSDoc to satisfy tsdoc/syntax.
+- Tests — fix TS2741 in mocked createRequire.resolve and stabilize fallback path
+  - Provide a proper NodeJS.RequireResolve (with `.paths`) in the mocked createRequire().resolve to satisfy TS/Typedoc; stabilizes fallback behavior on Windows paths with spaces.
 
- - Runner (archiving) — DRY prompt-aware archive calls in session
-   - Introduced small helpers to run diff/full phases with UI start/end and options.
-   - Rewrote both ephemeral-prompt branches (include‑on‑change vs quiet‑diff) to use helpers.
-   - Preserved prompt injection/restore sequencing and include‑on‑change behavior; no functional changes.
+- Prompt resolver follow‑through — stabilize tests & TSDoc
+  - Adjust fallback test to a minimal NodeJS.Require; remove the lone any; escape @ in TSDoc to satisfy tsdoc/syntax.
 
- - Config — shared effective engine resolver (namespaced + legacy)
-   - Added `src/runner/config/effective.ts` to centralize ContextConfig resolution with a transitional legacy extractor and scoped debugFallback.
-   - Wired into `src/cli/run/action.ts` (label preserved: `run.action:engine-legacy`) and `src/runner/snap/context.ts` (`snap.context:legacy`).
-   - Behavior unchanged; simplifies future deprecation gating (`STAN_ACCEPT_LEGACY=1`).
+- Runner (archiving) — DRY prompt-aware archive calls in session
+  - Introduced small helpers to run diff/full phases with UI start/end and options.
+  - Rewrote both ephemeral-prompt branches (include‑on‑change vs quiet‑diff) to use helpers.
+  - Preserved prompt injection/restore sequencing and include‑on‑change behavior; no functional changes.
 
- - Run — plan-only prints resolved prompt
-   - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails.
- - Run — wire --prompt end‑to‑end; add debug trace; fix TSDoc
-   - CLI → runner → session now pass the prompt choice so `-m core|local|<path>` is honored during the run,
-     not just for plan formatting.
-   - Planning phase resolves the prompt and injects `prompt:` into the plan; early resolution failure aborts
-     with a single concise error (no scripts/archives).
-   - Under `STAN_DEBUG=1`, exactly one diagnostic line is written to stderr before archiving:
-     `stan: debug: prompt: <source> <absolute-path>`.
-   - Resolved TSDoc warnings by escaping “@” sequences in comments.
+- Config — shared effective engine resolver (namespaced + legacy)
+  - Added `src/runner/config/effective.ts` to centralize ContextConfig resolution with a transitional legacy extractor and scoped debugFallback.
+  - Wired into `src/cli/run/action.ts` (label preserved: `run.action:engine-legacy`) and `src/runner/snap/context.ts` (`snap.context:legacy`).
+  - Behavior unchanged; simplifies future deprecation gating (`STAN_ACCEPT_LEGACY=1`).
+
+- Run — plan-only prints resolved prompt
+  - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails.
+
+- Run — wire --prompt end‑to‑end; add debug trace; fix TSDoc
+  - CLI → runner → session now pass the prompt choice so `-m core|local|<path>` is honored during the run, not just for plan formatting.
+  - Planning phase resolves the prompt and injects `prompt:` into the plan; early resolution failure aborts with a single concise error (no scripts/archives).
+  - Under `STAN_DEBUG=1`, exactly one diagnostic line is written to stderr before archiving: `stan: debug: prompt: <source> <absolute-path>`.
+  - Resolved TSDoc warnings by escaping “@” sequences in comments.
+
+- Lint — remove unused variable in run.action
+  - Deleted `legacyWarned` local and its assignments from `src/cli/run/action.ts` (debugFallback messages unchanged).

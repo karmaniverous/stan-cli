@@ -26,7 +26,6 @@ export const registerRunAction = (
   getFlagPresence: () => FlagPresence,
 ): void => {
   cmd.action(async (options: Record<string, unknown>) => {
-    let legacyWarned = false;
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
       getFlagPresence();
     // Authoritative conflict handling: -S cannot be combined with -s/-x
@@ -60,7 +59,6 @@ export const registerRunAction = (
             'run.action:engine-legacy',
             `detected legacy root keys (no "stan-core") in ${pEarly.replace(/\\/g, '/')}`,
           );
-          legacyWarned = true;
         }
       }
     } catch {
