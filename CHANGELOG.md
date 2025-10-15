@@ -2,11 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.10.2](https://github.com/karmaniverous/stan-cli/compare/0.10.1...0.10.2)
+
+- updated stan [`c8a3c49`](https://github.com/karmaniverous/stan-cli/commit/c8a3c49861d103eafe9d2d4fd3cdade47c065c77)
+- chore: robust core prompt resolver + CLI fallback [`3d29166`](https://github.com/karmaniverous/stan-cli/commit/3d29166bbfc1e4df89e52033f16d745c3073fc98)
+- run: resolve prompt at plan; honor --prompt; add STAN_DEBUG trace [`48bc95a`](https://github.com/karmaniverous/stan-cli/commit/48bc95a7ef2b92814a35d12b1aeea2a0ff23f48f)
+
 #### [0.10.1](https://github.com/karmaniverous/stan-cli/compare/0.10.0...0.10.1)
+
+> 14 October 2025
 
 - ingest interop note [`1c3fea7`](https://github.com/karmaniverous/stan-cli/commit/1c3fea790359f494077b8df43f6c419ee9ce4fa9)
 - chore: ack core interop; plan prompt-resolution helper + tests [`0b565ff`](https://github.com/karmaniverous/stan-cli/commit/0b565ff04a2f2cbe68673dda6ce467728d6d83c6)
 - chore(todo): prune Completed (recent) to last items [`6846fa7`](https://github.com/karmaniverous/stan-cli/commit/6846fa7e1f37f7c2a202ba0173703d73c6c69325)
+- chore: release v0.10.1 [`3b38ace`](https://github.com/karmaniverous/stan-cli/commit/3b38ace36420a134c0acfd39de20d45b7b34f3cd)
 - test(resolve): avoid package.json exports in fallback assertion [`7f70946`](https://github.com/karmaniverous/stan-cli/commit/7f70946274968f2a5d2966eeaa28b9777b76241d)
 - test(resolve): accept installed core dist path in fallback assertion [`a92de6e`](https://github.com/karmaniverous/stan-cli/commit/a92de6ee9f79e0e4b8cb99909953c55a37d154c5)
 - fix(test): satisfy NodeJS.RequireResolve in fallback test [`2d67341`](https://github.com/karmaniverous/stan-cli/commit/2d673417225ae40b91b7255cd5db9e5c9e361632)
