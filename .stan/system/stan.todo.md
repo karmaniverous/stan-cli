@@ -23,6 +23,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
   - Cut next patch release once docs are updated.
+- Knip gating
+  - After the DRY sweep, run knip and make it part of CI to catch orphaned deep imports early (in addition to ad‑hoc pre‑release runs).
 
 - Deprecation staging for config ingestion
   - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
@@ -33,6 +35,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
   - Getting Started/CLI Usage: namespaced examples; note prompt flag and PATH augmentation (already covered).
   - Init help: mention migration and .bak/--dry-run.
+  - Contributor note: add a brief guideline on barrels and avoiding cycles
+    (do not import the session barrel from within session submodules; prefer local
+    relative imports when barrel usage induces cycles).
 
 - Silent fallback audit (narrowed to config/migration scope)
   - Ensure debugFallback is used on: legacy engine extraction; legacy CLI loader fallback; DEFAULT_STAN_PATH resolution.
@@ -41,6 +46,14 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Test follow‑through
   - Add small parity checks for include‑on‑change on Windows/POSIX (core|path sources).
   - Consider a quick unit around top‑level index exports to guard against accidental re‑introduction of barrel‑of‑barrel.
+  - Expand adoption of test‑support/run helpers (startRun/writeScript) across
+    repetitive runSelected suites to reduce duplication and improve maintainability.
+
+- CI speed
+  - Shorten durations/timeouts in the cancellation matrix to reduce wall clock while preserving coverage.
+
+- Build guard
+  - Add a CI check that fails on new circular dependencies (e.g., Rollup/TS plugin or a simple analyzer) to prevent regressions.
 
 ---
 
