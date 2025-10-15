@@ -17,15 +17,6 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Provide small barrels under src/runner/run/session that re‑export local helpers (ui‑queue, signals, scripts‑phase, prompt‑plan, cancel‑controller) to discourage deep internal imports.
   - Replace deep paths in tests and code with '@/runner/run/live' and '@/runner/run/session'; run knip to ensure no orphaned deep paths remain.
 
-- Tests — consolidate cancellation suites
-  - Merge cancel.parity/gate/schedule/sigint/key into one parameterized suite toggling:
-    - live vs no‑live;
-    - sequential vs concurrent;
-    - keypress vs SIGINT;
-    - archive on/off;
-    - hang grace options.
-  - Remove duplicated scaffolding; keep a single helper for spawning/ canceling runs and asserting archive/output presence.
-
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
   - Cut next patch release once docs are updated.
@@ -166,11 +157,13 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - CLI — centralize legacy engine detection notice
   - Added src/cli/config/legacy.ts with detectLegacyRootKeys/maybeDebugLegacy helpers.
-  - Replaced inline “no stan-core” checks in src/cli/run/options.ts (preAction) and
-    src/cli/run/action.ts with the shared helper (scope labels preserved:
-    run.action:engine-legacy). No behavior change; single source of truth for wording/logic.
+  - Replaced inline “no stan-core” checks in src/cli/run/options.ts (preAction) and src/cli/run/action.ts with the shared helper (scope labels preserved: run.action:engine-legacy). No behavior change; single source of truth for wording/logic.
 
 - Tests — fix keypress cancellation in matrix (TTY stdin)
   - RunnerControl attaches key handlers only when both stdout.isTTY and stdin.isTTY are true.
   - Updated src/runner/run/cancel.matrix.test.ts to set stdin.isTTY=true for keypress cases so ‘q’ cancels promptly and archives are skipped.
-  - Resolves intermittent archive presence in live+keypress scenarios.
+  - Resolves intermittent archive presence in live+keypress scenarios.
+
+- Lint — escape “>” in TSDoc for archive row printable
+  - Escaped greater‑than in src/runner/run/archive/printable.ts TSDoc list to satisfy tsdoc/syntax.
+  - Keeps lint clean (no warnings) while preserving comment intent.
