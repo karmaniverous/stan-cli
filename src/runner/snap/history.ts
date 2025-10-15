@@ -67,12 +67,12 @@ export const handleUndo = async (): Promise<void> => {
     return;
   }
   const next = await restoreEntryAt(st, st.index - 1, diffDir, snapPath).catch(
-    () => null,
+    (err) => {
+      console.error('stan: failed to restore snapshot', err);
+      return null;
+    },
   );
-  if (!next) {
-    console.error('stan: failed to restore snapshot', e);
-    return;
-  }
+  if (!next) return;
   await writeJson(statePath, st);
   const undos = st.index;
   const redos = st.entries.length - 1 - st.index;
@@ -96,12 +96,12 @@ export const handleRedo = async (): Promise<void> => {
     return;
   }
   const next = await restoreEntryAt(st, st.index + 1, diffDir, snapPath).catch(
-    () => null,
+    (err) => {
+      console.error('stan: failed to restore snapshot', err);
+      return null;
+    },
   );
-  if (!next) {
-    console.error('stan: failed to restore snapshot', e);
-    return;
-  }
+  if (!next) return;
   await writeJson(statePath, st);
   const undos = st.index;
   const redos = st.entries.length - 1 - st.index;
