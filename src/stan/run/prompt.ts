@@ -8,7 +8,10 @@ import path from 'node:path';
 import { CORE_VERSION } from '@karmaniverous/stan-core';
 
 // Robust core prompt resolution (engine helper + fallback for global CLI + nested core)
-import { resolveCorePromptPath } from '@/stan/prompt/resolve';
+import {
+  getCliPackagedSystemPromptPath,
+  resolveCorePromptPath,
+} from '@/stan/prompt/resolve';
 
 export type PromptChoice = string;
 
@@ -84,6 +87,19 @@ export const resolvePromptSource = (
         display: `@karmaniverous/stan-core@${CORE_VERSION}`,
         kind: 'core',
       };
+    }
+    // Last-ditch: use CLI's packaged prompt (treated as a plain 'path' source).
+    try {
+      const cliAbs = getCliPackagedSystemPromptPath();
+      if (cliAbs && existsSync(cliAbs)) {
+        return {
+          abs: cliAbs,
+          display: `${cliAbs.replace(/\\/g, '/')}`,
+          kind: 'path',
+        };
+      }
+    } catch {
+      /* ignore */
     }
     throw new Error(
       'unable to resolve system prompt (auto: local and core unavailable)',

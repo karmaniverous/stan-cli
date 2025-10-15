@@ -1,5 +1,4 @@
-// src/stan/run/session/index.ts
-/**
+/* src/stan/run/session/index.ts
  * One-shot run session (single attempt).
  * Orchestrates: plan print, UI wiring, cancellation/restart, scripts, archives.
  */
@@ -76,6 +75,21 @@ export const runSessionOnce = async (args: {
     const rp = resolvePromptOrThrow(cwd, config.stanPath, promptChoice);
     resolvedPromptDisplay = rp.display;
     resolvedPromptAbs = rp.abs;
+
+    // Minimal, non-noisy diagnostics: exactly one line under STAN_DEBUG=1.
+    try {
+      if (process.env.STAN_DEBUG === '1') {
+        // Prefer the kind returned by resolver; normalize slashes in the path for readability.
+        const srcKind =
+          (rp as unknown as { kind?: 'local' | 'core' | 'path' }).kind ??
+          'path';
+        const p = String(resolvedPromptAbs ?? '').replace(/\\/g, '/');
+        // stderr only; do not change normal output
+        console.error(`stan: debug: prompt: ${srcKind} ${p}`);
+      }
+    } catch {
+      /* ignore */
+    }
   } catch (e) {
     const msg =
       e instanceof Error ? e.message : typeof e === 'string' ? e : String(e);

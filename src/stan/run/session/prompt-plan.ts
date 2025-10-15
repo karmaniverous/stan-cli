@@ -11,12 +11,12 @@ export const resolvePromptOrThrow = (
   cwd: string,
   stanPath: string,
   promptChoice?: string,
-): { display: string; abs: string } => {
+): { display: string; abs: string; kind: 'local' | 'core' | 'path' } => {
   const choice = (promptChoice ?? 'auto').trim();
   const resolved = resolvePromptSource(cwd, stanPath, choice);
   const display =
     choice === 'auto' ? `auto → ${resolved.display}` : resolved.display;
-  return { display, abs: resolved.abs };
+  return { display, abs: resolved.abs, kind: resolved.kind };
 };
 
 /** Print the plan with a prompt: line injected (TTY-agnostic). */
