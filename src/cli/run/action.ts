@@ -8,6 +8,7 @@ import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 import YAML from 'yaml';
 
+import { runDefaults } from '@/cli/cli-utils';
 import { maybeDebugLegacy } from '@/cli/config/legacy';
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
@@ -115,14 +116,8 @@ export const registerRunAction = (
     const noPlanFlag = Boolean((options as { noPlan?: unknown }).noPlan);
 
     // Default print-plan behavior from config
-    let defaultPrintPlan = true;
-    try {
-      const cliCfg2 = loadCliConfigSync(runCwd);
-      const planMaybe = cliCfg2.cliDefaults?.run?.plan;
-      defaultPrintPlan = typeof planMaybe === 'boolean' ? planMaybe : true;
-    } catch {
-      /* keep built-in true */
-    }
+    // DRY: derive from runDefaults so runtime and help tagging share the same source.
+    const defaultPrintPlan = runDefaults(runCwd).plan;
 
     const noScripts = (options as { scripts?: unknown }).scripts === false;
     if (noScripts && derived.behavior.archive === false) {

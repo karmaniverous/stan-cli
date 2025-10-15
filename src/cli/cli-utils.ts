@@ -135,6 +135,7 @@ export const runDefaults = (
 ): {
   archive: boolean;
   combine: boolean;
+  plan: boolean;
   keep: boolean;
   sequential: boolean;
   live: boolean;
@@ -149,6 +150,7 @@ export const runDefaults = (
     keep?: boolean;
     sequential?: boolean;
     live?: boolean;
+    plan?: boolean;
     hangWarn?: number;
     hangKill?: number;
     hangKillGrace?: number;
@@ -175,9 +177,13 @@ export const runDefaults = (
     typeof runIn.prompt === 'string' && runIn.prompt.trim().length
       ? runIn.prompt.trim()
       : 'auto';
+  // Plan header default: true unless explicitly overridden in cliDefaults.run.plan
+  const plan = typeof runIn.plan === 'boolean' ? runIn.plan : true;
+
   return {
     archive: pickBool('archive'),
     combine: pickBool('combine'),
+    plan,
     keep: pickBool('keep'),
     sequential: pickBool('sequential'),
     live: pickBool('live'),
