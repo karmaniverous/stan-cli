@@ -132,5 +132,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Deleted `legacyWarned` local and its assignments from `src/cli/run/action.ts` (debugFallback messages unchanged).
 
 - Imports hygiene — session barrel + test adoption
-  - Re-exported common session helpers from `src/runner/run/session/index.ts`
-    and updated a test to import from the barrel (no behavior change).
+  - Re-exported common session helpers from `src/runner/run/session/index.ts` and updated a test to import from the barrel (no behavior change).
+
+- Runner — archive wiring (ephemeral path) uses archivePhase toggles
+  - Added selective phase controls to `archivePhase` (diff/full/both) with optional staging/cleanup flags.
+  - Replaced direct `createArchive*` calls in the ephemeral branches with `archivePhase` and removed duplicate staging/cleanup (no behavior change).

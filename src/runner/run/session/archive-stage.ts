@@ -3,15 +3,8 @@
  */
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
-import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
-
-import { stanDirs } from '@/runner/paths';
-import {
-  cleanupOutputsAfterCombine,
-  cleanupPatchDirAfterArchive,
-  stageImports,
-} from '@/runner/run/archive/util';
+import { archivePhase } from '@/runner/run/archive';
+import { stageImports } from '@/runner/run/archive/util';
 import { preparePromptForArchive } from '@/runner/run/prompt';
 import { runArchivePhaseAndCollect } from '@/runner/run/session/invoke-archive';
 import type { RunnerConfig } from '@/runner/run/types';
@@ -19,64 +12,6 @@ import type { RunBehavior } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
 import { readDocsMeta } from '@/runner/system/docs-meta';
 import { sha256File } from '@/runner/util/hash';
-
-/** Run the diff archive phase with UI integration; returns absolute diffPath. */
-const runDiffPhase = async (args: {
-  cwd: string;
-  config: ContextConfig;
-  includeOutputs: boolean;
-  ui: RunnerUI;
-}): Promise<string> => {
-  const { cwd, config, includeOutputs, ui } = args;
-  try {
-    ui.onArchiveStart('diff');
-  } catch {
-    /* ignore */
-  }
-  const started = Date.now();
-  const { diffPath } = await createArchiveDiff({
-    cwd,
-    stanPath: config.stanPath,
-    baseName: 'archive',
-    includes: config.includes ?? [],
-    excludes: config.excludes ?? [],
-    updateSnapshot: 'createIfMissing',
-    includeOutputDirInDiff: includeOutputs,
-  });
-  try {
-    ui.onArchiveEnd('diff', diffPath, cwd, started, Date.now());
-  } catch {
-    /* ignore */
-  }
-  return diffPath;
-};
-
-/** Run the full archive phase with UI integration; returns absolute archivePath. */
-const runFullPhase = async (args: {
-  cwd: string;
-  config: ContextConfig;
-  includeOutputs: boolean;
-  ui: RunnerUI;
-}): Promise<string> => {
-  const { cwd, config, includeOutputs, ui } = args;
-  try {
-    ui.onArchiveStart('full');
-  } catch {
-    /* ignore */
-  }
-  const started = Date.now();
-  const archivePath = await createArchive(cwd, config.stanPath, {
-    includeOutputDir: includeOutputs,
-    includes: config.includes ?? [],
-    excludes: config.excludes ?? [],
-  });
-  try {
-    ui.onArchiveEnd('full', archivePath, cwd, started, Date.now());
-  } catch {
-    /* ignore */
-  }
-  return archivePath;
-};
 
 export const runArchiveStage = async (args: {
   cwd: string;
@@ -89,8 +24,7 @@ export const runArchiveStage = async (args: {
   const { cwd, config, behavior, ui, promptAbs, promptDisplay } = args;
   const created: string[] = [];
 
-  const dirs = stanDirs(cwd, config.stanPath);
-  const systemAbs = dirs.systemFile;
+  const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
 
   // Ephemeral = non-local source file (e.g., core/path) provided for this run
   const isEphemeralPrompt =
@@ -129,7 +63,8 @@ export const runArchiveStage = async (args: {
       includeOnChange = true;
     }
 
-    // Stage imports so both diff and full see the same staged context
+    // Stage imports once so both diff and full see the same staged context.
+    // Subsequent archivePhase calls skip staging and defer cleanup to the full pass.
     await stageImports(cwd, config.stanPath, config.imports);
 
     if (includeOnChange) {
@@ -167,33 +102,82 @@ export const runArchiveStage = async (args: {
 
       try {
         // DIFF (prompt materialized)
-        const diffPath = await runDiffPhase({
-          cwd,
-          config,
-          includeOutputs: Boolean(behavior.combine),
-          ui,
-        });
-        created.push(diffPath);
-        // FULL (prompt still materialized)
-        const archivePath = await runFullPhase({
-          cwd,
-          config,
-          includeOutputs: Boolean(behavior.combine),
-          ui,
-        });
-        created.push(archivePath);
+        const diffOut = await archivePhase(
+          {
+            cwd,
+            config: {
+              stanPath: config.stanPath,
+              includes: config.includes ?? [],
+              excludes: config.excludes ?? [],
+              imports: config.imports,
+            },
+            includeOutputs: Boolean(behavior.combine),
+          },
+          {
+            silent: true,
+            which: 'diff',
+            stage: false, // staged above
+            cleanup: false, // defer to FULL
+            progress: {
+              start: (k) => ui.onArchiveStart(k),
+              done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
+            },
+          },
+        );
+        if (diffOut.diffPath) created.push(diffOut.diffPath);
+
+        // FULL (prompt still materialized; perform cleanup)
+        const fullOut = await archivePhase(
+          {
+            cwd,
+            config: {
+              stanPath: config.stanPath,
+              includes: config.includes ?? [],
+              excludes: config.excludes ?? [],
+              imports: config.imports,
+            },
+            includeOutputs: Boolean(behavior.combine),
+          },
+          {
+            silent: true,
+            which: 'full',
+            stage: false,
+            cleanup: true,
+            progress: {
+              start: (k) => ui.onArchiveStart(k),
+              done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
+            },
+          },
+        );
+        if (fullOut.archivePath) created.push(fullOut.archivePath);
       } finally {
         await promptRestore?.().catch(() => void 0);
       }
     } else {
       // Quiet-diff: DIFF first (no injection), then inject for FULL and restore
-      const diffPath = await runDiffPhase({
-        cwd,
-        config,
-        includeOutputs: Boolean(behavior.combine),
-        ui,
-      });
-      created.push(diffPath);
+      const diffOut = await archivePhase(
+        {
+          cwd,
+          config: {
+            stanPath: config.stanPath,
+            includes: config.includes ?? [],
+            excludes: config.excludes ?? [],
+            imports: config.imports,
+          },
+          includeOutputs: Boolean(behavior.combine),
+        },
+        {
+          silent: true,
+          which: 'diff',
+          stage: false, // staged above
+          cleanup: false, // defer to FULL
+          progress: {
+            start: (k) => ui.onArchiveStart(k),
+            done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
+          },
+        },
+      );
+      if (diffOut.diffPath) created.push(diffOut.diffPath);
 
       let promptRestore: null | (() => Promise<void>) = null;
       try {
@@ -209,22 +193,34 @@ export const runArchiveStage = async (args: {
           );
           promptRestore = restore;
         }
-        const archivePath = await runFullPhase({
-          cwd,
-          config,
-          includeOutputs: Boolean(behavior.combine),
-          ui,
-        });
-        created.push(archivePath);
+        const fullOut = await archivePhase(
+          {
+            cwd,
+            config: {
+              stanPath: config.stanPath,
+              includes: config.includes ?? [],
+              excludes: config.excludes ?? [],
+              imports: config.imports,
+            },
+            includeOutputs: Boolean(behavior.combine),
+          },
+          {
+            silent: true,
+            which: 'full',
+            stage: false,
+            cleanup: true,
+            progress: {
+              start: (k) => ui.onArchiveStart(k),
+              done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
+            },
+          },
+        );
+        if (fullOut.archivePath) created.push(fullOut.archivePath);
       } finally {
         await promptRestore?.().catch(() => void 0);
       }
     }
 
-    if (behavior.combine) {
-      await cleanupOutputsAfterCombine(dirs.output);
-    }
-    await cleanupPatchDirAfterArchive(cwd, config.stanPath);
     return { created, cancelled: false };
   }
 
@@ -257,11 +253,17 @@ export const runArchiveStage = async (args: {
   try {
     const { archivePath, diffPath } = await runArchivePhaseAndCollect({
       cwd,
-      config,
+      config: {
+        stanPath: config.stanPath,
+        includes: config.includes ?? [],
+        excludes: config.excludes ?? [],
+        imports: config.imports,
+      },
       includeOutputs: Boolean(behavior.combine),
       ui,
     });
-    created.push(archivePath, diffPath);
+    if (archivePath) created.push(archivePath);
+    if (diffPath) created.push(diffPath);
   } finally {
     await promptRestore?.().catch(() => void 0);
   }
