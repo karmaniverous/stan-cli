@@ -17,6 +17,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Provide small barrels under src/runner/run/session that re‑export local helpers (ui‑queue, signals, scripts‑phase, prompt‑plan, cancel‑controller) to discourage deep internal imports. [partially DONE — session barrel extended with invoke-archive]
   - Replace deep paths in tests and code with '@/runner/run/live' and '@/runner/run/session' (begun: live-ui, archive-stage, live alignment test).
   - Follow‑through: expand adoption across remaining modules and run knip to catch any orphaned deep imports.
+    - Guideline: avoid importing the session barrel from within session submodules when it induces cycles; prefer local relative imports (e.g., archive-stage -> ./invoke-archive).
+    - Cycle fix pending verification in build output.
 
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
@@ -177,3 +179,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Imports hygiene — adopt barrels in code/tests (phase 2)
   - session/index: import { ProcessSupervisor, liveTrace } from live barrel.
   - progress sinks/model: import ProgressRenderer, computeCounts, deriveMetaFromKey from live barrel.
+
+- Build — break session/archive-stage circular dependency
+  - Changed archive-stage to import runArchivePhaseAndCollect from './invoke-archive' instead of the session barrel.
+  - Prevents the cycle: session/index -> archive-stage -> session/index.
+  - Keep barrel adoption elsewhere; use local imports within the session subtree when needed to avoid cycles.
