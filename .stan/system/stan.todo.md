@@ -158,3 +158,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Added shared helpers under src/test-support/run.ts (writeScript, startRun) for reuse by runSelected tests.
   - Removed redundant per-suite vi.mock('tar', ...) from run tests; rely on the global mock (src/test/mock-tar.ts) with STAN_TEST_REAL_TAR=1 escape hatch preserved.
   - Net: simpler matrix coverage (live/no-live × sequential/concurrent × keypress/SIGINT × archive on/off) with fewer LOC and less drift.
+
+- Tests — fix keypress cancellation in matrix (TTY stdin)
+  - RunnerControl attaches key handlers only when both stdout.isTTY and stdin.isTTY are true.
+  - Updated src/runner/run/cancel.matrix.test.ts to set stdin.isTTY=true for keypress cases so ‘q’ cancels promptly and archives are skipped.
+  - Resolves intermittent archive presence in live+keypress scenarios.

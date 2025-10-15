@@ -103,6 +103,15 @@ describe('cancellation matrix (live/no-live × mode × signal × archive)', () =
       } catch {
         // ignore
       }
+      // RunnerControl attaches only when BOTH stdout and stdin are TTY.
+      // Ensure stdin is TTY for keypress-triggered cancellation.
+      if (c.cancel === 'keypress') {
+        const stdinLike = process.stdin as unknown as NodeJS.ReadStream & {
+          isTTY?: boolean;
+          setRawMode?: (v: boolean) => void;
+        };
+        stdinLike.isTTY = true;
+      }
 
       // Minimal script set:
       // - sequential: include quick, wait, after (assert 'after' never runs)
