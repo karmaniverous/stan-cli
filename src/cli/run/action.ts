@@ -3,18 +3,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
-import {
-  DEFAULT_STAN_PATH,
-  findConfigPathSync,
-  loadConfig,
-  resolveStanPathSync,
-} from '@karmaniverous/stan-core';
+import { findConfigPathSync } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 import YAML from 'yaml';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
+import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runSelected } from '@/runner/run';
@@ -46,7 +42,8 @@ export const registerRunAction = (
     const cfgPath = findConfigPathSync(cwdInitial);
     const runCwd = cfgPath ? path.dirname(cfgPath) : cwdInitial;
 
-    // Early legacy-engine notice (debug-only): emit once per action if config lacks "stan-core".
+    // Early legacy-engine notice remains in options preAction hook; here we resolve
+    // effective engine context (namespaced or legacy) for the runner.
     try {
       const pEarly = findConfigPathSync(runCwd);
       if (pEarly) {
@@ -69,123 +66,10 @@ export const registerRunAction = (
     } catch {
       /* ignore */
     }
-    let config: ContextConfig;
-    try {
-      config = await loadConfig(runCwd);
-    } catch (err) {
-      // Debug-only notice: config load diversion from happy path
-      {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : typeof err === 'string'
-              ? err
-              : String(err);
-        debugFallback('run.action:loadConfig', msg);
-      }
-      const p = findConfigPathSync(runCwd);
-      if (p) {
-        try {
-          const raw = await readFile(p, 'utf8');
-          const rootUnknown: unknown = p.endsWith('.json')
-            ? (JSON.parse(raw) as unknown)
-            : (YAML.parse(raw) as unknown);
-          const obj =
-            rootUnknown && typeof rootUnknown === 'object'
-              ? (rootUnknown as Record<string, unknown>)
-              : {};
-
-          const stanCore =
-            obj['stan-core'] && typeof obj['stan-core'] === 'object'
-              ? (obj['stan-core'] as Record<string, unknown>)
-              : null;
-
-          if (!stanCore) {
-            const stanPathRaw = obj['stanPath'];
-            const includesRaw = obj['includes'];
-            const excludesRaw = obj['excludes'];
-            const importsRaw = obj['imports'];
-
-            const stanPath =
-              typeof stanPathRaw === 'string' && stanPathRaw.trim().length
-                ? stanPathRaw
-                : (() => {
-                    try {
-                      return resolveStanPathSync(runCwd);
-                    } catch {
-                      debugFallback(
-                        'run.action:stanPath',
-                        'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
-                      );
-                      return DEFAULT_STAN_PATH;
-                    }
-                  })();
-
-            const includes = Array.isArray(includesRaw)
-              ? includesRaw.filter((s): s is string => typeof s === 'string')
-              : [];
-            const excludes = Array.isArray(excludesRaw)
-              ? excludesRaw.filter((s): s is string => typeof s === 'string')
-              : [];
-            const imports =
-              importsRaw && typeof importsRaw === 'object'
-                ? (importsRaw as Record<string, string | string[]>)
-                : undefined;
-
-            config = { stanPath, includes, excludes, imports } as ContextConfig;
-            if (!legacyWarned) {
-              debugFallback(
-                'run.action:engine-legacy',
-                `synthesized engine config from legacy root keys in ${p.replace(/\\/g, '/')}`,
-              );
-              legacyWarned = true;
-            }
-          } else {
-            // Fallback (rare): use stan-core.stanPath if present; otherwise default
-            const sp = stanCore['stanPath'];
-            const stanPath =
-              typeof sp === 'string' && sp.trim().length
-                ? sp
-                : (() => {
-                    try {
-                      return resolveStanPathSync(runCwd);
-                    } catch {
-                      debugFallback(
-                        'run.action:stanPath',
-                        'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
-                      );
-                      return DEFAULT_STAN_PATH;
-                    }
-                  })();
-            config = { stanPath } as ContextConfig;
-          }
-        } catch {
-          // Ultimate fallback: stanPath only
-          let stanPathFallback = DEFAULT_STAN_PATH;
-          try {
-            stanPathFallback = resolveStanPathSync(runCwd);
-          } catch {
-            debugFallback(
-              'run.action:stanPath',
-              'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
-            );
-          }
-          config = { stanPath: stanPathFallback } as ContextConfig;
-        }
-      } else {
-        // No config file found — default stanPath
-        let stanPathFallback = DEFAULT_STAN_PATH;
-        try {
-          stanPathFallback = resolveStanPathSync(runCwd);
-        } catch {
-          debugFallback(
-            'run.action:stanPath',
-            'resolveStanPathSync failed; using DEFAULT_STAN_PATH',
-          );
-        }
-        config = { stanPath: stanPathFallback } as ContextConfig;
-      }
-    }
+    const config: ContextConfig = await resolveEffectiveEngineConfig(
+      runCwd,
+      'run.action:engine-legacy',
+    );
 
     // CLI defaults and scripts for runner config/derivation
     const cliCfg = loadCliConfigSync(runCwd);

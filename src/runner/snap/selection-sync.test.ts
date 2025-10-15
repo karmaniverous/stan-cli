@@ -15,12 +15,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { handleSnap } from '@/runner/snap/snap-run';
 
-// Silence preflight messaging in tests
-vi.mock('@/runner/preflight', () => ({
-  __esModule: true,
-  preflightDocsAndVersion: async () => {},
-}));
-
 // Capture tar.create calls to assert diff contents — define at module scope so
 // the hoisted vi.mock factory can access it reliably.
 // (Global tar mock is installed by setup; no per-test re-mock here.)

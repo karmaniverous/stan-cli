@@ -20,6 +20,64 @@ import type { RunnerUI } from '@/runner/run/ui';
 import { readDocsMeta } from '@/runner/system/docs-meta';
 import { sha256File } from '@/runner/util/hash';
 
+/** Run the diff archive phase with UI integration; returns absolute diffPath. */
+const runDiffPhase = async (args: {
+  cwd: string;
+  config: ContextConfig;
+  includeOutputs: boolean;
+  ui: RunnerUI;
+}): Promise<string> => {
+  const { cwd, config, includeOutputs, ui } = args;
+  try {
+    ui.onArchiveStart('diff');
+  } catch {
+    /* ignore */
+  }
+  const started = Date.now();
+  const { diffPath } = await createArchiveDiff({
+    cwd,
+    stanPath: config.stanPath,
+    baseName: 'archive',
+    includes: config.includes ?? [],
+    excludes: config.excludes ?? [],
+    updateSnapshot: 'createIfMissing',
+    includeOutputDirInDiff: includeOutputs,
+  });
+  try {
+    ui.onArchiveEnd('diff', diffPath, cwd, started, Date.now());
+  } catch {
+    /* ignore */
+  }
+  return diffPath;
+};
+
+/** Run the full archive phase with UI integration; returns absolute archivePath. */
+const runFullPhase = async (args: {
+  cwd: string;
+  config: ContextConfig;
+  includeOutputs: boolean;
+  ui: RunnerUI;
+}): Promise<string> => {
+  const { cwd, config, includeOutputs, ui } = args;
+  try {
+    ui.onArchiveStart('full');
+  } catch {
+    /* ignore */
+  }
+  const started = Date.now();
+  const archivePath = await createArchive(cwd, config.stanPath, {
+    includeOutputDir: includeOutputs,
+    includes: config.includes ?? [],
+    excludes: config.excludes ?? [],
+  });
+  try {
+    ui.onArchiveEnd('full', archivePath, cwd, started, Date.now());
+  } catch {
+    /* ignore */
+  }
+  return archivePath;
+};
+
 export const runArchiveStage = async (args: {
   cwd: string;
   config: RunnerConfig;
@@ -108,72 +166,33 @@ export const runArchiveStage = async (args: {
       }
 
       try {
-        // DIFF (with prompt materialized)
-        try {
-          ui.onArchiveStart('diff');
-        } catch {
-          /* ignore */
-        }
-        const startedDiff = Date.now();
-        const { diffPath } = await createArchiveDiff({
+        // DIFF (prompt materialized)
+        const diffPath = await runDiffPhase({
           cwd,
-          stanPath: config.stanPath,
-          baseName: 'archive',
-          includes: (config as ContextConfig).includes ?? [],
-          excludes: (config as ContextConfig).excludes ?? [],
-          updateSnapshot: 'createIfMissing',
-          includeOutputDirInDiff: Boolean(behavior.combine),
+          config,
+          includeOutputs: Boolean(behavior.combine),
+          ui,
         });
-        try {
-          ui.onArchiveEnd('diff', diffPath, cwd, startedDiff, Date.now());
-        } catch {
-          /* ignore */
-        }
         created.push(diffPath);
-
-        // FULL (still materialized)
-        try {
-          ui.onArchiveStart('full');
-        } catch {
-          /* ignore */
-        }
-        const startedFull = Date.now();
-        const archivePath = await createArchive(cwd, config.stanPath, {
-          includeOutputDir: Boolean(behavior.combine),
-          includes: (config as ContextConfig).includes ?? [],
-          excludes: (config as ContextConfig).excludes ?? [],
+        // FULL (prompt still materialized)
+        const archivePath = await runFullPhase({
+          cwd,
+          config,
+          includeOutputs: Boolean(behavior.combine),
+          ui,
         });
-        try {
-          ui.onArchiveEnd('full', archivePath, cwd, startedFull, Date.now());
-        } catch {
-          /* ignore */
-        }
         created.push(archivePath);
       } finally {
         await promptRestore?.().catch(() => void 0);
       }
     } else {
       // Quiet-diff: DIFF first (no injection), then inject for FULL and restore
-      try {
-        ui.onArchiveStart('diff');
-      } catch {
-        /* ignore */
-      }
-      const startedDiff = Date.now();
-      const { diffPath } = await createArchiveDiff({
+      const diffPath = await runDiffPhase({
         cwd,
-        stanPath: config.stanPath,
-        baseName: 'archive',
-        includes: (config as ContextConfig).includes ?? [],
-        excludes: (config as ContextConfig).excludes ?? [],
-        updateSnapshot: 'createIfMissing',
-        includeOutputDirInDiff: Boolean(behavior.combine),
+        config,
+        includeOutputs: Boolean(behavior.combine),
+        ui,
       });
-      try {
-        ui.onArchiveEnd('diff', diffPath, cwd, startedDiff, Date.now());
-      } catch {
-        /* ignore */
-      }
       created.push(diffPath);
 
       let promptRestore: null | (() => Promise<void>) = null;
@@ -190,22 +209,12 @@ export const runArchiveStage = async (args: {
           );
           promptRestore = restore;
         }
-        try {
-          ui.onArchiveStart('full');
-        } catch {
-          /* ignore */
-        }
-        const startedFull = Date.now();
-        const archivePath = await createArchive(cwd, config.stanPath, {
-          includeOutputDir: Boolean(behavior.combine),
-          includes: (config as ContextConfig).includes ?? [],
-          excludes: (config as ContextConfig).excludes ?? [],
+        const archivePath = await runFullPhase({
+          cwd,
+          config,
+          includeOutputs: Boolean(behavior.combine),
+          ui,
         });
-        try {
-          ui.onArchiveEnd('full', archivePath, cwd, startedFull, Date.now());
-        } catch {
-          /* ignore */
-        }
         created.push(archivePath);
       } finally {
         await promptRestore?.().catch(() => void 0);
