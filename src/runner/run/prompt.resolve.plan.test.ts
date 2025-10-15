@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
-import { resolvePromptOrThrow } from '@/runner/run/session/prompt-plan';
+import { resolvePromptOrThrow } from '@/runner/run/session';
 
 describe('plan header prompt line (core fallback when no local)', () => {
   beforeEach(() => {

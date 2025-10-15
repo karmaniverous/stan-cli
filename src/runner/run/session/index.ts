@@ -263,3 +263,12 @@ export const runSessionOnce = async (args: {
   detachSignals();
   return { created, cancelled: false, restartRequested: false };
 };
+
+// Barrel re-exports for internal consumers/tests (avoid deep subpath imports).
+export { CancelController } from './cancel-controller';
+export { ensureOrderFile } from './order-file';
+export { printPlanWithPrompt, resolvePromptOrThrow } from './prompt-plan';
+export { runScriptsPhase } from './scripts-phase';
+export { attachSessionSignals } from './signals';
+export type { SessionArgs, SessionOutcome } from './types';
+export { queueUiRows } from './ui-queue';

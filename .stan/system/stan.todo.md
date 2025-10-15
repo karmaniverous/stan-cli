@@ -8,6 +8,24 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Next up (priority order)
 
+- Archive wiring — unify phase helper
+  - Prefer archivePhase/runArchivePhaseAndCollect as the single implementation entry.
+  - Add phase toggles so the ephemeral quiet‑diff path can run diff‑only (no prompt injection) then full‑only (with injection) without calling createArchive\*/createArchiveDiff directly.
+  - Remove any residual direct createArchive/createArchiveDiff calls reachable at runtime and de‑duplicate stageImports usage.
+
+- Imports hygiene — add and adopt barrels
+  - Provide small barrels under src/runner/run/session that re‑export local helpers (ui‑queue, signals, scripts‑phase, prompt‑plan, cancel‑controller) to discourage deep internal imports.
+  - Replace deep paths in tests and code with '@/runner/run/live' and '@/runner/run/session'; run knip to ensure no orphaned deep paths remain.
+
+- Tests — consolidate cancellation suites
+  - Merge cancel.parity/gate/schedule/sigint/key into one parameterized suite toggling:
+    - live vs no‑live;
+    - sequential vs concurrent;
+    - keypress vs SIGINT;
+    - archive on/off;
+    - hang grace options.
+  - Remove duplicated scaffolding; keep a single helper for spawning/ canceling runs and asserting archive/output presence.
+
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel removal, dynamic TTY detection, PATH augmentation note.
   - Cut next patch release once docs are updated.
@@ -112,3 +130,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Lint — remove unused variable in run.action
   - Deleted `legacyWarned` local and its assignments from `src/cli/run/action.ts` (debugFallback messages unchanged).
+
+- Imports hygiene — session barrel + test adoption
+  - Re-exported common session helpers from `src/runner/run/session/index.ts`
+    and updated a test to import from the barrel (no behavior change).
