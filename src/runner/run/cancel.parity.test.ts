@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
-import { rmDirWithRetries } from '@/test/helpers';
+import { rmDirWithRetries } from '@/test';
 
 // Lightweight tar mock
 vi.mock('tar', () => ({

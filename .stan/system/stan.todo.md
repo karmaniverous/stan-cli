@@ -139,3 +139,11 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Replaced direct `createArchive*` calls in the ephemeral branches with `archivePhase` and removed duplicate staging/cleanup (no behavior change).
 
   - Follow‑up: updated `runArchivePhaseAndCollect` to request `which: 'both'` and return optional paths to match `archivePhase`’s signature, resolving TS2322 without changing behavior.
+
+- Tests — support: move common helper to @/test
+  - Moved rmDirWithRetries from @/test.ts to @/test/index.ts.
+  - Updated test imports to use "@/test"; behavior unchanged.
+
+- Tests — support: remove legacy helper and fix path header
+  - Deleted src/test/helpers.ts (superseded by @/test barrel).
+  - Corrected header comment in src/test/index.ts to match its filepath.

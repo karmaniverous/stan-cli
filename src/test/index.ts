@@ -1,10 +1,10 @@
-// src/test/helpers.ts
+// src/test/index.ts
 import { rm } from 'node:fs/promises';
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Remove a directory with a short series of retries to mitigate transient
++ * Remove a directory with a short series of retries to mitigate transient
  * EBUSY/ENOTEMPTY on Windows test runners.
  *
  * @param dir - Absolute path to remove.

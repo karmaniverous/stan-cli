@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
 // Windows teardown helper
-import { rmDirWithRetries } from '@/test/helpers';
+import { rmDirWithRetries } from '@/test';
 
 // Make tar lightweight
 vi.mock('tar', () => ({

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { rmDirWithRetries } from '@/test/helpers';
+import { rmDirWithRetries } from '@/test';
 // Mock diff.writeArchiveSnapshot in the module actually used by handleSnap
 vi.mock('@/runner/diff', () => ({
   __esModule: true,
