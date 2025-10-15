@@ -1,9 +1,8 @@
 /* src/stan/run/progress/sinks/logger.ts */
 
-import { label } from '@/runner/run/labels';
+import { presentRow } from '@/runner/run/presentation/row';
 import type { ProgressModel } from '@/runner/run/progress/model';
 import type { RowMeta, ScriptState } from '@/runner/run/types';
-import { relOut } from '@/runner/run/util/path';
 
 export class LoggerSink {
   private unsubscribe?: () => void;
@@ -26,32 +25,32 @@ export class LoggerSink {
 
   private onUpdate(meta: RowMeta, state: ScriptState): void {
     const item = meta.item;
-    const kind =
+    const printable =
       meta.type === 'archive'
         ? item === 'diff'
           ? 'archive (diff)'
           : 'archive'
         : item;
+    const mapped = presentRow({ state, cwd: this.cwd });
     if (state.kind === 'waiting') {
-      console.log(`stan: ${label('waiting')} "${kind}"`);
+      console.log(`stan: ${mapped.label} "${printable}"`);
       return;
     }
     if (state.kind === 'running') {
-      console.log(`stan: ${label('run')} "${kind}"`);
+      console.log(`stan: ${mapped.label} "${printable}"`);
       return;
     }
     if (state.kind === 'warn') {
-      const rel = relOut(this.cwd, state.outputPath);
-      console.log(`stan: ${label('warn')} "${kind}" -> ${rel}`);
+      console.log(`stan: ${mapped.label} "${printable}" -> ${mapped.output}`);
       return;
     }
     if (state.kind === 'done' || state.kind === 'error') {
       const ok = state.kind === 'done';
-      const rel = relOut(this.cwd, state.outputPath);
-      const lbl = ok ? label('ok') : label('error');
+      const lbl = mapped.label;
+      // Preserve explicit non-zero exit tail behavior (unchanged)
       const tail = ok ? '' : ' (exit 1)';
-      const out = rel || '';
-      console.log(`stan: ${lbl} "${kind}" -> ${out}${tail}`);
+      const out = mapped.output || '';
+      console.log(`stan: ${lbl} "${printable}" -> ${out}${tail}`);
       return;
     }
     // other states (quiet, stalled, cancelled, killed, timedout) are only rendered in live mode

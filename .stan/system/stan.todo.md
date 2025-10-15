@@ -146,4 +146,9 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - Tests — support: remove legacy helper and fix path header
   - Deleted src/test/helpers.ts (superseded by @/test barrel).
-  - Corrected header comment in src/test/index.ts to match its filepath.
+  - Corrected header comment in src/test/index.ts to match its filepath.
+
+- Live/log UI — DRY row → presentation mapping
+  - Introduced src/runner/run/presentation/row.ts to centralize status/relOut/time mapping.
+  - Live table composer and Logger sink now consume this mapper; no behavior changes.
+  - Preserves existing messages, labels, and tests; reduces duplication.
