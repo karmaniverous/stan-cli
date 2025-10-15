@@ -35,9 +35,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
   - Getting Started/CLI Usage: namespaced examples; note prompt flag and PATH augmentation (already covered).
   - Init help: mention migration and .bak/--dry-run.
-  - Contributor note: add a brief guideline on barrels and avoiding cycles
-    (do not import the session barrel from within session submodules; prefer local
-    relative imports when barrel usage induces cycles).
+  - Contributor note: add a brief guideline on barrels and avoiding cycles (do not import the session barrel from within session submodules; prefer local relative imports when barrel usage induces cycles).
 
 - Silent fallback audit (narrowed to config/migration scope)
   - Ensure debugFallback is used on: legacy engine extraction; legacy CLI loader fallback; DEFAULT_STAN_PATH resolution.
@@ -46,8 +44,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Test follow‑through
   - Add small parity checks for include‑on‑change on Windows/POSIX (core|path sources).
   - Consider a quick unit around top‑level index exports to guard against accidental re‑introduction of barrel‑of‑barrel.
-  - Expand adoption of test‑support/run helpers (startRun/writeScript) across
-    repetitive runSelected suites to reduce duplication and improve maintainability.
+  - Expand adoption of test‑support/run helpers (startRun/writeScript) across repetitive runSelected suites to reduce duplication and improve maintainability.
 
 - CI speed
   - Shorten durations/timeouts in the cancellation matrix to reduce wall clock while preserving coverage.
@@ -97,116 +94,47 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 ## Completed (recent)
 
-- Tests — avoid package.json exports in fallback check
-  - Removed reliance on resolving '@karmaniverous/stan-core/package.json' (may be excluded by exports). Assert the resolved path exists, ends with 'dist/stan.system.md', and is either under the temp fake base or under the installed node_modules/@karmaniverous/stan-core tree.
-
-- Tests — relax fallback strict equality to allow installed core path
-  - Accept either the temp fake prompt path or the real installed `@karmaniverous/stan-core/dist/stan.system.md` path. Still asserts the path suffix and existence to validate the fallback logic. Unblocks the unit test across dev setups.
-
-- Cleanup — remove unused preflight module and test
-  - Deleted `src/runner/preflight.ts` and `src/runner/preflight.tty.test.ts`; callers no longer import it.
-  - Updated `src/runner/snap/selection-sync.test.ts` to stop mocking `@/runner/preflight`.
-
-- DX — add live UI barrel (internal convenience)
-  - Created `src/runner/run/live/index.ts` to re‑export commonly used live helpers for index‑based internal imports. No behavior changes.
-
-- Tests — fix TS2741 in mocked createRequire.resolve and stabilize fallback path
-  - Provide a proper NodeJS.RequireResolve (with `.paths`) in the mocked createRequire().resolve to satisfy TS/Typedoc; stabilizes fallback behavior on Windows paths with spaces.
-
-- Prompt resolver follow‑through — stabilize tests & TSDoc
-  - Adjust fallback test to a minimal NodeJS.Require; remove the lone any; escape @ in TSDoc to satisfy tsdoc/syntax.
-
-- Runner (archiving) — DRY prompt-aware archive calls in session
-  - Introduced small helpers to run diff/full phases with UI start/end and options.
-  - Rewrote both ephemeral-prompt branches (include‑on‑change vs quiet‑diff) to use helpers.
-  - Preserved prompt injection/restore sequencing and include‑on‑change behavior; no functional changes.
-
-- Config — shared effective engine resolver (namespaced + legacy)
-  - Added `src/runner/config/effective.ts` to centralize ContextConfig resolution with a transitional legacy extractor and scoped debugFallback.
-  - Wired into `src/cli/run/action.ts` (label preserved: `run.action:engine-legacy`) and `src/runner/snap/context.ts` (`snap.context:legacy`).
-  - Behavior unchanged; simplifies future deprecation gating (`STAN_ACCEPT_LEGACY=1`).
-
-- Run — plan-only prints resolved prompt
-  - Updated `stan run -p` path to resolve the system prompt and include a `prompt:` line in the printed plan (core/local/path/auto). Falls back to the base plan if resolution fails.
-
-- Run — wire --prompt end‑to‑end; add debug trace; fix TSDoc
-  - CLI → runner → session now pass the prompt choice so `-m core|local|<path>` is honored during the run, not just for plan formatting.
-  - Planning phase resolves the prompt and injects `prompt:` into the plan; early resolution failure aborts with a single concise error (no scripts/archives).
-  - Under `STAN_DEBUG=1`, exactly one diagnostic line is written to stderr before archiving: `stan: debug: prompt: <source> <absolute-path>`.
-  - Resolved TSDoc warnings by escaping “@” sequences in comments.
-
-- Lint — remove unused variable in run.action
-  - Deleted `legacyWarned` local and its assignments from `src/cli/run/action.ts` (debugFallback messages unchanged).
-
-- Imports hygiene — session barrel + test adoption
-  - Re-exported common session helpers from `src/runner/run/session/index.ts` and updated a test to import from the barrel (no behavior change).
-
-- Runner — archive wiring (ephemeral path) uses archivePhase toggles
-  - Added selective phase controls to `archivePhase` (diff/full/both) with optional staging/cleanup flags.
-  - Replaced direct `createArchive*` calls in the ephemeral branches with `archivePhase` and removed duplicate staging/cleanup (no behavior change).
-
-  - Follow‑up: updated `runArchivePhaseAndCollect` to request `which: 'both'` and return optional paths to match `archivePhase`’s signature, resolving TS2322 without changing behavior.
-
 - Tests — support: move common helper to @/test
-  - Moved rmDirWithRetries from @/test.ts to @/test/index.ts.
-  - Updated test imports to use "@/test"; behavior unchanged.
+  - Moved rmDirWithRetries to @/test/index.ts; updated imports; behavior unchanged.
 
 - Tests — support: remove legacy helper and fix path header
-  - Deleted src/test/helpers.ts (superseded by @/test barrel).
-  - Corrected header comment in src/test/index.ts to match its filepath.
+  - Deleted src/test/helpers.ts; corrected header in src/test/index.ts.
 
 - Live/log UI — DRY row → presentation mapping
-  - Introduced src/runner/run/presentation/row.ts to centralize status/relOut/time mapping.
-  - Live table composer and Logger sink now consume this mapper; no behavior changes.
-  - Preserves existing messages, labels, and tests; reduces duplication.
+  - Added src/runner/run/presentation/row.ts; adopted by live composer and logger sink.
 
 - Tests — consolidate cancellation suites and dedupe tar mocks
-  - Replaced five separate cancellation suites with a single matrix-driven test: src/runner/run/cancel.matrix.test.ts.
-  - Added shared helpers under src/test-support/run.ts (writeScript, startRun) for reuse by runSelected tests.
-  - Removed redundant per-suite vi.mock('tar', ...) from run tests; rely on the global mock (src/test/mock-tar.ts) with STAN_TEST_REAL_TAR=1 escape hatch preserved.
-  - Net: simpler matrix coverage (live/no-live × sequential/concurrent × keypress/SIGINT × archive on/off) with fewer LOC and less drift.
+  - Introduced matrix-driven cancellation suite; shared helpers in src/test-support/run.ts; rely on global tar mock.
 
 - Runner — reuse a single printable helper for archive rows
-  - Added src/runner/run/archive/printable.ts with archivePrintable('full'|'diff').
-  - Logger sink now uses this helper to render "archive"/"archive (diff)".
-  - Small DRY to prevent future drift; no behavior change in tests.
+  - Added archivePrintable helper; adopted by logger sink.
 
 - CLI — centralize legacy engine detection notice
-  - Added src/cli/config/legacy.ts with detectLegacyRootKeys/maybeDebugLegacy helpers.
-  - Replaced inline “no stan-core” checks in src/cli/run/options.ts (preAction) and src/cli/run/action.ts with the shared helper (scope labels preserved: run.action:engine-legacy). No behavior change; single source of truth for wording/logic.
+  - Shared detectLegacyRootKeys/maybeDebugLegacy; consistent notice in options/action.
 
 - Tests — fix keypress cancellation in matrix (TTY stdin)
-  - RunnerControl attaches key handlers only when both stdout.isTTY and stdin.isTTY are true.
-  - Updated src/runner/run/cancel.matrix.test.ts to set stdin.isTTY=true for keypress cases so ‘q’ cancels promptly and archives are skipped.
-  - Resolves intermittent archive presence in live+keypress scenarios.
+  - Ensure stdin.isTTY=true for keypress tests; archives correctly skipped on cancel.
 
 - Lint — escape “>” in TSDoc for archive row printable
-  - Escaped greater‑than in src/runner/run/archive/printable.ts TSDoc list to satisfy tsdoc/syntax.
-  - Keeps lint clean (no warnings) while preserving comment intent.
+  - Escaped to satisfy tsdoc/syntax; keeps lint clean.
 
-- Imports hygiene — adopt barrels in code/tests (phase 1)
-  - Exported runArchivePhaseAndCollect from the session barrel.
-  - Switched live-ui and archive-stage to import from barrels; updated a live renderer test to use the live barrel.
-  - Next: broaden adoption and run knip to confirm no deep subpath stragglers.
-
-- Imports hygiene — adopt barrels in code/tests (phase 2)
-  - session/index: import { ProcessSupervisor, liveTrace } from live barrel.
-  - progress sinks/model: import ProgressRenderer, computeCounts, deriveMetaFromKey from live barrel.
+- Imports hygiene — adopt barrels in code/tests (phase 1 & 2)
+  - Adopt live/session barrels broadly; avoid deep imports; keep cycles out of session subtree.
 
 - Build — break session/archive-stage circular dependency
-  - Changed archive-stage to import runArchivePhaseAndCollect from './invoke-archive' instead of the session barrel.
-  - Prevents the cycle: session/index -> archive-stage -> session/index.
-  - Keep barrel adoption elsewhere; use local imports within the session subtree when needed to avoid cycles.
+  - Local import in archive-stage to avoid session barrel cycle.
 
 - DRY — remove duplicate plan test
-  - Deleted src/runner/run.plan.test.ts (duplicate of src/runner/run/plan.test.ts).
+  - Deleted redundant test (plan.test.ts kept).
 
 - DRY — unify archive invocation
-  - Removed src/runner/run/session/invoke-archive.ts and called archivePhase('both') directly from archive-stage with progress hooks.
-  - Barrel stopped re-exporting the deleted helper.
+  - Use archivePhase('both') directly; removed invoke-archive helper.
 
 - DRY — snap history
-  - Extracted restoreEntryAt helper used by undo/redo/set to eliminate repeated read/write/index update logic.
+  - Extracted restoreEntryAt; removed duplication in undo/redo/set flows.
 
 - DRY — non‑TTY hang messages
-  - Centralized stalled/timeout/killed console messages in src/runner/run/logs.ts and adopted in scripts-phase.
+  - Centralized stall/timeout/kill logs in run/logs.ts and adopted in scripts-phase.
+
+- DRY — archive-stage helpers
+  - Factored baseCfg/progress hooks; reduced repetition across archivePhase calls.

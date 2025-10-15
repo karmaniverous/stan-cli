@@ -25,6 +25,19 @@ export const runArchiveStage = async (args: {
 
   const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
 
+  // DRY: shared engine config and UI progress hooks for archivePhase calls.
+  const baseCfg = {
+    stanPath: config.stanPath,
+    includes: config.includes ?? [],
+    excludes: config.excludes ?? [],
+    imports: config.imports,
+  };
+  const progress = {
+    start: (k: 'full' | 'diff') => ui.onArchiveStart(k),
+    done: (k: 'full' | 'diff', p: string, s: number, e: number) =>
+      ui.onArchiveEnd(k, p, cwd, s, e),
+  } as const;
+
   // Ephemeral = non-local source file (e.g., core/path) provided for this run
   const isEphemeralPrompt =
     Boolean(promptAbs) &&
@@ -104,12 +117,7 @@ export const runArchiveStage = async (args: {
         const diffOut = await archivePhase(
           {
             cwd,
-            config: {
-              stanPath: config.stanPath,
-              includes: config.includes ?? [],
-              excludes: config.excludes ?? [],
-              imports: config.imports,
-            },
+            config: baseCfg,
             includeOutputs: Boolean(behavior.combine),
           },
           {
@@ -117,10 +125,7 @@ export const runArchiveStage = async (args: {
             which: 'diff',
             stage: false, // staged above
             cleanup: false, // defer to FULL
-            progress: {
-              start: (k) => ui.onArchiveStart(k),
-              done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
-            },
+            progress,
           },
         );
         if (diffOut.diffPath) created.push(diffOut.diffPath);
@@ -129,12 +134,7 @@ export const runArchiveStage = async (args: {
         const fullOut = await archivePhase(
           {
             cwd,
-            config: {
-              stanPath: config.stanPath,
-              includes: config.includes ?? [],
-              excludes: config.excludes ?? [],
-              imports: config.imports,
-            },
+            config: baseCfg,
             includeOutputs: Boolean(behavior.combine),
           },
           {
@@ -142,10 +142,7 @@ export const runArchiveStage = async (args: {
             which: 'full',
             stage: false,
             cleanup: true,
-            progress: {
-              start: (k) => ui.onArchiveStart(k),
-              done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
-            },
+            progress,
           },
         );
         if (fullOut.archivePath) created.push(fullOut.archivePath);
@@ -157,12 +154,7 @@ export const runArchiveStage = async (args: {
       const diffOut = await archivePhase(
         {
           cwd,
-          config: {
-            stanPath: config.stanPath,
-            includes: config.includes ?? [],
-            excludes: config.excludes ?? [],
-            imports: config.imports,
-          },
+          config: baseCfg,
           includeOutputs: Boolean(behavior.combine),
         },
         {
@@ -170,10 +162,7 @@ export const runArchiveStage = async (args: {
           which: 'diff',
           stage: false, // staged above
           cleanup: false, // defer to FULL
-          progress: {
-            start: (k) => ui.onArchiveStart(k),
-            done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
-          },
+          progress,
         },
       );
       if (diffOut.diffPath) created.push(diffOut.diffPath);
@@ -195,12 +184,7 @@ export const runArchiveStage = async (args: {
         const fullOut = await archivePhase(
           {
             cwd,
-            config: {
-              stanPath: config.stanPath,
-              includes: config.includes ?? [],
-              excludes: config.excludes ?? [],
-              imports: config.imports,
-            },
+            config: baseCfg,
             includeOutputs: Boolean(behavior.combine),
           },
           {
@@ -208,10 +192,7 @@ export const runArchiveStage = async (args: {
             which: 'full',
             stage: false,
             cleanup: true,
-            progress: {
-              start: (k) => ui.onArchiveStart(k),
-              done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
-            },
+            progress,
           },
         );
         if (fullOut.archivePath) created.push(fullOut.archivePath);
@@ -253,21 +234,13 @@ export const runArchiveStage = async (args: {
     const { archivePath, diffPath } = await archivePhase(
       {
         cwd,
-        config: {
-          stanPath: config.stanPath,
-          includes: config.includes ?? [],
-          excludes: config.excludes ?? [],
-          imports: config.imports,
-        },
+        config: baseCfg,
         includeOutputs: Boolean(behavior.combine),
       },
       {
         silent: true,
         which: 'both',
-        progress: {
-          start: (k) => ui.onArchiveStart(k),
-          done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
-        },
+        progress,
       },
     );
     if (archivePath) created.push(archivePath);
