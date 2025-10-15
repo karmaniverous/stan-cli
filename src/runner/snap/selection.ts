@@ -21,5 +21,3 @@ export const readSelection = async (
     };
   }
 };
-
-export default readSelection;

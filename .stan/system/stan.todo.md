@@ -147,4 +147,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - DRY — snap selection helper
   - Added `src/runner/snap/selection.ts` with `readSelection(cwd) → { stanPath, includes, excludes }`.
   - Refactored `snap-run` to reuse `readSelection` when writing snapshots.
-  - Tests unaffected; behavior unchanged.
+  - Tests unaffected; behavior unchanged.
+
+- Hygiene — knip duplicate export
+  - Removed default export from `src/runner/snap/selection.ts` to avoid duplicate exports
+    (keep named `readSelection` only). 
