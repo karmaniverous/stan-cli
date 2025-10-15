@@ -172,4 +172,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Imports hygiene — adopt barrels in code/tests (phase 1)
   - Exported runArchivePhaseAndCollect from the session barrel.
   - Switched live-ui and archive-stage to import from barrels; updated a live renderer test to use the live barrel.
-  - Next: broaden adoption and run knip to confirm no deep subpath stragglers.
+  - Next: broaden adoption and run knip to confirm no deep subpath stragglers.
+
+- Imports hygiene — adopt barrels in code/tests (phase 2)
+  - session/index: import { ProcessSupervisor, liveTrace } from live barrel.
+  - progress sinks/model: import ProgressRenderer, computeCounts, deriveMetaFromKey from live barrel.

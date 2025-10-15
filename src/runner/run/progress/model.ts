@@ -2,7 +2,7 @@
  * A tiny evented model for run progress. Sinks (live/logger) subscribe to updates.
  */
 
-import { computeCounts, deriveMetaFromKey } from '@/runner/run/live/util';
+import { computeCounts, deriveMetaFromKey } from '@/runner/run/live';
 import type { RowMeta, ScriptState } from '@/runner/run/types';
 
 type Row = { meta: RowMeta; state: ScriptState };

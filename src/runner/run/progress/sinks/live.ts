@@ -1,5 +1,5 @@
 /* src/stan/run/progress/sinks/live.ts */
-import { ProgressRenderer } from '@/runner/run/live/renderer';
+import { ProgressRenderer } from '@/runner/run/live';
 import type { ProgressModel } from '@/runner/run/progress/model';
 import type { RowMeta, ScriptState } from '@/runner/run/types';
 

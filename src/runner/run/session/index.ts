@@ -4,8 +4,7 @@
  */
 import { resolve as resolvePath } from 'node:path';
 
-import { ProcessSupervisor } from '@/runner/run/live/supervisor';
-import { liveTrace } from '@/runner/run/live/trace';
+import { liveTrace, ProcessSupervisor } from '@/runner/run/live';
 import { runArchiveStage } from '@/runner/run/session/archive-stage';
 import { ensureOrderFile } from '@/runner/run/session/order-file';
 import {
