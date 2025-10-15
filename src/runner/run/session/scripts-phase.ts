@@ -1,6 +1,11 @@
 // src/stan/run/session/scripts-phase.ts
 import { runScripts } from '@/runner/run/exec';
 import type { ProcessSupervisor } from '@/runner/run/live/supervisor';
+import {
+  logKilledNoLive,
+  logStalledNoLive,
+  logTimeoutNoLive,
+} from '@/runner/run/logs';
 import type { RunnerConfig } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
 
@@ -73,35 +78,19 @@ export const runScriptsPhase = async (args: {
       onHangWarn: (key, seconds) => {
         if (!isActive(epoch)) return;
         if (!liveEnabled) {
-          try {
-            console.log(
-              `stan: ⏱ stalled "${key}" after ${seconds}s of inactivity`,
-            );
-          } catch {
-            /* ignore */
-          }
+          logStalledNoLive(key, seconds);
         }
       },
       onHangTimeout: (key, seconds) => {
         if (!isActive(epoch)) return;
         if (!liveEnabled) {
-          try {
-            console.log(
-              `stan: ⏱ timeout "${key}" after ${seconds}s; sending SIGTERM`,
-            );
-          } catch {
-            /* ignore */
-          }
+          logTimeoutNoLive(key, seconds);
         }
       },
       onHangKilled: (key, grace) => {
         if (!isActive(epoch)) return;
         if (!liveEnabled) {
-          try {
-            console.log(`stan: ◼ killed "${key}" after ${grace}s grace`);
-          } catch {
-            /* ignore */
-          }
+          logKilledNoLive(key, grace);
         }
       },
     },

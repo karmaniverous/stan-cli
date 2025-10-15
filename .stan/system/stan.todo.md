@@ -197,3 +197,16 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Changed archive-stage to import runArchivePhaseAndCollect from './invoke-archive' instead of the session barrel.
   - Prevents the cycle: session/index -> archive-stage -> session/index.
   - Keep barrel adoption elsewhere; use local imports within the session subtree when needed to avoid cycles.
+
+- DRY — remove duplicate plan test
+  - Deleted src/runner/run.plan.test.ts (duplicate of src/runner/run/plan.test.ts).
+
+- DRY — unify archive invocation
+  - Removed src/runner/run/session/invoke-archive.ts and called archivePhase('both') directly from archive-stage with progress hooks.
+  - Barrel stopped re-exporting the deleted helper.
+
+- DRY — snap history
+  - Extracted restoreEntryAt helper used by undo/redo/set to eliminate repeated read/write/index update logic.
+
+- DRY — non‑TTY hang messages
+  - Centralized stalled/timeout/killed console messages in src/runner/run/logs.ts and adopted in scripts-phase.

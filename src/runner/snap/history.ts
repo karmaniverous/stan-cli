@@ -22,6 +22,22 @@ const getStatePaths = (cwd: string, stanPath: string) => {
   return { diffDir, statePath, snapPath };
 };
 
+/** Restore the snapshot for a target index and update the in-memory state. */
+const restoreEntryAt = async (
+  st: SnapState,
+  nextIndex: number,
+  diffDir: string,
+  snapPath: string,
+): Promise<{ st: SnapState; ts: string } | null> => {
+  if (nextIndex < 0 || nextIndex >= st.entries.length) return null;
+  const entry = st.entries[nextIndex];
+  const snapAbs = within(diffDir, entry.snapshot);
+  const body = await readFile(snapAbs, 'utf8');
+  await writeFile(snapPath, body, 'utf8');
+  st.index = nextIndex;
+  return { st, ts: entry.ts };
+};
+
 const ensureState = async (
   statePath: string,
   maxUndos: number,
@@ -50,22 +66,18 @@ export const handleUndo = async (): Promise<void> => {
     console.log('stan: nothing to undo');
     return;
   }
-  const nextIndex = st.index - 1;
-  const entry = st.entries[nextIndex];
-  const snapAbs = within(diffDir, entry.snapshot);
-  try {
-    const body = await readFile(snapAbs, 'utf8');
-    await writeFile(snapPath, body, 'utf8');
-  } catch (e) {
+  const next = await restoreEntryAt(st, st.index - 1, diffDir, snapPath).catch(
+    () => null,
+  );
+  if (!next) {
     console.error('stan: failed to restore snapshot', e);
     return;
   }
-  st.index = nextIndex;
   await writeJson(statePath, st);
   const undos = st.index;
   const redos = st.entries.length - 1 - st.index;
   console.log(
-    `stan: undo -> ${entry.ts} (undos left ${undos.toString()}, redos left ${redos.toString()})`,
+    `stan: undo -> ${next.ts} (undos left ${undos.toString()}, redos left ${redos.toString()})`,
   );
 };
 
@@ -83,22 +95,18 @@ export const handleRedo = async (): Promise<void> => {
     console.log('stan: nothing to redo');
     return;
   }
-  const nextIndex = st.index + 1;
-  const entry = st.entries[nextIndex];
-  const snapAbs = within(diffDir, entry.snapshot);
-  try {
-    const body = await readFile(snapAbs, 'utf8');
-    await writeFile(snapPath, body, 'utf8');
-  } catch (e) {
+  const next = await restoreEntryAt(st, st.index + 1, diffDir, snapPath).catch(
+    () => null,
+  );
+  if (!next) {
     console.error('stan: failed to restore snapshot', e);
     return;
   }
-  st.index = nextIndex;
   await writeJson(statePath, st);
   const undos = st.index;
   const redos = st.entries.length - 1 - st.index;
   console.log(
-    `stan: redo -> ${entry.ts} (undos left ${undos.toString()}, redos left ${redos.toString()})`,
+    `stan: redo -> ${next.ts} (undos left ${undos.toString()}, redos left ${redos.toString()})`,
   );
 };
 
@@ -124,16 +132,15 @@ export const handleSet = async (indexArg: string): Promise<void> => {
     console.error('stan: index out of range');
     return;
   }
-  const entry = st.entries[idx];
-  const snapAbs = within(diffDir, entry.snapshot);
-  const body = await readFile(snapAbs, 'utf8');
-  await writeFile(snapPath, body, 'utf8');
-  st.index = idx;
+  const next = await restoreEntryAt(st, idx, diffDir, snapPath).catch(
+    () => null,
+  );
+  if (!next) return;
   await writeJson(statePath, st);
   const undos = st.index;
   const redos = st.entries.length - 1 - st.index;
   console.log(
-    `stan: set -> ${entry.ts} (undos left ${undos.toString()}, redos left ${redos.toString()})`,
+    `stan: set -> ${next.ts} (undos left ${undos.toString()}, redos left ${redos.toString()})`,
   );
 };
 

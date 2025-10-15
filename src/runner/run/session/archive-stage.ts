@@ -12,8 +12,6 @@ import type { RunnerUI } from '@/runner/run/ui';
 import { readDocsMeta } from '@/runner/system/docs-meta';
 import { sha256File } from '@/runner/util/hash';
 
-import { runArchivePhaseAndCollect } from './invoke-archive';
-
 export const runArchiveStage = async (args: {
   cwd: string;
   config: RunnerConfig;
@@ -252,17 +250,26 @@ export const runArchiveStage = async (args: {
   }
 
   try {
-    const { archivePath, diffPath } = await runArchivePhaseAndCollect({
-      cwd,
-      config: {
-        stanPath: config.stanPath,
-        includes: config.includes ?? [],
-        excludes: config.excludes ?? [],
-        imports: config.imports,
+    const { archivePath, diffPath } = await archivePhase(
+      {
+        cwd,
+        config: {
+          stanPath: config.stanPath,
+          includes: config.includes ?? [],
+          excludes: config.excludes ?? [],
+          imports: config.imports,
+        },
+        includeOutputs: Boolean(behavior.combine),
       },
-      includeOutputs: Boolean(behavior.combine),
-      ui,
-    });
+      {
+        silent: true,
+        which: 'both',
+        progress: {
+          start: (k) => ui.onArchiveStart(k),
+          done: (k, p, s, e) => ui.onArchiveEnd(k, p, cwd, s, e),
+        },
+      },
+    );
     if (archivePath) created.push(archivePath);
     if (diffPath) created.push(diffPath);
   } finally {
