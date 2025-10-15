@@ -9,12 +9,13 @@ export const runArchivePhaseAndCollect = async (args: {
   config: ContextConfig;
   includeOutputs: boolean;
   ui: RunnerUI;
-}): Promise<{ archivePath: string; diffPath: string }> => {
+}): Promise<{ archivePath?: string; diffPath?: string }> => {
   const { cwd, config, includeOutputs, ui } = args;
   const { archivePath, diffPath } = await archivePhase(
     { cwd, config, includeOutputs },
     {
       silent: true,
+      which: 'both',
       progress: {
         start: (kind) => ui.onArchiveStart(kind),
         done: (kind, pathAbs, startedAt, endedAt) =>

@@ -137,3 +137,5 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Runner — archive wiring (ephemeral path) uses archivePhase toggles
   - Added selective phase controls to `archivePhase` (diff/full/both) with optional staging/cleanup flags.
   - Replaced direct `createArchive*` calls in the ephemeral branches with `archivePhase` and removed duplicate staging/cleanup (no behavior change).
+
+  - Follow‑up: updated `runArchivePhaseAndCollect` to request `which: 'both'` and return optional paths to match `archivePhase`’s signature, resolving TS2322 without changing behavior.
