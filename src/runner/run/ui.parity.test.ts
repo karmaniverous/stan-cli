@@ -8,16 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
 
-// Lightweight tar mock to keep runs deterministic
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
 const readUtf8 = (p: string) => readFile(p, 'utf8');
 
 describe('UI parity (live vs no-live): artifacts are identical', () => {

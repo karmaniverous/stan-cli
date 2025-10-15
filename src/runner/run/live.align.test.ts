@@ -8,16 +8,6 @@ import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
 import { stripAnsi } from '@/runner/run/live/format';
 
-// Mock tar to keep runs light-weight
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
 describe('live renderer alignment (two-space indent)', () => {
   let dir: string;
   const ttyBackup = (process.stdout as unknown as { isTTY?: boolean }).isTTY;

@@ -9,15 +9,6 @@ import type { RunnerConfig } from '@/runner/run';
 
 import { runSelected } from './run';
 
-// Ensure tar writing is mocked to avoid heavy operations
-vi.mock('tar', () => ({
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'DUMMY_TAR\n', 'utf8');
-  },
-}));
-
 describe('runSelected archive/combine/keep behavior', () => {
   let dir: string;
 

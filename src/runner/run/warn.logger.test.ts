@@ -7,16 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
 
-// Keep tar lightweight (avoid real archiving)
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
 describe('warn status (logger UI)', () => {
   let dir: string;
   const envBackup = { ...process.env };

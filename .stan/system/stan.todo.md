@@ -151,4 +151,10 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 - Live/log UI — DRY row → presentation mapping
   - Introduced src/runner/run/presentation/row.ts to centralize status/relOut/time mapping.
   - Live table composer and Logger sink now consume this mapper; no behavior changes.
-  - Preserves existing messages, labels, and tests; reduces duplication.
+  - Preserves existing messages, labels, and tests; reduces duplication.
+
+- Tests — consolidate cancellation suites and dedupe tar mocks
+  - Replaced five separate cancellation suites with a single matrix-driven test: src/runner/run/cancel.matrix.test.ts.
+  - Added shared helpers under src/test-support/run.ts (writeScript, startRun) for reuse by runSelected tests.
+  - Removed redundant per-suite vi.mock('tar', ...) from run tests; rely on the global mock (src/test/mock-tar.ts) with STAN_TEST_REAL_TAR=1 escape hatch preserved.
+  - Net: simpler matrix coverage (live/no-live × sequential/concurrent × keypress/SIGINT × archive on/off) with fewer LOC and less drift.

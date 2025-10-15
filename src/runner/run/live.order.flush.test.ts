@@ -7,16 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
 
-// Mock tar to avoid heavy operations and ensure archives are written deterministically.
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
 describe('live renderer (order + final-frame flush)', () => {
   let dir: string;
   const ttyBackup = (process.stdout as unknown as { isTTY?: boolean }).isTTY;
