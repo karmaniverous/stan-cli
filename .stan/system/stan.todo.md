@@ -159,6 +159,12 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Removed redundant per-suite vi.mock('tar', ...) from run tests; rely on the global mock (src/test/mock-tar.ts) with STAN_TEST_REAL_TAR=1 escape hatch preserved.
   - Net: simpler matrix coverage (live/no-live × sequential/concurrent × keypress/SIGINT × archive on/off) with fewer LOC and less drift.
 
+- CLI — centralize legacy engine detection notice
+  - Added src/cli/config/legacy.ts with detectLegacyRootKeys/maybeDebugLegacy helpers.
+  - Replaced inline “no stan-core” checks in src/cli/run/options.ts (preAction) and
+    src/cli/run/action.ts with the shared helper (scope labels preserved:
+    run.action:engine-legacy). No behavior change; single source of truth for wording/logic.
+
 - Tests — fix keypress cancellation in matrix (TTY stdin)
   - RunnerControl attaches key handlers only when both stdout.isTTY and stdin.isTTY are true.
   - Updated src/runner/run/cancel.matrix.test.ts to set stdin.isTTY=true for keypress cases so ‘q’ cancels promptly and archives are skipped.

@@ -4,8 +4,8 @@ import { findConfigPathSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 import YAML from 'yaml';
 
+import { maybeDebugLegacy } from '@/cli/config/legacy';
 import { renderAvailableScriptsHelp } from '@/runner/help';
-import { debugFallback } from '@/runner/util/debug';
 
 import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
 
@@ -181,16 +181,7 @@ export const registerRunOptions = (
       const rootUnknown: unknown = p.endsWith('.json')
         ? (JSON.parse(raw) as unknown)
         : (YAML.parse(raw) as unknown);
-      const root =
-        rootUnknown && typeof rootUnknown === 'object'
-          ? (rootUnknown as Record<string, unknown>)
-          : {};
-      if (!Object.prototype.hasOwnProperty.call(root, 'stan-core')) {
-        debugFallback(
-          'run.action:engine-legacy',
-          `detected legacy root keys (no "stan-core") in ${p.replace(/\\/g, '/')}`,
-        );
-      }
+      maybeDebugLegacy('run.action:engine-legacy', p, rootUnknown);
     } catch {
       /* ignore */
     }

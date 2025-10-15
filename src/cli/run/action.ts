@@ -8,6 +8,7 @@ import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 import YAML from 'yaml';
 
+import { maybeDebugLegacy } from '@/cli/config/legacy';
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
 import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
@@ -16,7 +17,6 @@ import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
-import { debugFallback } from '@/runner/util/debug';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
@@ -50,16 +50,7 @@ export const registerRunAction = (
         const rootUnknownEarly: unknown = pEarly.endsWith('.json')
           ? (JSON.parse(rawEarly) as unknown)
           : (YAML.parse(rawEarly) as unknown);
-        const rootEarly =
-          rootUnknownEarly && typeof rootUnknownEarly === 'object'
-            ? (rootUnknownEarly as Record<string, unknown>)
-            : {};
-        if (!Object.prototype.hasOwnProperty.call(rootEarly, 'stan-core')) {
-          debugFallback(
-            'run.action:engine-legacy',
-            `detected legacy root keys (no "stan-core") in ${pEarly.replace(/\\/g, '/')}`,
-          );
-        }
+        maybeDebugLegacy('run.action:engine-legacy', pEarly, rootUnknownEarly);
       }
     } catch {
       /* ignore */
