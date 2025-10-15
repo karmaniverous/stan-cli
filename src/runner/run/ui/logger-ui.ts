@@ -4,6 +4,13 @@ import { ProgressModel } from '@/runner/run/progress/model';
 import { LoggerSink } from '@/runner/run/progress/sinks/logger';
 import { relOut } from '@/runner/run/util/path';
 
+import {
+  endArchive,
+  endScript,
+  queueScript,
+  startArchive,
+  startScript,
+} from './lifecycle';
 import type { ArchiveKind, RunnerUI } from './types';
 
 export class LoggerUI implements RunnerUI {
@@ -19,18 +26,10 @@ export class LoggerUI implements RunnerUI {
     console.log(planBody);
   }
   onScriptQueued(key: string): void {
-    this.model.update(
-      `script:${key}`,
-      { kind: 'waiting' },
-      { type: 'script', item: key },
-    );
+    queueScript(this.model, key);
   }
   onScriptStart(key: string): void {
-    this.model.update(
-      `script:${key}`,
-      { kind: 'running', startedAt: Date.now() },
-      { type: 'script', item: key },
-    );
+    startScript(this.model, key);
   }
   onScriptEnd(
     key: string,
@@ -42,33 +41,18 @@ export class LoggerUI implements RunnerUI {
     status?: 'ok' | 'warn' | 'error',
   ): void {
     const rel = relOut(cwd, outAbs);
-    const st =
-      status === 'error'
-        ? ({ kind: 'error', durationMs: 0, outputPath: rel } as const)
-        : status === 'warn'
-          ? ({ kind: 'warn', durationMs: 0, outputPath: rel } as const)
-          : ({ kind: 'done', durationMs: 0, outputPath: rel } as const);
-    this.model.update(`script:${key}`, st, { type: 'script', item: key });
+    // Logger parity: no duration; exitCode considered via status mapping.
+    endScript(this.model, key, rel, undefined, undefined, undefined, status);
   }
   onArchiveQueued(): void {
     // logger mode renders per-event lines only
   }
   onArchiveStart(kind: ArchiveKind): void {
-    const item = kind === 'full' ? 'full' : 'diff';
-    this.model.update(
-      `archive:${item}`,
-      { kind: 'running', startedAt: Date.now() },
-      { type: 'archive', item },
-    );
+    startArchive(this.model, kind);
   }
   onArchiveEnd(kind: ArchiveKind, outAbs: string, cwd: string): void {
     const rel = relOut(cwd, outAbs);
-    const item = kind === 'full' ? 'full' : 'diff';
-    this.model.update(
-      `archive:${item}`,
-      { kind: 'done', durationMs: 0, outputPath: rel },
-      { type: 'archive', item },
-    );
+    endArchive(this.model, kind, rel);
   }
   onCancelled(): void {}
   installCancellation(): void {}

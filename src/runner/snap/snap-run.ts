@@ -1,7 +1,7 @@
 /* src/stan/snap/snap-run.ts
  * Snapshot capture operation with optional stash.
  */
-import { loadConfig, writeArchiveSnapshot } from '@karmaniverous/stan-core';
+import { writeArchiveSnapshot } from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
 import { resolvePromptSource } from '@/runner/run/prompt';
@@ -12,6 +12,7 @@ import { utcStamp } from '../util/time';
 import { captureSnapshotAndArchives } from './capture';
 import { resolveContext } from './context';
 import { runGit } from './git';
+import { readSelection } from './selection';
 export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
   const { cwd, stanPath, maxUndos } = await resolveContext(process.cwd());
   const wantStash = Boolean(opts?.stash);
@@ -36,15 +37,13 @@ export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
   }
 
   // Resolve selection from repo config so the snapshot and diff use the same rules
-  let cfgIncludes: string[] = [];
-  let cfgExcludes: string[] = [];
-  try {
-    const cfg = await loadConfig(cwd);
-    cfgIncludes = Array.isArray(cfg.includes) ? cfg.includes : [];
-    cfgExcludes = Array.isArray(cfg.excludes) ? cfg.excludes : [];
-  } catch {
-    // best‑effort; fall back to empty arrays
-  }
+  const { includes: cfgIncludes, excludes: cfgExcludes } = await readSelection(
+    cwd,
+  ).catch(() => ({
+    stanPath,
+    includes: [] as string[],
+    excludes: [] as string[],
+  }));
 
   try {
     await writeArchiveSnapshot({

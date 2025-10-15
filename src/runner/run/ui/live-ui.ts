@@ -6,6 +6,14 @@ import { ProgressModel } from '@/runner/run/progress/model';
 import { LiveSink } from '@/runner/run/progress/sinks/live';
 import { relOut } from '@/runner/run/util/path';
 
+import {
+  endArchive,
+  endScript,
+  queueArchive,
+  queueScript,
+  startArchive,
+  startScript,
+} from './lifecycle';
 import type { ArchiveKind, RunnerUI } from './types';
 
 export class LiveUI implements RunnerUI {
@@ -36,18 +44,10 @@ export class LiveUI implements RunnerUI {
     console.log(planBody);
   }
   onScriptQueued(key: string): void {
-    this.model.update(
-      `script:${key}`,
-      { kind: 'waiting' },
-      { type: 'script', item: key },
-    );
+    queueScript(this.model, key);
   }
   onScriptStart(key: string): void {
-    this.model.update(
-      `script:${key}`,
-      { kind: 'running', startedAt: Date.now() },
-      { type: 'script', item: key },
-    );
+    startScript(this.model, key);
   }
   onScriptEnd(
     key: string,
@@ -59,41 +59,13 @@ export class LiveUI implements RunnerUI {
     status?: 'ok' | 'warn' | 'error',
   ): void {
     const rel = relOut(cwd, outAbs);
-    const st =
-      status === 'error' || (typeof exitCode === 'number' && exitCode !== 0)
-        ? {
-            kind: 'error' as const,
-            durationMs: Math.max(0, endedAt - startedAt),
-            outputPath: rel,
-          }
-        : status === 'warn'
-          ? {
-              kind: 'warn' as const,
-              durationMs: Math.max(0, endedAt - startedAt),
-              outputPath: rel,
-            }
-          : {
-              kind: 'done' as const,
-              durationMs: Math.max(0, endedAt - startedAt),
-              outputPath: rel,
-            };
-    this.model.update(`script:${key}`, st, { type: 'script', item: key });
+    endScript(this.model, key, rel, startedAt, endedAt, exitCode, status);
   }
   onArchiveQueued(kind: ArchiveKind): void {
-    const item = kind === 'full' ? 'full' : 'diff';
-    this.model.update(
-      `archive:${item}`,
-      { kind: 'waiting' },
-      { type: 'archive', item },
-    );
+    queueArchive(this.model, kind);
   }
   onArchiveStart(kind: ArchiveKind): void {
-    const item = kind === 'full' ? 'full' : 'diff';
-    this.model.update(
-      `archive:${item}`,
-      { kind: 'running', startedAt: Date.now() },
-      { type: 'archive', item },
-    );
+    startArchive(this.model, kind);
   }
   onArchiveEnd(
     kind: ArchiveKind,
@@ -102,17 +74,8 @@ export class LiveUI implements RunnerUI {
     startedAt: number,
     endedAt: number,
   ): void {
-    const item = kind === 'full' ? 'full' : 'diff';
     const rel = relOut(cwd, outAbs);
-    this.model.update(
-      `archive:${item}`,
-      {
-        kind: 'done',
-        durationMs: Math.max(0, endedAt - startedAt),
-        outputPath: rel,
-      },
-      { type: 'archive', item },
-    );
+    endArchive(this.model, kind, rel, startedAt, endedAt);
   }
   /**
    * Tear down live rendering on cancellation.

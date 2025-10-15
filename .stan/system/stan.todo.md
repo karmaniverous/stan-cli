@@ -138,3 +138,13 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
 
 - DRY — archive-stage helpers
   - Factored baseCfg/progress hooks; reduced repetition across archivePhase calls.
+
+- DRY — UI base utilities: shared row lifecycle helpers
+  - Extracted shared “row lifecycle” helpers into `src/runner/run/ui/lifecycle.ts`
+    (queue/start/end for scripts and archives).
+  - Adopted in LiveUI and LoggerUI; rendering/logging remain separate (no behavior change).
+
+- DRY — snap selection helper
+  - Added `src/runner/snap/selection.ts` with `readSelection(cwd) → { stanPath, includes, excludes }`.
+  - Refactored `snap-run` to reuse `readSelection` when writing snapshots.
+  - Tests unaffected; behavior unchanged.
