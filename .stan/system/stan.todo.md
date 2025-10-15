@@ -159,6 +159,11 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Removed redundant per-suite vi.mock('tar', ...) from run tests; rely on the global mock (src/test/mock-tar.ts) with STAN_TEST_REAL_TAR=1 escape hatch preserved.
   - Net: simpler matrix coverage (live/no-live × sequential/concurrent × keypress/SIGINT × archive on/off) with fewer LOC and less drift.
 
+- Runner — reuse a single printable helper for archive rows
+  - Added src/runner/run/archive/printable.ts with archivePrintable('full'|'diff').
+  - Logger sink now uses this helper to render "archive"/"archive (diff)".
+  - Small DRY to prevent future drift; no behavior change in tests.
+
 - CLI — centralize legacy engine detection notice
   - Added src/cli/config/legacy.ts with detectLegacyRootKeys/maybeDebugLegacy helpers.
   - Replaced inline “no stan-core” checks in src/cli/run/options.ts (preAction) and

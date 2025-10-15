@@ -1,5 +1,6 @@
 /* src/stan/run/progress/sinks/logger.ts */
 
+import { archivePrintable } from '@/runner/run/archive/printable';
 import { presentRow } from '@/runner/run/presentation/row';
 import type { ProgressModel } from '@/runner/run/progress/model';
 import type { RowMeta, ScriptState } from '@/runner/run/types';
@@ -27,9 +28,7 @@ export class LoggerSink {
     const item = meta.item;
     const printable =
       meta.type === 'archive'
-        ? item === 'diff'
-          ? 'archive (diff)'
-          : 'archive'
+        ? archivePrintable(item === 'diff' ? 'diff' : 'full')
         : item;
     const mapped = presentRow({ state, cwd: this.cwd });
     if (state.kind === 'waiting') {
