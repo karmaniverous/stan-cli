@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { registerInit } from '@/cli/init';
+import { rmDirWithRetries } from '@/test';
 
 const readUtf8 = (p: string) => readFile(p, 'utf8');
 
@@ -24,7 +25,7 @@ describe('init --dry-run', () => {
     } catch {
       // ignore
     }
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
   });
 
   it('does not write stan.config.yml when run with --dry-run', async () => {

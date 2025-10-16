@@ -1,13 +1,14 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
-
-import { runSelected } from './run';
+import { runSelected } from '@/runner/run';
+import { rmDirWithRetries } from '@/test';
+import { writeScript } from '@/test-support/run';
 
 const read = (p: string) => readFile(p, 'utf8');
 
@@ -19,7 +20,7 @@ describe('script execution', () => {
   });
 
   afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
   });
 
   it('writes <key>.txt for a single requested script key and captures stderr', async () => {
@@ -38,16 +39,8 @@ describe('script execution', () => {
   });
 
   it('sequential mode: with -s preserves provided order; without -s uses config order', async () => {
-    await writeFile(
-      path.join(dir, 'a.js'),
-      'process.stdout.write("A")',
-      'utf8',
-    );
-    await writeFile(
-      path.join(dir, 'b.js'),
-      'process.stdout.write("B")',
-      'utf8',
-    );
+    await writeScript(dir, 'a.js', 'process.stdout.write("A")\n');
+    await writeScript(dir, 'b.js', 'process.stdout.write("B")\n');
 
     const cfg1: RunnerConfig = {
       stanPath: 'out',

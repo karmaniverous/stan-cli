@@ -1,10 +1,12 @@
 // src/cli/stan/init.test.ts
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { rmDirWithRetries } from '@/test';
 
 import { performInit, registerInit } from './init';
 
@@ -25,7 +27,7 @@ describe('init helpers', () => {
     } catch {
       // ignore
     }
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
   });
 
   it('performInit --force writes stan.config.yml with outputPath=stan, adds to .gitignore', async () => {

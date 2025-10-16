@@ -1,10 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path, { delimiter } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runSelected } from '@/runner/run';
+import { rmDirWithRetries } from '@/test';
 
 const read = (p: string) => readFile(p, 'utf8');
 
@@ -18,7 +19,7 @@ describe('script runner PATH augmentation (repo-local node_modules/.bin preceden
   });
 
   afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
   });
 
   it('prefixes PATH with <repoRoot>/node_modules/.bin for child scripts', async () => {

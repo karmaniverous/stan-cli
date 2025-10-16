@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
 import { runSelected } from '@/runner/run';
+import { rmDirWithRetries } from '@/test';
 
 describe('live renderer (order + final-frame flush)', () => {
   let dir: string;
@@ -42,7 +43,7 @@ describe('live renderer (order + final-frame flush)', () => {
     }
     process.env = { ...envBackup };
     writeSpy.mockRestore();
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
 

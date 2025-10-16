@@ -16,8 +16,8 @@ vi.mock('@/runner/run', () => ({
 }));
 
 // CLI helpers
-import { applyCliSafety } from './cli-utils';
-import { registerRun } from './runner';
+import { applyCliSafety } from '@/cli/cli-utils';
+import { registerRun } from '@/cli/runner';
 
 describe('stan run new semantics (default scripts+archive, -p/-S/-A)', () => {
   let dir: string;

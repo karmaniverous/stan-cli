@@ -15,8 +15,8 @@ vi.mock('@/runner/run', () => ({
   },
 }));
 
-import { applyCliSafety } from './cli-utils';
-import { registerRun } from './runner';
+import { applyCliSafety } from '@/cli/cli-utils';
+import { registerRun } from '@/cli/runner';
 
 describe('run defaults from opts.cliDefaults.run', () => {
   let dir: string;

@@ -1,11 +1,13 @@
 import { EventEmitter } from 'node:events';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { rmDirWithRetries } from '@/test';
 
 // Mock spawn to avoid running real git; return an EE that closes with code 0.
 vi.mock('node:child_process', async (importOriginal) => {
@@ -62,7 +64,7 @@ describe('patch subcommand (clipboard and file modes)', () => {
       // ignore
     }
     await delay(10);
-    await rm(dir, { recursive: true, force: true });
+    await rmDirWithRetries(dir);
     vi.restoreAllMocks();
   });
   it('reads from clipboard by default and logs terminal status', async () => {

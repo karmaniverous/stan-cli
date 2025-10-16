@@ -2,12 +2,6 @@
 
 ## Next up (priority order)
 
-- Test‑only DRY
-  - Expand test‑support adoption
-    - Prefer startRun/writeScript/rmDirWithRetries in suites that still open‑code temp repos/spawns.
-  - Normalize barrel usage in tests
-    - Update tests to import via barrels instead of deep paths (progress/presentation/archive/snap).
-
 - Nice‑to‑have cleanups
 - Import hygiene/knip
   - After barrel sweep, run knip and prune any newly orphaned internals; keep barrels the only public entry points for their areas.
@@ -145,6 +139,14 @@
   - Scope: `config.effective:stanpath-fallback` (centralized in debug-scopes).
   - Behavior: only visible when STAN_DEBUG=1; no changes to normal output.
   - Completes the silent fallback audit item for stanPath; other legacy notices remain as previously implemented.
+
+- Test‑only DRY — phase 1
+  - Adopted rmDirWithRetries in representative suites (runner live/*.test, exec.envpath, cli init/patch)
+    to mitigate transient Windows EBUSY/ENOTEMPTY and unify teardown.
+  - Replaced ad‑hoc writeFile calls with writeScript in runner/run.test for clarity.
+  - Normalized CLI runner tests to import registerRun via '@/cli/runner' (and applyCliSafety via
+    '@/cli/cli-utils') instead of local relative paths. Remaining suites will be migrated incrementally.
+
 - CI speed — shorten matrix durations
   - Reduced the dummy wait script in cancellation matrix tests from 10s to 2s and shortened teardown settle. This cuts per-case wall clock while preserving coverage across live/no‑live × mode × signal × archive.
 
