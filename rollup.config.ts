@@ -77,6 +77,21 @@ const commonInputOptions = (
 ): InputOptions => ({
   plugins: makePlugins(minify, extras),
   onwarn(warning, defaultHandler) {
+    // CI build guard: fail on new circular dependencies introduced in this package.
+    // Allow cycles originating from node_modules (e.g., zod), but treat project cycles as errors.
+    if (warning.code === 'CIRCULAR_DEPENDENCY') {
+      const msg = String((warning as { message?: string }).message ?? '');
+      const ids =
+        ((warning as unknown as { ids?: string[] }).ids as string[] | undefined) ??
+        [];
+      const fromNodeModules =
+        (Array.isArray(ids) && ids.some((p) => p.includes('node_modules'))) ||
+        /node_modules/.test(msg);
+      if (!fromNodeModules) {
+        // Treat as a hard error to surface regressions early in CI.
+        throw new Error(`Circular dependency detected: ${msg}`);
+      }
+    }
     defaultHandler(warning);
   },
   external: (id) =>

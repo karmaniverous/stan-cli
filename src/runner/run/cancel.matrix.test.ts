@@ -88,7 +88,7 @@ describe('cancellation matrix (live/no-live × mode × signal × archive)', () =
     } catch {
       // ignore
     }
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 25));
     await rmDirWithRetries(dir);
   });
 
@@ -122,14 +122,14 @@ describe('cancellation matrix (live/no-live × mode × signal × archive)', () =
               stanPath: 'stan',
               scripts: {
                 quick: 'node -e "process.stdout.write(`ok`)"',
-                wait: 'node -e "setTimeout(()=>{}, 10000)"',
+                wait: 'node -e "setTimeout(()=>{}, 2000)"',
                 after: 'node -e "process.stdout.write(`after`)"',
               },
             }
           : {
               stanPath: 'stan',
               scripts: {
-                wait: 'node -e "setTimeout(()=>{}, 10000)"',
+                wait: 'node -e "setTimeout(()=>{}, 2000)"',
               },
             };
 
