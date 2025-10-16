@@ -13,9 +13,9 @@
   - Normalize barrel usage in tests
     - Update tests to import via barrels instead of deep paths (progress/presentation/archive/snap).
 
- - Nice‑to‑have cleanups
-  - Import hygiene/knip
-    - After barrel sweep, run knip and prune any newly orphaned internals; keep barrels the only public entry points for their areas.
+- Nice‑to‑have cleanups
+- Import hygiene/knip
+  - After barrel sweep, run knip and prune any newly orphaned internals; keep barrels the only public entry points for their areas.
 
 - Changelog / release notes
   - Document: prompt include‑on‑change behavior, DRY barrel adoption, dynamic TTY detection, PATH augmentation note.
@@ -149,3 +149,10 @@
   - LiveUI now delegates onScriptEnd/onArchiveEnd with useDurations=true (preserves durations/exit code).
   - LoggerUI now delegates onScriptEnd/onArchiveEnd with useDurations=false (parity: no durations).
   - No behavior changes; reduces boilerplate and keeps responsibilities in lifecycle.ts.
+
+- Cancellation scheduling gate — pre-spawn guard hardening
+  - In sequential mode, added a CI/POSIX‑aware guard window and an extra yield before starting the next script to further absorb very‑late SIGINT delivery.
+  - Guard computation:
+    - base 25 ms; +25 ms when CI is truthy; +10 ms on POSIX.
+  - Keeps local/default behavior snappy while making CI more resilient.
+  - No changes to archive logic; complements the existing late‑cancel guards before the archive phase.

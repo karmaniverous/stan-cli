@@ -35,6 +35,26 @@ export const normalizeSelection = (
   return all.filter((k) => requested.has(k));
 };
 
+/** CI-aware truthy detection (accepts common values: 1,true,TRUE). */
+const ciOn = (): boolean => {
+  try {
+    const v = String(process.env.CI ?? '')
+      .trim()
+      .toLowerCase();
+    return v !== '' && v !== '0' && v !== 'false';
+  } catch {
+    return false;
+  }
+};
+/** Slightly longer pre-spawn guard for CI/POSIX to absorb late SIGINT. */
+const preSpawnGuardMs = (): number => {
+  const base = 25;
+  let extra = 0;
+  if (ciOn()) extra += 25;
+  if (process.platform !== 'win32') extra += 10;
+  return base + extra;
+};
+
 /**
  * Run a set of scripts concurrently or sequentially.
  * @param cwd - Working directory for child processes.
@@ -123,8 +143,11 @@ export const runScripts = async (
         if (!shouldContinue()) break;
         await yieldToEventLoop();
         if (!shouldContinue()) break;
-        // Guard window (~25ms) to absorb late-arriving SIGINT
-        await pause(25);
+        // Guard window to absorb late-arriving SIGINT (CI/POSIX slightly longer)
+        await pause(preSpawnGuardMs());
+        if (!shouldContinue()) break;
+        // Extra yield after the guard to close the remaining sliver before spawn
+        await yieldToEventLoop();
         if (!shouldContinue()) break;
       }
       await runner(k);
