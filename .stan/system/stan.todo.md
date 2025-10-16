@@ -32,10 +32,6 @@
   - Init help: mention migration and .bak/--dry‑run.
   - Contributor note: barrels and cycle‑avoidance (do not import the session barrel from within session submodules; prefer local relative imports when a barrel would induce a cycle).
 
-- Silent fallback audit (config/migration scope)
-  - Ensure debugFallback is used on: legacy engine extraction; legacy CLI loader fallback; DEFAULT_STAN_PATH resolution.
-  - Tests assert no debug output unless STAN_DEBUG=1.
-
 - Test follow‑through
   - Add small parity checks for include‑on‑change on Windows/POSIX (core|path sources).
   - Quick unit around top‑level index exports to guard against accidental “barrel of barrels”.
@@ -156,3 +152,9 @@
     - base 25 ms; +25 ms when CI is truthy; +10 ms on POSIX.
   - Keeps local/default behavior snappy while making CI more resilient.
   - No changes to archive logic; complements the existing late‑cancel guards before the archive phase.
+
+- Silent fallback audit — stanPath fallback notice
+  - Emitted debugFallback when stanPath falls back via DEFAULT_STAN_PATH/resolveStanPathSync (no config found or parse failed).
+  - Scope: `config.effective:stanpath-fallback` (centralized in debug-scopes).
+  - Behavior: only visible when STAN_DEBUG=1; no changes to normal output.
+  - Completes the silent fallback audit item for stanPath; other legacy notices remain as previously implemented.

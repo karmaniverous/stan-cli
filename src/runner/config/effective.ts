@@ -14,7 +14,10 @@ import {
 
 import { parseText } from '@/common/config/parse';
 import { debugFallback } from '@/runner/util/debug';
-import { DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
+import {
+  DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY,
+  DBG_SCOPE_EFFECTIVE_STANPATH_FALLBACK,
+} from '@/runner/util/debug-scopes';
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === 'object';
@@ -111,6 +114,15 @@ export const resolveEffectiveEngineConfig = async (
   let stanPathFallback = DEFAULT_STAN_PATH;
   try {
     stanPathFallback = resolveStanPathSync(cwd);
+  } catch {
+    /* ignore */
+  }
+  try {
+    // Concise, opt-in notice for fallback path resolution
+    debugFallback(
+      DBG_SCOPE_EFFECTIVE_STANPATH_FALLBACK,
+      `using fallback stanPath "${stanPathFallback}" (no config found or parse failed)`,
+    );
   } catch {
     /* ignore */
   }

@@ -16,6 +16,10 @@ export const DBG_SCOPE_CLI_CONFIG_LOAD_SYNC = 'cli.config:loadSync';
 export const DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY =
   'config.effective:engine-legacy';
 
+/** effective config resolver (stanPath fallback when config missing/invalid) */
+export const DBG_SCOPE_EFFECTIVE_STANPATH_FALLBACK =
+  'config.effective:stanpath-fallback';
+
 /** snap context (legacy engine extraction notice) */
 export const DBG_SCOPE_SNAP_CONTEXT_LEGACY = 'snap.context:legacy';
 
