@@ -36,9 +36,6 @@
   - Add small parity checks for include‑on‑change on Windows/POSIX (core|path sources).
   - Quick unit around top‑level index exports to guard against accidental “barrel of barrels”.
 
-- CI speed
-  - Shorten durations/timeouts in the cancellation matrix to reduce wall clock while preserving coverage.
-
 ## Backlog / follow‑through
 
 - Snapshot UX
@@ -153,15 +150,9 @@
   - Scope: `config.effective:stanpath-fallback` (centralized in debug-scopes).
   - Behavior: only visible when STAN_DEBUG=1; no changes to normal output.
   - Completes the silent fallback audit item for stanPath; other legacy notices remain as previously implemented.
-  
 - CI speed — shorten matrix durations
-  - Reduced the dummy wait script in cancellation matrix tests from 10s to 2s
-    and shortened teardown settle. This cuts per-case wall clock while
-    preserving coverage across live/no‑live × mode × signal × archive.
+  - Reduced the dummy wait script in cancellation matrix tests from 10s to 2s and shortened teardown settle. This cuts per-case wall clock while preserving coverage across live/no‑live × mode × signal × archive.
 
 - Build guard — fail build on new circular dependencies
-  - Added a simple CI guard in rollup.config.ts: onwarn now throws on Rollup
-    CIRCULAR_DEPENDENCY warnings that do not originate from node_modules.
-  - Known third‑party cycles (e.g., zod in node_modules) remain allowed;
-    project‑local cycles now fail the build to prevent regressions.
-
+  - Added a simple CI guard in rollup.config.ts: onwarn now throws on Rollup CIRCULAR_DEPENDENCY warnings that do not originate from node_modules.
+  - Known third‑party cycles (e.g., zod in node_modules) remain allowed; project‑local cycles now fail the build to prevent regressions.
