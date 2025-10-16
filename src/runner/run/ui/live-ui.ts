@@ -3,11 +3,9 @@
 import { RunnerControl } from '@/runner/run/control';
 import { liveTrace, ProgressRenderer } from '@/runner/run/live';
 import { LiveSink, ProgressModel } from '@/runner/run/progress';
-import { relOut } from '@/runner/run/util/path';
+import { createUiEndForwarders } from '@/runner/run/ui/forward';
 
 import {
-  endArchive,
-  endScript,
   queueArchive,
   queueScript,
   startArchive,
@@ -20,6 +18,7 @@ export class LiveUI implements RunnerUI {
   private control: RunnerControl | null = null;
   private readonly model = new ProgressModel();
   private readonly sink: LiveSink;
+  private forwards = createUiEndForwarders(this.model, { useDurations: true });
   /** Idempotency guard for stop(). */
   private stopped = false;
 
@@ -57,8 +56,15 @@ export class LiveUI implements RunnerUI {
     exitCode?: number,
     status?: 'ok' | 'warn' | 'error',
   ): void {
-    const rel = relOut(cwd, outAbs);
-    endScript(this.model, key, rel, startedAt, endedAt, exitCode, status);
+    this.forwards.onScriptEnd(
+      key,
+      outAbs,
+      cwd,
+      startedAt,
+      endedAt,
+      exitCode,
+      status,
+    );
   }
   onArchiveQueued(kind: ArchiveKind): void {
     queueArchive(this.model, kind);
@@ -73,8 +79,7 @@ export class LiveUI implements RunnerUI {
     startedAt: number,
     endedAt: number,
   ): void {
-    const rel = relOut(cwd, outAbs);
-    endArchive(this.model, kind, rel, startedAt, endedAt);
+    this.forwards.onArchiveEnd(kind, outAbs, cwd, startedAt, endedAt);
   }
   /**
    * Tear down live rendering on cancellation.

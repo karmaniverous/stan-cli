@@ -2,12 +2,6 @@
 
 ## Next up (priority order)
 
-- Optional refactors (medium effort; clear payoff)
-  - Common UI wiring helper
-    - Factor a helper to forward queue/start/end events via lifecycle.ts; reduce boilerplate in LiveUI/LoggerUI without changing behavior.
-  - Consolidate early config peek
-    - Centralize a helper to read/parse stan.config.\* once and emit maybeDebugLegacy with a consistent scope label; reduce duplicate YAML/JSON parsing and debug labeling.
-
 - Cancellation stabilization (follow‑through)
   - Re‑run the cancellation matrix on POSIX in CI to confirm the secondary late‑cancel guard closes the remaining race in no‑live sequential + archive.
   - Keep liveTrace.session enabled when investigating flakes; remove or keep instrumentation as low‑noise trace only.
@@ -151,3 +145,9 @@
   - Introduced src/runner/run/progress/sinks/base.ts to centralize ProgressModel subscription/unsubscription.
   - LiveSink and LoggerSink now extend BaseSink, removing duplicated subscribe/stop wiring.
   - No behavioral changes; rendering and logging remain identical. This reduces boilerplate and clarifies responsibilities.
+
+- UI wiring helper — DRY end-of-row forwarding
+  - Added src/runner/run/ui/forward.ts with createUiEndForwarders(model, { useDurations }).
+  - LiveUI now delegates onScriptEnd/onArchiveEnd with useDurations=true (preserves durations/exit code).
+  - LoggerUI now delegates onScriptEnd/onArchiveEnd with useDurations=false (parity: no durations).
+  - No behavior changes; reduces boilerplate and keeps responsibilities in lifecycle.ts.
