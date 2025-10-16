@@ -122,3 +122,11 @@
     - src/cli/run/action.ts (early legacy peek)
     - src/cli/runner/options.ts (preAction legacy notice)
   - Keeps YAML/JSON parsing consistent across CLI and runner; removes ad‑hoc duplicates.
+
+- Archive barrel conflict fix & cleanup
+  - Moved src/runner/run/archive.ts → src/runner/run/archive/phase.ts to ensure
+    imports of "@/runner/run/archive" resolve to the new folder barrel instead of
+    the legacy file.
+  - Updated src/runner/run/archive/index.ts to re‑export archivePhase from "./phase".
+  - Removed unused duplicate src/cli/runner/options.ts (CLI uses src/cli/run/options.ts);
+    resolves knip’s “Unused files” warning.

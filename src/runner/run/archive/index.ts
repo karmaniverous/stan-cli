@@ -1,5 +1,5 @@
 // src/runner/run/archive/index.ts
-export { archivePhase } from '../archive';
+export { archivePhase } from './phase';
 export { archivePrintable } from './printable';
 export {
   cleanupOutputsAfterCombine,
