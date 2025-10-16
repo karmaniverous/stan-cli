@@ -16,6 +16,7 @@ import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
+import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
@@ -42,7 +43,7 @@ export const registerRunAction = (
 
     // Early legacy-engine notice remains in options preAction hook; here we resolve
     // effective engine context (namespaced or legacy) for the runner.
-    await peekAndMaybeDebugLegacy('run.action:engine-legacy', runCwd);
+    await peekAndMaybeDebugLegacy(DBG_SCOPE_RUN_ENGINE_LEGACY, runCwd);
     const config: ContextConfig = await resolveEffectiveEngineConfig(
       runCwd,
       'run.action:engine-legacy',

@@ -2,6 +2,7 @@ import { Command, Option } from 'commander';
 
 import { peekAndMaybeDebugLegacySync } from '@/cli/config/peek';
 import { renderAvailableScriptsHelp } from '@/runner/help';
+import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
 
@@ -170,7 +171,7 @@ export const registerRunOptions = (
   // Early legacy engine-config notice (preAction, STAN_DEBUG=1):
   // Emit once per invocation if the config file lacks top-level "stan-core".
   cmd.hook('preAction', () => {
-    peekAndMaybeDebugLegacySync('run.action:engine-legacy', process.cwd());
+    peekAndMaybeDebugLegacySync(DBG_SCOPE_RUN_ENGINE_LEGACY, process.cwd());
   });
 
   // Effective defaults from config (cliDefaults.run) over baseline

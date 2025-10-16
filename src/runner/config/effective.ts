@@ -14,6 +14,7 @@ import {
 
 import { parseText } from '@/common/config/parse';
 import { debugFallback } from '@/runner/util/debug';
+import { DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === 'object';
@@ -46,7 +47,7 @@ const normalizeImports = (
  */
 export const resolveEffectiveEngineConfig = async (
   cwd: string,
-  debugScope = 'config.effective:engine-legacy',
+  debugScope = DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY,
 ): Promise<ContextConfig> => {
   // Happy path — namespaced engine loader
   try {

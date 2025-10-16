@@ -144,3 +144,7 @@
     - Matrix passes across live/no‑live × mode × signal × archive on Windows.
     - No archives are created on cancel in any combo, including the no‑live sequential SIGINT + archive case.
     - Next: run the same matrix on POSIX in CI to confirm cross‑platform stability; keep liveTrace.session instrumentation available but low‑noise.
+
+- Debug scopes — centralized labels
+  - Added src/runner/util/debug-scopes.ts with shared constants for scope labels used by debugFallback and legacy notices.
+  - Updated CLI/runner call sites to import and use these constants: • src/cli/config/load.ts, • src/cli/run/options.ts, src/cli/run/action.ts, • src/runner/config/effective.ts, src/runner/snap/context.ts.

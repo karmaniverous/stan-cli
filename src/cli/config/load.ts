@@ -17,6 +17,11 @@ import {
 } from '@/cli/config/schema';
 import { parseText } from '@/common/config/parse';
 import { debugFallback } from '@/runner/util/debug';
+import {
+  DBG_SCOPE_CLI_CONFIG_LOAD,
+  DBG_SCOPE_CLI_CONFIG_LOAD_SYNC,
+  DBG_SCOPE_RUN_ENGINE_LEGACY,
+} from '@/runner/util/debug-scopes';
 
 const formatZodError = (e: unknown): string =>
   e instanceof ZodError
@@ -95,14 +100,14 @@ export const loadCliConfig = async (cwd: string): Promise<LoadedCliConfig> => {
   if (Object.keys(legacy).length > 0) {
     // Debug-visible notice to help users migrate via `stan init`
     debugFallback(
-      'cli.config:load',
+      DBG_SCOPE_CLI_CONFIG_LOAD,
       `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,
     );
     // Also emit the run-scoped legacy engine notice to satisfy transitional tests
     // that assert a single, consistent label is present when running under a legacy config.
     if (!Object.prototype.hasOwnProperty.call(root, 'stan-core')) {
       debugFallback(
-        'run.action:engine-legacy',
+        DBG_SCOPE_RUN_ENGINE_LEGACY,
         `detected legacy root keys (no "stan-core") in ${cfgPath.replace(/\\/g, '/')}`,
       );
     }
@@ -128,13 +133,13 @@ export const loadCliConfigSync = (cwd: string): LoadedCliConfig => {
   const legacy = pickLegacyCliSection(root);
   if (Object.keys(legacy).length > 0) {
     debugFallback(
-      'cli.config:loadSync',
+      DBG_SCOPE_CLI_CONFIG_LOAD_SYNC,
       `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,
     );
     // Mirror the run-scoped legacy engine notice here as well for symmetry.
     if (!Object.prototype.hasOwnProperty.call(root, 'stan-core')) {
       debugFallback(
-        'run.action:engine-legacy',
+        DBG_SCOPE_RUN_ENGINE_LEGACY,
         `detected legacy root keys (no "stan-core") in ${cfgPath.replace(/\\/g, '/')}`,
       );
     }

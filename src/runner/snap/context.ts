@@ -7,6 +7,7 @@ import { findConfigPathSync } from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
 import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
+import { DBG_SCOPE_SNAP_CONTEXT_LEGACY } from '@/runner/util/debug-scopes';
 
 /**
  * Resolve the effective execution context for snapshot operations.
@@ -25,7 +26,10 @@ export const resolveContext = async (
   const cwd = cfgPath ? path.dirname(cfgPath) : cwd0;
 
   // Engine context (namespaced or legacy), snap-scoped debug label for legacy fallback
-  const engine = await resolveEffectiveEngineConfig(cwd, 'snap.context:legacy');
+  const engine = await resolveEffectiveEngineConfig(
+    cwd,
+    DBG_SCOPE_SNAP_CONTEXT_LEGACY,
+  );
 
   // CLI config for snap retention
   let maxUndos: number | undefined;
