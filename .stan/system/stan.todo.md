@@ -121,3 +121,6 @@
 
 - Barrel adoption sweep — archive stageImports
   - Re-exported stageImports from src/runner/run/archive/index.ts and updated src/runner/run/session/archive-stage.ts to import it via the archive barrel (no deep util path). This completes the remaining archive barrel adoption.
+
+  - Tests — normalized snap barrel usage
+    - Updated src/runner/snap/selection-sync.test.ts to import handleSnap from the snap barrel ('@/runner/snap') instead of the deep path '@/runner/snap/snap-run'. Continue normalizing other tests to prefer barrels where available.

@@ -13,7 +13,7 @@ import {
 } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { handleSnap } from '@/runner/snap/snap-run';
+import { handleSnap } from '@/runner/snap';
 
 // Capture tar.create calls to assert diff contents — define at module scope so
 // the hoisted vi.mock factory can access it reliably.
