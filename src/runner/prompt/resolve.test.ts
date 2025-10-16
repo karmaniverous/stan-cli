@@ -26,7 +26,7 @@ describe('resolveCorePromptPath (primary + fallback)', () => {
         // simulate packaged resolution
         .mockReturnValue(prompt);
 
-      const { resolveCorePromptPath } = await import('@/runner/prompt/resolve');
+      const { resolveCorePromptPath } = await import('@/runner/prompt');
       const out = resolveCorePromptPath();
       expect(out).toBe(prompt);
       expect(spy).toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe('resolveCorePromptPath (primary + fallback)', () => {
 
     try {
       // Re-import with mocked createRequire
-      const { resolveCorePromptPath } = await import('@/runner/prompt/resolve');
+      const { resolveCorePromptPath } = await import('@/runner/prompt');
       const out = resolveCorePromptPath();
       // Path should exist and end with dist/stan.system.md
       expect(out && existsSync(out)).toBe(true);

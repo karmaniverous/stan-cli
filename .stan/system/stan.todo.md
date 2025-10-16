@@ -124,3 +124,6 @@
 
   - Tests — normalized snap barrel usage
     - Updated src/runner/snap/selection-sync.test.ts to import handleSnap from the snap barrel ('@/runner/snap') instead of the deep path '@/runner/snap/snap-run'. Continue normalizing other tests to prefer barrels where available.
+
+  - Barrels — prompt helpers
+    - Added src/runner/prompt/index.ts as a public barrel re-exporting prompt helpers, and updated src/runner/prompt/resolve.test.ts to import from '@/runner/prompt' instead of the deep path '@/runner/prompt/resolve'. Continue normalizing remaining tests as barrels become available.
