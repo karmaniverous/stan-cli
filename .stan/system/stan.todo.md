@@ -13,9 +13,7 @@
   - Normalize barrel usage in tests
     - Update tests to import via barrels instead of deep paths (progress/presentation/archive/snap).
 
-- Nice‑to‑have cleanups
-  - Scope constants for debug labels
-    - Centralize scope strings used by debugFallback (e.g., 'run.action:engine‑legacy') to keep logs/tests consistent.
+ - Nice‑to‑have cleanups
   - Import hygiene/knip
     - After barrel sweep, run knip and prune any newly orphaned internals; keep barrels the only public entry points for their areas.
 
