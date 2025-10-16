@@ -1,7 +1,6 @@
 // src/stan/run/ui/logger-ui.ts
 
-import { ProgressModel } from '@/runner/run/progress/model';
-import { LoggerSink } from '@/runner/run/progress/sinks/logger';
+import { LoggerSink, ProgressModel } from '@/runner/run/progress';
 import { relOut } from '@/runner/run/util/path';
 
 import {

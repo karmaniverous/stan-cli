@@ -2,8 +2,7 @@
 
 import { RunnerControl } from '@/runner/run/control';
 import { liveTrace, ProgressRenderer } from '@/runner/run/live';
-import { ProgressModel } from '@/runner/run/progress/model';
-import { LiveSink } from '@/runner/run/progress/sinks/live';
+import { LiveSink, ProgressModel } from '@/runner/run/progress';
 import { relOut } from '@/runner/run/util/path';
 
 import {

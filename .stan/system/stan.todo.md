@@ -140,8 +140,7 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Factored baseCfg/progress hooks; reduced repetition across archivePhase calls.
 
 - DRY — UI base utilities: shared row lifecycle helpers
-  - Extracted shared “row lifecycle” helpers into `src/runner/run/ui/lifecycle.ts`
-    (queue/start/end for scripts and archives).
+  - Extracted shared “row lifecycle” helpers into `src/runner/run/ui/lifecycle.ts` (queue/start/end for scripts and archives).
   - Adopted in LiveUI and LoggerUI; rendering/logging remain separate (no behavior change).
 
 - DRY — snap selection helper
@@ -150,5 +149,10 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Tests unaffected; behavior unchanged.
 
 - Hygiene — knip duplicate export
-  - Removed default export from `src/runner/snap/selection.ts` to avoid duplicate exports
-    (keep named `readSelection` only). 
+  - Removed default export from `src/runner/snap/selection.ts` to avoid duplicate exports (keep named `readSelection` only).
+
+- Imports barrels audit — progress barrel and UI adoption
+  - Added `src/runner/run/progress/index.ts` barrel; updated LiveUI and LoggerUI to import `ProgressModel` / `LoggerSink` / `LiveSink` from the barrel (no deep paths).
+  - Avoided session cycles by keeping local relative imports within the session subtree; no session‑barrel usage from session submodules.
+  - Archive wiring audit: confirmed no reachable direct calls to `createArchive`/`createArchiveDiff` remain in runtime code; tests may use core APIs directly by design.
+  - `stageImports` remains de‑duplicated (staged once per run in the session wrapper, then `archivePhase` invoked with `stage: false`).
