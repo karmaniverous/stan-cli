@@ -124,9 +124,11 @@
   - Keeps YAML/JSON parsing consistent across CLI and runner; removes ad‑hoc duplicates.
 
 - Archive barrel conflict fix & cleanup
-  - Moved src/runner/run/archive.ts → src/runner/run/archive/phase.ts to ensure
-    imports of "@/runner/run/archive" resolve to the new folder barrel instead of
-    the legacy file.
+  - Moved src/runner/run/archive.ts → src/runner/run/archive/phase.ts to ensure imports of "@/runner/run/archive" resolve to the new folder barrel instead of the legacy file.
   - Updated src/runner/run/archive/index.ts to re‑export archivePhase from "./phase".
-  - Removed unused duplicate src/cli/runner/options.ts (CLI uses src/cli/run/options.ts);
-    resolves knip’s “Unused files” warning.
+  - Removed unused duplicate src/cli/runner/options.ts (CLI uses src/cli/run/options.ts); resolves knip’s “Unused files” warning.
+
+- Early config peek consolidation
+  - Added shared helpers at src/cli/config/peek.ts: • peekAndMaybeDebugLegacySync for Commander preAction hooks, • peekAndMaybeDebugLegacy for async action handlers.
+  - Updated: • src/cli/run/options.ts (preAction) to use the sync helper, • src/cli/run/action.ts to use the async helper.
+  - Behavior unchanged; centralizes legacy notice logic and reduces duplication.

@@ -1,5 +1,4 @@
 /// src/cli/stan/run/action.ts
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
@@ -8,10 +7,9 @@ import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
 import { runDefaults } from '@/cli/cli-utils';
-import { maybeDebugLegacy } from '@/cli/config/legacy';
 import { loadCliConfigSync } from '@/cli/config/load';
+import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
-import { parseText } from '@/common/config/parse';
 import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
@@ -44,16 +42,7 @@ export const registerRunAction = (
 
     // Early legacy-engine notice remains in options preAction hook; here we resolve
     // effective engine context (namespaced or legacy) for the runner.
-    try {
-      const pEarly = findConfigPathSync(runCwd);
-      if (pEarly) {
-        const rawEarly = await readFile(pEarly, 'utf8');
-        const rootUnknownEarly: unknown = parseText(pEarly, rawEarly);
-        maybeDebugLegacy('run.action:engine-legacy', pEarly, rootUnknownEarly);
-      }
-    } catch {
-      /* ignore */
-    }
+    await peekAndMaybeDebugLegacy('run.action:engine-legacy', runCwd);
     const config: ContextConfig = await resolveEffectiveEngineConfig(
       runCwd,
       'run.action:engine-legacy',

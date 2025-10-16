@@ -1,10 +1,6 @@
-import { readFileSync } from 'node:fs';
-
-import { findConfigPathSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
-import YAML from 'yaml';
 
-import { maybeDebugLegacy } from '@/cli/config/legacy';
+import { peekAndMaybeDebugLegacySync } from '@/cli/config/peek';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 
 import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
@@ -174,17 +170,7 @@ export const registerRunOptions = (
   // Early legacy engine-config notice (preAction, STAN_DEBUG=1):
   // Emit once per invocation if the config file lacks top-level "stan-core".
   cmd.hook('preAction', () => {
-    try {
-      const p = findConfigPathSync(process.cwd());
-      if (!p) return;
-      const raw = readFileSync(p, 'utf8');
-      const rootUnknown: unknown = p.endsWith('.json')
-        ? (JSON.parse(raw) as unknown)
-        : (YAML.parse(raw) as unknown);
-      maybeDebugLegacy('run.action:engine-legacy', p, rootUnknown);
-    } catch {
-      /* ignore */
-    }
+    peekAndMaybeDebugLegacySync('run.action:engine-legacy', process.cwd());
   });
 
   // Effective defaults from config (cliDefaults.run) over baseline
