@@ -1,30 +1,29 @@
-/* src/stan/run/progress/sinks/logger.ts */
+/* src/runner/run/progress/sinks/logger.ts */
 
 import { archivePrintable } from '@/runner/run/archive';
 import { presentRow } from '@/runner/run/presentation';
 import type { ProgressModel } from '@/runner/run/progress/model';
 import type { RowMeta, ScriptState } from '@/runner/run/types';
 
-export class LoggerSink {
-  private unsubscribe?: () => void;
+import { BaseSink } from './base';
 
+export class LoggerSink extends BaseSink {
   constructor(
-    private readonly model: ProgressModel,
+    model: ProgressModel,
     private readonly cwd: string,
-  ) {}
+  ) {
+    super(model);
+  }
 
   start(): void {
-    this.unsubscribe = this.model.subscribe((e) =>
-      this.onUpdate(e.meta, e.state),
-    );
+    this.subscribeModel();
   }
 
   stop(): void {
-    if (this.unsubscribe) this.unsubscribe();
-    this.unsubscribe = undefined;
+    this.unsubscribeModel();
   }
 
-  private onUpdate(meta: RowMeta, state: ScriptState): void {
+  protected onUpdate(_key: string, meta: RowMeta, state: ScriptState): void {
     const item = meta.item;
     const printable =
       meta.type === 'archive'

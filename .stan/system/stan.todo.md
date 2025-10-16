@@ -3,8 +3,6 @@
 ## Next up (priority order)
 
 - Optional refactors (medium effort; clear payoff)
-  - Base sink scaffolding (progress)
-    - Extract a tiny BaseSink for subscribe/unsubscribe + onUpdate dispatch; keep LoggerSink/LiveSink focused on logging/rendering.
   - Common UI wiring helper
     - Factor a helper to forward queue/start/end events via lifecycle.ts; reduce boilerplate in LiveUI/LoggerUI without changing behavior.
   - Consolidate early config peek
@@ -148,3 +146,8 @@
 - Debug scopes — centralized labels
   - Added src/runner/util/debug-scopes.ts with shared constants for scope labels used by debugFallback and legacy notices.
   - Updated CLI/runner call sites to import and use these constants: • src/cli/config/load.ts, • src/cli/run/options.ts, src/cli/run/action.ts, • src/runner/config/effective.ts, src/runner/snap/context.ts.
+
+- Base sink scaffolding (progress)
+  - Introduced src/runner/run/progress/sinks/base.ts to centralize ProgressModel subscription/unsubscription.
+  - LiveSink and LoggerSink now extend BaseSink, removing duplicated subscribe/stop wiring.
+  - No behavioral changes; rendering and logging remain identical. This reduces boilerplate and clarifies responsibilities.
