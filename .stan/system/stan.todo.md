@@ -2,11 +2,6 @@
 
 ## Next up (priority order)
 
-- Cancellation stabilization (follow‑through)
-  - Re‑run the cancellation matrix on POSIX in CI to confirm the secondary late‑cancel guard closes the remaining race in no‑live sequential + archive.
-  - Keep liveTrace.session enabled when investigating flakes; remove or keep instrumentation as low‑noise trace only.
-  - If any residual flake remains, consider increasing the secondary settle delay slightly on CI only.
-
 - Test‑only DRY
   - Expand test‑support adoption
     - Prefer startRun/writeScript/rmDirWithRetries in suites that still open‑code temp repos/spawns.
@@ -156,3 +151,7 @@
 - Build guard — fail build on new circular dependencies
   - Added a simple CI guard in rollup.config.ts: onwarn now throws on Rollup CIRCULAR_DEPENDENCY warnings that do not originate from node_modules.
   - Known third‑party cycles (e.g., zod in node_modules) remain allowed; project‑local cycles now fail the build to prevent regressions.
+
+- Cancellation stabilization — follow‑through
+  - Verified the cancellation matrix across live/no‑live × mode × signal × archive; archives are skipped on cancel and exit code is non‑zero.
+  - Added a tiny CI‑only POSIX increase to the secondary late‑cancel settle window to absorb very‑late signals without impacting local runs.

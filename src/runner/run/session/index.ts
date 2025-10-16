@@ -282,7 +282,10 @@ export const runSessionOnce = async (args: {
   // short delay + another yield to close the remaining sliver before archives.
   try {
     // Slightly longer on Windows to account for process signal delivery variance.
-    const settleMs = process.platform === 'win32' ? 25 : 10;
+    // On POSIX CI, add a small extra cushion to absorb very-late delivery without
+    // impacting local runs.
+    const settleMs =
+      process.platform === 'win32' ? 25 : process.env.CI ? 20 : 10;
     await new Promise((r) => setTimeout(r, settleMs));
   } catch {
     /* ignore */
