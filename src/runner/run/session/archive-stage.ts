@@ -3,8 +3,7 @@
  */
 import path from 'node:path';
 
-import { archivePhase } from '@/runner/run/archive';
-import { stageImports } from '@/runner/run/archive/util';
+import { archivePhase, stageImports } from '@/runner/run/archive';
 import { preparePromptForArchive } from '@/runner/run/prompt';
 import type { RunnerConfig } from '@/runner/run/types';
 import type { RunBehavior } from '@/runner/run/types';

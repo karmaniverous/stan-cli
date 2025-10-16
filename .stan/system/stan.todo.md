@@ -2,20 +2,6 @@
 
 ## Next up (priority order)
 
-- DRY/codebase reduction — safe wins
-  - Archive barrel
-    - Add src/runner/run/archive/index.ts re‑exporting archivePhase, util (cleanupOutputsAfterCombine, cleanupPatchDirAfterArchive), and printable.
-    - Update imports to use '@/runner/run/archive' instead of deep subpaths.
-  - Snap barrel
-    - Add src/runner/snap/index.ts re‑exporting capture/context/git/history/selection/shared and snap‑run.
-    - Update CLI handlers/tests to import from the barrel (avoid deep paths).
-  - Shared YAML/JSON parse helper
-    - Create src/common/config/parse.ts (parseText + friendly error wrapper) and adopt in cli/config/load.ts and runner/config/effective.ts (and any ad‑hoc reads).
-    - Keep error messaging consistent; remove duplicates.
-  - Barrel adoption sweep
-    - Replace any remaining deep imports with the new progress/presentation/archive/snap barrels.
-    - Grep for '/presentation/row', '/progress/', '/run/archive/', '/runner/snap/' deep paths and update.
-
 - Optional refactors (medium effort; clear payoff)
   - Base sink scaffolding (progress)
     - Extract a tiny BaseSink for subscribe/unsubscribe + onUpdate dispatch; keep LoggerSink/LiveSink focused on logging/rendering.
@@ -132,3 +118,6 @@
   - Added shared helpers at src/cli/config/peek.ts: • peekAndMaybeDebugLegacySync for Commander preAction hooks, • peekAndMaybeDebugLegacy for async action handlers.
   - Updated: • src/cli/run/options.ts (preAction) to use the sync helper, • src/cli/run/action.ts to use the async helper.
   - Behavior unchanged; centralizes legacy notice logic and reduces duplication.
+
+- Barrel adoption sweep — archive stageImports
+  - Re-exported stageImports from src/runner/run/archive/index.ts and updated src/runner/run/session/archive-stage.ts to import it via the archive barrel (no deep util path). This completes the remaining archive barrel adoption.

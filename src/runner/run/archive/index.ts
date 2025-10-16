@@ -4,6 +4,7 @@ export { archivePrintable } from './printable';
 export {
   cleanupOutputsAfterCombine,
   cleanupPatchDirAfterArchive,
+  stageImports,
 } from './util';
 
 // Note:
