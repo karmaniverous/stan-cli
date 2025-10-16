@@ -11,8 +11,8 @@
     - Centralize a helper to read/parse stan.config.\* once and emit maybeDebugLegacy with a consistent scope label; reduce duplicate YAML/JSON parsing and debug labeling.
 
 - Cancellation stabilization (follow‑through)
-  - Re‑run the cancellation matrix on POSIX and Windows to confirm the secondary late‑cancel guard closes the remaining race in no‑live sequential + archive.
-  - Keep liveTrace.session enabled locally when investigating flakes; remove or keep instrumentation as low‑noise trace only.
+  - Re‑run the cancellation matrix on POSIX in CI to confirm the secondary late‑cancel guard closes the remaining race in no‑live sequential + archive.
+  - Keep liveTrace.session enabled when investigating flakes; remove or keep instrumentation as low‑noise trace only.
   - If any residual flake remains, consider increasing the secondary settle delay slightly on CI only.
 
 - Test‑only DRY
@@ -139,3 +139,8 @@
 
   - Run cancellation — late-cancel guard before archive phase
     - Added a yield re-check of cancellation immediately before starting the archive phase in src/runner/run/session/index.ts. This closes a narrow race where SIGINT could arrive between script completion and archive start, preventing archives from being written after user cancellation.
+
+  - Cancellation matrix — stabilization verification (Windows)
+    - Matrix passes across live/no‑live × mode × signal × archive on Windows.
+    - No archives are created on cancel in any combo, including the no‑live sequential SIGINT + archive case.
+    - Next: run the same matrix on POSIX in CI to confirm cross‑platform stability; keep liveTrace.session instrumentation available but low‑noise.
