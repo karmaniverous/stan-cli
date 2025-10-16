@@ -4,6 +4,7 @@
  */
 import { resolve as resolvePath } from 'node:path';
 
+import { yieldToEventLoop } from '@/runner/run/exec/util';
 import { liveTrace, ProcessSupervisor } from '@/runner/run/live';
 import { runArchiveStage } from '@/runner/run/session/archive-stage';
 import { ensureOrderFile } from '@/runner/run/session/order-file';
@@ -238,6 +239,82 @@ export const runSessionOnce = async (args: {
   if (cancelCtl.isRestart()) {
     detachSignals();
     return { created, cancelled: true, restartRequested: true };
+  }
+
+  // Late-cancel guard: process any pending SIGINT/keypress before archiving.
+  // This avoids a narrow race where cancellation arrives after scripts finish
+  // but just before the archive phase begins, which could otherwise result in
+  // archives being created despite user cancel. Yield once, then re-check.
+  try {
+    await yieldToEventLoop();
+  } catch {
+    /* ignore */
+  }
+  if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+    try {
+      ui.stop();
+    } catch {
+      /* ignore */
+    }
+    if (liveEnabled) {
+      try {
+        console.log('');
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      await supervisor.waitAll(3000);
+    } catch {
+      /* ignore */
+    }
+    detachSignals();
+    try {
+      (process.stdin as unknown as { pause?: () => void }).pause?.();
+    } catch {
+      /* ignore */
+    }
+    return { created, cancelled: true, restartRequested: false };
+  }
+
+  // Secondary late-cancel settle: absorb very-late SIGINT/keypress before archiving.
+  // Some environments may deliver SIGINT just after the first yield above; add a
+  // short delay + another yield to close the remaining sliver before archives.
+  try {
+    // Slightly longer on Windows to account for process signal delivery variance.
+    const settleMs = process.platform === 'win32' ? 25 : 10;
+    await new Promise((r) => setTimeout(r, settleMs));
+  } catch {
+    /* ignore */
+  }
+  try {
+    await yieldToEventLoop();
+  } catch {
+    /* ignore */
+  }
+  if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+    // Minimal trace to aid diagnosing rare late-cancel hits
+    try {
+      liveTrace.session.info(
+        'late-cancel: cancelled between scripts and archive (secondary guard)',
+      );
+    } catch {
+      /* ignore */
+    }
+    try {
+      ui.stop();
+    } catch {
+      /* ignore */
+    }
+    if (liveEnabled) {
+      try {
+        console.log('');
+      } catch {
+        /* ignore */
+      }
+    }
+    detachSignals();
+    return { created, cancelled: true, restartRequested: false };
   }
 
   // ARCHIVE PHASE

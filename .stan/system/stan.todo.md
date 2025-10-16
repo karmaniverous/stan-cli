@@ -10,6 +10,11 @@
   - Consolidate early config peek
     - Centralize a helper to read/parse stan.config.\* once and emit maybeDebugLegacy with a consistent scope label; reduce duplicate YAML/JSON parsing and debug labeling.
 
+- Cancellation stabilization (follow‑through)
+  - Re‑run the cancellation matrix on POSIX and Windows to confirm the secondary late‑cancel guard closes the remaining race in no‑live sequential + archive.
+  - Keep liveTrace.session enabled locally when investigating flakes; remove or keep instrumentation as low‑noise trace only.
+  - If any residual flake remains, consider increasing the secondary settle delay slightly on CI only.
+
 - Test‑only DRY
   - Expand test‑support adoption
     - Prefer startRun/writeScript/rmDirWithRetries in suites that still open‑code temp repos/spawns.
@@ -127,3 +132,10 @@
 
   - Barrels — prompt helpers
     - Added src/runner/prompt/index.ts as a public barrel re-exporting prompt helpers, and updated src/runner/prompt/resolve.test.ts to import from '@/runner/prompt' instead of the deep path '@/runner/prompt/resolve'. Continue normalizing remaining tests as barrels become available.
+
+  - Run cancellation — secondary late‑cancel settle before archive
+    - Added a short settle + extra yield and re‑check immediately before the archive phase to absorb very‑late SIGINT delivery in no‑live sequential runs.
+    - Logged a concise liveTrace.session note when this secondary guard triggers to aid diagnosis without noisy output.
+
+  - Run cancellation — late-cancel guard before archive phase
+    - Added a yield re-check of cancellation immediately before starting the archive phase in src/runner/run/session/index.ts. This closes a narrow race where SIGINT could arrive between script completion and archive start, preventing archives from being written after user cancellation.
