@@ -112,3 +112,13 @@
 - Archive wiring — single entry
   - Confirmed runtime paths use archivePhase exclusively; no reachable direct createArchive/createArchiveDiff calls (tests may use core APIs by design).
   - stageImports is de‑duplicated (staged once per run; archivePhase invoked with stage: false).
+
+- Barrels & shared config parser (CLI/runner)
+  - Added src/runner/run/archive/index.ts and src/runner/snap/index.ts to provide stable, public barrels for archive and snap surfaces.
+  - Updated CLI and logger imports to consume the new barrels (snap handlers and archive printable).
+  - Introduced src/common/config/parse.ts and adopted it in:
+    - src/cli/config/load.ts
+    - src/runner/config/effective.ts
+    - src/cli/run/action.ts (early legacy peek)
+    - src/cli/runner/options.ts (preAction legacy notice)
+  - Keeps YAML/JSON parsing consistent across CLI and runner; removes ad‑hoc duplicates.

@@ -16,9 +16,9 @@ import {
   handleInfo,
   handleRedo,
   handleSet,
+  handleSnap,
   handleUndo,
-} from '@/runner/snap/history';
-import { handleSnap } from '@/runner/snap/snap-run';
+} from '@/runner/snap';
 
 import { applyCliSafety, tagDefault } from './cli-utils';
 

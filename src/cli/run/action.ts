@@ -6,12 +6,12 @@ import type { ContextConfig } from '@karmaniverous/stan-core';
 import { findConfigPathSync } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
-import YAML from 'yaml';
 
 import { runDefaults } from '@/cli/cli-utils';
 import { maybeDebugLegacy } from '@/cli/config/legacy';
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
+import { parseText } from '@/common/config/parse';
 import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
@@ -48,9 +48,7 @@ export const registerRunAction = (
       const pEarly = findConfigPathSync(runCwd);
       if (pEarly) {
         const rawEarly = await readFile(pEarly, 'utf8');
-        const rootUnknownEarly: unknown = pEarly.endsWith('.json')
-          ? (JSON.parse(rawEarly) as unknown)
-          : (YAML.parse(rawEarly) as unknown);
+        const rootUnknownEarly: unknown = parseText(pEarly, rawEarly);
         maybeDebugLegacy('run.action:engine-legacy', pEarly, rootUnknownEarly);
       }
     } catch {

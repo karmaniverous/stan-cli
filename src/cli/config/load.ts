@@ -7,7 +7,6 @@ import { readFile } from 'node:fs/promises';
 
 import { findConfigPathSync } from '@karmaniverous/stan-core';
 import { DEFAULT_OPEN_COMMAND } from '@karmaniverous/stan-core';
-import YAML from 'yaml';
 import { ZodError } from 'zod';
 
 import {
@@ -16,6 +15,7 @@ import {
   ensureNoReservedScriptKeys,
   type ScriptMap,
 } from '@/cli/config/schema';
+import { parseText } from '@/common/config/parse';
 import { debugFallback } from '@/runner/util/debug';
 
 const formatZodError = (e: unknown): string =>
@@ -48,11 +48,6 @@ export type LoadedCliConfig = {
   maxUndos?: number;
   devMode?: boolean;
 };
-
-const parseText = (p: string, text: string): unknown =>
-  p.endsWith('.json')
-    ? (JSON.parse(text) as unknown)
-    : (YAML.parse(text) as unknown);
 
 const parseCliNode = (
   nodeUnknown: unknown,

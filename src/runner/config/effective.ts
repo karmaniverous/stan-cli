@@ -11,14 +11,9 @@ import {
   loadConfig,
   resolveStanPathSync,
 } from '@karmaniverous/stan-core';
-import YAML from 'yaml';
 
+import { parseText } from '@/common/config/parse';
 import { debugFallback } from '@/runner/util/debug';
-
-const parseText = (p: string, text: string): unknown =>
-  p.endsWith('.json')
-    ? (JSON.parse(text) as unknown)
-    : (YAML.parse(text) as unknown);
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === 'object';
