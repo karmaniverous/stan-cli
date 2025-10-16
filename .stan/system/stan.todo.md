@@ -156,3 +156,8 @@ This plan tracks near‑term and follow‑through work for the stan‑cli packag
   - Avoided session cycles by keeping local relative imports within the session subtree; no session‑barrel usage from session submodules.
   - Archive wiring audit: confirmed no reachable direct calls to `createArchive`/`createArchiveDiff` remain in runtime code; tests may use core APIs directly by design.
   - `stageImports` remains de‑duplicated (staged once per run in the session wrapper, then `archivePhase` invoked with `stage: false`).
+
+- Imports barrels audit — presentation barrel
+  - Added `src/runner/run/presentation/index.ts` barrel and switched imports in Logger sink and Live frame from deep `.../presentation/row` to the barrel.
+  - Continues the replacement of deep imports while avoiding session‑scope cycles.
+  - No runtime behavior changes.

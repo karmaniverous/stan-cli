@@ -1,7 +1,7 @@
 /* src/stan/run/progress/sinks/logger.ts */
 
 import { archivePrintable } from '@/runner/run/archive/printable';
-import { presentRow } from '@/runner/run/presentation/row';
+import { presentRow } from '@/runner/run/presentation';
 import type { ProgressModel } from '@/runner/run/progress/model';
 import type { RowMeta, ScriptState } from '@/runner/run/types';
 

@@ -1,6 +1,6 @@
 // src/stan/run/live/frame.ts
 // Compose a full frame body from rows + options (content-only; no I/O).
-import { presentRow } from '@/runner/run/presentation/row';
+import { presentRow } from '@/runner/run/presentation';
 import type { ScriptState } from '@/runner/run/types';
 
 import { renderSummary } from '../summary';
