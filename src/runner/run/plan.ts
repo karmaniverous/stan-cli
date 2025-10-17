@@ -52,6 +52,10 @@ export const renderRunPlan = (
         ? behavior.hangKillGrace.toString()
         : 'n/a'
     }s`,
+    // Optional Facet view (supplied by action via RunnerConfig.overlayPlan)
+    ...(Array.isArray(config.overlayPlan) && config.overlayPlan.length
+      ? ['facet view:', ...config.overlayPlan.map((l) => `  ${l}`)]
+      : []),
   ];
   return `stan:\n  ${lines.join('\n  ')}`;
 };

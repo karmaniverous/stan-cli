@@ -192,6 +192,33 @@ export const registerRunOptions = (
   optHangKill.default(eff.hangKill);
   optHangKillGrace.default(eff.hangKillGrace);
 
+  // Facet overlay flags (binary + per-run activation/deactivation)
+  const optOverlayOn = new Option('--facets', 'enable facet overlay');
+  const optOverlayOff = new Option('--no-facets', 'disable facet overlay');
+  // -f (variadic names) — overlay ON; when no names provided (naked), treat all facets active (no hiding)
+  const optOverlayActivate = new Option(
+    '-f, --facets-activate [names...]',
+    'activate facets for this run (overlay ON; naked form treats all facets active)',
+  );
+  // -F (variadic names) — overlay ON; when no names provided (naked), same as --no-facets
+  const optOverlayDeactivate = new Option(
+    '-F, --facets-deactivate [names...]',
+    'deactivate facets for this run (overlay ON; naked form disables overlay)',
+  );
+  // Tag default (cliDefaults.run.facets)
+  tagDefault(eff.facets ? optOverlayOn : optOverlayOff, true);
+
+  cmd
+    .addOption(optOverlayOn)
+    .addOption(optOverlayOff)
+    .addOption(optOverlayActivate)
+    .addOption(optOverlayDeactivate);
+
+  // Track presence of selection flags (existing) and overlay toggles (for action)
+  cmd.on('option:facets', () => void 0);
+  cmd.on('option:no-facets', () => void 0);
+  cmd.on('option:facets-activate', () => void 0);
+  cmd.on('option:facets-deactivate', () => void 0);
   // Help footer
   cmd.addHelpText('after', () => renderAvailableScriptsHelp(process.cwd()));
 

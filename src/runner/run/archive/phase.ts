@@ -9,6 +9,12 @@ import {
 } from '@/runner/run/archive/util';
 import { alert, ok } from '@/runner/util/color';
 
+type WithAnchors = {
+  includes?: string[];
+  excludes?: string[];
+  anchors?: string[];
+};
+
 // Progress callbacks for live renderer integration
 type ArchiveProgress = {
   /** Called when a phase starts (kind: 'full' | 'diff'). */
@@ -39,7 +45,7 @@ type ArchiveProgress = {
 export const archivePhase = async (
   args: {
     cwd: string;
-    config: ContextConfig;
+    config: ContextConfig & WithAnchors;
     includeOutputs: boolean;
   },
   opts?: {
@@ -88,6 +94,7 @@ export const archivePhase = async (
         includeOutputDir: includeOutputs,
         includes: config.includes ?? [],
         excludes: config.excludes ?? [],
+        anchors: config.anchors ?? [],
       });
       opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
       if (!silent) {
@@ -111,6 +118,7 @@ export const archivePhase = async (
         baseName: 'archive',
         includes: config.includes ?? [],
         excludes: config.excludes ?? [],
+        anchors: config.anchors ?? [],
         updateSnapshot: 'createIfMissing',
         includeOutputDirInDiff: includeOutputs,
       });

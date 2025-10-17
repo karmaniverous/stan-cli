@@ -21,6 +21,9 @@ export type RunnerConfig = {
   includes?: string[];
   excludes?: string[];
   imports?: Record<string, string[]>;
+  /** High-precedence re-includes (passed to core; subject to reserved denials). */
+  anchors?: string[];
+  overlayPlan?: string[]; // optional extra plan lines (facet view)
 };
 /**
  * Behavior flags controlling archive/combine/keep semantics:

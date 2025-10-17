@@ -143,6 +143,7 @@ export const runDefaults = (
   hangKill: number;
   hangKillGrace: number;
   prompt: string;
+  facets: boolean;
 } => {
   let runIn: {
     archive?: boolean;
@@ -155,6 +156,7 @@ export const runDefaults = (
     hangKill?: number;
     hangKillGrace?: number;
     prompt?: string;
+    facets?: boolean;
   } = {};
   try {
     runIn = (loadCliConfigSync(dir).cliDefaults?.run ?? {}) as typeof runIn;
@@ -179,6 +181,9 @@ export const runDefaults = (
       : 'auto';
   // Plan header default: true unless explicitly overridden in cliDefaults.run.plan
   const plan = typeof runIn.plan === 'boolean' ? runIn.plan : true;
+  // Overlay default: off unless cliDefaults.run.facets is true
+  const facets =
+    typeof runIn.facets === 'boolean' ? Boolean(runIn.facets) : false;
 
   return {
     archive: pickBool('archive'),
@@ -191,6 +196,7 @@ export const runDefaults = (
     hangKill: pickNum('hangKill', RUN_BASE_DEFAULTS.hangKill),
     hangKillGrace: pickNum('hangKillGrace', RUN_BASE_DEFAULTS.hangKillGrace),
     prompt,
+    facets,
   };
 };
 

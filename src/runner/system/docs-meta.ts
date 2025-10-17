@@ -13,6 +13,14 @@ export type DocsMeta = Record<string, unknown> & {
     hash?: string;
     path?: string;
   } & Record<string, unknown>;
+  overlay?: {
+    enabled?: boolean;
+    activated?: string[];
+    deactivated?: string[];
+    effective?: Record<string, boolean>;
+    autosuspended?: string[];
+    anchorsKept?: Record<string, number>;
+  } & Record<string, unknown>;
 };
 
 const metaPath = (cwd: string, stanPath: string): string =>
@@ -49,6 +57,56 @@ export const updateDocsMetaPrompt = async (
   const next: DocsMeta = {
     ...base,
     prompt: { ...(base.prompt ?? {}), ...prompt },
+  };
+  await ensureDir(path.dirname(p));
+  await writeFile(p, JSON.stringify(next, null, 2), 'utf8');
+};
+
+export const updateDocsMetaOverlay = async (
+  cwd: string,
+  stanPath: string,
+  overlay: {
+    enabled: boolean;
+    activated?: string[];
+    deactivated?: string[];
+    effective?: Record<string, boolean>;
+    autosuspended?: string[];
+    anchorsKept?: Record<string, number>;
+  },
+): Promise<void> => {
+  const p = metaPath(cwd, stanPath);
+  let base: DocsMeta = {};
+  try {
+    const raw = await readFile(p, 'utf8');
+    const v = JSON.parse(raw) as unknown;
+    if (v && typeof v === 'object') base = v as DocsMeta;
+  } catch {
+    base = {};
+  }
+  const next: DocsMeta = {
+    ...base,
+    overlay: {
+      ...(base.overlay ?? {}),
+      enabled: overlay.enabled,
+      activated:
+        overlay.activated ??
+        (base.overlay as { activated?: string[] } | undefined)?.activated,
+      deactivated:
+        overlay.deactivated ??
+        (base.overlay as { deactivated?: string[] } | undefined)?.deactivated,
+      effective:
+        overlay.effective ??
+        (base.overlay as { effective?: Record<string, boolean> } | undefined)
+          ?.effective,
+      autosuspended:
+        overlay.autosuspended ??
+        (base.overlay as { autosuspended?: string[] } | undefined)
+          ?.autosuspended,
+      anchorsKept:
+        overlay.anchorsKept ??
+        (base.overlay as { anchorsKept?: Record<string, number> } | undefined)
+          ?.anchorsKept,
+    },
   };
   await ensureDir(path.dirname(p));
   await writeFile(p, JSON.stringify(next, null, 2), 'utf8');

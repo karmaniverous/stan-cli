@@ -25,11 +25,18 @@ export const runArchiveStage = async (args: {
   const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
 
   // DRY: shared engine config and UI progress hooks for archivePhase calls.
-  const baseCfg = {
+  const baseCfg: {
+    stanPath: string;
+    includes?: string[];
+    excludes?: string[];
+    imports?: Record<string, string[]>;
+    anchors?: string[];
+  } = {
     stanPath: config.stanPath,
     includes: config.includes ?? [],
     excludes: config.excludes ?? [],
     imports: config.imports,
+    anchors: config.anchors ?? [],
   };
   const progress = {
     start: (k: 'full' | 'diff') => ui.onArchiveStart(k),
