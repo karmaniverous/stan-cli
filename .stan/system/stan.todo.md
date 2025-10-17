@@ -6,6 +6,25 @@
 
 Provide an optional, binary overlay that shrinks the full archive selection for steady threads while preserving a safe escape hatch to a complete baseline. The CLI owns overlay composition; the engine remains authoritative for selection semantics and reserved denials.
 
+### Current status
+
+- CLI flags are wired and active:
+  - `--facets`/`--no-facets`, `-f/--facets-activate [names...]` (naked = all on), `-F/--facets-deactivate [names...]` (naked = overlay off).
+- Overlay composition implemented (`computeFacetOverlay`) and plumbed to the runner:
+  - `excludesOverlay` merged into engine `excludes`.
+  - `anchorsOverlay` passed to core (subject to reserved denials and binary screening).
+- Plan shows a “Facet view” with overlay status, inactive/auto‑suspended facets, and anchors kept count.
+- Docs metadata now persists overlay state to `.stan/system/.docs.meta.json`.
+
+### Remaining work (near term)
+
+- Tests:
+  - Unit: overlay derivation (activate/deactivate precedence), anchors vs excludes precedence, ramp‑up safety auto‑suspend, facet view plan lines.
+  - Integration: flag matrix (variadics + naked forms), metadata persisted, anchors honored by core, reserved denials never re‑included.
+- Docs:
+  - CLI usage: document overlay flags/semantics and show “Facet view” in plan.
+  - Configuration: document `facet.meta.json`/`facet.state.json`, precedence rules, ramp‑up safety note.
+
 Files (included in archives; lives under `<stanPath>/system/`)
 
 - `facet.meta.json` (durable, versioned in git): map of facet name to:
@@ -84,7 +103,7 @@ Testing (representative)
 - Deprecation staging for config ingestion
   - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
   - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
-  - Phase 3: strict stan‑cli only (remove legacy acceptance).
+  - Phase 3: strict stan‑cli only (remove legacy acceptance).  [plan later]
 
 - Docs & help updates
   - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
@@ -113,13 +132,13 @@ Testing (representative)
 ## Acceptance criteria (near‑term)
 
 - Config swing:
-  - stan init migrates legacy → namespaced; backup + dry‑run supported. [PENDING]
-  - Legacy engine keys honored via synthesized ContextConfig during transition; debugFallback notice only. [PENDING]
-  - Deprecation phases implemented (env‑gated, then strict). [PENDING]
+  - stan init migrates legacy → namespaced; backup + dry‑run supported. [DONE]
+  - Legacy engine keys honored via synthesized ContextConfig during transition; debugFallback notice only. [DONE]
+  - Deprecation phases implemented (env‑gated, then strict). [IN PROGRESS]
 - Tests/docs:
-  - Migration tests (YAML/JSON/mixed; idempotent; backups; dry‑run). [PENDING]
-  - Transitional extraction tests (legacy excludes/includes honored). [PENDING]
-  - Docs updated (namespaced examples; migration appendix; init help). [PENDING]
+  - Migration tests (YAML/JSON/mixed; idempotent; backups; dry‑run). [DONE]
+  - Transitional extraction tests (legacy excludes/includes honored). [DONE]
+  - Docs updated (namespaced examples; migration appendix; init help). [DONE]
 
 ---
 
