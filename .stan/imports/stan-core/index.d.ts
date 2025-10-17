@@ -16,8 +16,38 @@ type CreateArchiveOptions = {
     excludes?: string[];
     /** Optional callback for archive classifier warnings (engine remains silent by default). */
     onArchiveWarnings?: (text: string) => void;
+    /**
+     * High‑precedence re‑includes (subject to reserved denials and output exclusion).
+     * Anchors re-include paths even when excluded by `.gitignore` or `excludes`,
+     * but they never override reserved workspace denials:
+     * - `<stanPath>/diff/**`, `<stanPath>/patch/**`
+     * - `<stanPath>/output/{archive.tar,archive.diff.tar,archive.warnings.txt}`
+     * - `.git/**`
+     *
+     * @example
+     * ```ts
+     * // Force-include README.md even if repo excludes would drop it:
+     * await createArchive(cwd, '.stan', {
+     *   includes: [],
+     *   excludes: ['README.md'],
+     *   anchors: ['README.md'],
+     * });
+     * ```
+     */
+    anchors?: string[];
 };
-/** Create `stanPath/output/archive.tar` (or custom file name) from the repo root. */
+/**
+ * Create `stanPath/output/archive.tar` (or custom file name) from the repo root.
+ *
+ * @example
+ * ```ts
+ * const tarPath = await createArchive(process.cwd(), '.stan', {
+ *   includeOutputDir: false,
+ *   excludes: ['**\/.tsbuild/**'],
+ *   anchors: ['README.md', 'docs/index.md'], // re-include anchors
+ * });
+ * ```
+ */
 declare const createArchive: (cwd: string, stanPath: string, options?: CreateArchiveOptions) => Promise<string>;
 
 /** Public default STAN path for consumers and internal use. */
@@ -93,13 +123,26 @@ type SnapshotUpdateMode = 'never' | 'createIfMissing' | 'replace';
  *   - stanPath: STAN workspace folder.
  *   - includes: Allow‑list globs (overrides excludes).
  *   - excludes: Deny‑list globs.
+ *   - anchors: High‑precedence re‑includes (subject to reserved/output).
+ *
+ * @example
+ * ```ts
+ * // Seed snapshot using anchors to keep README.md even when excluded:
+ * await writeArchiveSnapshot({
+ *   cwd: process.cwd(),
+ *   stanPath: '.stan',
+ *   excludes: ['README.md'],
+ *   anchors: ['README.md'],
+ * });
+ * ```
  * @returns Absolute path to the `.archive.snapshot.json` file.
  */
-declare const writeArchiveSnapshot: ({ cwd, stanPath, includes, excludes, }: {
+declare const writeArchiveSnapshot: ({ cwd, stanPath, includes, excludes, anchors, }: {
     cwd: string;
     stanPath: string;
     includes?: string[];
     excludes?: string[];
+    anchors?: string[];
 }) => Promise<string>;
 /**
  * Create a diff tar at <stanPath>/output/<baseName>.diff.tar.
@@ -116,11 +159,25 @@ declare const writeArchiveSnapshot: ({ cwd, stanPath, includes, excludes, }: {
  *   - baseName: Base archive name (e.g., `archive` -\> `archive.diff.tar`).
  *   - includes: Allow‑list globs (overrides excludes).
  *   - excludes: Deny‑list globs.
+ *   - anchors: High‑precedence re‑includes (subject to reserved/output).
  *   - updateSnapshot: Controls when the snapshot file is replaced.
  *   - includeOutputDirInDiff: When true, include `stanPath/output` in the diff.
  * @returns `{ diffPath }` absolute path to the diff archive.
+ *
+ * @example
+ * ```ts
+ * // Diff archive with anchors to retain docs/overview.md:
+ * const { diffPath } = await createArchiveDiff({
+ *   cwd: process.cwd(),
+ *   stanPath: '.stan',
+ *   baseName: 'archive',
+ *   excludes: ['docs/**'],
+ *   anchors: ['docs/overview.md'],
+ *   updateSnapshot: 'createIfMissing',
+ * });
+ * ```
  */
-declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes, updateSnapshot, includeOutputDirInDiff, onArchiveWarnings, }: {
+declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes, updateSnapshot, includeOutputDirInDiff, anchors, onArchiveWarnings, }: {
     cwd: string;
     stanPath: string;
     baseName: string;
@@ -128,6 +185,7 @@ declare const createArchiveDiff: ({ cwd, stanPath, baseName, includes, excludes,
     excludes?: string[];
     updateSnapshot?: SnapshotUpdateMode;
     includeOutputDirInDiff?: boolean;
+    anchors?: string[];
     onArchiveWarnings?: (text: string) => void;
 }) => Promise<{
     diffPath: string;
@@ -279,6 +337,14 @@ declare const prepareImports: (args: {
     onStage?: (label: string, files: string[]) => void;
 }) => Promise<void>;
 
+/**
+ * Compile an engine‑parity matcher that returns true when any pattern matches.
+ *
+ * @param patterns - Glob/prefix patterns (POSIX paths).
+ * @returns (relPath) =\> boolean
+ */
+declare const makeGlobMatcher: (patterns: string[]) => ((rel: string) => boolean);
+
 /** Resolve packaged dist/stan.system.md if present. */
 declare const getPackagedSystemPromptPath: () => string | null;
 
@@ -304,5 +370,5 @@ declare const assembleSystemMonolith: (cwd: string, stanPath: string) => Promise
 
 declare const CORE_VERSION: string;
 
-export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, assembleSystemMonolith, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, getPackagedSystemPromptPath, loadConfig, loadConfigSync, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
+export { CORE_VERSION, DEFAULT_OPEN_COMMAND, DEFAULT_STAN_PATH, __internal, applyPatchPipeline, applyWithJsDiff, assembleSystemMonolith, createArchive, createArchiveDiff, detectAndCleanPatch, ensureOutputDir, executeFileOps, findConfigPathSync, getPackagedSystemPromptPath, loadConfig, loadConfigSync, makeGlobMatcher, parseFileOpsBlock, prepareImports, resolveStanPath, resolveStanPathSync, validateOrThrow, validateResponseMessage, writeArchiveSnapshot };
 export type { ApplyResult, AssembleResult, AttemptCapture, Block, BlockKind, ContextConfig, CreateArchiveOptions, FileOp, FileOpsPlan, ImportsMap, JsDiffOutcome, OpResult, PipelineOutcome, SnapshotUpdateMode, ValidationResult };

@@ -327,3 +327,82 @@ All core calls MUST be deterministic and presentation‑free; stan‑cli is resp
   - Script runner PATH augmentation so repo devDeps resolve without globals.
 
 ---
+
+## 10) Facet overlay (CLI owner)
+
+Provide an optional, binary overlay that shrinks the full archive selection for steady threads while preserving a safe escape hatch to a complete baseline. The CLI owns overlay composition; the engine remains authoritative for selection semantics and reserved denials.
+
+Files (included in archives; lives under `<stanPath>/system/`)
+
+- `facet.meta.json` (durable, versioned in git): map of facet name to:
+  - `exclude: string[]` — subtrees to drop when the facet is inactive and overlay is enabled.
+  - `include: string[]` — “anchors” that must always be kept (e.g., docs indices, READMEs). Anchors re‑include even when excluded by `.gitignore` or repo/overlay excludes, subject to reserved denials and binary screening.
+- `facet.state.json` (ephemeral, gitignored): map of facet name to boolean:
+  - `true` = active (no drop),
+  - `false` = inactive (drop its `exclude` globs when overlay is enabled),
+  - facet missing in state ⇒ treated as active by default.
+
+Flags (run only)
+
+- `--facets` / `--no-facets` — enable/disable overlay.
+- `-f [names...]` — overlay ON; set listed facets active for this run only. Naked `-f` ⇒ overlay ON; treat all facets active (no hiding).
+- `-F [names...]` — overlay ON; set listed facets inactive for this run only. Naked `-F` ⇒ same as `--no-facets` (ignore overlay).
+- If a facet appears in both `-f` and `-F`, `-f` wins (safer include).
+- Defaults:
+  - Built‑in default: overlay OFF.
+  - `cliDefaults.run.facets: boolean` MAY set the overlay default; flags override.
+
+Composition (CLI)
+
+1. Determine inactive facets for the run (precedence: per‑run overrides > `facet.state.json` > default active).
+2. Build overlay sets:
+   - `excludesOverlay = ∪(exclude[] of all inactive facets)`,
+   - `anchorsOverlay = ∪(include[] of all facets)` (always included).
+3. Ramp‑up safety: if a facet is inactive but no anchor exists under its excluded subtree(s), **do not hide it** for this run (auto‑suspend the drop) and print a concise plan warning:
+   - `stan: facet "<name>": no anchors found; kept code this run. Add an anchor in facet.meta.json include and re-run.`
+4. Pass to engine alongside repo selection:
+   - `includes: repo includes`,
+   - `excludes: repo excludes ∪ excludesOverlay`,
+   - `anchors: anchorsOverlay`.
+
+Engine interaction and precedence (documented behavior)
+
+- CLI passes `anchors` to:
+  - `createArchive(cwd, stanPath, { includes?, excludes?, anchors? })`,
+  - `createArchiveDiff({ ..., includes?, excludes?, anchors?, ... })`,
+  - `writeArchiveSnapshot({ ..., includes?, excludes?, anchors? })`.
+- Precedence:
+  - `includes` override `.gitignore` (not `excludes`),
+  - `excludes` override `includes`,
+  - `anchors` override both `.gitignore` and `excludes`, subject to reserved denials:
+    - `.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`,
+    - `<stanPath>/output/{archive.tar,archive.diff.tar,archive.warnings.txt}`,
+    - binary screening still applies.
+
+Plan output (TTY/non‑TTY)
+
+- When overlay is enabled, print a “Facet view” section:
+  - overlay: on/off,
+  - inactive facets and their excluded roots,
+  - anchors kept (count or short list),
+  - any auto‑suspended facets,
+  - per‑run overrides in effect.
+
+Overlay metadata (for assistants)
+
+- Each run, augment `<stanPath>/system/.docs.meta.json` with:
+  - `overlay.enabled: boolean`,
+  - `overlay.activated: string[]`,
+  - `overlay.deactivated: string[]`,
+  - `overlay.effective: Record<string, boolean>`,
+  - `overlay.autosuspended: string[]`,
+  - `overlay.anchorsKept: Record<string, number>` (count‑per‑facet; avoid large metadata).
+- Ensure metadata is included in both full and diff archives.
+
+Testing (representative)
+
+- Flags: `--facets/--no-facets`, `-f/-F` (variadics and naked forms), conflict resolution (`-f` wins).
+- Overlay composition and ramp‑up safety.
+- Anchors propagate to engine; reserved denials never overridden by anchors.
+- Overlay metadata written and present in archives.
+- Plan shows “Facet view” accurately.

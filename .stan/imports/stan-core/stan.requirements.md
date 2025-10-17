@@ -13,7 +13,7 @@ stan-cli MUST be able to run against any compatible stan-core at runtime.
   - stan-core publishes a stable, documented API surface (see “Public API”).
   - stan-core provides prompt helpers required by the CLI:
     - `getPackagedSystemPromptPath(): string | null` resolves packaged `dist/stan.system.md`.
-    - `assembleSystemMonolith(cwd, stanPath)` assembles `.stan/system/parts/*.md` into `.stan/system/stan.system.md` in dev workflows (quiet helper; no logs).
+    - `assembleSystemMonolith(cwd, stanPath)` assembles `<stanPath>/system/parts/*.md` into `<stanPath>/system/stan.system.md` in dev workflows (quiet helper; no logs).
 
 - Packaging
   - Dist: ESM/CJS outputs under `dist/mjs` and `dist/cjs` with `.d.ts` types.
@@ -50,9 +50,22 @@ Provide a cohesive, dependency‑light engine that implements the durable capabi
   - Apply selection rules:
     - default denials (`node_modules`, `.git`),
     - `.gitignore` semantics,
-    - includes (additive, override `.gitignore`),
-    - excludes (take precedence over includes),
+    - `includes` (additive, override `.gitignore`),
+    - `excludes` (take precedence over `includes`),
+    - `anchors` (high‑precedence re‑inclusion; see below),
     - reserved workspace rules (exclude `<stanPath>/diff` and `<stanPath>/patch`, conditionally exclude `<stanPath>/output`).
+  - Anchors channel (new):
+    - Core selection surfaces MUST accept an optional `anchors?: string[]` and re‑include matched paths after applying excludes and `.gitignore`.
+    - Anchors MUST NOT override reserved denials (`.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`, and archive outputs) and MUST NOT bypass binary screening.
+    - Surfaces:
+      - `filterFiles(files, { …, includes?, excludes?, anchors? })`
+      - `createArchive(cwd, stanPath, { …, includes?, excludes?, anchors? })`
+      - `createArchiveDiff({ …, includes?, excludes?, anchors?, … })`
+      - `writeArchiveSnapshot({ …, includes?, excludes?, anchors? })`
+  - Precedence (documented behavior):
+    - `includes` override `.gitignore` (not `excludes`);
+    - `excludes` override `includes`;
+    - `anchors` override both `excludes` and `.gitignore`, subject to reserved denials and binary screening.
 
 - Archiving and diffs
   - Create full and diff archives:
@@ -62,6 +75,9 @@ Provide a cohesive, dependency‑light engine that implements the durable capabi
     - Exclude binaries,
     - Flag large text by size and/or LOC.
   - Warnings must be exposed via return values and/or optional callbacks (no console I/O).
+  - Overlay metadata (CLI):
+    - The CLI MUST write a machine‑readable `overlay` block to `<stanPath>/system/.docs.meta.json` each run capturing: `enabled`, per‑run overrides (`activated`/`deactivated`), final `effective` facet map, any `autosuspended` facets (ramp‑up safety), and optional `anchorsKept`.
+    - This metadata MUST be included in both full and diff archives so the assistant can distinguish selection/view changes from code churn across turns.
 
 - Snapshotting
   - Compute per‑file content hashes for the filtered selection.
@@ -96,7 +112,7 @@ Provide a cohesive, dependency‑light engine that implements the durable capabi
 ### Non‑goals
 
 - No CLI/TTY responsibilities (no Commander, no clipboard, no editor spawning).
-- No console output; diagnostics/warnings must flow back as data or via optional callbacks.
+- No console output; diagnostics/warnings must flow back as data or via optional callbacks to the caller (CLI).
 - No long‑running interactive state (transport‑agnostic services only).
 
 ### Public API (representative; stable)
@@ -109,7 +125,7 @@ Provide a cohesive, dependency‑light engine that implements the durable capabi
 - Archive/diff/snapshot
   - `createArchive(cwd, stanPath, options): Promise<string>`
   - `createArchiveDiff(args): Promise<{ diffPath: string }>`
-  - `writeArchiveSnapshot({ cwd, stanPath, includes, excludes }): Promise<string>`
+  - `writeArchiveSnapshot({ cwd, stanPath, includes, excludes, anchors? }): Promise<string>`
   - Classification utility included as internal detail; warnings surfaced by archive APIs.
   - Optional callback: `onArchiveWarnings?: (text: string) => void` (where supported).
 - Patch engine
@@ -138,9 +154,11 @@ Notes
 - Determinism: selection/archiving/snapshotting are deterministic for identical inputs.
 - Path hygiene: external inputs/outputs use POSIX repo‑relative paths.
 - Side‑effect bounds: changes are limited to documented workspace paths (e.g., `<stanPath>/output`, `<stanPath>/diff`, `<stanPath>/patch`).
-- Dependencies:
-  - Allowed at runtime: `tar`, `fs-extra`.
-  - Not allowed: clipboard libraries, CLI frameworks, TTY/presentation utilities.
+
+### Dependencies
+
+- Allowed at runtime: `tar`, `fs-extra`.
+- Not allowed: clipboard libraries, CLI frameworks, TTY/presentation utilities.
 
 ### Cross‑repo configuration alignment (CLI perspective)
 
@@ -166,7 +184,7 @@ Improve success on “new document” diffs commonly malformed in chat:
 
 - Coverage for:
   - Config loaders and schema error messages (namespaced `stan-core` block).
-  - Selection semantics (includes vs excludes precedence; reserved workspace exclusions).
+  - Selection semantics (includes vs excludes precedence; reserved workspace exclusions; anchors re‑inclusion).
   - Archive classification (binary exclusion, large‑text flags) and warnings surfacing (returns/callback).
   - Diff archive + snapshot handling (changed/no‑changes sentinel).
   - Patch pipeline:
