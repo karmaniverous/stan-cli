@@ -47,3 +47,9 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 - Core — implemented anchors channel in selection surfaces
   - `filterFiles` accepts `anchors?: string[]` and re‑includes matches after excludes/.gitignore while respecting reserved denials (`.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`) and output exclusion when `includeOutputDir=false`.
   - `createArchive`, `createArchiveDiff`, and `writeArchiveSnapshot` accept and propagate `anchors` to ensure consistent selection across full, diff, and snapshot.
+
+- System — facet‑aware editing guard (prompt update)
+  - Added a new system part describing a two‑turn cadence when a target lies under an inactive facet:
+    - Turn N: enable the facet (state patch) and log intent; no content patch for hidden targets.
+    - Turn N+1: emit the actual edits after re‑run with `-f <facet>` (or `-F` to disable overlay).
+  - Clarifies allowed mixing (other visible patches OK; anchors OK) and reiterates reserved denials.
