@@ -22,10 +22,6 @@ Provide an optional, binary overlay that shrinks the full archive selection for 
   - Unit: overlay derivation (activate/deactivate precedence), anchors vs excludes precedence, ramp‑up safety auto‑suspend, facet view plan lines.
   - Integration: flag matrix (variadics + naked forms), metadata persisted, anchors honored by core, reserved denials never re‑included.
 
-- Docs:
-  - CLI usage: document overlay flags/semantics and show “Facet view” in plan.
-  - Configuration: document `facet.meta.json`/`facet.state.json`, precedence rules, ramp‑up safety note.
-
 Files (included in archives; lives under `<stanPath>/system/`)
 
 - `facet.meta.json` (durable, versioned in git): map of facet name to:
@@ -182,4 +178,8 @@ Overlay metadata (for assistants)
   - Added integration test (src/runner/overlay/anchors.reserved.integration.test.ts) that anchors under `.stan/diff/**` and `.stan/patch/**` are ignored by selection, while normal anchors (e.g., README.md) are included.
   - Uses `writeArchiveSnapshot` (engine surface) to validate selection deterministically without relying on tar introspection; preserves CLI integration intent.
   - Confirms system‑documented reserved‑denials policy for `<stanPath>/diff` and `<stanPath>/patch` in a CLI integration test.
-  - Note: `.git/**` behavior is pending upstream confirmation; track as a follow‑up interop item with stan‑core to ensure anchors never re‑include `.git/**` during snapshot/selection.
+  - Note: `.git/**` behavior is pending upstream confirmation; track as a follow‑up interop item with stan‑core to ensure anchors never re‑include `.git/**` during snapshot/selection.
+
+- Config hardening — overlay default locked
+  - Confirmed `stan-cli.cliDefaults.run.facets: true` in `stan.config.*`, ensuring overlay is ON by default for this repository.
+  - Flags still override defaults at run time; facet view appears in the plan when overlay is enabled.
