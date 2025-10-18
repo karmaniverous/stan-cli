@@ -169,3 +169,6 @@ Testing (representative)
   - Added run flags: `--facets/--no-facets`, `-f/-F`, and `cliDefaults.run.facets` default.
   - Compute overlay before plan; pass `excludesOverlay` and `anchorsOverlay` to core via RunnerConfig; inject facet view in plan.
   - Extended docs metadata with `overlay.*` (enabled, overrides, effective, autosuspended, anchorsKept counts).
+
+- Facet overlay — initial carve‑off
+  - Added .stan/system/facet.meta.json and facet.state.json with facets: ci (.github/**), vscode (.vscode/**), docs (docs-src/**). Each facet keeps a local anchor to satisfy ramp‑up safety. Defaults are inactive to reduce baseline archive size while preserving breadcrumbs.

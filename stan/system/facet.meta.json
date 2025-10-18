@@ -1,0 +1,22 @@
+{
+  "ci": {
+    "exclude": [
+      ".github/**"
+    ],
+    "include": [
+      ".github/FUNDING.yml"
+    ]
+  },
+  "vscode": {
+    "exclude": [
+      ".vscode/**"
+    ],
+    "include": [
+      ".vscode/settings.json"
+    ]
+  },
+  "docs": {
+    "exclude": ["docs-src/**"],
+    "include": ["docs-src/getting-started.md"]
+  }
+}
