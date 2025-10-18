@@ -183,3 +183,7 @@ Overlay metadata (for assistants)
 - Config hardening — overlay default locked
   - Confirmed `stan-cli.cliDefaults.run.facets: true` in `stan.config.*`, ensuring overlay is ON by default for this repository.
   - Flags still override defaults at run time; facet view appears in the plan when overlay is enabled.
+
+- Init — ensure .gitignore includes system state/metadata files
+  - Updated init workspace guard (`ensureStanGitignore`) to add `<stanPath>/system/facet.state.json` and `<stanPath>/system/.docs.meta.json` to `.gitignore`.
+  - Added unit tests to assert new entries are written and that the function remains idempotent.
