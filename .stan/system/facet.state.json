@@ -1,0 +1,8 @@
+{
+  "ci": false,
+  "vscode": false,
+  "docs": false,
+  "tests": false,
+  "live-ui": false
+}
+

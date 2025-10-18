@@ -1,0 +1,50 @@
+{
+  "ci": {
+    "exclude": [
+      ".github/**"
+    ],
+    "include": [
+      ".github/FUNDING.yml"
+    ]
+  },
+  "vscode": {
+    "exclude": [
+      ".vscode/**"
+    ],
+    "include": [
+      ".vscode/settings.json"
+    ]
+  },
+  "docs": {
+    "exclude": ["docs-src/**"],
+    "include": ["docs-src/getting-started.md"]
+  },
+  "tests": {
+    "exclude": [
+      "**/*.test.ts",
+      "src/test/**",
+      "src/test-support/**"
+    ],
+    "include": [
+      "README.md",
+      "src/test/setup.ts",
+      "src/test-support/run.ts"
+    ]
+  },
+  "live-ui": {
+    "exclude": [
+      "src/anchored-writer/**",
+      "src/runner/run/live/**",
+      "src/runner/run/progress/**",
+      "src/runner/run/presentation/**",
+      "src/runner/run/ui/**"
+    ],
+    "include": [
+      "src/anchored-writer/index.ts",
+      "src/runner/run/live/index.ts",
+      "src/runner/run/progress/index.ts",
+      "src/runner/run/presentation/index.ts",
+      "src/runner/run/ui/index.ts"
+    ]
+  }
+}

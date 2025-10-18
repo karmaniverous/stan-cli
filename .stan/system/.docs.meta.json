@@ -8,8 +8,20 @@
     "enabled": true,
     "activated": [],
     "deactivated": [],
-    "effective": {},
+    "effective": {
+      "ci": false,
+      "vscode": false,
+      "docs": false,
+      "tests": false,
+      "live-ui": false
+    },
     "autosuspended": [],
-    "anchorsKept": {}
+    "anchorsKept": {
+      "ci": 1,
+      "vscode": 1,
+      "docs": 1,
+      "tests": 3,
+      "live-ui": 5
+    }
   }
 }
