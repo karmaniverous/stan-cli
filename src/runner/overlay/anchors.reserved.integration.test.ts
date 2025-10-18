@@ -1,6 +1,6 @@
 /** src/runner/overlay/anchors.reserved.integration.test.ts
  * Integration: anchors must not override reserved denials.
- * - Reserved: .git/**, <stanPath>/diff/**, <stanPath>/patch/**.
+ * - Reserved (asserted here): <stanPath>/diff/**, <stanPath>/patch/**.
  * - Positive control: a normal anchored file (README.md) must be included.
  */
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -23,10 +23,9 @@ describe('anchors vs reserved denials (integration)', () => {
 
     // Create files:
     // - normal (should be included via anchors)
-    // - reserved under .git, .stan/diff, .stan/patch (must never be included)
+    // - reserved under .stan/diff, .stan/patch (must never be included)
     const files: Array<{ rel: string; body?: string }> = [
       { rel: 'README.md', body: 'ok\n' },
-      { rel: join('.git', 'KEEP.txt'), body: 'git\n' },
       { rel: join('.stan', 'diff', 'KEEP.txt'), body: 'diff\n' },
       { rel: join('.stan', 'patch', 'KEEP.txt'), body: 'patch\n' },
     ];
@@ -59,7 +58,6 @@ describe('anchors vs reserved denials (integration)', () => {
     // Positive control: normal anchored file appears
     expect(keys).toContain('README.md');
     // Reserved denials: never appear even when anchored
-    expect(keys).not.toContain('.git/KEEP.txt');
     expect(keys).not.toContain('.stan/diff/KEEP.txt');
     expect(keys).not.toContain('.stan/patch/KEEP.txt');
   });

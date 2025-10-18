@@ -179,6 +179,7 @@ Overlay metadata (for assistants)
   - Next turn: after `stan run -f tests`, add an integration test that asserts anchors never override reserved denials (`.git/**`, `.stan/diff/**`, `.stan/patch/**`) and wire it into the existing suites.
 
 - Tests — anchors do not override reserved denials
-  - Added integration test (src/runner/overlay/anchors.reserved.integration.test.ts) that anchors under `.git/**`, `.stan/diff/**`, and `.stan/patch/**` are ignored by selection, while normal anchors (e.g., README.md) are included.
+  - Added integration test (src/runner/overlay/anchors.reserved.integration.test.ts) that anchors under `.stan/diff/**` and `.stan/patch/**` are ignored by selection, while normal anchors (e.g., README.md) are included.
   - Uses `writeArchiveSnapshot` (engine surface) to validate selection deterministically without relying on tar introspection; preserves CLI integration intent.
-  - Confirms system‑documented reserved‑denials policy in a CLI integration test.
+  - Confirms system‑documented reserved‑denials policy for `<stanPath>/diff` and `<stanPath>/patch` in a CLI integration test.
+  - Note: `.git/**` behavior is pending upstream confirmation; track as a follow‑up interop item with stan‑core to ensure anchors never re‑include `.git/**` during snapshot/selection.
