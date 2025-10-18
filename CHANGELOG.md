@@ -2,7 +2,36 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.0](https://github.com/karmaniverous/stan-cli/compare/0.10.3...0.11.0)
+
+- feat(cli): record facet overlay requirements and dev plan [`2b936d3`](https://github.com/karmaniverous/stan-cli/commit/2b936d311162c2cef5d17a2107e648fbb6389196)
+- feat(run): facet overlay scaffolding — flags, readers, anchors plumbing [`76f23dc`](https://github.com/karmaniverous/stan-cli/commit/76f23dc101b0be1e90a2486491478ef6cb5bcd78)
+- updated stan-core [`b0d7844`](https://github.com/karmaniverous/stan-cli/commit/b0d7844d262d6dfa6a5fbb6abb615b8cdd57bad3)
+- feat(interp/core): propose minimal facet overlay (exclude+anchor) and CLI-owned semantics [`4620c28`](https://github.com/karmaniverous/stan-cli/commit/4620c280951833fb35b5b280d5973a2fb5986b87)
+- feat(cli): rename facet flags (-f/--facets, -F/--no-facets) and align semantics/docs [`9135c4d`](https://github.com/karmaniverous/stan-cli/commit/9135c4d99989bf6b98fd186d1a22febb32d5c6da)
+- chore(interp/core): ACK facet overlay; accept anchors hook and outline next steps [`a1bbb8a`](https://github.com/karmaniverous/stan-cli/commit/a1bbb8a14a33929a77f3b6fa0d66a1a8468cd4bb)
+- test(docs): add facet overlay unit tests [`81a1649`](https://github.com/karmaniverous/stan-cli/commit/81a1649b06b9304ff77ed057d7af9213cd8596f0)
+- chore: add stan-core interop note for facet‑aware editing guard; update plan [`e94b61f`](https://github.com/karmaniverous/stan-cli/commit/e94b61fd7035d64c4647b9090bbadcf4adc94ef0)
+- updated todo [`28b90ea`](https://github.com/karmaniverous/stan-cli/commit/28b90ead8cc05ef17c3544653b77690e144205df)
+- feat: add high-impact facets (tests, live-ui) to shrink archives [`a9dc003`](https://github.com/karmaniverous/stan-cli/commit/a9dc0033415cc8a6fa55798343ef61d5dadfad94)
+- test: add integration asserting anchors never override reserved denials [`9a2c297`](https://github.com/karmaniverous/stan-cli/commit/9a2c297523ce4c4509b82396fc97dfa1d9179e1c)
+- read interop [`6f01492`](https://github.com/karmaniverous/stan-cli/commit/6f014921298c55700119d8ccb692cac977d490e6)
+- feat: env‑gate legacy config acceptance (Phase‑2); require STAN_ACCEPT_LEGACY [`5e5331c`](https://github.com/karmaniverous/stan-cli/commit/5e5331ca7994e235e4dc25ea4f270968d0a12eae)
+- feat(init): add system state/meta files to .gitignore and test [`f5e479c`](https://github.com/karmaniverous/stan-cli/commit/f5e479c5e4763f07deca01a7bcbb59002e37d3b8)
+- updated gitignores [`3a32909`](https://github.com/karmaniverous/stan-cli/commit/3a3290995dbe3af3412744854b388c8736a42a57)
+- feat: add patch/snap/init facets to further shrink archives [`4eb478c`](https://github.com/karmaniverous/stan-cli/commit/4eb478cac703aa6185440db8bcfa2e43a40c0ee7)
+- docs(todo): update overlay status, enumerate remaining tasks, mark migration criteria done [`05b075c`](https://github.com/karmaniverous/stan-cli/commit/05b075c1475f45b48c08b9b2d16834944fe35310)
+- feat: add initial facet overlays (ci/vscode/docs) [`d20c737`](https://github.com/karmaniverous/stan-cli/commit/d20c7373ba1ba22a1b7880e5cece4f72c120f03b)
+- updated stan-core [`fd503a7`](https://github.com/karmaniverous/stan-cli/commit/fd503a71e36210bf8483e21d3d1312300ceb3137)
+- test: scope reserved‑denials integration to diff/patch; note .git follow‑up [`95b5983`](https://github.com/karmaniverous/stan-cli/commit/95b5983aa5b4c7efb8ac8b8c05fea9b067457723)
+- feat: enable tests facet; schedule reserved‑denials test next turn [`9d765bd`](https://github.com/karmaniverous/stan-cli/commit/9d765bd13a49c2e206cdf03a6b105e321583758a)
+- test: set STAN_ACCEPT_LEGACY at module load in setup to fix legacy‑config suites [`4d6f35a`](https://github.com/karmaniverous/stan-cli/commit/4d6f35aaf71309d57c04bbf342e2d58a91963789)
+- updated stan [`08d664f`](https://github.com/karmaniverous/stan-cli/commit/08d664f53347bf98567d6becde2dbce6e56f2c18)
+- feat: add high-impact facets (tests, live-ui) to shrink archives [`90c8d73`](https://github.com/karmaniverous/stan-cli/commit/90c8d73190bebedaffacaa6f08cd916a300100ed)
+
 #### [0.10.3](https://github.com/karmaniverous/stan-cli/compare/0.10.2...0.10.3)
+
+> 16 October 2025
 
 - test: consolidate cancellation suites and remove per-suite tar mocks [`4767be8`](https://github.com/karmaniverous/stan-cli/commit/4767be84d8a3017ad02031d75cc52e3ced83c1e7)
 - refactor: DRY prompt-aware archiving in session (diff/full helpers) [`895e607`](https://github.com/karmaniverous/stan-cli/commit/895e60702c07ca0955aa0811c0b7eedbd46d12e5)
@@ -12,6 +41,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor(ui,snap): extract lifecycle helpers; add selection util [`e36a718`](https://github.com/karmaniverous/stan-cli/commit/e36a718add8322324ac28189d24ce91585763678)
 - fix(archive,cli): resolve archive barrel shadowing; remove unused options [`32ad7da`](https://github.com/karmaniverous/stan-cli/commit/32ad7da27131036a61219d1756bfe28f243afaf6)
 - refactor(dry): factor archive-stage config/progress helpers [`bbeec8f`](https://github.com/karmaniverous/stan-cli/commit/bbeec8f036ab4b92872645e7ee913ebebfc77345)
+- chore: release v0.10.3 [`81d6bfa`](https://github.com/karmaniverous/stan-cli/commit/81d6bfad151e6777a3a7ecc079d36c2bfb8c0ea4)
 - refactor(ui): centralize row→presentation mapping for live/logger [`183971f`](https://github.com/karmaniverous/stan-cli/commit/183971f3195eb95301e4b962cafb6b003db8e932)
 - updated dev plan [`3157760`](https://github.com/karmaniverous/stan-cli/commit/31577602a515d6970decd6821ecdaaa8476d1b86)
 - refactor(dry): remove duplicates, unify archive call, and centralize helpers [`8815e87`](https://github.com/karmaniverous/stan-cli/commit/8815e87235010faff5225a936d1b4be2e48dee97)
