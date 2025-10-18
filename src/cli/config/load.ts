@@ -23,6 +23,18 @@ import {
   DBG_SCOPE_RUN_ENGINE_LEGACY,
 } from '@/runner/util/debug-scopes';
 
+/** Phase‑2: accept legacy only when explicitly enabled by env. */
+const legacyAccepted = (): boolean => {
+  try {
+    const v = String(process.env.STAN_ACCEPT_LEGACY ?? '')
+      .trim()
+      .toLowerCase();
+    return v === '1' || v === 'true';
+  } catch {
+    return false;
+  }
+};
+
 const formatZodError = (e: unknown): string =>
   e instanceof ZodError
     ? e.issues
@@ -98,6 +110,17 @@ export const loadCliConfig = async (cwd: string): Promise<LoadedCliConfig> => {
   // Transitional: legacy top-level keys only (no "stan-cli")
   const legacy = pickLegacyCliSection(root);
   if (Object.keys(legacy).length > 0) {
+    // Phase‑2 gate: require env to proceed with legacy acceptance.
+    if (!legacyAccepted()) {
+      const rel = cfgPath.replace(/\\/g, '/');
+      throw new Error(
+        [
+          `stan-cli: legacy configuration detected in ${rel} (missing top-level "stan-cli").`,
+          `Run "stan init" to migrate your config (a .bak is written next to the file),`,
+          `or set STAN_ACCEPT_LEGACY=1 to temporarily accept legacy keys during the transition.`,
+        ].join(' '),
+      );
+    }
     // Debug-visible notice to help users migrate via `stan init`
     debugFallback(
       DBG_SCOPE_CLI_CONFIG_LOAD,
@@ -132,6 +155,17 @@ export const loadCliConfigSync = (cwd: string): LoadedCliConfig => {
   }
   const legacy = pickLegacyCliSection(root);
   if (Object.keys(legacy).length > 0) {
+    // Phase‑2 gate: require env to proceed with legacy acceptance.
+    if (!legacyAccepted()) {
+      const rel = cfgPath.replace(/\\/g, '/');
+      throw new Error(
+        [
+          `stan-cli: legacy configuration detected in ${rel} (missing top-level "stan-cli").`,
+          `Run "stan init" to migrate your config (a .bak is written next to the file),`,
+          `or set STAN_ACCEPT_LEGACY=1 to temporarily accept legacy keys during the transition.`,
+        ].join(' '),
+      );
+    }
     debugFallback(
       DBG_SCOPE_CLI_CONFIG_LOAD_SYNC,
       `using legacy top-level CLI keys from ${cfgPath.replace(/\\/g, '/')}; run "stan init" to migrate`,

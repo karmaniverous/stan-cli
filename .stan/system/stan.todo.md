@@ -144,6 +144,11 @@ Testing (representative)
 
 ## Completed (recent)
 
+- Legacy config acceptance — Phase‑2 env gate
+  - Implemented env gate for legacy shapes: loaders now require STAN_ACCEPT_LEGACY=1 (or “true”) to accept legacy config keys; otherwise they fail early with concise “run stan init” guidance.
+  - Defaulted STAN_ACCEPT_LEGACY=1 in test setup to preserve transitional behavior; tests may override to assert failure paths.
+  - Follow‑through: strict removal planned in Phase‑3.
+
 - CLI — rename facet flags and align semantics/docs
   - Replaced `--facets/--no-facets` + `--facets-activate/--facets-deactivate` with:
     - `-f, --facets [names...]` (overlay ON; naked = all active)

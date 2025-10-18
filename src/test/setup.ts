@@ -9,6 +9,9 @@ import { tmpdir } from 'node:os';
 import { afterEach, beforeEach } from 'vitest';
 
 beforeEach(() => {
+  // Phase‑2 transition: default legacy acceptance for tests unless explicitly disabled.
+  if (!('STAN_ACCEPT_LEGACY' in process.env))
+    process.env.STAN_ACCEPT_LEGACY = '1';
   try {
     process.chdir(tmpdir());
   } catch {

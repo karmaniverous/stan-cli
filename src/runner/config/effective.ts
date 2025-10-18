@@ -42,6 +42,17 @@ const normalizeImports = (
   return Object.keys(out).length ? out : undefined;
 };
 
+/** Phase‑2: accept legacy engine shape only when explicitly enabled by env. */
+const legacyAccepted = (): boolean => {
+  try {
+    const v = String(process.env.STAN_ACCEPT_LEGACY ?? '')
+      .trim()
+      .toLowerCase();
+    return v === '1' || v === 'true';
+  } catch {
+    return false;
+  }
+};
 /**
  * Resolve effective engine ContextConfig with a legacy extractor.
  *
@@ -82,6 +93,19 @@ export const resolveEffectiveEngineConfig = async (
                 }
               })();
         return { stanPath } as ContextConfig;
+      }
+
+      // Phase‑2 gate: config file exists but top‑level "stan-core" is missing.
+      // Accept legacy only when env allows; otherwise fail early with clear guidance.
+      if (!legacyAccepted()) {
+        const rel = p.replace(/\\/g, '/');
+        throw new Error(
+          [
+            `stan: legacy engine configuration detected in ${rel} (missing top-level "stan-core").`,
+            `Run "stan init" to migrate your config,`,
+            `or set STAN_ACCEPT_LEGACY=1 to temporarily accept legacy keys during the transition.`,
+          ].join(' '),
+        );
       }
 
       // Legacy root keys extractor (transitional)
