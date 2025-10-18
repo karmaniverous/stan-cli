@@ -149,6 +149,10 @@ Testing (representative)
   - Defaulted STAN_ACCEPT_LEGACY=1 in test setup to preserve transitional behavior; tests may override to assert failure paths.
   - Follow‑through: strict removal planned in Phase‑3.
 
+- Tests — ensure env gate is effective during CLI construction
+  - Set STAN_ACCEPT_LEGACY at module load time in src/test/setup.ts so Phase‑2 legacy acceptance is active even when CLI is constructed during test module import.
+  - Removed the redundant set inside beforeEach.
+
 - CLI — rename facet flags and align semantics/docs
   - Replaced `--facets/--no-facets` + `--facets-activate/--facets-deactivate` with:
     - `-f, --facets [names...]` (overlay ON; naked = all active)
