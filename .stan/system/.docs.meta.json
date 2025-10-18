@@ -2,7 +2,7 @@
   "version": "0.10.3",
   "prompt": {
     "source": "core",
-    "hash": "6f0f51ad76f7142ae27257de2e16aaf43c5ebf18117e9dc79218775fa8a04be7"
+    "hash": "a47818fc2fb888ddf914a3c8d5b0b2bb7ac187c02287e37c83b9f7b25b8e7e2c"
   },
   "overlay": {
     "enabled": true,
@@ -12,7 +12,7 @@
       "ci": false,
       "vscode": false,
       "docs": false,
-      "tests": false,
+      "tests": true,
       "live-ui": false,
       "patch": false,
       "snap": false,

@@ -2,7 +2,7 @@
   "ci": false,
   "vscode": false,
   "docs": false,
-  "tests": false,
+  "tests": true,
   "live-ui": false,
   "patch": false,
   "snap": false,

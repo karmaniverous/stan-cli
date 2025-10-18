@@ -21,6 +21,8 @@ Provide an optional, binary overlay that shrinks the full archive selection for 
 - Tests:
   - Unit: overlay derivation (activate/deactivate precedence), anchors vs excludes precedence, ramp‑up safety auto‑suspend, facet view plan lines.
   - Integration: flag matrix (variadics + naked forms), metadata persisted, anchors honored by core, reserved denials never re‑included.
+  - Next step: enable the “tests” facet (done in facet.state.json) and re‑run with `stan run -f tests`; then add an integration test asserting anchors never override reserved denials (e.g., `.git/**`, `.stan/diff/**`, `.stan/patch/**`).
+
 - Docs:
   - CLI usage: document overlay flags/semantics and show “Facet view” in plan.
   - Configuration: document `facet.meta.json`/`facet.state.json`, precedence rules, ramp‑up safety note.
@@ -195,3 +197,7 @@ Testing (representative)
   - Authored `.stan/interop/stan-core/20251018-000501Z-facet-aware-editing-guard.md` describing a system‑prompt change that requires enabling a facet before editing/creating files under it.
   - Identifies the system‑prompt sections that encouraged edits without facet gating (documentation cadence, always‑on checks, response format), and proposes a concrete guard/algorithm using `.docs.meta.json` `facet.meta.json`.
   - Optional enhancement: enrich `.docs.meta.json` with `overlay.facetRoots` to simplify assistant path‑to‑facet mapping.
+
+- Facets — enable “tests” for next run
+  - Activated the “tests” facet in `.stan/system/facet.state.json` to make test files visible.
+  - Next turn: after `stan run -f tests`, add an integration test that asserts anchors never override reserved denials (`.git/**`, `.stan/diff/**`, `.stan/patch/**`) and wire it into the existing suites.
