@@ -172,3 +172,6 @@ Testing (representative)
 
 - Facet overlay — initial carve‑off
   - Added .stan/system/facet.meta.json and facet.state.json with facets: ci (.github/**), vscode (.vscode/**), docs (docs-src/**). Each facet keeps a local anchor to satisfy ramp‑up safety. Defaults are inactive to reduce baseline archive size while preserving breadcrumbs.
+- Facet overlay — major carve‑off
+  - Added tests facet excluding '**/*.test.ts', 'src/test/**', 'src/test-support/**'; anchors keep a breadcrumb under each excluded root ('README.md', 'src/test/setup.ts', 'src/test-support/run.ts').
+  - Added live-ui facet excluding 'src/anchored-writer/**', 'src/runner/run/live/**', 'src/runner/run/progress/**', 'src/runner/run/presentation/**', 'src/runner/run/ui/**'; anchors keep each subtree’s barrel ('.../index.ts').
