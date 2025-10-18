@@ -190,3 +190,8 @@ Testing (representative)
   - Added patch facet excluding 'src/runner/patch/\*\*' (anchor: 'src/runner/patch/service.ts').
   - Added snap facet excluding 'src/runner/snap/\*\*' (anchor: 'src/runner/snap/index.ts').
   - Added init facet excluding 'src/runner/init/\*\*' (anchor: 'src/runner/init/index.ts').
+
+- Interop — facet‑aware editing guard (proposal to stan‑core)
+  - Authored `.stan/interop/stan-core/20251018-000501Z-facet-aware-editing-guard.md` describing a system‑prompt change that requires enabling a facet before editing/creating files under it.
+  - Identifies the system‑prompt sections that encouraged edits without facet gating (documentation cadence, always‑on checks, response format), and proposes a concrete guard/algorithm using `.docs.meta.json` `facet.meta.json`.
+  - Optional enhancement: enrich `.docs.meta.json` with `overlay.facetRoots` to simplify assistant path‑to‑facet mapping.
