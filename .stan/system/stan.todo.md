@@ -21,7 +21,6 @@ Provide an optional, binary overlay that shrinks the full archive selection for 
 - Tests:
   - Unit: overlay derivation (activate/deactivate precedence), anchors vs excludes precedence, ramp‑up safety auto‑suspend, facet view plan lines.
   - Integration: flag matrix (variadics + naked forms), metadata persisted, anchors honored by core, reserved denials never re‑included.
-  - Next step: enable the “tests” facet (done in facet.state.json) and re‑run with `stan run -f tests`; then add an integration test asserting anchors never override reserved denials (e.g., `.git/**`, `.stan/diff/**`, `.stan/patch/**`).
 
 - Docs:
   - CLI usage: document overlay flags/semantics and show “Facet view” in plan.
@@ -93,29 +92,6 @@ Overlay metadata (for assistants)
   - `overlay.autosuspended: string[]`,
   - `overlay.anchorsKept: Record<string, number>` (count‑per‑facet; avoid large metadata).
 - Ensure metadata is included in both full and diff archives.
-
-Testing (representative)
-
-- Flags: `--facets/--no-facets`, `-f/-F` (variadics and naked forms), conflict resolution (`-f` wins).
-- Overlay composition and ramp‑up safety.
-- Anchors propagate to engine; reserved denials never overridden by anchors.
-- Overlay metadata written and present in archives.
-- Plan shows “Facet view” accurately.
-
-- Deprecation staging for config ingestion
-  - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
-  - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
-  - Phase 3: strict stan‑cli only (remove legacy acceptance). [plan later]
-
-- Docs & help updates
-  - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
-  - Getting Started/CLI Usage: note prompt flag and PATH augmentation (already covered).
-  - Init help: mention migration and .bak/--dry‑run.
-  - Contributor note: barrels and cycle‑avoidance (do not import the session barrel from within session submodules; prefer local relative imports when a barrel would induce a cycle).
-
-- Test follow‑through
-  - Add small parity checks for include‑on‑change on Windows/POSIX (core|path sources).
-  - Quick unit around top‑level index exports to guard against accidental “barrel of barrels”.
 
 ## Backlog / follow‑through
 
@@ -201,3 +177,8 @@ Testing (representative)
 - Facets — enable “tests” for next run
   - Activated the “tests” facet in `.stan/system/facet.state.json` to make test files visible.
   - Next turn: after `stan run -f tests`, add an integration test that asserts anchors never override reserved denials (`.git/**`, `.stan/diff/**`, `.stan/patch/**`) and wire it into the existing suites.
+
+- Tests — anchors do not override reserved denials
+  - Added integration test (src/runner/overlay/anchors.reserved.integration.test.ts) that anchors under `.git/**`, `.stan/diff/**`, and `.stan/patch/**` are ignored by selection, while normal anchors (e.g., README.md) are included.
+  - Uses `writeArchiveSnapshot` (engine surface) to validate selection deterministically without relying on tar introspection; preserves CLI integration intent.
+  - Confirms system‑documented reserved‑denials policy in a CLI integration test.
