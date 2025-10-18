@@ -87,42 +87,39 @@ export const registerRunAction = (
       scriptsDefault: cliCfg.cliDefaults?.run?.scripts,
     });
 
-    // Facet overlay — determine defaults and per-run overrides
+    // Facet overlay — determine defaults and per-run overrides (renamed flags)
     const eff = runDefaults(runCwd);
     const src = cmd as unknown as {
       getOptionValueSource?: (name: string) => string | undefined;
     };
     const fromCli = (n: string) => src.getOptionValueSource?.(n) === 'cli';
 
-    // --facets / --no-facets base
-    const overlayDefault = eff.facets;
-    const overlayOn = fromCli('facets')
-      ? true
-      : fromCli('noFacets')
-        ? false
-        : overlayDefault;
-
-    // -f / -F variadics (may be naked)
+    // -f, --facets [names...]     → overlay ON; activate listed facets; naked -f = all active
+    // -F, --no-facets [names...]  → overlay ON; deactivate listed facets; naked -F = overlay OFF
     const toStringArray = (v: unknown): string[] =>
       Array.isArray(v)
         ? v.filter((x): x is string => typeof x === 'string')
         : [];
 
-    const activateOpt = (options as { facetsActivate?: unknown })
-      .facetsActivate;
-    const deactivateOpt = (options as { facetsDeactivate?: unknown })
-      .facetsDeactivate;
+    const facetsOpt = (options as { facets?: unknown }).facets;
+    const noFacetsOpt = (options as { noFacets?: unknown }).noFacets;
 
-    const activateNames = toStringArray(activateOpt);
-    const deactivateNames = toStringArray(deactivateOpt);
+    const activateNames = toStringArray(facetsOpt);
+    const deactivateNames = toStringArray(noFacetsOpt);
 
-    const nakedActivateAll =
-      fromCli('facetsActivate') && activateNames.length === 0;
+    const facetsProvided = fromCli('facets');
+    const noFacetsProvided = fromCli('noFacets');
 
-    const nakedDisableOverlay =
-      fromCli('facetsDeactivate') && deactivateNames.length === 0;
+    const nakedActivateAll = facetsProvided && activateNames.length === 0;
 
-    const overlayEnabled = overlayOn && !nakedDisableOverlay;
+    // Determine overlay enablement with new semantics
+    let overlayEnabled = eff.facets;
+    if (facetsProvided) {
+      overlayEnabled = true;
+    }
+    if (noFacetsProvided) {
+      overlayEnabled = deactivateNames.length === 0 ? false : true;
+    }
 
     // Compute overlay for plan + engine inputs
     let overlay: FacetOverlayOutput | null = null;

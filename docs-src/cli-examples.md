@@ -58,6 +58,23 @@ Flags (presented in the same order as `stan run --help`):
 - -q, --sequential / -Q, --no-sequential
   - Run sequentially (preserves -s order) or concurrently (default).
 
+- Facet overlay (selection view; defaults via cliDefaults.run.facets)
+  - -f, --facets [names...]
+    - Activate specific facets for this run (overlay ON). Naked -f treats all facets active (no hiding).
+  - -F, --no-facets [names...]
+    - Deactivate specific facets for this run (overlay ON). Naked -F disables overlay.
+  - Plan view:
+    - When overlay is enabled, the run plan prints a “facet view” section (overlay on/off, inactive facets, auto‑suspended facets, anchors kept count).
+
+Examples:
+
+```
+stan run --facets -f docs # overlay ON; keep facet "docs" active
+stan run -F heavy         # overlay ON; hide facet "heavy" (unless auto‑suspended by ramp‑up safety)
+stan run -f               # overlay ON; activate all facets (no hiding)
+stan run -F               # disable overlay (same as --no-facets)
+```
+
 - -a, --archive / -A, --no-archive
   - Create (or skip) archive.tar and archive.diff.tar. Built‑in default: archive enabled unless explicitly negated. Note: -c implies -a.
 - -c, --combine / -C, --no-combine
@@ -69,7 +86,7 @@ Flags (presented in the same order as `stan run --help`):
 - -p, --plan
   - Print a concise run plan and exit with no side effects.
 - -P, --no-plan
-  - Execute without printing the run plan first.
+  - Execute without printing the plan first.
 
 Plan header contents:
 
@@ -135,14 +152,14 @@ stan run -x test
 # Sequential execution (preserves -s order)
 stan run -q -s lint test
 
-# Combine mode: include outputs inside archives; remove them from disk
-stan run -c
+# Combine mode and plan
+stan run -c -p               # plan only; combine would include outputs in archives
 
 # Keep outputs on disk even after runs
 stan run -k
 
-# Disable scripts and archives (plan only)
-stan run -S -A -p
+# Overlay view
+stan run --facets -p         # plan shows “facet view” section
 ```
 
 ## Patch — options and workflow

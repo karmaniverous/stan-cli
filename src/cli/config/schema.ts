@@ -56,6 +56,7 @@ const cliDefaultsRunSchema = z
     sequential: coerceBool,
     live: coerceBool,
     plan: coerceBool,
+    facets: coerceBool,
     hangWarn: z.coerce.number().int().positive().optional(),
     hangKill: z.coerce.number().int().positive().optional(),
     hangKillGrace: z.coerce.number().int().positive().optional(),

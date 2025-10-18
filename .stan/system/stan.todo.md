@@ -8,8 +8,8 @@ Provide an optional, binary overlay that shrinks the full archive selection for 
 
 ### Current status
 
-- CLI flags are wired and active:
-  - `--facets`/`--no-facets`, `-f/--facets-activate [names...]` (naked = all on), `-F/--facets-deactivate [names...]` (naked = overlay off).
+- CLI flags are wired and active (renamed):
+  - `-f/--facets [names...]` (overlay ON; naked = all active), `-F/--no-facets [names...]` (overlay ON with listed facets deactivated; naked = overlay OFF).
 - Overlay composition implemented (`computeFacetOverlay`) and plumbed to the runner:
   - `excludesOverlay` merged into engine `excludes`.
   - `anchorsOverlay` passed to core (subject to reserved denials and binary screening).
@@ -103,7 +103,7 @@ Testing (representative)
 - Deprecation staging for config ingestion
   - Phase 1: keep legacy extractor + loader fallback; emit debugFallback notices when used; changelog guidance to run “stan init”.
   - Phase 2: require STAN_ACCEPT_LEGACY=1 for legacy; otherwise fail early with a concise message (“Run ‘stan init’ to migrate config.”).
-  - Phase 3: strict stan‑cli only (remove legacy acceptance).  [plan later]
+  - Phase 3: strict stan‑cli only (remove legacy acceptance). [plan later]
 
 - Docs & help updates
   - Configuration: namespaced layout only; “Migration” appendix → “run stan init”.
@@ -143,6 +143,12 @@ Testing (representative)
 ---
 
 ## Completed (recent)
+
+- CLI — rename facet flags and align semantics/docs
+  - Replaced `--facets/--no-facets` + `--facets-activate/--facets-deactivate` with:
+    - `-f, --facets [names...]` (overlay ON; naked = all active)
+    - `-F, --no-facets [names...]` (overlay ON with names deactivated; naked = overlay OFF)
+  - Updated action logic and help/docs accordingly; cliDefaults.run.facets remains the overlay default.
 
 - CI speed — shorten matrix durations
   - Reduced the dummy wait script in cancellation matrix tests from 10s to 2s and shortened teardown settle. This cuts per-case wall clock while preserving coverage across live/no‑live × mode × signal × archive.
