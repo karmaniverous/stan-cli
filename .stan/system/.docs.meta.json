@@ -13,15 +13,23 @@
       "vscode": false,
       "docs": false,
       "tests": false,
-      "live-ui": false
+      "live-ui": false,
+      "patch": false,
+      "snap": false,
+      "init": true
     },
-    "autosuspended": [],
+    "autosuspended": [
+      "init"
+    ],
     "anchorsKept": {
       "ci": 1,
       "vscode": 1,
       "docs": 1,
       "tests": 3,
-      "live-ui": 5
+      "live-ui": 5,
+      "patch": 1,
+      "snap": 1,
+      "init": 0
     }
   }
 }

@@ -46,5 +46,17 @@
       "src/runner/run/presentation/index.ts",
       "src/runner/run/ui/index.ts"
     ]
+  },
+  "patch": {
+    "exclude": ["src/runner/patch/**"],
+    "include": ["src/runner/patch/service.ts"]
+  },
+  "snap": {
+    "exclude": ["src/runner/snap/**"],
+    "include": ["src/runner/snap/index.ts"]
+  },
+  "init": {
+    "exclude": ["src/runner/init/**"],
+    "include": ["src/runner/init/index.ts"]
   }
 }

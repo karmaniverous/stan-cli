@@ -3,6 +3,9 @@
   "vscode": false,
   "docs": false,
   "tests": false,
-  "live-ui": false
+  "live-ui": false,
+  "patch": false,
+  "snap": false,
+  "init": false
 }
 
