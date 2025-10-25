@@ -101,3 +101,8 @@
   - Next turn: refresh baseline:
     - Run: `stan run -f patch` (overlay ON; facet forced active), or proceed with overlay enabled (defaults) since state now marks “patch” active.
   - Follow‑through: add BORING‑aware status helpers (statusOk/statusFail) for patch logging and re‑run tests; this addresses the remaining failure in src/cli/patch.fileops-only.test.ts.
+
+- Live UI — fix parser‑sensitive brace/comment boundary in LiveSink
+  - Moved the trailing comment for flushNow() onto its own line after the closing brace of stop() to avoid any parser edge cases that could lead to a SyntaxError in the live.order.flush test.
+  - Next: re‑run tests to confirm the live.order.flush suite passes cleanly.
+  - If the error persists, expand the stack capture (STAN_LIVE_DEBUG=1) and inspect the compiled JS for the exact token location.

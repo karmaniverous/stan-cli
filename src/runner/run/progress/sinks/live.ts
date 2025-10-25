@@ -62,7 +62,8 @@ export class LiveSink extends BaseSink {
     }
     // Detach from model updates.
     this.unsubscribeModel();
-  } /** Force an immediate render of the current table state (no stop/clear). */
+  }
+  /** Force an immediate render of the current table state (no stop/clear). */
   flushNow(): void {
     try {
       this.renderer?.flush();
