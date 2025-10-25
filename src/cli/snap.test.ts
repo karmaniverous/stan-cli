@@ -7,26 +7,18 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock child_process spawn for stash failure in the first test
-vi.mock('node:child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:child_process')>();
-  return {
-    __esModule: true,
-    ...actual,
-    default: actual as unknown as object,
-    spawn: (_cmd: string, args: string[]) => {
-      const ee = new EventEmitter();
-      // If this is 'git stash -u', simulate failure; otherwise success
-      const isStash = args.join(' ') === 'stash -u';
-      const code = isStash ? 1 : 0;
-      setTimeout(() => ee.emit('close', code), 0);
-      return ee as unknown;
-    },
-  };
-});
+// Mock runGit directly: return code=1 for "stash -u", else 0
+vi.mock('@/runner/snap/git', () => ({
+  __esModule: true,
+  runGit: async (_cwd: string, args: string[]) => ({
+    code: args.join(' ') === 'stash -u' ? 1 : 0,
+    stdout: '',
+    stderr: '',
+  }),
+}));
 
 // Mock diff.writeArchiveSnapshot to write a recognizable snapshot body
-vi.mock('./diff', () => ({
+vi.mock('@/runner/diff', () => ({
   __esModule: true,
   writeArchiveSnapshot: async ({
     cwd,

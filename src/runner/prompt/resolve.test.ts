@@ -66,6 +66,9 @@ describe('resolveCorePromptPath (primary + fallback)', () => {
       const actual =
         await vi.importActual<typeof import('node:module')>('node:module');
       return {
+        __esModule: true,
+        // Ensure default export is present for ESM mock consumers
+        default: actual as unknown as { [k: string]: unknown },
         ...actual,
         createRequire: () => {
           // Minimal NodeJS.Require with a proper RequireResolve (including .paths).

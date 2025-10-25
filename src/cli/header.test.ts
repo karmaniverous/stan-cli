@@ -7,7 +7,11 @@ import { printHeader } from './header';
 describe('printHeader (BORING/TTY)', () => {
   const envBackup = { ...process.env };
   const ttyBackup = (process.stdout as unknown as { isTTY?: boolean }).isTTY;
-  let logSpy: ReturnType<typeof vi.spyOn>;
+  // Structural spy type to avoid TS constructor-signature friction in vitest typings
+  let logSpy: {
+    mockRestore: () => void;
+    mock: { calls: unknown[][] };
+  };
 
   beforeEach(() => {
     process.env = { ...envBackup };
@@ -16,7 +20,12 @@ describe('printHeader (BORING/TTY)', () => {
     } catch {
       /* ignore */
     }
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi
+      .spyOn(console, 'log')
+      .mockImplementation(() => {}) as unknown as {
+      mockRestore: () => void;
+      mock: { calls: unknown[][] };
+    };
   });
 
   afterEach(() => {
