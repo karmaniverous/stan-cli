@@ -95,3 +95,9 @@
   - Follow‑through (after refresh):
     - Fix child_process mocking path in snap tests so `spawn` is a function when imported from 'node:child_process'.
     - Re‑run tests to confirm stash‑failure handling passes without touching archives.
+
+- Facets — enable “patch” for next run
+  - Enabled the “patch” facet so code under src/runner/patch/\*\* is visible while overlay is on.
+  - Next turn: refresh baseline:
+    - Run: `stan run -f patch` (overlay ON; facet forced active), or proceed with overlay enabled (defaults) since state now marks “patch” active.
+  - Follow‑through: add BORING‑aware status helpers (statusOk/statusFail) for patch logging and re‑run tests; this addresses the remaining failure in src/cli/patch.fileops-only.test.ts.
