@@ -87,3 +87,11 @@
     - Fix node:module mock to include a default export when partially mocking (resolveCorePromptPath fallback).
     - Address UI parity test SyntaxError (likely stray token in test or import).
     - Re‑run full suite and rebuild; iterate as needed.
+
+- Facets — enable “snap” for next run
+  - Enabled the “snap” facet so code under src/runner/snap/\*\* is visible while overlay is on.
+  - Next turn: refresh baseline with the facet active:
+    - Run: `stan run -f snap` (overlay ON; facet forced active), or proceed with overlay enabled (defaults) since state now marks “snap” active.
+  - Follow‑through (after refresh):
+    - Fix child_process mocking path in snap tests so `spawn` is a function when imported from 'node:child_process'.
+    - Re‑run tests to confirm stash‑failure handling passes without touching archives.
