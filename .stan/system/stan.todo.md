@@ -75,3 +75,15 @@
 - Config hardening — overlay default locked
   - Confirmed `stan-cli.cliDefaults.run.facets: true` in `stan.config.*`, ensuring overlay is ON by default for this repository.
   - Flags still override defaults at run time; facet view appears in the plan when overlay is enabled.
+
+- Facets — enable “tests” and “live-ui” for next run
+  - Enabled the “tests” facet so unit/integration tests and helpers are visible when overlay is on.
+  - Enabled the “live-ui” facet to allow edits in src/runner/run/live/\*\*, progress sinks, and UI barrels if needed.
+  - Next turn: refresh baseline with the facets active:
+    - Run: `stan run -f tests live-ui` (overlay ON; listed facets forced active) or simply rerun with overlay enabled (defaults) since state now marks both as active.
+  - Follow‑through (after refresh):
+    - Fix TS type in src/cli/header.test.ts (spyOn mock type mismatch).
+    - Stabilize child_process mocking in snap tests (ensure named export `spawn` is mocked for ESM).
+    - Fix node:module mock to include a default export when partially mocking (resolveCorePromptPath fallback).
+    - Address UI parity test SyntaxError (likely stray token in test or import).
+    - Re‑run full suite and rebuild; iterate as needed.

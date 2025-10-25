@@ -4,6 +4,30 @@ This document lists durable requirements for the STAN engine (“stan-core”), 
 
 ---
 
+## SSR-friendly dynamic import pattern (test stability)
+
+- Motivation
+  - Under Vitest 4 SSR, named-export bindings can be transiently unavailable during module evaluation. To keep tests stable without changing runtime behavior, modules that must resolve peer exports dynamically SHOULD use a named-or-default dynamic import pattern.
+- Requirement
+  - When a module must resolve a peer export at runtime in an SSR/testing context, prefer the named export and fall back to the default export’s property of the same name. Throw a clear error only if neither is present.
+- Example (pattern)
+  ```ts
+  // Resolve "foo" from ./peer using a robust SSR-safe pattern.
+  const getFoo = async (): Promise<typeof import('./peer')['foo']> => {
+    const mod = await import('./peer');
+    const named = (mod as { foo?: unknown }).foo;
+    const viaDefault = (mod as { default?: { foo?: unknown } }).default?.foo;
+    const fn = (typeof named === 'function' ? named : viaDefault) as
+      | typeof import('./peer')['foo']
+      | undefined;
+    if (typeof fn === 'function') return fn;
+    throw new Error('foo export not found in ./peer');
+  };
+  ```
+- Guidance
+  - Use this pattern only where dynamic resolution is required for test/SSR robustness; prefer normal static imports for production code paths whenever possible.
+  - Do not introduce side effects or console I/O in the resolver; keep it pure and presentation-free.
+
 ## 0) Swappable Core (engine integration contract)
 
 stan-cli MUST be able to run against any compatible stan-core at runtime.
