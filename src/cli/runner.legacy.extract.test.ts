@@ -7,16 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeCli } from '@/cli/index';
 
-// Keep tar lightweight in this test
-vi.mock('tar', () => ({
-  __esModule: true,
-  default: undefined,
-  create: async ({ file }: { file: string }) => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(file, 'TAR', 'utf8');
-  },
-}));
-
 describe('legacy engine config extraction (transitional) emits debugFallback under STAN_DEBUG=1', () => {
   let dir: string;
   const envBackup = { ...process.env };

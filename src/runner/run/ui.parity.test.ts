@@ -19,7 +19,9 @@ describe('UI parity (live vs no-live): artifacts are identical', () => {
   beforeEach(async () => {
     dir1 = await mkdtemp(path.join(os.tmpdir(), 'stan-ui-parity-1-'));
     dir2 = await mkdtemp(path.join(os.tmpdir(), 'stan-ui-parity-2-'));
-    process.env = { ...envBackup, STAN_BORING: '1' }; // stable labels
+    // Stable, BORING labels and no extra live debug paths
+    process.env = { ...envBackup, STAN_BORING: '1' };
+    delete process.env.STAN_LIVE_DEBUG;
   });
 
   afterEach(async () => {

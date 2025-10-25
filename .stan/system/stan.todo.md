@@ -106,3 +106,9 @@
   - Moved the trailing comment for flushNow() onto its own line after the closing brace of stop() to avoid any parser edge cases that could lead to a SyntaxError in the live.order.flush test.
   - Next: re‑run tests to confirm the live.order.flush suite passes cleanly.
   - If the error persists, expand the stack capture (STAN_LIVE_DEBUG=1) and inspect the compiled JS for the exact token location.
+
+- Build UX — harden warnPattern to ignore allowed Rollup warnings
+  - Updated stan.config.yml so the build script’s warnPattern:
+    - ignores @rollup/plugin-typescript’s “outputToFilesystem option is defaulting to true” warning, and
+    - ignores circular dependency lines from node_modules/zod/\*\*, while still flagging other “(!) …” warnings.
+  - Result: clean runs don’t surface [WARN] when only these benign lines appear.
