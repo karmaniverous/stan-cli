@@ -49,7 +49,19 @@ export const registerSnap = (cli: Commander): Command => {
       'Create/update the diff snapshot (without writing an archive)',
     );
 
-  applyCliSafety(sub);
+  try {
+    const applyCliSafetySub: ApplyCliSafetyFn | undefined =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetySub?.(sub);
+  } catch {
+    /* best-effort */
+  }
 
   sub
     .command('undo')

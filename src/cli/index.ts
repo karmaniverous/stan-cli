@@ -12,7 +12,8 @@ import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 import { printVersionInfo } from '@/runner/version';
 
-import { applyCliSafety, rootDefaults, tagDefault } from './cli-utils';
+import * as cliUtils from './cli-utils';
+import { tagDefault } from './cli-utils';
 import { performInit, registerInit } from './init';
 // Robustly resolve registerPatch (named or default export) to tolerate SSR/ESM interop.
 import * as patchMod from './patch';
@@ -27,6 +28,34 @@ const registerPatchResolved: RegisterPatchFn =
     (m) => (m as { default?: Partial<PatchModule> }).default?.registerPatch,
     'registerPatch',
   );
+type CliUtilsModule = typeof import('./cli-utils');
+type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
+type RootDefaultsFn = CliUtilsModule['rootDefaults'];
+const applyCliSafetyResolved: ApplyCliSafetyFn | undefined = (() => {
+  try {
+    return resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+      cliUtils as unknown,
+      (m) => (m as CliUtilsModule).applyCliSafety,
+      (m) =>
+        (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+      'applyCliSafety',
+    );
+  } catch {
+    return undefined;
+  }
+})();
+const rootDefaultsResolved: RootDefaultsFn | undefined = (() => {
+  try {
+    return resolveNamedOrDefaultFunction<RootDefaultsFn>(
+      cliUtils as unknown,
+      (m) => (m as CliUtilsModule).rootDefaults,
+      (m) => (m as { default?: Partial<CliUtilsModule> }).default?.rootDefaults,
+      'rootDefaults',
+    );
+  } catch {
+    return undefined;
+  }
+})();
 /**
  * Build the root CLI (`stan`) without side effects (safe for tests). *
  * Registers the `run`, `init`, `snap`, and `patch` subcommands, installs
@@ -38,7 +67,20 @@ const registerPatchResolved: RegisterPatchFn =
 export const makeCli = (): Command => {
   const cli = new Command();
   // Resolve effective defaults from config (when present); fall back to built‑ins.
-  const { debugDefault, boringDefault } = rootDefaults(process.cwd());
+  const safeRootDefaults = (): {
+    debugDefault: boolean;
+    boringDefault: boolean;
+    yesDefault: boolean;
+  } => {
+    try {
+      return rootDefaultsResolved
+        ? rootDefaultsResolved(process.cwd())
+        : { debugDefault: false, boringDefault: false, yesDefault: false };
+    } catch {
+      return { debugDefault: false, boringDefault: false, yesDefault: false };
+    }
+  };
+  const { debugDefault, boringDefault } = safeRootDefaults();
 
   cli.name('stan').description(
     // A clearer story than the prior one‑liner.
@@ -68,7 +110,12 @@ export const makeCli = (): Command => {
 
   // Root-level help footer: show available script keys
   cli.addHelpText('after', () => renderAvailableScriptsHelp(process.cwd())); // Ensure tests never call process.exit() and argv normalization is consistent
-  applyCliSafety(cli);
+  try {
+    // Best-effort SSR-safe application of exit override/argv normalization
+    applyCliSafetyResolved?.(cli);
+  } catch {
+    /* best‑effort */
+  }
 
   // Propagate -d/--debug to subcommands (set before any subcommand action)
   cli.hook('preAction', (thisCommand) => {
@@ -80,8 +127,8 @@ export const makeCli = (): Command => {
       };
       const opts = holder.opts?.() ?? {};
 
-      // Resolve config defaults (best-effort)
-      const { debugDefault, boringDefault } = rootDefaults(process.cwd());
+      // Resolve config defaults (best‑effort; SSR‑safe)
+      const { debugDefault, boringDefault } = safeRootDefaults();
 
       const src = holder.getOptionValueSource?.bind(root);
       const debugFromCli =

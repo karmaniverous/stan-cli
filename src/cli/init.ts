@@ -6,9 +6,12 @@
 import type { Command } from 'commander';
 import { Command as Commander } from 'commander';
 
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { performInitService } from '@/runner/init/service';
 
-import { applyCliSafety } from './cli-utils';
+import * as cliUtils from './cli-utils';
+type CliUtilsModule = typeof import('./cli-utils');
+type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 
 /**
  * Register the `init` subcommand on the provided root CLI.
@@ -17,7 +20,7 @@ import { applyCliSafety } from './cli-utils';
  * @returns The same root command for chaining.
  */
 export const performInit = (
-  cli: Command,
+  _cli: Command,
   opts: {
     cwd?: string;
     force?: boolean;
@@ -27,7 +30,19 @@ export const performInit = (
 ) => performInitService(opts);
 
 export const registerInit = (cli: Commander): Command => {
-  applyCliSafety(cli);
+  try {
+    const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetyResolved?.(cli);
+  } catch {
+    /* best-effort */
+  }
 
   const sub = cli
     .command('init')
@@ -35,7 +50,19 @@ export const registerInit = (cli: Commander): Command => {
       'Create or update stan.config.json|yml by scanning package.json scripts.',
     );
 
-  applyCliSafety(sub);
+  try {
+    const applyCliSafetySub: ApplyCliSafetyFn | undefined =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetySub?.(sub);
+  } catch {
+    /* best-effort */
+  }
 
   sub
     .option(

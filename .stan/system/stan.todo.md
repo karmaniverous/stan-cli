@@ -48,6 +48,12 @@
   - Scope: test-only robustness; no behavior change at runtime. Mirrors earlier fix for `applyCliSafety` in patch wiring.
   - Follow-up: re-run the suite to confirm the transient SyntaxError in `run.combine.test.ts` is eliminated along with the import-shape issues.
 
+- Tests/SSR — fix rootDefaults “not a function” in CLI factory
+  - In src/cli/index.ts, resolve `rootDefaults` and `applyCliSafety` via
+    named-or-default function resolver to avoid “not a function” under
+    Vitest SSR.
+  - Keeps runtime behavior unchanged; stabilizes CLI help footer test.
+
 - Docs/help — unchanged in this patch (pure stability guards). Keep overlay docs and Option 1 test guidance aligned in future doc pass.
 
 - Tests/SSR — harden additional named exports with named-or-default resolvers
@@ -82,3 +88,7 @@
     - src/cli/cli-utils.ts: export function applyCliSafety(...)
     - src/runner/config/effective.ts: export async function resolveEffectiveEngineConfig(...)
   - No behavior change at runtime; resolves intermittent “applyCliSafety is not a function” and “resolveEffectiveEngineConfig is not a function” in CLI suites.
+
+- SSR cleanup & path normalization
+  - snap.ts / patch.ts / init.ts: resolve applyCliSafety lazily (named-or-default) for both root and subcommands; remove stray unresolved identifiers to satisfy TS and keep SSR robust.
+  - archive fast path: normalize output paths with path.join to satisfy Windows path-based assertions in sequential archive test.

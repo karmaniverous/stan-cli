@@ -1,4 +1,5 @@
 import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
@@ -92,7 +93,7 @@ export const archivePhase = async (
       if (which === 'both' || which === 'full') {
         opts?.progress?.start?.('full');
         const startedFull = Date.now();
-        const fullPath = `${dirs.output}/archive.tar`;
+        const fullPath = path.join(dirs.output, 'archive.tar');
         await writeFile(fullPath, `TAR-${stamp}`, 'utf8');
         opts?.progress?.done?.('full', fullPath, startedFull, Date.now());
         created.archivePath = fullPath;
@@ -110,7 +111,7 @@ export const archivePhase = async (
       if (which === 'both' || which === 'diff') {
         opts?.progress?.start?.('diff');
         const startedDiff = Date.now();
-        const diffPath = `${dirs.output}/archive.diff.tar`;
+        const diffPath = path.join(dirs.output, 'archive.diff.tar');
         await writeFile(diffPath, `TAR-DIFF-${stamp}`, 'utf8');
         opts?.progress?.done?.('diff', diffPath, startedDiff, Date.now());
         created.diffPath = diffPath;

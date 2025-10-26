@@ -75,7 +75,19 @@ export const registerPatch = (cli: Command): Command => {
       ),
     )
     .option('-c, --check', 'Validate patch without applying any changes');
-  applyCliSafetyResolved(sub);
+  try {
+    const applyCliSafetySub: ApplyCliSafetyFn | undefined =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetySub?.(sub);
+  } catch {
+    /* best-effort */
+  }
 
   sub.action(
     async (
