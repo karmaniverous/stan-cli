@@ -55,32 +55,11 @@ export const resolveContext = async (
   }
 
   // Engine context (namespaced or legacy), resolved lazily to avoid SSR/ESM
-  // evaluation-order hazards during module import. Prefer named export and
-  // fall back to default.resolveEffectiveEngineConfig when present.
+  // evaluation-order hazards during module import.
   let engine: ContextConfig;
   try {
-    const effMod = (await import('@/runner/config/effective')) as unknown as {
-      resolveEffectiveEngineConfig?: (
-        cwd: string,
-        scope?: string,
-      ) => Promise<ContextConfig>;
-      default?:
-        | ((cwd: string, scope?: string) => Promise<ContextConfig>)
-        | {
-            resolveEffectiveEngineConfig?: (
-              cwd: string,
-              scope?: string,
-            ) => Promise<ContextConfig>;
-            default?:
-              | ((cwd: string, scope?: string) => Promise<ContextConfig>)
-              | {
-                  resolveEffectiveEngineConfig?: (
-                    cwd: string,
-                    scope?: string,
-                  ) => Promise<ContextConfig>;
-                };
-          };
-    };
+    const effMod = (await import('@/runner/config/effective')) as unknown;
+
     const tryCall = async (fnMaybe: unknown): Promise<ContextConfig | null> => {
       if (typeof fnMaybe !== 'function') return null;
       try {
@@ -91,38 +70,74 @@ export const resolveContext = async (
           out &&
           typeof out === 'object' &&
           typeof (out as { stanPath?: unknown }).stanPath === 'string'
-        )
+        ) {
           return out;
+        }
       } catch {
         // continue to next candidate
       }
       return null;
     };
-    let picked: ContextConfig | null = null;
-    // Try common shapes in order
-    picked = await tryCall(effMod?.resolveEffectiveEngineConfig);
-    if (!picked)
-      picked = await tryCall(
-        (effMod?.default as { resolveEffectiveEngineConfig?: unknown })
-          ?.resolveEffectiveEngineConfig,
-      );
-    if (!picked)
-      picked = await tryCall(
-        (
-          effMod?.default as {
-            default?: { resolveEffectiveEngineConfig?: unknown };
+
+    // Recursively enumerate plausible function candidates from the module and its nested defaults.
+    const candidates: unknown[] = [];
+    const seen = new Set<unknown>();
+    const walk = (obj: unknown, depth = 0): void => {
+      if (!obj || seen.has(obj) || depth > 4) return;
+      seen.add(obj);
+
+      // Direct function candidate
+      if (typeof obj === 'function') {
+        candidates.push(obj);
+      }
+
+      if (typeof obj !== 'object' && typeof obj !== 'function') return;
+      const o = obj as { [k: string]: unknown };
+
+      // Named resolver export
+      if (typeof o.resolveEffectiveEngineConfig === 'function') {
+        candidates.push(o.resolveEffectiveEngineConfig);
+      }
+
+      // Explore nested default(s)
+      if ('default' in o) {
+        const d = o.default;
+        if (d) {
+          if (
+            typeof (d as { resolveEffectiveEngineConfig?: unknown })
+              .resolveEffectiveEngineConfig === 'function'
+          ) {
+            candidates.push(
+              (
+                d as {
+                  resolveEffectiveEngineConfig: unknown;
+                }
+              ).resolveEffectiveEngineConfig,
+            );
           }
-        )?.default?.resolveEffectiveEngineConfig,
-      );
-    if (!picked) picked = await tryCall(effMod?.default as unknown);
-    if (!picked)
-      picked = await tryCall(
-        (effMod?.default as { default?: unknown })?.default,
-      );
-    // Last-resort: some mock shapes may export the resolver as the module itself
-    if (!picked) picked = await tryCall(effMod as unknown);
-    if (!picked) throw new Error('resolveEffectiveEngineConfig not found');
-    engine = picked;
+          // Walk default
+          walk(d, depth + 1);
+          // Some shapes use default.default chains
+          if (
+            typeof d === 'object' &&
+            d &&
+            'default' in (d as { [k: string]: unknown })
+          ) {
+            walk((d as { default?: unknown }).default, depth + 1);
+          }
+        }
+      }
+    };
+
+    walk(effMod);
+
+    let pickedCfg: ContextConfig | null = null;
+    for (const c of candidates) {
+      pickedCfg = await tryCall(c);
+      if (pickedCfg) break;
+    }
+    if (!pickedCfg) throw new Error('resolveEffectiveEngineConfig not found');
+    engine = pickedCfg;
   } catch {
     // Minimal, safe fallback: derive stanPath only. This preserves snap
     // behavior even when the effective-config module cannot be resolved

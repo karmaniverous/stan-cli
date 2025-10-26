@@ -153,3 +153,7 @@
 
 - Snap CLI argv normalization guard
   - Applied applyCliSafety directly to both the root and the subcommand in src/cli/snap.ts (in addition to the named‑or‑default resolver) to eliminate intermittent “unknown command 'node'” under SSR/mocked shapes.
+
+- Snap context resolver — recursive candidate discovery
+  - Replaced ad-hoc picks with a recursive enumerator over named/default/nested-default shapes
+    to find any viable resolver function; try candidates in order and accept the first valid config.
