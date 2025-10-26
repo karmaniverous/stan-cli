@@ -116,3 +116,6 @@
 
 - Snap context — support nested default shapes in tests
   - Updated resolver to detect resolveEffectiveEngineConfig under default.resolveEffectiveEngineConfig and default.default.resolveEffectiveEngineConfig, preventing fallback to config stanPath in the default-only resolver test.
+
+- Snap context — robust default-only resolver
+  - Hardened function picking to cover named, default object, nested default.default, and function-as-default shapes to eliminate the last fallback to config stanPath in the default-only resolver test.

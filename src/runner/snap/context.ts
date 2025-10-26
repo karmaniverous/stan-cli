@@ -62,36 +62,47 @@ export const resolveContext = async (
     type EffModule = typeof import('@/runner/config/effective');
     type ResolveEngineCfgFn = EffModule['resolveEffectiveEngineConfig'];
     const eff = (await import('@/runner/config/effective')) as unknown;
-    // Prefer named export when available
-    const named = (eff as EffModule).resolveEffectiveEngineConfig as
-      | ResolveEngineCfgFn
-      | undefined;
-    // Default export may be:
-    //  - an object with .resolveEffectiveEngineConfig
-    //  - nested under default.default.resolveEffectiveEngineConfig (double-default shape)
-    //  - or (rare) the function itself (default is the function)
-    const d = (eff as { default?: unknown }).default as
-      | Partial<EffModule>
-      | { default?: Partial<EffModule> }
-      | ResolveEngineCfgFn
-      | undefined;
-    let viaDefault: ResolveEngineCfgFn | undefined;
-    if (d && typeof d === 'object') {
-      const tryObj = d as Partial<EffModule>;
-      const direct = tryObj.resolveEffectiveEngineConfig ?? undefined;
-      const nested =
-        (tryObj as { default?: Partial<EffModule> }).default
-          ?.resolveEffectiveEngineConfig ?? undefined;
-      viaDefault = direct ?? nested;
-    } else if (typeof d === 'function') {
-      viaDefault = d;
-    }
-    const fn: ResolveEngineCfgFn | undefined =
-      typeof named === 'function'
-        ? named
-        : typeof viaDefault === 'function'
-          ? viaDefault
-          : undefined;
+    // Robust pick across common ESM/CJS/mock shapes:
+    // - named: module.resolveEffectiveEngineConfig
+    // - default object: module.default.resolveEffectiveEngineConfig
+    // - nested default: module.default.default.resolveEffectiveEngineConfig
+    // - function-as-default: module.default is the function
+    const pickEff = (mod: unknown): ResolveEngineCfgFn | undefined => {
+      try {
+        const m = mod as {
+          resolveEffectiveEngineConfig?: unknown;
+          default?:
+            | ResolveEngineCfgFn
+            | {
+                resolveEffectiveEngineConfig?: unknown;
+                default?: { resolveEffectiveEngineConfig?: unknown };
+              };
+        };
+        const candidates: unknown[] = [
+          m?.resolveEffectiveEngineConfig,
+          m?.default,
+          (m?.default as { resolveEffectiveEngineConfig?: unknown })
+            ?.resolveEffectiveEngineConfig,
+          (
+            m?.default as {
+              default?: { resolveEffectiveEngineConfig?: unknown };
+            }
+          )?.default,
+          (
+            m?.default as {
+              default?: { resolveEffectiveEngineConfig?: unknown };
+            }
+          )?.default?.resolveEffectiveEngineConfig,
+        ];
+        for (const c of candidates) {
+          if (typeof c === 'function') return c as ResolveEngineCfgFn;
+        }
+      } catch {
+        /* ignore and fall through */
+      }
+      return undefined;
+    };
+    const fn = pickEff(eff);
     if (!fn) throw new Error('resolveEffectiveEngineConfig not found');
     engine = await fn(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
   } catch {
