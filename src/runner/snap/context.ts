@@ -62,16 +62,31 @@ export const resolveContext = async (
     type EffModule = typeof import('@/runner/config/effective');
     type ResolveEngineCfgFn = EffModule['resolveEffectiveEngineConfig'];
     const eff = (await import('@/runner/config/effective')) as unknown;
+    // Prefer named export when available
     const named = (eff as EffModule).resolveEffectiveEngineConfig as
       | ResolveEngineCfgFn
       | undefined;
-    const viaDefault =
-      (
-        eff as {
-          default?: Partial<EffModule>;
-        }
-      ).default?.resolveEffectiveEngineConfig ?? undefined;
-    const fn =
+    // Default export may be:
+    //  - an object with .resolveEffectiveEngineConfig
+    //  - nested under default.default.resolveEffectiveEngineConfig (double-default shape)
+    //  - or (rare) the function itself (default is the function)
+    const d = (eff as { default?: unknown }).default as
+      | Partial<EffModule>
+      | { default?: Partial<EffModule> }
+      | ResolveEngineCfgFn
+      | undefined;
+    let viaDefault: ResolveEngineCfgFn | undefined;
+    if (d && typeof d === 'object') {
+      const tryObj = d as Partial<EffModule>;
+      const direct = tryObj.resolveEffectiveEngineConfig ?? undefined;
+      const nested =
+        (tryObj as { default?: Partial<EffModule> }).default
+          ?.resolveEffectiveEngineConfig ?? undefined;
+      viaDefault = direct ?? nested;
+    } else if (typeof d === 'function') {
+      viaDefault = d;
+    }
+    const fn: ResolveEngineCfgFn | undefined =
       typeof named === 'function'
         ? named
         : typeof viaDefault === 'function'

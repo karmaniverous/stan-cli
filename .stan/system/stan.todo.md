@@ -112,4 +112,7 @@
   - Moved findConfigPathSync and resolveStanPathSync resolution inside resolveContext with dynamic import and named‑or‑default fallback to eliminate the remaining “findConfigPathSync not found” race.
 
 - Snap CLI — resolve tagDefault via named‑or‑default
-  - Resolved tagDefault from cli-utils defensively to fix “tagDefault is not a function” under SSR/mocks in snap.stash.success.test.
+  - Resolved tagDefault from cli-utils defensively to fix “tagDefault is not a function” under SSR/mocks in snap.stash.success.test.
+
+- Snap context — support nested default shapes in tests
+  - Updated resolver to detect resolveEffectiveEngineConfig under default.resolveEffectiveEngineConfig and default.default.resolveEffectiveEngineConfig, preventing fallback to config stanPath in the default-only resolver test.
