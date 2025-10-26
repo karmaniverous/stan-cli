@@ -20,7 +20,23 @@ import { promptForConfig, readPackageJsonScripts } from '../prompts';
 import { ensureKey, ensureNsNode, hasOwn, isObj, setKey } from './helpers';
 import { maybeMigrateLegacyToNamespaced } from './migrate';
 import { resolveIncludesExcludes } from './selection';
-import { resolveEffectiveStanPath } from './stanpath';
+// SSR/ESM-robust resolver for resolveEffectiveStanPath (named-or-default)
+import * as stanpathMod from './stanpath';
+const resolveEffectiveStanPath: (typeof import('./stanpath'))['resolveEffectiveStanPath'] =
+  ((): any => {
+    try {
+      const m = stanpathMod as unknown as {
+        resolveEffectiveStanPath?: unknown;
+        default?: { resolveEffectiveStanPath?: unknown };
+      };
+      return typeof m.resolveEffectiveStanPath === 'function'
+        ? m.resolveEffectiveStanPath
+        : (m.default as { resolveEffectiveStanPath?: unknown } | undefined)
+            ?.resolveEffectiveStanPath;
+    } catch {
+      return undefined as unknown;
+    }
+  })() as (typeof import('./stanpath'))['resolveEffectiveStanPath'];
 
 /**
  * Initialize or update STAN configuration and workspace assets.

@@ -6,8 +6,25 @@ import path from 'node:path';
 import { findConfigPathSync } from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
-import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
+// SSR/ESM-robust resolver for resolveEffectiveEngineConfig (named-or-default)
+import * as effMod from '@/runner/config/effective';
 import { DBG_SCOPE_SNAP_CONTEXT_LEGACY } from '@/runner/util/debug-scopes';
+
+const resolveEffectiveEngineConfig: (typeof import('@/runner/config/effective'))['resolveEffectiveEngineConfig'] =
+  ((): any => {
+    try {
+      const m = effMod as unknown as {
+        resolveEffectiveEngineConfig?: unknown;
+        default?: { resolveEffectiveEngineConfig?: unknown };
+      };
+      return typeof m.resolveEffectiveEngineConfig === 'function'
+        ? m.resolveEffectiveEngineConfig
+        : (m.default as { resolveEffectiveEngineConfig?: unknown } | undefined)
+            ?.resolveEffectiveEngineConfig;
+    } catch {
+      return undefined as unknown;
+    }
+  })() as (typeof import('@/runner/config/effective'))['resolveEffectiveEngineConfig'];
 
 /**
  * Resolve the effective execution context for snapshot operations.
