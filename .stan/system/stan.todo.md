@@ -2,25 +2,17 @@
 
 ## Next up (priority order)
 
-- Testing infrastructure — Vitest Option 1 (apply consistently)
-  - Make node the default environment in vitest.config.ts; use DOM only per‑suite when necessary.
-  - Introduce an ESM‑friendly mock helper that returns `{ __esModule: true, default: impl, ...impl }`; convert mocks for node:child_process, node:module, clipboardy, tar, and any partial core/CLI mocks to this pattern.
-  - In suites where mocked deps are needed at module‑eval time, switch to `vi.doMock` + dynamic SUT import after `vi.resetModules()`.
-  - In CI, set `test.pool = 'forks'` to reduce hoist/order issues. Keep `server.deps.inline: ['@karmaniverous/stan-core', 'tar']`.
-  - Re‑run the suite locally and in release to confirm stability (no “not a function”/SyntaxError flukes).
-
-- Facet overlay — enabled‑wins tie‑breaker and scoped re‑inclusion
-  - Subtree roots: drop inactive roots from excludesOverlay when they equal / contain / are contained by any active root (enabled facet wins).
-  - Leaf‑glob excludes (e.g., `**/*.test.ts`): add scoped anchors `<activeRoot>/**/<globTail>` for each active root to re‑include matching files only inside active areas.
-  - Preserve reserved denials; do not attempt to re‑include them.
-  - Update plan rendering and `.docs.meta.json.overlay` (optional `overlapKept`) to aid troubleshooting.
-
 - Facet overlay — tests
   - Add unit tests for:
     - Equal‑root overlap (inactive root dropped).
     - Parent/child overlap (inactive parent dropped when child is active).
     - Leaf‑glob re‑inclusion (tests under active areas only).
   - Keep existing ramp‑up safety tests working.
+
+- Docs website follow‑through
+  - Document facet overlay tie‑breaker (“enabled facet wins”) and scoped leaf‑glob re‑inclusion.
+  - Document Vitest “Option 1” model (environment=node; pool=forks; ESM‑friendly mocks).
+  - Document PATH augmentation for child processes (`<repo>/node_modules/.bin` precedence).
 
 - Requirements & docs
   - Update CLI docs/help for facet strategy (tie‑breaker + scoped anchors) and Vitest Option 1 guidance.
@@ -60,11 +52,14 @@
 
 - Facet overlay — enabled-wins + scoped anchors
   - Implemented subtree tie-breaker (“enabled facet wins”): inactive exclude roots that equal/contain/are contained by any active root are dropped from excludesOverlay.
-  - Implemented leaf-glob re-inclusion: collected tails from inactive leaf-glob excludes (e.g., “**/*.test.ts”) and added scoped anchors “<activeRoot>/**/<tail>” for each active root.
+  - Implemented leaf-glob re-inclusion: collected tails from inactive leaf-glob excludes (e.g., “**/\*.test.ts”) and added scoped anchors “<activeRoot>/**/<tail>” for each active root.
   - Preserved ramp-up safety for subtree roots only; leaf-globs do not trigger auto-suspend on their own.
   - Reserved denials remain enforced by core (anchors cannot override).
 
 - Facet overlay — tests added
   - equal-root overlap: inactive “docs” dropped when “docs” is active.
   - parent/child overlap: inactive “packages/**” dropped when “packages/app/**” is active.
-  - leaf-glob scoping: added “src/**/*.test.ts” anchor when leaf-glob is inactive and “src/**” is active.
+  - leaf-glob scoping: added “src/**/\*.test.ts” anchor when leaf-glob is inactive and “src/**” is active.
+
+- Overlay diagnostics
+  - Record per‑facet `overlapKept` counts (inactive subtree roots retained after enabled‑wins filtering) in `.stan/system/.docs.meta.json.overlay` to aid troubleshooting of overlap filtering.

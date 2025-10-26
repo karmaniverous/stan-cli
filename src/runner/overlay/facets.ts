@@ -36,6 +36,8 @@ export type FacetOverlayOutput = {
   autosuspended: string[];
   /** Count of anchors kept per facet (for plan/metadata summaries). */
   anchorsKeptCounts: Record<string, number>;
+  /** Per-facet count of inactive subtree roots retained after enabled-wins filtering (diagnostics). */
+  overlapKeptCounts: Record<string, number>;
 };
 
 const posix = (p: string): string =>
@@ -137,6 +139,8 @@ export const computeFacetOverlay = async (
   const excludesOverlayArr: string[] = [];
   const autosuspended: string[] = [];
   const anchorsKeptCounts: Record<string, number> = {};
+  // Track per-facet inactive subtree roots for overlap-kept diagnostics.
+  const inactiveEntries: Array<{ facet: string; root: string }> = [];
 
   // Precompute active subtree roots across all facets (for tie-breakers and scoped anchors).
   const activeRoots = new Set<string>();
@@ -173,6 +177,7 @@ export const computeFacetOverlay = async (
       effective,
       autosuspended,
       anchorsKeptCounts,
+      overlapKeptCounts: {},
     };
   }
 
@@ -214,8 +219,11 @@ export const computeFacetOverlay = async (
     }
 
     // Aggregate subtree excludes for truly inactive facets with anchors present under roots (if any).
-    for (const root of exRoots) {
-      if (root) excludesOverlayArr.push(root.endsWith('/') ? root : root);
+    for (const rootRaw of exRoots) {
+      const root = posix(rootRaw);
+      if (!root) continue;
+      inactiveEntries.push({ facet: name, root });
+      excludesOverlayArr.push(root.endsWith('/') ? root : root);
     }
     // Collect leaf-glob tails to re-include within each active root.
     for (const g of leafGlobs) {
@@ -225,18 +233,33 @@ export const computeFacetOverlay = async (
   }
 
   // Subtree tie-breaker: enabled facet wins (drop inactive roots that equal/overlap with active roots).
+  const overlapKeptCounts: Record<string, number> = {};
   if (excludesOverlayArr.length > 0 && activeRoots.size > 0) {
     const act = Array.from(activeRoots);
     const kept: string[] = [];
-    for (const r of excludesOverlayArr) {
+    const keptEntries: Array<{ facet: string; root: string }> = [];
+    for (const entry of inactiveEntries) {
+      const r = entry.root;
       const drop = act.some(
         (ar) => ar === r || isUnder(r, ar) || isUnder(ar, r),
       );
-      if (!drop) kept.push(r);
+      if (!drop) {
+        kept.push(r);
+        keptEntries.push(entry);
+      }
     }
     // Replace with filtered list
     excludesOverlayArr.length = 0;
     excludesOverlayArr.push(...kept);
+    // Count kept roots per facet
+    for (const { facet } of keptEntries) {
+      overlapKeptCounts[facet] = (overlapKeptCounts[facet] ?? 0) + 1;
+    }
+  } else {
+    // No filtering occurred (no active roots or no excludes); consider all inactive entries as kept.
+    for (const { facet } of inactiveEntries) {
+      overlapKeptCounts[facet] = (overlapKeptCounts[facet] ?? 0) + 1;
+    }
   }
 
   // Leaf-glob scoped re-inclusion: add anchors "<activeRoot>/**/<tail>" for every collected tail.
@@ -259,5 +282,6 @@ export const computeFacetOverlay = async (
     effective,
     autosuspended,
     anchorsKeptCounts,
+    overlapKeptCounts,
   };
 };

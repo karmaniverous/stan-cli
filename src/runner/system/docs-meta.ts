@@ -20,6 +20,8 @@ export type DocsMeta = Record<string, unknown> & {
     effective?: Record<string, boolean>;
     autosuspended?: string[];
     anchorsKept?: Record<string, number>;
+    /** Per-facet count of inactive subtree roots retained after enabled-wins filtering. */
+    overlapKept?: Record<string, number>;
   } & Record<string, unknown>;
 };
 
@@ -72,6 +74,8 @@ export const updateDocsMetaOverlay = async (
     effective?: Record<string, boolean>;
     autosuspended?: string[];
     anchorsKept?: Record<string, number>;
+    /** Optional per-facet kept counts after tie-breakers. */
+    overlapKept?: Record<string, number>;
   },
 ): Promise<void> => {
   const p = metaPath(cwd, stanPath);
@@ -106,6 +110,10 @@ export const updateDocsMetaOverlay = async (
         overlay.anchorsKept ??
         (base.overlay as { anchorsKept?: Record<string, number> } | undefined)
           ?.anchorsKept,
+      overlapKept:
+        overlay.overlapKept ??
+        (base.overlay as { overlapKept?: Record<string, number> } | undefined)
+          ?.overlapKept,
     },
   };
   await ensureDir(path.dirname(p));

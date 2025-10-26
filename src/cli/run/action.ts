@@ -204,6 +204,7 @@ export const registerRunAction = (
         effective: overlay?.effective,
         autosuspended: overlay?.autosuspended,
         anchorsKept: overlay?.anchorsKeptCounts,
+        overlapKept: overlay?.overlapKeptCounts,
       });
     } catch {
       /* best-effort */
