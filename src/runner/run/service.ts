@@ -1,12 +1,24 @@
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import type { RunnerConfig } from '@/runner/run/types';
 
-import { renderRunPlan } from './plan';
+import * as planMod from './plan';
 import { runSessionOnce } from './session';
 import type { ExecutionMode, RunBehavior } from './types';
 import type { RunnerUI } from './ui';
 import * as uiMod from './ui';
+
+// SSR‑robust resolver for renderRunPlan (named or default)
+type PlanModule = typeof import('./plan');
+type RenderRunPlanFn = PlanModule['renderRunPlan'];
+const renderRunPlanResolved: RenderRunPlanFn =
+  resolveNamedOrDefaultFunction<RenderRunPlanFn>(
+    planMod as unknown,
+    (m) => (m as PlanModule).renderRunPlan,
+    (m) => (m as { default?: Partial<PlanModule> }).default?.renderRunPlan,
+    'renderRunPlan',
+  );
 
 const resolveUI = (): {
   LiveUICtor?: new (opts?: { boring?: boolean }) => RunnerUI;
@@ -65,7 +77,7 @@ export const runSelected = async (
   await ensureOutputDir(cwd, config.stanPath, Boolean(behavior.keep));
 
   // Multi-line plan summary
-  const planBody = renderRunPlan(cwd, {
+  const planBody = renderRunPlanResolved(cwd, {
     selection,
     config,
     mode,

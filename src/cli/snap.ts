@@ -10,6 +10,7 @@ import { Command as Commander, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import {
@@ -20,13 +21,28 @@ import {
   handleUndo,
 } from '@/runner/snap';
 
-import { applyCliSafety, tagDefault } from './cli-utils';
+import * as cliUtils from './cli-utils';
+import { tagDefault } from './cli-utils';
+type CliUtilsModule = typeof import('./cli-utils');
+type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 
 /** * Register the `snap` subcommand on the provided root CLI.
  * * @param cli - Commander root command.
  * @returns The same root command for chaining. */
 export const registerSnap = (cli: Commander): Command => {
-  applyCliSafety(cli);
+  try {
+    const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetyResolved?.(cli);
+  } catch {
+    /* best-effort */
+  }
   const sub = cli
     .command('snap')
     .description(

@@ -50,6 +50,11 @@
 
 - Docs/help — unchanged in this patch (pure stability guards). Keep overlay docs and Option 1 test guidance aligned in future doc pass.
 
+- Tests/SSR — harden additional named exports with named-or-default resolvers
+  - src/runner/run/service.ts: resolve renderRunPlan via resolveNamedOrDefaultFunction to fix “renderRunPlan is not a function” under SSR.
+  - src/cli/patch.ts: resolve runPatch via resolveNamedOrDefaultFunction to fix “runPatch is not a function” in patch CLI tests.
+  - No functional changes at runtime; improves stability in Vitest SSR/forks.
+
 - Facet overlay — enabled-wins + scoped anchors
   - Implemented subtree tie-breaker (“enabled facet wins”): inactive exclude roots that equal/contain/are contained by any active root are dropped from excludesOverlay.
   - Implemented leaf-glob re-inclusion: collected tails from inactive leaf-glob excludes (e.g., “**/\*.test.ts”) and added scoped anchors “<activeRoot>/**/<tail>” for each active root.

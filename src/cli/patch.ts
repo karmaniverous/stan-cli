@@ -12,19 +12,14 @@ import { printHeader } from '@/cli/header';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
-import { runPatch } from '@/runner/patch/service';
+import * as patchServiceMod from '@/runner/patch/service';
+type PatchServiceModule = typeof import('@/runner/patch/service');
+type RunPatchFn = PatchServiceModule['runPatch'];
 
 // Robustly resolve applyCliSafety from named or default exports to avoid SSR/evaluation issues.
 import * as cliUtils from './cli-utils';
 type CliUtilsModule = typeof import('./cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
-const applyCliSafetyResolved: ApplyCliSafetyFn =
-  resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-    cliUtils as unknown,
-    (m) => (m as CliUtilsModule).applyCliSafety,
-    (m) => (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
-    'applyCliSafety',
-  );
 
 /**
  * Register the `patch` subcommand on the provided root CLI. *
@@ -32,7 +27,19 @@ const applyCliSafetyResolved: ApplyCliSafetyFn =
  */
 export const registerPatch = (cli: Command): Command => {
   // Best‑effort: do not throw if resolution fails in a mocked/SSR environment.
-  applyCliSafetyResolved(cli);
+  try {
+    const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetyResolved?.(cli);
+  } catch {
+    /* best-effort */
+  }
 
   const sub = cli
     .command('patch')
@@ -115,7 +122,21 @@ export const registerPatch = (cli: Command): Command => {
         // best-effort
       }
 
-      await runPatch(process.cwd(), inputMaybe, {
+      // Resolve runPatch lazily at action time to avoid module-eval SSR issues.
+      let runPatchResolved: RunPatchFn | undefined;
+      try {
+        runPatchResolved = resolveNamedOrDefaultFunction<RunPatchFn>(
+          patchServiceMod as unknown,
+          (m) => (m as PatchServiceModule).runPatch,
+          (m) =>
+            (m as { default?: Partial<PatchServiceModule> }).default?.runPatch,
+          'runPatch',
+        );
+      } catch {
+        runPatchResolved = undefined;
+      }
+      if (!runPatchResolved) return; // silent best‑effort when unavailable in test/SSR edge cases
+      await runPatchResolved(process.cwd(), inputMaybe, {
         file: opts?.file,
         check: opts?.check,
         defaultFile,
