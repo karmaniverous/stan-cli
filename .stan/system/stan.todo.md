@@ -67,3 +67,7 @@
 - Overlay diagnostics follow‑through
   - Added `overlapKeptCounts` to the overlay fallback in `src/cli/run/action.ts` to satisfy the extended `FacetOverlayOutput` type.
   - Hardened CLI config loader under SSR by guarding the `ensureNoReservedScriptKeys` call; prevents rare “not a function” errors in tests while keeping strict validation on the primary path.
+
+- Scripts warnPattern flags override
+  - Added optional scripts.warnPatternFlags (sibling to warnPattern) to override default regex flags behavior.
+  - Updated schema validation, runner compilation (compileWarnPatterns), and tests to ensure flags disable the implicit /i fallback when provided.

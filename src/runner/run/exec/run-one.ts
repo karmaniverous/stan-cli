@@ -32,26 +32,43 @@ export type RunHooks = {
   onHangKilled?: (key: string, graceSeconds: number) => void;
 };
 
-/** Compile warn regex variants (as-is, \\-deescaped, and /i). */
-export const compileWarnPatterns = (raw?: string): RegExp[] => {
+/** Compile warn regex variants.
+ * Default behavior (no flags provided):
+ *  - as-is
+ *  - \\-deescaped
+ *  - case-insensitive (/i) convenience
+ *
+ * When flags are provided (warnPatternFlags), they override the default flags behavior:
+ *  - compile as-is with provided flags
+ *  - compile \\-deescaped with provided flags
+ *  - do NOT add the implicit /i variant
+ */
+export const compileWarnPatterns = (
+  raw?: string,
+  flagsMaybe?: string,
+): RegExp[] => {
   if (typeof raw !== 'string' || !raw.trim()) return [];
   const src = raw.trim();
   const out: RegExp[] = [];
-  try {
-    out.push(new RegExp(src));
-  } catch {
-    /* ignore */
-  }
-  try {
+  const useFlags = typeof flagsMaybe === 'string' && flagsMaybe.length > 0;
+  const add = (pattern: string, flags?: string) => {
+    try {
+      out.push(new RegExp(pattern, flags));
+    } catch {
+      /* ignore invalid */
+    }
+  };
+
+  if (useFlags) {
+    add(src, flagsMaybe);
     const deEscaped = src.replace(/\\\\/g, '\\');
-    if (deEscaped !== src) out.push(new RegExp(deEscaped));
-  } catch {
-    /* ignore */
-  }
-  try {
-    out.push(new RegExp(src, 'i'));
-  } catch {
-    /* ignore */
+    if (deEscaped !== src) add(deEscaped, flagsMaybe);
+  } else {
+    add(src);
+    const deEscaped = src.replace(/\\\\/g, '\\');
+    if (deEscaped !== src) add(deEscaped);
+    // Default convenience: case-insensitive
+    add(src, 'i');
   }
   return out;
 };

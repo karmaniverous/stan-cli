@@ -6,8 +6,21 @@ import { z } from 'zod';
 const isValidRegex = (s: string): boolean => {
   try {
     // Construct without flags; pattern may include inline flags if desired.
-
     new RegExp(s);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const isValidFlags = (s: string): boolean => {
+  try {
+    // Validate via constructor; throws on invalid/duplicate flags.
+    // Node 20 supports g i m s u y d
+    // We let the engine/runtime enforce exact support; constructor check is sufficient.
+    // Using empty pattern is fine for validating flags.
+
+    new RegExp('', s);
     return true;
   } catch {
     return false;
@@ -27,7 +40,14 @@ const coerceBool = z
   })
   .optional();
 
-export type ScriptEntry = string | { script: string; warnPattern?: string };
+export type ScriptEntry =
+  | string
+  | {
+      script: string;
+      warnPattern?: string;
+      /** Optional regex flags that override the default flags behavior for warnPattern. */
+      warnPatternFlags?: string;
+    };
 export type ScriptMap = Record<string, ScriptEntry>;
 
 const scriptObjectSchema = z
@@ -39,6 +59,12 @@ const scriptObjectSchema = z
       .optional()
       .refine((v) => (typeof v === 'string' ? isValidRegex(v) : true), {
         message: 'warnPattern: invalid regular expression',
+      }),
+    warnPatternFlags: z
+      .string()
+      .optional()
+      .refine((v) => (typeof v === 'string' ? isValidFlags(v) : true), {
+        message: 'warnPatternFlags: invalid regex flags',
       }),
   })
   .strict();

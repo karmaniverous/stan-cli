@@ -108,7 +108,10 @@ export const runScripts = async (
       entry &&
       typeof entry === 'object' &&
       'warnPattern' in (entry as Record<string, unknown>)
-        ? compileWarnPatterns((entry as { warnPattern?: string }).warnPattern)
+        ? compileWarnPatterns(
+            (entry as { warnPattern?: string }).warnPattern,
+            (entry as { warnPatternFlags?: string }).warnPatternFlags,
+          )
         : [];
 
     const p = await runOne(
