@@ -7,7 +7,8 @@ import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
 import { runDefaults } from '@/cli/cli-utils';
-import { loadCliConfigSync } from '@/cli/config/load';
+// SSR-safe import: resolve loadCliConfigSync at runtime to tolerate ESM/CJS/mock shapes
+import * as cliLoadMod from '@/cli/config/load';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
@@ -40,6 +41,18 @@ const resolveEffectiveEngineConfig: ResolveEffFn =
     'resolveEffectiveEngineConfig',
   );
 
+// SSR‑robust resolver for loadCliConfigSync (named or default)
+type CliLoadModule = typeof import('@/cli/config/load');
+type LoadCliConfigSyncFn = CliLoadModule['loadCliConfigSync'];
+const loadCliConfigSyncResolved: LoadCliConfigSyncFn =
+  resolveNamedOrDefaultFunction<LoadCliConfigSyncFn>(
+    cliLoadMod as unknown,
+    (m) => (m as CliLoadModule).loadCliConfigSync,
+    (m) =>
+      (m as { default?: Partial<CliLoadModule> }).default?.loadCliConfigSync,
+    'loadCliConfigSync',
+  );
+
 export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
@@ -69,7 +82,7 @@ export const registerRunAction = (
     );
 
     // CLI defaults and scripts for runner config/derivation
-    const cliCfg = loadCliConfigSync(runCwd);
+    const cliCfg = loadCliConfigSyncResolved(runCwd);
 
     // Loop header + reversal guard
     try {

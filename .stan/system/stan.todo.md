@@ -130,3 +130,7 @@
   - Updated src/runner/snap/context.resolve.test.ts to mock a function-as-default under nested default.default.
   - Aligns with the resolver’s robust picker (named, default object, nested default.default, and function-as-default).
   - Removes prior TS friction and ensures the “default-only” path remains green across SSR.
+
+- Run CLI live defaults — SSR guard
+  - src/cli/run/action.ts now resolves loadCliConfigSync via a named-or-default picker to avoid “not a function” under SSR.
+  - Eliminates remaining flakiness in run live defaults tests without changing runtime behavior.
