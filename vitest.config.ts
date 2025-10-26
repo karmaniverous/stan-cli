@@ -13,7 +13,10 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'happy-dom',
+    // Vitest Option 1: default to Node; use DOM only per-suite when truly needed.
+    environment: 'node',
+    // CI stability: prefer process isolation to reduce hoist/order surprises.
+    pool: process.env.CI ? 'forks' : 'threads',
     exclude: ['node_modules/**', 'dist/**', '.rollup.cache/**'],
     // Ensure dependencies are inlined so vi.mock('tar') applies within @karmaniverous/stan-core.
     // Vitest v3: use server.deps.inline (deps.inline is deprecated).

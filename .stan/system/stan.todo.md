@@ -36,3 +36,8 @@
 
 - Reserved denials — anchors do not override
   - Verified that anchors never re‑include `.stan/diff/**`, `.stan/patch/**`, or archive outputs and added integration tests to lock this in.
+
+- Testing — Vitest Option 1 adoption (node env + ESM-friendly mocks)
+  - Set default test environment to node and prefer pool='forks' in CI.
+  - Added ESM-friendly mock helper (src/test/mock-esm.ts).
+  - Updated src/cli/index.help.test.ts to use the helper so named imports stay stable under SSR.
