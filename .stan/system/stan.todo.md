@@ -102,3 +102,8 @@
 
 - Tests/SSR — snap context guard
   - src/runner/snap/context.ts: resolve `findConfigPathSync` from `@karmaniverous/stan-core` via named‑or‑default to prevent “findConfigPathSync is not a function” under Vitest SSR.
+
+- Snap context — lazy engine resolver + tests
+  - Moved resolveEffectiveEngineConfig resolution inside resolveContext with a dynamic import and named‑or‑default fallback to eliminate SSR import‑time races.
+  - Added unit tests covering both named‑only and default‑only export shapes for the resolver (src/runner/snap/context.resolve.test.ts).
+  - Provided a minimal stanPath fallback via resolveStanPathSync to keep snap usable in rare SSR/mock failures.

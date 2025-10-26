@@ -3,24 +3,12 @@
  */
 import path from 'node:path';
 
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import * as coreMod from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
-import * as effMod from '@/runner/config/effective';
 import { DBG_SCOPE_SNAP_CONTEXT_LEGACY } from '@/runner/util/debug-scopes';
-
-type EffModule = typeof import('@/runner/config/effective');
-type ResolveEngineCfgFn = EffModule['resolveEffectiveEngineConfig'];
-const resolveEffectiveEngineConfig: ResolveEngineCfgFn =
-  resolveNamedOrDefaultFunction<ResolveEngineCfgFn>(
-    effMod as unknown,
-    (m) => (m as EffModule).resolveEffectiveEngineConfig,
-    (m) =>
-      (m as { default?: Partial<EffModule> }).default
-        ?.resolveEffectiveEngineConfig,
-    'resolveEffectiveEngineConfig',
-  );
 
 // SSR-robust resolver for core findConfigPathSync (named-or-default)
 type CoreModule = typeof import('@karmaniverous/stan-core');
@@ -31,6 +19,16 @@ const findConfigPathSyncResolved: FindConfigPathSyncFn =
     (m) => (m as CoreModule).findConfigPathSync,
     (m) => (m as { default?: Partial<CoreModule> }).default?.findConfigPathSync,
     'findConfigPathSync',
+  );
+
+type ResolveStanPathSyncFn = CoreModule['resolveStanPathSync'];
+const resolveStanPathSyncResolved: ResolveStanPathSyncFn =
+  resolveNamedOrDefaultFunction<ResolveStanPathSyncFn>(
+    coreMod as unknown,
+    (m) => (m as CoreModule).resolveStanPathSync,
+    (m) =>
+      (m as { default?: Partial<CoreModule> }).default?.resolveStanPathSync,
+    'resolveStanPathSync',
   );
 
 /**
@@ -49,11 +47,44 @@ export const resolveContext = async (
   const cfgPath = findConfigPathSyncResolved(cwd0);
   const cwd = cfgPath ? path.dirname(cfgPath) : cwd0;
 
-  // Engine context (namespaced or legacy), snap-scoped debug label for legacy fallback
-  const engine = await resolveEffectiveEngineConfig(
-    cwd,
-    DBG_SCOPE_SNAP_CONTEXT_LEGACY,
-  );
+  // Engine context (namespaced or legacy), resolved lazily to avoid SSR/ESM
+  // evaluation-order hazards during module import. Prefer named export and
+  // fall back to default.resolveEffectiveEngineConfig when present.
+  let engine: ContextConfig;
+  try {
+    type EffModule = typeof import('@/runner/config/effective');
+    type ResolveEngineCfgFn = EffModule['resolveEffectiveEngineConfig'];
+    const eff = (await import('@/runner/config/effective')) as unknown;
+    const named = (eff as EffModule).resolveEffectiveEngineConfig as
+      | ResolveEngineCfgFn
+      | undefined;
+    const viaDefault =
+      (
+        eff as {
+          default?: Partial<EffModule>;
+        }
+      ).default?.resolveEffectiveEngineConfig ?? undefined;
+    const fn =
+      typeof named === 'function'
+        ? named
+        : typeof viaDefault === 'function'
+          ? viaDefault
+          : undefined;
+    if (!fn) throw new Error('resolveEffectiveEngineConfig not found');
+    engine = await fn(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
+  } catch {
+    // Minimal, safe fallback: derive stanPath only. This preserves snap
+    // behavior even when the effective-config module cannot be resolved
+    // (e.g., SSR/mock edge cases). Downstream consumers treat includes/
+    // excludes as optional and default to [].
+    let stanPath = '.stan';
+    try {
+      stanPath = resolveStanPathSyncResolved(cwd);
+    } catch {
+      /* keep default */
+    }
+    engine = { stanPath } as ContextConfig;
+  }
 
   // CLI config for snap retention
   let maxUndos: number | undefined;
