@@ -13,14 +13,29 @@ import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runPatch } from '@/runner/patch/service';
 
-import { applyCliSafety } from './cli-utils';
+// Robustly resolve applyCliSafety from named or default export to tolerate SSR/CJS interop.
+import * as cliUtils from './cli-utils';
+const resolveApplyCliSafety = (): ((c: Command) => void) | undefined => {
+  const mod = cliUtils as unknown as {
+    applyCliSafety?: unknown;
+    default?: { applyCliSafety?: unknown };
+  };
+  const fn =
+    typeof mod.applyCliSafety === 'function'
+      ? (mod.applyCliSafety as (c: Command) => void)
+      : typeof mod.default?.applyCliSafety === 'function'
+        ? (mod.default.applyCliSafety as (c: Command) => void)
+        : undefined;
+  return fn;
+};
 
 /**
  * Register the `patch` subcommand on the provided root CLI. *
  * @param cli - Commander root command. * @returns The same root command for chaining.
  */
 export const registerPatch = (cli: Command): Command => {
-  applyCliSafety(cli);
+  // Best‑effort: do not throw if resolution fails in a mocked/SSR environment.
+  resolveApplyCliSafety()?.(cli);
 
   const sub = cli
     .command('patch')

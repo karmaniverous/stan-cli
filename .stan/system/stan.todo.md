@@ -40,4 +40,10 @@
 - Testing — Vitest Option 1 adoption (node env + ESM-friendly mocks)
   - Set default test environment to node and prefer pool='forks' in CI.
   - Added ESM-friendly mock helper (src/test/mock-esm.ts).
-  - Updated src/cli/index.help.test.ts to use the helper so named imports stay stable under SSR.  - Use forks pool unconditionally so process.chdir() in CLI suites works under Vitest; worker-threads pool forbids chdir in workers.
+  - Updated src/cli/index.help.test.ts to use the helper so named imports stay stable under SSR.
+  - Use forks pool unconditionally so process.chdir() in CLI suites works under Vitest; worker-threads pool forbids chdir in workers.
+
+  - Updated src/cli/patch.jsdiff.test.ts to use vi.resetModules + vi.doMock + dynamic SUT import with ESM-shaped mocks, stabilizing named export resolution and preventing registerPatch import shape issues under Node/SSR.
+  - Hardened CLI SSR interop:
+    - src/cli/patch.ts now resolves applyCliSafety from named or default exports to avoid “not a function” under SSR/evaluation order.
+    - src/cli/config/load.ts adds a minimal, safe fallback when the schema binding is unavailable in rare worker contexts, preserving expected defaults for tests while keeping strict validation as primary path.

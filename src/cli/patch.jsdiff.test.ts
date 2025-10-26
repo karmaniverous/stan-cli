@@ -5,20 +5,28 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Force git-apply path to fail so jsdiff fallback is used
-vi.mock('./apply', () => ({
-  __esModule: true,
-  buildApplyAttempts: () => [],
-  runGitApply: () =>
-    Promise.resolve({
+import { asEsmModule } from '@/test/mock-esm';
+
+// Install mocks before importing the SUT — Vitest Option 1:
+// resetModules + doMock + dynamic import to control evaluation order.
+vi.resetModules();
+vi.doMock('./apply', async () =>
+  asEsmModule({
+    buildApplyAttempts: () => [],
+    runGitApply: async () => ({
       ok: false,
       tried: ['3way-nowarn-p1', '3way-ignore-p1', 'reject-nowarn-p1'],
       lastCode: 1,
       captures: [],
     }),
-}));
+  }),
+);
 
-import { registerPatch } from './patch';
+// Defer SUT import until after mocks are installed.
+const importSut = async () =>
+  (await import('./patch')) as unknown as {
+    registerPatch: (c: Command) => Command;
+  };
 
 describe('jsdiff fallback applies patch and preserves EOL', () => {
   let dir: string;
@@ -64,6 +72,7 @@ describe('jsdiff fallback applies patch and preserves EOL', () => {
     });
 
     const cli = new Command();
+    const { registerPatch } = await importSut();
     registerPatch(cli);
     await cli.parseAsync(['node', 'stan', 'patch', diff], { from: 'user' });
 
