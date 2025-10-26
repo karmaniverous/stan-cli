@@ -119,6 +119,8 @@ export const resolveContext = async (
       picked = await tryCall(
         (effMod?.default as { default?: unknown })?.default,
       );
+    // Last-resort: some mock shapes may export the resolver as the module itself
+    if (!picked) picked = await tryCall(effMod as unknown);
     if (!picked) throw new Error('resolveEffectiveEngineConfig not found');
     engine = picked;
   } catch {

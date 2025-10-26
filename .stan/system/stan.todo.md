@@ -143,3 +143,10 @@
   - Hardened the default‑only resolver to try multiple shapes in order: named export, `default.resolveEffectiveEngineConfig`, nested `default.default.resolveEffectiveEngineConfig`, and function‑as‑default (at both `default` and `default.default`).
   - Fixes the test that mocks a function‑as‑default, avoiding fallback to config stanPath.
   - Behavior unchanged in normal runtime; improves stability in SSR/mocked environments.
+
+- Follow‑through: typing fixes in run/action lazy config path
+  - Safely narrowed `scripts` and `cliDefaults.run.scripts` before passing to derive/runner to satisfy TS and docs builds.
+  - Avoided unsafe assignments flagged by eslint (no‑unsafe‑assignment).
+
+- Snap context: add module‑as‑function fallback
+  - Final fallback tries calling the imported module itself when mocks export the resolver as the module value.

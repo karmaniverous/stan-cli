@@ -135,11 +135,21 @@ export const registerRunAction = (
     }
 
     // Derive run parameters
+    // Narrow scripts map for derive step (default to empty map)
+    const scriptsMap = cliCfg.scripts ?? {};
+    // Narrow scripts default (boolean | string[] | undefined) from cliDefaults when present
+    const scriptsDefaultCfg =
+      (
+        cliCfg.cliDefaults as
+          | { run?: { scripts?: boolean | string[] } }
+          | undefined
+      )?.run?.scripts ?? undefined;
+
     const derived = deriveRunParameters({
       options,
       cmd,
-      scripts: cliCfg.scripts,
-      scriptsDefault: cliCfg.cliDefaults?.run?.scripts,
+      scripts: scriptsMap,
+      scriptsDefault: scriptsDefaultCfg,
     });
 
     // Facet overlay — determine defaults and per-run overrides (renamed flags)
@@ -199,6 +209,8 @@ export const registerRunAction = (
 
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
+      // Narrow to string map for the runner; unknown entries are filtered at call sites
+      // (script runner treats only string or {script:string} entries as runnable).
       scripts: (cliCfg.scripts ?? {}) as Record<string, string>,
       // Propagate selection context for the archive phase (legacy-friendly).
       includes: config.includes ?? [],
