@@ -49,9 +49,7 @@
   - Follow-up: re-run the suite to confirm the transient SyntaxError in `run.combine.test.ts` is eliminated along with the import-shape issues.
 
 - Tests/SSR — fix rootDefaults “not a function” in CLI factory
-  - In src/cli/index.ts, resolve `rootDefaults` and `applyCliSafety` via
-    named-or-default function resolver to avoid “not a function” under
-    Vitest SSR.
+  - In src/cli/index.ts, resolve `rootDefaults` and `applyCliSafety` via named-or-default function resolver to avoid “not a function” under Vitest SSR.
   - Keeps runtime behavior unchanged; stabilizes CLI help footer test.
 
 - Docs/help — unchanged in this patch (pure stability guards). Keep overlay docs and Option 1 test guidance aligned in future doc pass.
@@ -92,3 +90,12 @@
 - SSR cleanup & path normalization
   - snap.ts / patch.ts / init.ts: resolve applyCliSafety lazily (named-or-default) for both root and subcommands; remove stray unresolved identifiers to satisfy TS and keep SSR robust.
   - archive fast path: normalize output paths with path.join to satisfy Windows path-based assertions in sequential archive test.
+
+- Tests/SSR — resolve service/options via named-or-default
+  - src/cli/init.ts: resolve `performInitService` via named-or-default to avoid “performInitService is not a function” under Vitest SSR.
+  - src/cli/runner/index.ts: resolve `registerRunOptions` via named-or-default to avoid “registerRunOptions is not a function” during CLI run option wiring tests.
+  - Runtime behavior unchanged; improves test stability in SSR/forks.
+
+- Tests/SSR — finalize CLI SSR guards
+  - src/cli/init.ts: make `performInit` call the SSR‑resolved service and return `Promise<string|null>`; safe fallback to `null` when the service cannot be resolved (rare SSR anomalies).
+  - src/cli/run/action.ts: resolve `resolveEffectiveEngineConfig` via named‑or‑default to eliminate remaining “not a function” under Vitest SSR.

@@ -7,11 +7,26 @@ import type { Command } from 'commander';
 import { Command as Commander } from 'commander';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
-import { performInitService } from '@/runner/init/service';
+import * as initServiceMod from '@/runner/init/service';
 
 import * as cliUtils from './cli-utils';
 type CliUtilsModule = typeof import('./cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
+type InitModule = typeof import('@/runner/init/service');
+type PerformInitServiceFn = InitModule['performInitService'];
+const performInitServiceResolved: PerformInitServiceFn | undefined = (() => {
+  try {
+    return resolveNamedOrDefaultFunction<PerformInitServiceFn>(
+      initServiceMod as unknown,
+      (m) => (m as InitModule).performInitService,
+      (m) =>
+        (m as { default?: Partial<InitModule> }).default?.performInitService,
+      'performInitService',
+    );
+  } catch {
+    return undefined;
+  }
+})();
 
 /**
  * Register the `init` subcommand on the provided root CLI.
@@ -27,7 +42,19 @@ export const performInit = (
     preserveScripts?: boolean;
     dryRun?: boolean;
   },
-) => performInitService(opts);
+): Promise<string | null> => {
+  const fn = performInitServiceResolved;
+  if (typeof fn === 'function') return fn(opts);
+  // Fallback: attempt named access from the module (SSR edge), else null
+  const fallback = (
+    initServiceMod as unknown as {
+      performInitService?: PerformInitServiceFn;
+    }
+  ).performInitService;
+  return typeof fallback === 'function'
+    ? fallback(opts)
+    : Promise.resolve(null);
+};
 
 export const registerInit = (cli: Commander): Command => {
   try {
@@ -81,7 +108,15 @@ export const registerInit = (cli: Commander): Command => {
       preserveScripts?: boolean;
       dryRun?: boolean;
     }) => {
-      await performInit(cli, {
+      // Resolve service lazily to avoid SSR/evaluation issues
+      const fn = performInitServiceResolved;
+      if (!fn) {
+        // Silent best-effort in rare SSR anomalies; mirror prior behavior
+        // by returning without side effects when the service cannot be resolved.
+        return;
+      }
+      await fn({
+        // performInitService signature accepts the same options bag
         force: Boolean(opts.force),
         preserveScripts: Boolean(opts.preserveScripts),
         dryRun: Boolean(opts.dryRun),

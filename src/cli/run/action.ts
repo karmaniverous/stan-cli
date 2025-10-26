@@ -10,7 +10,8 @@ import { runDefaults } from '@/cli/cli-utils';
 import { loadCliConfigSync } from '@/cli/config/load';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
-import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
+import * as effMod from '@/runner/config/effective';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import {
@@ -25,6 +26,19 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
+
+// SSR-robust resolver for resolveEffectiveEngineConfig (named-or-default)
+type EffModule = typeof import('@/runner/config/effective');
+type ResolveEffFn = EffModule['resolveEffectiveEngineConfig'];
+const resolveEffectiveEngineConfig: ResolveEffFn =
+  resolveNamedOrDefaultFunction<ResolveEffFn>(
+    effMod as unknown,
+    (m) => (m as EffModule).resolveEffectiveEngineConfig,
+    (m) =>
+      (m as { default?: Partial<EffModule> }).default
+        ?.resolveEffectiveEngineConfig,
+    'resolveEffectiveEngineConfig',
+  );
 
 export const registerRunAction = (
   cmd: Command,
@@ -114,12 +128,9 @@ export const registerRunAction = (
 
     // Determine overlay enablement with new semantics
     let overlayEnabled = eff.facets;
-    if (facetsProvided) {
-      overlayEnabled = true;
-    }
-    if (noFacetsProvided) {
+    if (facetsProvided) overlayEnabled = true;
+    if (noFacetsProvided)
       overlayEnabled = deactivateNames.length === 0 ? false : true;
-    }
 
     // Compute overlay for plan + engine inputs
     let overlay: FacetOverlayOutput | null = null;
@@ -149,8 +160,6 @@ export const registerRunAction = (
       stanPath: config.stanPath,
       scripts: cliCfg.scripts,
       // Propagate selection context for the archive phase (legacy-friendly).
-      // These originate from the resolved engine ContextConfig above, which may
-      // be synthesized from legacy root keys during the transitional window.
       includes: config.includes ?? [],
       excludes: [
         ...(config.excludes ?? []),
@@ -176,9 +185,7 @@ export const registerRunAction = (
             0,
           );
           lines.push(
-            `facets inactive: ${
-              inactive.length ? inactive.join(', ') : 'none'
-            }`,
+            `facets inactive: ${inactive.length ? inactive.join(', ') : 'none'}`,
           );
           if (auto.length) lines.push(`auto-suspended: ${auto.join(', ')}`);
           lines.push(`anchors kept: ${anchorsTotal.toString()}`);
