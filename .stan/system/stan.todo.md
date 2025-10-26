@@ -99,3 +99,6 @@
 - Tests/SSR — finalize CLI SSR guards
   - src/cli/init.ts: make `performInit` call the SSR‑resolved service and return `Promise<string|null>`; safe fallback to `null` when the service cannot be resolved (rare SSR anomalies).
   - src/cli/run/action.ts: resolve `resolveEffectiveEngineConfig` via named‑or‑default to eliminate remaining “not a function” under Vitest SSR.
+
+- Tests/SSR — snap context guard
+  - src/runner/snap/context.ts: resolve `findConfigPathSync` from `@karmaniverous/stan-core` via named‑or‑default to prevent “findConfigPathSync is not a function” under Vitest SSR.

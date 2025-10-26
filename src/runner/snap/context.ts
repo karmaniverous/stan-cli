@@ -3,7 +3,7 @@
  */
 import path from 'node:path';
 
-import { findConfigPathSync } from '@karmaniverous/stan-core';
+import * as coreMod from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
@@ -22,6 +22,17 @@ const resolveEffectiveEngineConfig: ResolveEngineCfgFn =
     'resolveEffectiveEngineConfig',
   );
 
+// SSR-robust resolver for core findConfigPathSync (named-or-default)
+type CoreModule = typeof import('@karmaniverous/stan-core');
+type FindConfigPathSyncFn = CoreModule['findConfigPathSync'];
+const findConfigPathSyncResolved: FindConfigPathSyncFn =
+  resolveNamedOrDefaultFunction<FindConfigPathSyncFn>(
+    coreMod as unknown,
+    (m) => (m as CoreModule).findConfigPathSync,
+    (m) => (m as { default?: Partial<CoreModule> }).default?.findConfigPathSync,
+    'findConfigPathSync',
+  );
+
 /**
  * Resolve the effective execution context for snapshot operations.
  * Starting from `cwd0`, locates the nearest `stan.config.*` and returns:
@@ -35,7 +46,7 @@ const resolveEffectiveEngineConfig: ResolveEngineCfgFn =
 export const resolveContext = async (
   cwd0: string,
 ): Promise<{ cwd: string; stanPath: string; maxUndos: number }> => {
-  const cfgPath = findConfigPathSync(cwd0);
+  const cfgPath = findConfigPathSyncResolved(cwd0);
   const cwd = cfgPath ? path.dirname(cfgPath) : cwd0;
 
   // Engine context (namespaced or legacy), snap-scoped debug label for legacy fallback
