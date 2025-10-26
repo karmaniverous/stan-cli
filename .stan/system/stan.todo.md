@@ -107,3 +107,9 @@
   - Moved resolveEffectiveEngineConfig resolution inside resolveContext with a dynamic import and named‑or‑default fallback to eliminate SSR import‑time races.
   - Added unit tests covering both named‑only and default‑only export shapes for the resolver (src/runner/snap/context.resolve.test.ts).
   - Provided a minimal stanPath fallback via resolveStanPathSync to keep snap usable in rare SSR/mock failures.
+
+- Snap context — lazy core resolvers for config/stanPath
+  - Moved findConfigPathSync and resolveStanPathSync resolution inside resolveContext with dynamic import and named‑or‑default fallback to eliminate the remaining “findConfigPathSync not found” race.
+
+- Snap CLI — resolve tagDefault via named‑or‑default
+  - Resolved tagDefault from cli-utils defensively to fix “tagDefault is not a function” under SSR/mocks in snap.stash.success.test.

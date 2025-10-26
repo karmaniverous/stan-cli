@@ -22,9 +22,9 @@ import {
 } from '@/runner/snap';
 
 import * as cliUtils from './cli-utils';
-import { tagDefault } from './cli-utils';
 type CliUtilsModule = typeof import('./cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
+type TagDefaultFn = CliUtilsModule['tagDefault'];
 
 /** * Register the `snap` subcommand on the provided root CLI.
  * * @param cli - Commander root command.
@@ -101,15 +101,31 @@ export const registerSnap = (cli: Commander): Command => {
     '-S, --no-stash',
     'do not stash before snapshot (negated form)',
   );
+
+  // Resolve tagDefault lazily (named-or-default) to avoid SSR import-shape issues.
+  const tagDefaultResolved: TagDefaultFn | undefined = (() => {
+    try {
+      return resolveNamedOrDefaultFunction<TagDefaultFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).tagDefault,
+        (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
+        'tagDefault',
+      );
+    } catch {
+      return undefined;
+    }
+  })();
+
   // Determine effective default (config overrides > built-ins)
   try {
     const p = findConfigPathSync(process.cwd());
     const cfg = p ? loadCliConfigSync(process.cwd()) : null;
     const stashDef = Boolean(cfg?.cliDefaults?.snap?.stash ?? false);
-    tagDefault(stashDef ? optStash : optNoStash, true);
+    tagDefaultResolved?.(optStash, stashDef);
+    tagDefaultResolved?.(optNoStash, !stashDef);
   } catch {
     // best-effort; built-in default is no-stash
-    tagDefault(optNoStash, true);
+    tagDefaultResolved?.(optNoStash, true);
   }
 
   sub

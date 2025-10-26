@@ -4,32 +4,10 @@
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
-import * as coreMod from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { DBG_SCOPE_SNAP_CONTEXT_LEGACY } from '@/runner/util/debug-scopes';
-
-// SSR-robust resolver for core findConfigPathSync (named-or-default)
-type CoreModule = typeof import('@karmaniverous/stan-core');
-type FindConfigPathSyncFn = CoreModule['findConfigPathSync'];
-const findConfigPathSyncResolved: FindConfigPathSyncFn =
-  resolveNamedOrDefaultFunction<FindConfigPathSyncFn>(
-    coreMod as unknown,
-    (m) => (m as CoreModule).findConfigPathSync,
-    (m) => (m as { default?: Partial<CoreModule> }).default?.findConfigPathSync,
-    'findConfigPathSync',
-  );
-
-type ResolveStanPathSyncFn = CoreModule['resolveStanPathSync'];
-const resolveStanPathSyncResolved: ResolveStanPathSyncFn =
-  resolveNamedOrDefaultFunction<ResolveStanPathSyncFn>(
-    coreMod as unknown,
-    (m) => (m as CoreModule).resolveStanPathSync,
-    (m) =>
-      (m as { default?: Partial<CoreModule> }).default?.resolveStanPathSync,
-    'resolveStanPathSync',
-  );
 
 /**
  * Resolve the effective execution context for snapshot operations.
@@ -44,8 +22,37 @@ const resolveStanPathSyncResolved: ResolveStanPathSyncFn =
 export const resolveContext = async (
   cwd0: string,
 ): Promise<{ cwd: string; stanPath: string; maxUndos: number }> => {
-  const cfgPath = findConfigPathSyncResolved(cwd0);
-  const cwd = cfgPath ? path.dirname(cfgPath) : cwd0;
+  // Lazily resolve core helpers to avoid SSR/ESM import-time races.
+  type CoreModule = typeof import('@karmaniverous/stan-core');
+  type FindConfigPathSyncFn = CoreModule['findConfigPathSync'];
+  type ResolveStanPathSyncFn = CoreModule['resolveStanPathSync'];
+  let cwd = cwd0;
+  let resolveStanPathSyncResolved: ResolveStanPathSyncFn | null = null;
+  try {
+    const coreMod = (await import('@karmaniverous/stan-core')) as unknown;
+    const findConfigPathSyncResolved =
+      resolveNamedOrDefaultFunction<FindConfigPathSyncFn>(
+        coreMod,
+        (m) => (m as CoreModule).findConfigPathSync,
+        (m) =>
+          (m as { default?: Partial<CoreModule> }).default?.findConfigPathSync,
+        'findConfigPathSync',
+      );
+    const cfgPath = findConfigPathSyncResolved(cwd0);
+    cwd = cfgPath ? path.dirname(cfgPath) : cwd0;
+    // Keep a resolved handle for fallback stanPath derivation
+    resolveStanPathSyncResolved =
+      resolveNamedOrDefaultFunction<ResolveStanPathSyncFn>(
+        coreMod,
+        (m) => (m as CoreModule).resolveStanPathSync,
+        (m) =>
+          (m as { default?: Partial<CoreModule> }).default?.resolveStanPathSync,
+        'resolveStanPathSync',
+      );
+  } catch {
+    // best‑effort; keep cwd=cwd0 and derive stanPath in the general fallback below
+    resolveStanPathSyncResolved = null;
+  }
 
   // Engine context (namespaced or legacy), resolved lazily to avoid SSR/ESM
   // evaluation-order hazards during module import. Prefer named export and
@@ -79,7 +86,9 @@ export const resolveContext = async (
     // excludes as optional and default to [].
     let stanPath = '.stan';
     try {
-      stanPath = resolveStanPathSyncResolved(cwd);
+      stanPath = resolveStanPathSyncResolved
+        ? resolveStanPathSyncResolved(cwd)
+        : stanPath;
     } catch {
       /* keep default */
     }
