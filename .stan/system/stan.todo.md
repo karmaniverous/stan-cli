@@ -40,4 +40,4 @@
 - Testing — Vitest Option 1 adoption (node env + ESM-friendly mocks)
   - Set default test environment to node and prefer pool='forks' in CI.
   - Added ESM-friendly mock helper (src/test/mock-esm.ts).
-  - Updated src/cli/index.help.test.ts to use the helper so named imports stay stable under SSR.
+  - Updated src/cli/index.help.test.ts to use the helper so named imports stay stable under SSR.  - Use forks pool unconditionally so process.chdir() in CLI suites works under Vitest; worker-threads pool forbids chdir in workers.
