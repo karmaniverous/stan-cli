@@ -149,4 +149,7 @@
   - Avoided unsafe assignments flagged by eslint (no‑unsafe‑assignment).
 
 - Snap context: add module‑as‑function fallback
-  - Final fallback tries calling the imported module itself when mocks export the resolver as the module value.
+  - Final fallback tries calling the imported module itself when mocks export the resolver as the module value.
+
+- Snap CLI argv normalization guard
+  - Applied applyCliSafety directly to both the root and the subcommand in src/cli/snap.ts (in addition to the named‑or‑default resolver) to eliminate intermittent “unknown command 'node'” under SSR/mocked shapes.
