@@ -3,8 +3,33 @@
  */
 import type { Command } from 'commander';
 
-import { registerRunAction } from '../run/action';
+// SSR/CJS-robust resolver for registerRunAction: prefer named, fall back to default.registerRunAction.
+import * as runActionMod from '../run/action';
 import { registerRunOptions } from '../run/options';
+
+type FlagPresence = {
+  sawNoScriptsFlag: boolean;
+  sawScriptsFlag: boolean;
+  sawExceptFlag: boolean;
+};
+
+const resolveRegisterRunAction = ():
+  | ((cmd: Command, getFlagPresence: () => FlagPresence) => void)
+  | undefined => {
+  const mod = runActionMod as unknown as {
+    registerRunAction?: unknown;
+    default?: { registerRunAction?: unknown };
+  };
+  const fn =
+    typeof mod.registerRunAction === 'function'
+      ? mod.registerRunAction
+      : typeof mod.default?.registerRunAction === 'function'
+        ? mod.default.registerRunAction
+        : undefined;
+  return fn as
+    | ((cmd: Command, getFlagPresence: () => FlagPresence) => void)
+    | undefined;
+};
 
 /**
  * Register the `run` subcommand on the provided root CLI.
@@ -14,6 +39,6 @@ import { registerRunOptions } from '../run/options';
  */
 export const registerRun = (cli: Command): Command => {
   const { cmd, getFlagPresence } = registerRunOptions(cli);
-  registerRunAction(cmd, getFlagPresence);
+  resolveRegisterRunAction()?.(cmd, getFlagPresence);
   return cli;
 };

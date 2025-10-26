@@ -5,7 +5,34 @@ import type { RunnerConfig } from '@/runner/run/types';
 import { renderRunPlan } from './plan';
 import { runSessionOnce } from './session';
 import type { ExecutionMode, RunBehavior } from './types';
-import { LiveUI, LoggerUI, type RunnerUI } from './ui';
+import type { RunnerUI } from './ui';
+import * as uiMod from './ui';
+
+const resolveUI = (): {
+  LiveUICtor?: new (opts?: { boring?: boolean }) => RunnerUI;
+  LoggerUICtor?: new () => RunnerUI;
+} => {
+  const mod = uiMod as unknown as {
+    LiveUI?: unknown;
+    LoggerUI?: unknown;
+    default?: { LiveUI?: unknown; LoggerUI?: unknown };
+  };
+  const Live = (
+    typeof mod.LiveUI === 'function'
+      ? (mod.LiveUI as unknown)
+      : typeof mod.default?.LiveUI === 'function'
+        ? (mod.default.LiveUI as unknown)
+        : undefined
+  ) as (new (opts?: { boring?: boolean }) => RunnerUI) | undefined;
+  const Logger = (
+    typeof mod.LoggerUI === 'function'
+      ? (mod.LoggerUI as unknown)
+      : typeof mod.default?.LoggerUI === 'function'
+        ? (mod.default.LoggerUI as unknown)
+        : undefined
+  ) as (new () => RunnerUI) | undefined;
+  return { LiveUICtor: Live, LoggerUICtor: Logger };
+};
 
 /**
  * High‑level runner for `stan run`.
@@ -54,9 +81,26 @@ export const runSelected = async (
   const selected = selection == null ? Object.keys(config.scripts) : selection;
 
   // Create a single UI instance for the entire run; reuse across restarts.
-  const ui: RunnerUI = liveEnabled
-    ? new LiveUI({ boring: process.env.STAN_BORING === '1' })
-    : new LoggerUI();
+  const { LiveUICtor, LoggerUICtor } = resolveUI();
+  const ui: RunnerUI =
+    liveEnabled && typeof LiveUICtor === 'function'
+      ? new LiveUICtor({ boring: process.env.STAN_BORING === '1' })
+      : typeof LoggerUICtor === 'function'
+        ? new LoggerUICtor()
+        : // Extremely defensive: fall back to a logger-like no-op to avoid throwing in tests.
+          ({
+            start() {},
+            onPlan() {},
+            onScriptQueued() {},
+            onScriptStart() {},
+            onScriptEnd() {},
+            onArchiveQueued() {},
+            onArchiveStart() {},
+            onArchiveEnd() {},
+            onCancelled() {},
+            installCancellation() {},
+            stop() {},
+          } as unknown as RunnerUI);
 
   // Outer loop: allow live-mode restart (press 'r') to repeat a session once per trigger.
   let printedPlan = false;

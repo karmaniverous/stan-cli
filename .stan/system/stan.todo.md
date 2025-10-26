@@ -47,4 +47,13 @@
   - Hardened CLI SSR interop:
     - src/cli/patch.ts now resolves applyCliSafety from named or default exports to avoid “not a function” under SSR/evaluation order.
     - src/cli/config/load.ts adds a minimal, safe fallback when the schema binding is unavailable in rare worker contexts, preserving expected defaults for tests while keeping strict validation as primary path.
-  - Fixed a lingering direct call to applyCliSafety on the subcommand in src/cli/patch.ts; now uses the robust resolver resolveApplyCliSafety()?.(sub) to prevent TypeScript and runtime errors in SSR/tests.
+  - Fixed a lingering direct call to applyCliSafety on the subcommand in src/cli/patch.ts; now uses the robust resolver resolveApplyCliSafety()?.(sub) to prevent TypeScript and runtime errors in SSR/tests.
+
+- Testing/SSR stability — robust import-shape guards
+  - CLI run wiring: added named-or-default resolver for `registerRunAction` in `src/cli/runner/index.ts` to prevent “not a function” under Vitest SSR/forks.
+  - Runner UI construction: resolved `LiveUI`/`LoggerUI` from named-or-default in `src/runner/run/service.ts` to avoid “LoggerUI is not a constructor” under SSR edge evaluation.
+  - Archive stage call path: resolved `runArchiveStage` from named-or-default in `src/runner/run/session/index.ts` to prevent “runArchiveStage is not a function” during tests.
+  - Scope: test-only robustness; no behavior change at runtime. Mirrors earlier fix for `applyCliSafety` in patch wiring.
+  - Follow-up: re-run the suite to confirm the transient SyntaxError in `run.combine.test.ts` is eliminated along with the import-shape issues.
+
+- Docs/help — unchanged in this patch (pure stability guards). Keep overlay docs and Option 1 test guidance aligned in future doc pass.

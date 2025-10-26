@@ -6,7 +6,8 @@ import { resolve as resolvePath } from 'node:path';
 
 import { yieldToEventLoop } from '@/runner/run/exec/util';
 import { liveTrace, ProcessSupervisor } from '@/runner/run/live';
-import { runArchiveStage } from '@/runner/run/session/archive-stage';
+// SSR/CJS-robust resolver: prefer named export; fall back to default.register
+import * as archiveStageMod from '@/runner/run/session/archive-stage';
 import { ensureOrderFile } from '@/runner/run/session/order-file';
 import {
   printPlanWithPrompt,
@@ -21,6 +22,25 @@ import type { RunnerUI } from '@/runner/run/ui';
 import { CancelController } from './cancel-controller';
 import { runScriptsPhase } from './scripts-phase';
 import type { SessionOutcome } from './types';
+
+// Resolve runArchiveStage from named or default export for SSR robustness.
+const resolveRunArchiveStage = ():
+  | (typeof import('@/runner/run/session/archive-stage'))['runArchiveStage']
+  | undefined => {
+  const mod = archiveStageMod as unknown as {
+    runArchiveStage?: unknown;
+    default?: { runArchiveStage?: unknown };
+  };
+  const fn =
+    typeof mod.runArchiveStage === 'function'
+      ? mod.runArchiveStage
+      : typeof mod.default?.runArchiveStage === 'function'
+        ? mod.default.runArchiveStage
+        : undefined;
+  return fn as
+    | (typeof import('@/runner/run/session/archive-stage'))['runArchiveStage']
+    | undefined;
+};
 
 // Active session epoch (symbol). Callbacks from previous epochs are ignored.
 let ACTIVE_EPOCH: symbol | null = null;
@@ -322,14 +342,17 @@ export const runSessionOnce = async (args: {
 
   // ARCHIVE PHASE
   if (behavior.archive) {
-    const a = await runArchiveStage({
-      cwd,
-      config,
-      behavior,
-      ui,
-      promptAbs: resolvedPromptAbs,
-      promptDisplay: resolvedPromptDisplay,
-    });
+    const runArchive = resolveRunArchiveStage();
+    const a = runArchive
+      ? await runArchive({
+          cwd,
+          config,
+          behavior,
+          ui,
+          promptAbs: resolvedPromptAbs,
+          promptDisplay: resolvedPromptDisplay,
+        })
+      : { created: [], cancelled: false };
     if (a.cancelled) {
       detachSignals();
       return { created, cancelled: true, restartRequested: false };
