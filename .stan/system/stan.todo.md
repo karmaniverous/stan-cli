@@ -46,4 +46,5 @@
   - Updated src/cli/patch.jsdiff.test.ts to use vi.resetModules + vi.doMock + dynamic SUT import with ESM-shaped mocks, stabilizing named export resolution and preventing registerPatch import shape issues under Node/SSR.
   - Hardened CLI SSR interop:
     - src/cli/patch.ts now resolves applyCliSafety from named or default exports to avoid “not a function” under SSR/evaluation order.
-    - src/cli/config/load.ts adds a minimal, safe fallback when the schema binding is unavailable in rare worker contexts, preserving expected defaults for tests while keeping strict validation as primary path.
+    - src/cli/config/load.ts adds a minimal, safe fallback when the schema binding is unavailable in rare worker contexts, preserving expected defaults for tests while keeping strict validation as primary path.
+  - Fixed a lingering direct call to applyCliSafety on the subcommand in src/cli/patch.ts; now uses the robust resolver resolveApplyCliSafety()?.(sub) to prevent TypeScript and runtime errors in SSR/tests.

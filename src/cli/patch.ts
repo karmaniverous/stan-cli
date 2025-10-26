@@ -71,7 +71,7 @@ export const registerPatch = (cli: Command): Command => {
       ),
     )
     .option('-c, --check', 'Validate patch without applying any changes');
-  applyCliSafety(sub);
+  resolveApplyCliSafety()?.(sub);
 
   sub.action(
     async (
