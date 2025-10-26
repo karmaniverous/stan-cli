@@ -13,9 +13,26 @@ import { printVersionInfo } from '@/runner/version';
 
 import { applyCliSafety, rootDefaults, tagDefault } from './cli-utils';
 import { performInit, registerInit } from './init';
-import { registerPatch } from './patch';
+// Robustly resolve registerPatch (named or default export) to tolerate SSR/ESM interop.
+import * as patchMod from './patch';
 import { registerRun } from './runner';
 import { registerSnap } from './snap';
+
+const resolveRegisterPatch = ():
+  | ((cli: Command) => Command | Command['command'])
+  | undefined => {
+  const mod = patchMod as unknown as {
+    registerPatch?: unknown;
+    default?: { registerPatch?: unknown };
+  };
+  const fn =
+    typeof mod.registerPatch === 'function'
+      ? (mod.registerPatch as (cli: Command) => Command)
+      : typeof mod.default?.registerPatch === 'function'
+        ? (mod.default.registerPatch as (cli: Command) => Command)
+        : undefined;
+  return fn;
+};
 /**
  * Build the root CLI (`stan`) without side effects (safe for tests). *
  * Registers the `run`, `init`, `snap`, and `patch` subcommands, installs
@@ -100,11 +117,16 @@ export const makeCli = (): Command => {
     } catch {
       // ignore
     }
-  }); // Subcommands
+  });
+  // Subcommands
   registerRun(cli);
   registerInit(cli);
   registerSnap(cli);
-  registerPatch(cli);
+  try {
+    resolveRegisterPatch()?.(cli);
+  } catch {
+    /* best-effort */
+  }
 
   // Root action:
   // - If -v/--version: print extended version info and return.
