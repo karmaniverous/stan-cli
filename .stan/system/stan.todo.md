@@ -119,3 +119,9 @@
 
 - Snap context — robust default-only resolver
   - Hardened function picking to cover named, default object, nested default.default, and function-as-default shapes to eliminate the last fallback to config stanPath in the default-only resolver test.
+
+- Decompose long orchestrators (session/init) into small modules
+  - run/session: moved the heavy runSessionOnce orchestration out of index.ts into run-session.ts; added archive-stage-resolver.ts and epoch.ts for SSR-robust resolution and active-epoch gating. index.ts is now a thin barrel.
+  - init/service: moved performInitService out of index.ts into service.main.ts; factored readExisting/deriveUi/interactive-apply/write-config/workspace/snapshot modules for clarity and testability. index.ts is now a thin barrel.
+  - Kept public barrels stable to avoid deep-path drift in callers and tests.
+  - No behavior changes; code split only. Each new module is well under the 300 LOC threshold.
