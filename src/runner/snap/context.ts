@@ -59,52 +59,68 @@ export const resolveContext = async (
   // fall back to default.resolveEffectiveEngineConfig when present.
   let engine: ContextConfig;
   try {
-    type EffModule = typeof import('@/runner/config/effective');
-    type ResolveEngineCfgFn = EffModule['resolveEffectiveEngineConfig'];
-    const eff = (await import('@/runner/config/effective')) as unknown;
-    // Robust pick across common ESM/CJS/mock shapes:
-    // - named: module.resolveEffectiveEngineConfig
-    // - default object: module.default.resolveEffectiveEngineConfig
-    // - nested default: module.default.default.resolveEffectiveEngineConfig
-    // - function-as-default: module.default is the function
-    const pickEff = (mod: unknown): ResolveEngineCfgFn | undefined => {
-      try {
-        const m = mod as {
-          resolveEffectiveEngineConfig?: unknown;
-          default?:
-            | ResolveEngineCfgFn
-            | {
-                resolveEffectiveEngineConfig?: unknown;
-                default?: { resolveEffectiveEngineConfig?: unknown };
-              };
-        };
-        const candidates: unknown[] = [
-          m?.resolveEffectiveEngineConfig,
-          m?.default,
-          (m?.default as { resolveEffectiveEngineConfig?: unknown })
-            ?.resolveEffectiveEngineConfig,
-          (
-            m?.default as {
-              default?: { resolveEffectiveEngineConfig?: unknown };
-            }
-          )?.default,
-          (
-            m?.default as {
-              default?: { resolveEffectiveEngineConfig?: unknown };
-            }
-          )?.default?.resolveEffectiveEngineConfig,
-        ];
-        for (const c of candidates) {
-          if (typeof c === 'function') return c as ResolveEngineCfgFn;
-        }
-      } catch {
-        /* ignore and fall through */
-      }
-      return undefined;
+    const effMod = (await import('@/runner/config/effective')) as unknown as {
+      resolveEffectiveEngineConfig?: (
+        cwd: string,
+        scope?: string,
+      ) => Promise<ContextConfig>;
+      default?:
+        | ((cwd: string, scope?: string) => Promise<ContextConfig>)
+        | {
+            resolveEffectiveEngineConfig?: (
+              cwd: string,
+              scope?: string,
+            ) => Promise<ContextConfig>;
+            default?:
+              | ((cwd: string, scope?: string) => Promise<ContextConfig>)
+              | {
+                  resolveEffectiveEngineConfig?: (
+                    cwd: string,
+                    scope?: string,
+                  ) => Promise<ContextConfig>;
+                };
+          };
     };
-    const fn = pickEff(eff);
-    if (!fn) throw new Error('resolveEffectiveEngineConfig not found');
-    engine = await fn(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
+    const tryCall = async (fnMaybe: unknown): Promise<ContextConfig | null> => {
+      if (typeof fnMaybe !== 'function') return null;
+      try {
+        const out = await (
+          fnMaybe as (cwd: string, scope?: string) => Promise<ContextConfig>
+        )(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
+        if (
+          out &&
+          typeof out === 'object' &&
+          typeof (out as { stanPath?: unknown }).stanPath === 'string'
+        )
+          return out;
+      } catch {
+        // continue to next candidate
+      }
+      return null;
+    };
+    let picked: ContextConfig | null = null;
+    // Try common shapes in order
+    picked = await tryCall(effMod?.resolveEffectiveEngineConfig);
+    if (!picked)
+      picked = await tryCall(
+        (effMod?.default as { resolveEffectiveEngineConfig?: unknown })
+          ?.resolveEffectiveEngineConfig,
+      );
+    if (!picked)
+      picked = await tryCall(
+        (
+          effMod?.default as {
+            default?: { resolveEffectiveEngineConfig?: unknown };
+          }
+        )?.default?.resolveEffectiveEngineConfig,
+      );
+    if (!picked) picked = await tryCall(effMod?.default as unknown);
+    if (!picked)
+      picked = await tryCall(
+        (effMod?.default as { default?: unknown })?.default,
+      );
+    if (!picked) throw new Error('resolveEffectiveEngineConfig not found');
+    engine = picked;
   } catch {
     // Minimal, safe fallback: derive stanPath only. This preserves snap
     // behavior even when the effective-config module cannot be resolved

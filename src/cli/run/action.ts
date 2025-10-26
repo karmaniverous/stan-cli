@@ -7,8 +7,6 @@ import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
 import { runDefaults } from '@/cli/cli-utils';
-// SSR-safe import: resolve loadCliConfigSync at runtime to tolerate ESM/CJS/mock shapes
-import * as cliLoadMod from '@/cli/config/load';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
@@ -41,17 +39,47 @@ const resolveEffectiveEngineConfig: ResolveEffFn =
     'resolveEffectiveEngineConfig',
   );
 
-// SSR‑robust resolver for loadCliConfigSync (named or default)
-type CliLoadModule = typeof import('@/cli/config/load');
-type LoadCliConfigSyncFn = CliLoadModule['loadCliConfigSync'];
-const loadCliConfigSyncResolved: LoadCliConfigSyncFn =
-  resolveNamedOrDefaultFunction<LoadCliConfigSyncFn>(
-    cliLoadMod as unknown,
-    (m) => (m as CliLoadModule).loadCliConfigSync,
-    (m) =>
-      (m as { default?: Partial<CliLoadModule> }).default?.loadCliConfigSync,
-    'loadCliConfigSync',
-  );
+// Lazy SSR‑safe loader for cli config (named-or-default, resolved at action time)
+const loadCliConfigSyncLazy = async (
+  dir: string,
+): Promise<{
+  scripts?: Record<string, unknown>;
+  cliDefaults?: Record<string, unknown>;
+  patchOpenCommand?: string;
+  maxUndos?: number;
+  devMode?: boolean;
+}> => {
+  try {
+    const mod = (await import('@/cli/config/load')) as unknown as {
+      loadCliConfigSync?: (cwd: string) => unknown;
+      default?:
+        | { loadCliConfigSync?: (cwd: string) => unknown }
+        | ((cwd: string) => unknown);
+    };
+    const named = (mod as { loadCliConfigSync?: unknown }).loadCliConfigSync;
+    const viaDefaultObj = (mod as { default?: { loadCliConfigSync?: unknown } })
+      .default?.loadCliConfigSync;
+    const viaDefaultFn = (mod as { default?: unknown }).default;
+    const fn =
+      typeof named === 'function'
+        ? (named as (cwd: string) => unknown)
+        : typeof viaDefaultObj === 'function'
+          ? (viaDefaultObj as (cwd: string) => unknown)
+          : typeof viaDefaultFn === 'function'
+            ? (viaDefaultFn as (cwd: string) => unknown)
+            : null;
+    const out = fn ? (fn(dir) as Record<string, unknown>) : {};
+    return (out ?? {}) as {
+      scripts?: Record<string, unknown>;
+      cliDefaults?: Record<string, unknown>;
+      patchOpenCommand?: string;
+      maxUndos?: number;
+      devMode?: boolean;
+    };
+  } catch {
+    return {};
+  }
+};
 
 export const registerRunAction = (
   cmd: Command,
@@ -81,8 +109,8 @@ export const registerRunAction = (
       'run.action:engine-legacy',
     );
 
-    // CLI defaults and scripts for runner config/derivation
-    const cliCfg = loadCliConfigSyncResolved(runCwd);
+    // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
+    const cliCfg = await loadCliConfigSyncLazy(runCwd);
 
     // Loop header + reversal guard
     try {
@@ -171,7 +199,7 @@ export const registerRunAction = (
 
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
-      scripts: cliCfg.scripts,
+      scripts: (cliCfg.scripts ?? {}) as Record<string, string>,
       // Propagate selection context for the archive phase (legacy-friendly).
       includes: config.includes ?? [],
       excludes: [

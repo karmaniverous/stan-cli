@@ -134,3 +134,12 @@
 - Run CLI live defaults — SSR guard
   - src/cli/run/action.ts now resolves loadCliConfigSync via a named-or-default picker to avoid “not a function” under SSR.
   - Eliminates remaining flakiness in run live defaults tests without changing runtime behavior.
+
+- Run/action SSR race — lazy load cli config inside action
+  - Moved `loadCliConfigSync` resolution into the action handler (dynamic import + named‑or‑default pick) to prevent `resolveNamedOrDefaultFunction: loadCliConfigSync not found` under Vitest SSR/forks.
+  - Removed the top‑level constant that ran at module‑eval time and could race mocks.
+
+- Snap context resolver — robust default‑only path
+  - Hardened the default‑only resolver to try multiple shapes in order: named export, `default.resolveEffectiveEngineConfig`, nested `default.default.resolveEffectiveEngineConfig`, and function‑as‑default (at both `default` and `default.default`).
+  - Fixes the test that mocks a function‑as‑default, avoiding fallback to config stanPath.
+  - Behavior unchanged in normal runtime; improves stability in SSR/mocked environments.
