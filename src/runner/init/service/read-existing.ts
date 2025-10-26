@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 import YAML from 'yaml';
 
-/** Read the existing stan.config.* body preserving key order; return {} on failure. */
+/** Read the existing stan.config.* body preserving key order; return an empty object on failure. */
 export const readExistingConfig = async (
   existingPath: string | null | undefined,
 ): Promise<Record<string, unknown>> => {

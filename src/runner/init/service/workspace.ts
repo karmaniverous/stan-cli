@@ -12,7 +12,7 @@ export const ensureWorkspace = async (
   dryRun: boolean,
   targetPath: string,
 ): Promise<void> => {
-  if (!dryRun) await ensureOutputDir(cwd, '.stan', true);
+  if (!dryRun) await ensureOutputDir(cwd, stanPath, true);
   if (!dryRun) {
     await ensureStanGitignore(cwd, stanPath);
     await ensureDocs(cwd, stanPath);

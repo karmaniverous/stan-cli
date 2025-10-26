@@ -14,7 +14,10 @@ import type { RunnerConfig } from '@/runner/run/types';
 import type { ExecutionMode, RunBehavior } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
 
-import { getRunArchiveStage } from './archive-stage-resolver';
+import {
+  getRunArchiveStage,
+  type RunArchiveStageFn,
+} from './archive-stage-resolver';
 import { CancelController } from './cancel-controller';
 import { beginEpoch, isActiveEpoch } from './epoch';
 import { runScriptsPhase } from './scripts-phase';
@@ -298,8 +301,8 @@ export const runSessionOnce = async (args: {
 
   // ARCHIVE PHASE
   if (behavior.archive) {
-    const runArchive = getRunArchiveStage();
-    const a = await runArchive({
+    const runArchive: RunArchiveStageFn = getRunArchiveStage();
+    const a: { created: string[]; cancelled: boolean } = await runArchive({
       cwd,
       config,
       behavior,
