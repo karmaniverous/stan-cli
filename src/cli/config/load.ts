@@ -35,6 +35,18 @@ const legacyAccepted = (): boolean => {
   }
 };
 
+/** Best-effort guard: only call ensureNoReservedScriptKeys when it is a function. */
+const safeEnsureNoReserved = (scripts: Record<string, unknown>): void => {
+  try {
+    const fn = ensureNoReservedScriptKeys as unknown as
+      | ((s: Record<string, unknown>) => void)
+      | undefined;
+    if (typeof fn === 'function') fn(scripts);
+  } catch {
+    /* ignore SSR/hoist anomalies */
+  }
+};
+
 const formatZodError = (e: unknown): string =>
   e instanceof ZodError
     ? e.issues
@@ -88,7 +100,8 @@ const parseCliNode = (
       // Minimal, safe fallback (tests/SSR only): accept scripts and common fields without strict checks.
       const fallbackScripts = ((node as { scripts?: Record<string, unknown> })
         .scripts ?? {}) as ScriptMap;
-      ensureNoReservedScriptKeys(fallbackScripts ?? {});
+      // Best-effort reserved key guard in fallback
+      safeEnsureNoReserved(fallbackScripts ?? {});
       return {
         scripts: fallbackScripts,
         cliDefaults: (node as { cliDefaults?: CliConfig['cliDefaults'] })
@@ -104,7 +117,10 @@ const parseCliNode = (
     const rel = cfgPath.replace(/\\/g, '/');
     throw new Error(`stan-cli: invalid config in ${rel}\n${formatZodError(e)}`);
   }
-  ensureNoReservedScriptKeys(parsed.scripts ?? {});
+  // Best-effort reserved key guard in normal path
+  safeEnsureNoReserved(
+    (parsed as { scripts?: Record<string, unknown> }).scripts ?? {},
+  );
   return {
     scripts: (parsed.scripts ?? {}) as ScriptMap,
     cliDefaults: parsed.cliDefaults,

@@ -140,6 +140,8 @@ export const registerRunAction = (
         effective: {},
         autosuspended: [],
         anchorsKeptCounts: {},
+        // diagnostics fallback (no overlay computed): nothing kept by default
+        overlapKeptCounts: {},
       };
     }
 

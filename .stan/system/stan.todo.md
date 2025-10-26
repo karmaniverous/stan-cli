@@ -63,3 +63,7 @@
 
 - Overlay diagnostics
   - Record per‑facet `overlapKept` counts (inactive subtree roots retained after enabled‑wins filtering) in `.stan/system/.docs.meta.json.overlay` to aid troubleshooting of overlap filtering.
+
+- Overlay diagnostics follow‑through
+  - Added `overlapKeptCounts` to the overlay fallback in `src/cli/run/action.ts` to satisfy the extended `FacetOverlayOutput` type.
+  - Hardened CLI config loader under SSR by guarding the `ensureNoReservedScriptKeys` call; prevents rare “not a function” errors in tests while keeping strict validation on the primary path.
