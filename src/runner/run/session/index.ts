@@ -4,9 +4,10 @@
  */
 import { resolve as resolvePath } from 'node:path';
 
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { yieldToEventLoop } from '@/runner/run/exec/util';
 import { liveTrace, ProcessSupervisor } from '@/runner/run/live';
-// SSR/CJS-robust resolver: prefer named export; fall back to default.register
+// Resolver for runArchiveStage with named-or-default fallback
 import * as archiveStageMod from '@/runner/run/session/archive-stage';
 import { ensureOrderFile } from '@/runner/run/session/order-file';
 import {
@@ -23,24 +24,16 @@ import { CancelController } from './cancel-controller';
 import { runScriptsPhase } from './scripts-phase';
 import type { SessionOutcome } from './types';
 
-// Resolve runArchiveStage from named or default export for SSR robustness.
-const resolveRunArchiveStage = ():
-  | (typeof import('@/runner/run/session/archive-stage'))['runArchiveStage']
-  | undefined => {
-  const mod = archiveStageMod as unknown as {
-    runArchiveStage?: unknown;
-    default?: { runArchiveStage?: unknown };
-  };
-  const fn =
-    typeof mod.runArchiveStage === 'function'
-      ? mod.runArchiveStage
-      : typeof mod.default?.runArchiveStage === 'function'
-        ? mod.default.runArchiveStage
-        : undefined;
-  return fn as
-    | (typeof import('@/runner/run/session/archive-stage'))['runArchiveStage']
-    | undefined;
-};
+type ArchiveStageModule = typeof import('@/runner/run/session/archive-stage');
+type RunArchiveStageFn = ArchiveStageModule['runArchiveStage'];
+const runArchiveStageResolved: RunArchiveStageFn =
+  resolveNamedOrDefaultFunction<RunArchiveStageFn>(
+    archiveStageMod as unknown,
+    (m) => (m as ArchiveStageModule).runArchiveStage,
+    (m) =>
+      (m as { default?: Partial<ArchiveStageModule> }).default?.runArchiveStage,
+    'runArchiveStage',
+  );
 
 // Active session epoch (symbol). Callbacks from previous epochs are ignored.
 let ACTIVE_EPOCH: symbol | null = null;
@@ -298,12 +291,7 @@ export const runSessionOnce = async (args: {
   }
 
   // Secondary late-cancel settle: absorb very-late SIGINT/keypress before archiving.
-  // Some environments may deliver SIGINT just after the first yield above; add a
-  // short delay + another yield to close the remaining sliver before archives.
   try {
-    // Slightly longer on Windows to account for process signal delivery variance.
-    // On POSIX CI, add a small extra cushion to absorb very-late delivery without
-    // impacting local runs.
     const settleMs =
       process.platform === 'win32' ? 25 : process.env.CI ? 20 : 10;
     await new Promise((r) => setTimeout(r, settleMs));
@@ -316,7 +304,6 @@ export const runSessionOnce = async (args: {
     /* ignore */
   }
   if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
-    // Minimal trace to aid diagnosing rare late-cancel hits
     try {
       liveTrace.session.info(
         'late-cancel: cancelled between scripts and archive (secondary guard)',
@@ -342,7 +329,7 @@ export const runSessionOnce = async (args: {
 
   // ARCHIVE PHASE
   if (behavior.archive) {
-    const runArchive = resolveRunArchiveStage();
+    const runArchive = runArchiveStageResolved;
     const a = runArchive
       ? await runArchive({
           cwd,

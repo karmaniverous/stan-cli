@@ -13,6 +13,7 @@ import {
 import YAML from 'yaml';
 
 import { loadCliConfig } from '@/cli/config/load';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 
 import { ensureDocs } from '../docs';
 import { ensureStanGitignore } from '../gitignore';
@@ -20,23 +21,19 @@ import { promptForConfig, readPackageJsonScripts } from '../prompts';
 import { ensureKey, ensureNsNode, hasOwn, isObj, setKey } from './helpers';
 import { maybeMigrateLegacyToNamespaced } from './migrate';
 import { resolveIncludesExcludes } from './selection';
-// SSR/ESM-robust resolver for resolveEffectiveStanPath (named-or-default)
 import * as stanpathMod from './stanpath';
-const resolveEffectiveStanPath: (typeof import('./stanpath'))['resolveEffectiveStanPath'] =
-  ((): any => {
-    try {
-      const m = stanpathMod as unknown as {
-        resolveEffectiveStanPath?: unknown;
-        default?: { resolveEffectiveStanPath?: unknown };
-      };
-      return typeof m.resolveEffectiveStanPath === 'function'
-        ? m.resolveEffectiveStanPath
-        : (m.default as { resolveEffectiveStanPath?: unknown } | undefined)
-            ?.resolveEffectiveStanPath;
-    } catch {
-      return undefined as unknown;
-    }
-  })() as (typeof import('./stanpath'))['resolveEffectiveStanPath'];
+
+type StanPathModule = typeof import('./stanpath');
+type ResolveStanPathFn = StanPathModule['resolveEffectiveStanPath'];
+const resolveEffectiveStanPath: ResolveStanPathFn =
+  resolveNamedOrDefaultFunction<ResolveStanPathFn>(
+    stanpathMod as unknown,
+    (m) => (m as StanPathModule).resolveEffectiveStanPath,
+    (m) =>
+      (m as { default?: Partial<StanPathModule> }).default
+        ?.resolveEffectiveStanPath,
+    'resolveEffectiveStanPath',
+  );
 
 /**
  * Initialize or update STAN configuration and workspace assets.

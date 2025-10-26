@@ -59,10 +59,10 @@ const legacyAccepted = (): boolean => {
  * @param cwd - Repo root (or descendant). The nearest config is used.
  * @param debugScope - Label for debugFallback when synthesizing from legacy root keys.
  */
-export const resolveEffectiveEngineConfig = async (
+export async function resolveEffectiveEngineConfig(
   cwd: string,
-  debugScope = DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY,
-): Promise<ContextConfig> => {
+  debugScope: string = DBG_SCOPE_EFFECTIVE_ENGINE_LEGACY,
+): Promise<ContextConfig> {
   // Happy path — namespaced engine loader
   try {
     return await loadConfig(cwd);
@@ -151,4 +151,4 @@ export const resolveEffectiveEngineConfig = async (
     /* ignore */
   }
   return { stanPath: stanPathFallback } as ContextConfig;
-};
+}

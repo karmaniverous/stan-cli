@@ -6,25 +6,21 @@ import path from 'node:path';
 import { findConfigPathSync } from '@karmaniverous/stan-core';
 
 import { loadCliConfig } from '@/cli/config/load';
-// SSR/ESM-robust resolver for resolveEffectiveEngineConfig (named-or-default)
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import * as effMod from '@/runner/config/effective';
 import { DBG_SCOPE_SNAP_CONTEXT_LEGACY } from '@/runner/util/debug-scopes';
 
-const resolveEffectiveEngineConfig: (typeof import('@/runner/config/effective'))['resolveEffectiveEngineConfig'] =
-  ((): any => {
-    try {
-      const m = effMod as unknown as {
-        resolveEffectiveEngineConfig?: unknown;
-        default?: { resolveEffectiveEngineConfig?: unknown };
-      };
-      return typeof m.resolveEffectiveEngineConfig === 'function'
-        ? m.resolveEffectiveEngineConfig
-        : (m.default as { resolveEffectiveEngineConfig?: unknown } | undefined)
-            ?.resolveEffectiveEngineConfig;
-    } catch {
-      return undefined as unknown;
-    }
-  })() as (typeof import('@/runner/config/effective'))['resolveEffectiveEngineConfig'];
+type EffModule = typeof import('@/runner/config/effective');
+type ResolveEngineCfgFn = EffModule['resolveEffectiveEngineConfig'];
+const resolveEffectiveEngineConfig: ResolveEngineCfgFn =
+  resolveNamedOrDefaultFunction<ResolveEngineCfgFn>(
+    effMod as unknown,
+    (m) => (m as EffModule).resolveEffectiveEngineConfig,
+    (m) =>
+      (m as { default?: Partial<EffModule> }).default
+        ?.resolveEffectiveEngineConfig,
+    'resolveEffectiveEngineConfig',
+  );
 
 /**
  * Resolve the effective execution context for snapshot operations.

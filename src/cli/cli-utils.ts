@@ -88,10 +88,14 @@ export const installExitOverride = (cmd: Command): void => {
   });
 };
 /** Apply both safety adapters to a command. */
-export const applyCliSafety = (cmd: Command): void => {
-  installExitOverride(cmd);
-  patchParseMethods(cmd);
-};
+export function applyCliSafety(cmd: Command): void {
+  try {
+    installExitOverride(cmd);
+    patchParseMethods(cmd);
+  } catch {
+    /* best-effort */
+  }
+}
 
 /** Tag an Option description with (DEFAULT) when active. */
 export const tagDefault = (opt: Option, on: boolean): void => {

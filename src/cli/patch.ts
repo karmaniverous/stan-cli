@@ -9,25 +9,22 @@ import { Command, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runPatch } from '@/runner/patch/service';
 
-// Robustly resolve applyCliSafety from named or default export to tolerate SSR/CJS interop.
+// Robustly resolve applyCliSafety from named or default exports to avoid SSR/evaluation issues.
 import * as cliUtils from './cli-utils';
-const resolveApplyCliSafety = (): ((c: Command) => void) | undefined => {
-  const mod = cliUtils as unknown as {
-    applyCliSafety?: unknown;
-    default?: { applyCliSafety?: unknown };
-  };
-  const fn =
-    typeof mod.applyCliSafety === 'function'
-      ? (mod.applyCliSafety as (c: Command) => void)
-      : typeof mod.default?.applyCliSafety === 'function'
-        ? (mod.default.applyCliSafety as (c: Command) => void)
-        : undefined;
-  return fn;
-};
+type CliUtilsModule = typeof import('./cli-utils');
+type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
+const applyCliSafetyResolved: ApplyCliSafetyFn =
+  resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+    cliUtils as unknown,
+    (m) => (m as CliUtilsModule).applyCliSafety,
+    (m) => (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+    'applyCliSafety',
+  );
 
 /**
  * Register the `patch` subcommand on the provided root CLI. *
@@ -35,7 +32,7 @@ const resolveApplyCliSafety = (): ((c: Command) => void) | undefined => {
  */
 export const registerPatch = (cli: Command): Command => {
   // Best‑effort: do not throw if resolution fails in a mocked/SSR environment.
-  resolveApplyCliSafety()?.(cli);
+  applyCliSafetyResolved(cli);
 
   const sub = cli
     .command('patch')
@@ -71,7 +68,7 @@ export const registerPatch = (cli: Command): Command => {
       ),
     )
     .option('-c, --check', 'Validate patch without applying any changes');
-  resolveApplyCliSafety()?.(sub);
+  applyCliSafetyResolved(sub);
 
   sub.action(
     async (

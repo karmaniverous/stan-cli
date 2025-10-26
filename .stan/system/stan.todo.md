@@ -71,3 +71,9 @@
 - Scripts warnPattern flags override
   - Added optional scripts.warnPatternFlags (sibling to warnPattern) to override default regex flags behavior.
   - Updated schema validation, runner compilation (compileWarnPatterns), and tests to ensure flags disable the implicit /i fallback when provided.
+
+- Tests/SSR — stabilize named exports under Vitest SSR
+  - Converted arrow-function named exports to hoisted function declarations to avoid rare “not a function” evaluation under SSR/mock-heavy paths:
+    - src/cli/cli-utils.ts: export function applyCliSafety(...)
+    - src/runner/config/effective.ts: export async function resolveEffectiveEngineConfig(...)
+  - No behavior change at runtime; resolves intermittent “applyCliSafety is not a function” and “resolveEffectiveEngineConfig is not a function” in CLI suites.
