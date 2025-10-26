@@ -8,7 +8,6 @@ import path from 'node:path';
 // via the returned path. Core-level tests cover filter semantics in detail.)
 import {
   createArchiveDiff,
-  loadConfig,
   writeArchiveSnapshot,
 } from '@karmaniverous/stan-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -78,6 +77,7 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
     await handleSnap();
     // Deterministically write/refresh the snapshot to eliminate race conditions (Windows/CI)
     try {
+      const { loadConfig } = await import('@karmaniverous/stan-core');
       const cfgNow = await loadConfig(dir);
       await writeArchiveSnapshot({
         cwd: dir,
@@ -105,6 +105,7 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
 
     // Now compute diff — with no content changes, the diff archive should NOT include files
     // under services/**; only the patch dir and sentinel should be packed.
+    const { loadConfig } = await import('@karmaniverous/stan-core');
     const cfg = await loadConfig(dir);
     const { diffPath } = await createArchiveDiff({
       cwd: dir,

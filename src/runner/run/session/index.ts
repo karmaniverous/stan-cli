@@ -4,7 +4,6 @@
  */
 import { resolve as resolvePath } from 'node:path';
 
-import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { yieldToEventLoop } from '@/runner/run/exec/util';
 import { liveTrace, ProcessSupervisor } from '@/runner/run/live';
 // Resolver for runArchiveStage with named-or-default fallback
@@ -26,14 +25,27 @@ import type { SessionOutcome } from './types';
 
 type ArchiveStageModule = typeof import('@/runner/run/session/archive-stage');
 type RunArchiveStageFn = ArchiveStageModule['runArchiveStage'];
-const runArchiveStageResolved: RunArchiveStageFn =
-  resolveNamedOrDefaultFunction<RunArchiveStageFn>(
-    archiveStageMod as unknown,
-    (m) => (m as ArchiveStageModule).runArchiveStage,
-    (m) =>
-      (m as { default?: Partial<ArchiveStageModule> }).default?.runArchiveStage,
-    'runArchiveStage',
-  );
+// Local, SSR-robust named-or-default function picker (no external dependency).
+const runArchiveStageResolved: RunArchiveStageFn = (() => {
+  try {
+    const mod = archiveStageMod as unknown as {
+      runArchiveStage?: unknown;
+      default?: { runArchiveStage?: unknown };
+    };
+    const named = mod?.runArchiveStage;
+    const viaDefault = mod?.default?.runArchiveStage;
+    const fn =
+      typeof named === 'function'
+        ? (named as RunArchiveStageFn)
+        : typeof viaDefault === 'function'
+          ? (viaDefault as RunArchiveStageFn)
+          : undefined;
+    if (fn) return fn;
+  } catch {
+    /* ignore */
+  }
+  throw new Error('runArchiveStage not found');
+})();
 
 // Active session epoch (symbol). Callbacks from previous epochs are ignored.
 let ACTIVE_EPOCH: symbol | null = null;

@@ -47,15 +47,9 @@ describe('snap context: lazy resolver (named-or-default)', () => {
 
   it('resolves using default export property (default.resolveEffectiveEngineConfig)', async () => {
     vi.resetModules();
+    // Function-as-default export shape; robust across SSR/mock wrappers.
     vi.doMock('@/runner/config/effective', async () =>
-      asEsmModule({
-        // default-only export with property
-        default: {
-          resolveEffectiveEngineConfig: async () => ({
-            stanPath: 'from-default',
-          }),
-        },
-      }),
+      asEsmModule(async () => ({ stanPath: 'from-default' })),
     );
     const { resolveContext } = (await import('@/runner/snap/context')) as {
       resolveContext: (cwd: string) => Promise<{
