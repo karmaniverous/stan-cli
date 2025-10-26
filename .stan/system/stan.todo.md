@@ -57,3 +57,14 @@
   - Follow-up: re-run the suite to confirm the transient SyntaxError in `run.combine.test.ts` is eliminated along with the import-shape issues.
 
 - Docs/help — unchanged in this patch (pure stability guards). Keep overlay docs and Option 1 test guidance aligned in future doc pass.
+
+- Facet overlay — enabled-wins + scoped anchors
+  - Implemented subtree tie-breaker (“enabled facet wins”): inactive exclude roots that equal/contain/are contained by any active root are dropped from excludesOverlay.
+  - Implemented leaf-glob re-inclusion: collected tails from inactive leaf-glob excludes (e.g., “**/*.test.ts”) and added scoped anchors “<activeRoot>/**/<tail>” for each active root.
+  - Preserved ramp-up safety for subtree roots only; leaf-globs do not trigger auto-suspend on their own.
+  - Reserved denials remain enforced by core (anchors cannot override).
+
+- Facet overlay — tests added
+  - equal-root overlap: inactive “docs” dropped when “docs” is active.
+  - parent/child overlap: inactive “packages/**” dropped when “packages/app/**” is active.
+  - leaf-glob scoping: added “src/**/*.test.ts” anchor when leaf-glob is inactive and “src/**” is active.

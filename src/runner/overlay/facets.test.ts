@@ -135,4 +135,79 @@ describe('computeFacetOverlay', () => {
     expect(out.effective).toMatchObject({ a: true, b: true });
     expect(out.excludesOverlay).toEqual([]); // nothing inactive
   });
+
+  it('enabled-wins: drop inactive root equal to an active root', async () => {
+    const meta: FacetMeta = {
+      a: { exclude: ['docs/**'], include: ['docs/KEEP.md'] },
+      b: { exclude: ['docs/**'], include: ['docs/KEEP.md'] },
+    };
+    const state: FacetState = { a: true, b: false };
+    await writeJson(sys('facet.meta.json'), meta);
+    await writeJson(sys('facet.state.json'), state);
+    await mkdir(path.join(cwd, 'docs'), { recursive: true });
+    await writeFile(path.join(cwd, 'docs', 'KEEP.md'), 'x', 'utf8');
+    const out = await computeFacetOverlay({
+      cwd,
+      stanPath,
+      enabled: true,
+    });
+    // Inactive 'docs' root from b is dropped because a has same active root.
+    expect(out.excludesOverlay).toEqual([]);
+    // Anchors union remains
+    expect(out.anchorsOverlay.sort()).toEqual(['docs/KEEP.md'].sort());
+  });
+
+  it('enabled-wins: drop inactive parent when active child root is present', async () => {
+    const meta: FacetMeta = {
+      a: { exclude: ['packages/app/**'], include: ['packages/app/ANCHOR.md'] },
+      b: { exclude: ['packages/**'], include: ['packages/KEEP.md'] },
+    };
+    const state: FacetState = { a: true, b: false };
+    await writeJson(sys('facet.meta.json'), meta);
+    await writeJson(sys('facet.state.json'), state);
+    // materialize anchors so ramp-up doesn’t autosuspend b
+    await mkdir(path.join(cwd, 'packages', 'app'), { recursive: true });
+    await writeFile(
+      path.join(cwd, 'packages', 'app', 'ANCHOR.md'),
+      'x',
+      'utf8',
+    );
+    await writeFile(path.join(cwd, 'packages', 'KEEP.md'), 'x', 'utf8');
+    const out = await computeFacetOverlay({
+      cwd,
+      stanPath,
+      enabled: true,
+    });
+    // Inactive 'packages' root from b is a parent of active 'packages/app' -> dropped
+    expect(out.excludesOverlay).toEqual([]);
+    // Anchors union includes both
+    expect(out.anchorsOverlay.sort()).toEqual(
+      ['packages/app/ANCHOR.md', 'packages/KEEP.md'].sort(),
+    );
+  });
+
+  it('leaf-glob re-inclusion: adds scoped anchors under active roots', async () => {
+    // Active facet defines subtree root 'src/**'; inactive facet denies leaf-glob '**/*.test.ts'
+    const meta: FacetMeta = {
+      core: { exclude: ['src/**'], include: ['src/README.md'] },
+      tests: { exclude: ['**/*.test.ts'], include: ['src/ANCHOR.md'] },
+    };
+    const state: FacetState = { core: true, tests: false };
+    await writeJson(sys('facet.meta.json'), meta);
+    await writeJson(sys('facet.state.json'), state);
+    await mkdir(path.join(cwd, 'src'), { recursive: true });
+    await writeFile(path.join(cwd, 'src', 'README.md'), 'x', 'utf8');
+    await writeFile(path.join(cwd, 'src', 'ANCHOR.md'), 'x', 'utf8');
+
+    const out = await computeFacetOverlay({
+      cwd,
+      stanPath,
+      enabled: true,
+    });
+    // Expect a scoped anchor for '*.test.ts' under active root 'src'
+    const hasScoped = out.anchorsOverlay.some((a) => a === 'src/**/*.test.ts');
+    expect(hasScoped).toBe(true);
+    // Subtree excludes remain empty (no inactive subtree roots)
+    expect(out.excludesOverlay).toEqual([]);
+  });
 });

@@ -59,6 +59,23 @@ const stripGlobTail = (s: string): string => {
   if (out.endsWith('/*')) out = out.slice(0, -2);
   return posix(out).replace(/\/+$/, ''); // drop trailing slash
 };
+/** Return true if a pattern looks like a subtree pattern (ends with '/**' or '/*'). */
+const isSubtreePattern = (s: string): boolean => {
+  const p = posix(s.trim());
+  return p.endsWith('/**') || p.endsWith('/*');
+};
+/** Extract the "tail" (after last '/') from a glob (e.g., '**\/*.test.ts' -\> '*.test.ts'). */
+const globTail = (s: string): string => {
+  const p = posix(s.trim());
+  const idx = p.lastIndexOf('/');
+  return idx >= 0 ? p.slice(idx + 1) : p;
+};
+/** Normalize subtree roots from a list of exclude patterns. */
+const collectSubtreeRoots = (patterns: string[] | undefined): string[] =>
+  (patterns ?? [])
+    .filter((p) => isSubtreePattern(p))
+    .map(stripGlobTail)
+    .filter((r) => r.length > 0);
 
 const isUnder = (childRel: string, root: string): boolean => {
   const c = posix(childRel);
@@ -121,6 +138,16 @@ export const computeFacetOverlay = async (
   const autosuspended: string[] = [];
   const anchorsKeptCounts: Record<string, number> = {};
 
+  // Precompute active subtree roots across all facets (for tie-breakers and scoped anchors).
+  const activeRoots = new Set<string>();
+  for (const name of facetNames) {
+    const isActive = effective[name] !== false;
+    const exRoots = collectSubtreeRoots(meta[name]?.exclude);
+    if (isActive) for (const r of exRoots) activeRoots.add(posix(r));
+  }
+  // Collect leaf-glob tails from inactive facets (for scoped anchors under active roots).
+  const inactiveLeafTails = new Set<string>();
+
   // Always include all anchors (keep docs breadcrumbs visible even when overlay off)
   for (const name of facetNames) {
     const inc = (meta[name]?.include ?? []).map(posix);
@@ -152,9 +179,12 @@ export const computeFacetOverlay = async (
   // Ramp-up safety + excludes aggregation
   for (const name of facetNames) {
     const isActive = effective[name] !== false;
-    const exRoots = (meta[name]?.exclude ?? [])
+    const excludes = (meta[name]?.exclude ?? []).map(posix);
+    const exRoots = excludes
+      .filter(isSubtreePattern)
       .map(stripGlobTail)
       .filter(Boolean);
+    const leafGlobs = excludes.filter((p) => !isSubtreePattern(p));
     const inc = (meta[name]?.include ?? []).map(posix);
 
     // Count anchors present on disk (for metadata)
@@ -166,23 +196,56 @@ export const computeFacetOverlay = async (
       continue; // no drop for this facet
     }
 
-    // Check if any include anchor exists under an excluded root
+    // Check if any include anchor exists under an excluded subtree root (ramp-up guard).
+    // Only subtree roots participate in ramp-up safety; leaf globs are ignored here.
+    const hasRoots = exRoots.length > 0;
     const hasAnchorUnderRoot =
+      hasRoots &&
       inc.length > 0 &&
       exRoots.some((root) =>
         inc.some((a) => isUnder(a, root) && existsSync(toAbs(cwd, a))),
       );
 
-    if (!hasAnchorUnderRoot) {
+    if (hasRoots && !hasAnchorUnderRoot) {
       // Auto-suspend this facet's drop for this run
       effective[name] = true;
       autosuspended.push(name);
       continue;
     }
 
-    // Aggregate excludes for truly inactive facets with anchors present
+    // Aggregate subtree excludes for truly inactive facets with anchors present under roots (if any).
     for (const root of exRoots) {
       if (root) excludesOverlayArr.push(root.endsWith('/') ? root : root);
+    }
+    // Collect leaf-glob tails to re-include within each active root.
+    for (const g of leafGlobs) {
+      const tail = globTail(g);
+      if (tail) inactiveLeafTails.add(tail);
+    }
+  }
+
+  // Subtree tie-breaker: enabled facet wins (drop inactive roots that equal/overlap with active roots).
+  if (excludesOverlayArr.length > 0 && activeRoots.size > 0) {
+    const act = Array.from(activeRoots);
+    const kept: string[] = [];
+    for (const r of excludesOverlayArr) {
+      const drop = act.some(
+        (ar) => ar === r || isUnder(r, ar) || isUnder(ar, r),
+      );
+      if (!drop) kept.push(r);
+    }
+    // Replace with filtered list
+    excludesOverlayArr.length = 0;
+    excludesOverlayArr.push(...kept);
+  }
+
+  // Leaf-glob scoped re-inclusion: add anchors "<activeRoot>/**/<tail>" for every collected tail.
+  if (inactiveLeafTails.size > 0 && activeRoots.size > 0) {
+    for (const ar of activeRoots) {
+      for (const tail of inactiveLeafTails) {
+        const scoped = posix(`${ar}/**/${tail}`);
+        anchorsOverlaySet.add(scoped);
+      }
     }
   }
 
