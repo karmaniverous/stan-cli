@@ -125,3 +125,8 @@
   - init/service: moved performInitService out of index.ts into service.main.ts; factored readExisting/deriveUi/interactive-apply/write-config/workspace/snapshot modules for clarity and testability. index.ts is now a thin barrel.
   - Kept public barrels stable to avoid deep-path drift in callers and tests.
   - No behavior changes; code split only. Each new module is well under the 300 LOC threshold.
+
+- Snap resolver test — default-only mock shape stabilization
+  - Updated src/runner/snap/context.resolve.test.ts to mock a function-as-default under nested default.default.
+  - Aligns with the resolver’s robust picker (named, default object, nested default.default, and function-as-default).
+  - Removes prior TS friction and ensures the “default-only” path remains green across SSR.
