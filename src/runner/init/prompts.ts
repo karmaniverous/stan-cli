@@ -1,4 +1,4 @@
-/* src/stan/init/prompts.ts */
+/* src/runner/init/prompts.ts */
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -10,9 +10,9 @@ const parseCsv = (v: string): string[] =>
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 
-export const readPackageJsonScripts = async (
+export async function readPackageJsonScripts(
   cwd: string,
-): Promise<Record<string, string>> => {
+): Promise<Record<string, string>> {
   try {
     const raw = await readFile(path.join(cwd, 'package.json'), 'utf8');
     const pkg = JSON.parse(raw) as { scripts?: Record<string, string> };
@@ -20,7 +20,7 @@ export const readPackageJsonScripts = async (
   } catch {
     return {};
   }
-};
+}
 
 type Picked = {
   stanPath: string;
@@ -30,7 +30,7 @@ type Picked = {
 };
 
 /** Ask user for config values; preserve script set optionally. */
-export const promptForConfig = async (
+export async function promptForConfig(
   cwd: string,
   pkgScripts: Record<string, string>,
   defaults?: Partial<{
@@ -40,7 +40,7 @@ export const promptForConfig = async (
     scripts: ScriptMap;
   }>,
   preserveScriptsFromDefaults?: boolean,
-): Promise<Picked> => {
+): Promise<Picked> {
   const { default: inquirer } = (await import('inquirer')) as {
     default: { prompt: (qs: unknown[]) => Promise<unknown> };
   };
@@ -137,4 +137,4 @@ export const promptForConfig = async (
     excludes: excludesCsv ? parseCsv(excludesCsv) : [],
     scripts,
   };
-};
+}

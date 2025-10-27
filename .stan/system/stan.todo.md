@@ -327,13 +327,16 @@ Verification:
   - snap CLI: load handlers from concrete modules (snap-run/history) with named-or-default resolution, avoiding sporadic SSR barrel-import parse errors (“missing ) after argument list”) in snap.stash.success test.
 
 - Help defaults — SSR fallback for runDefaults resolution
-  - Wrapped resolution of `runDefaults` in `src/cli/run/options.ts` with try/catch and fell back to
-    `RUN_BASE_DEFAULTS` plus `prompt: 'auto'` and `facets: false` when resolution is unavailable under
-    Vitest SSR/mocked shapes.
-  - Resolved `tagDefault` defensively and guarded calls with optional chaining to avoid import-shape
-    races during help/default-tag rendering.
-  - Fixes the intermittent failure in `src/cli/index.help.test.ts` (“runDefaults not found”) observed
-    on the third run; keeps help defaults deterministic across environments.
+  - Wrapped resolution of `runDefaults` in `src/cli/run/options.ts` with try/catch and fell back to `RUN_BASE_DEFAULTS` plus `prompt: 'auto'` and `facets: false` when resolution is unavailable under Vitest SSR/mocked shapes.
+  - Resolved `tagDefault` defensively and guarded calls with optional chaining to avoid import-shape races during help/default-tag rendering.
+  - Fixes the intermittent failure in `src/cli/index.help.test.ts` (“runDefaults not found”) observed on the third run; keeps help defaults deterministic across environments.
 
-- Amendment: include `plan: true` in the SSR-safe fallback initializer for `eff` in
-  `src/cli/run/options.ts` and remove the follow-up `eff.plan` assignment to satisfy TS/docs/lint.
+- Amendment: include `plan: true` in the SSR-safe fallback initializer for `eff` in `src/cli/run/options.ts` and remove the follow-up `eff.plan` assignment to satisfy TS/docs/lint.
+
+- Init prompts — hoist exports to declarations (Vitest SSR stability)
+  - Problem: src/runner/init/prompts.test.ts reported “promptForConfig is not a function” under Vitest SSR/hoist order when the helper was exported as a const async. This mirrors earlier SSR flakes fixed by hoisting.
+  - Change: convert readPackageJsonScripts and promptForConfig to exported async function declarations to ensure hoisting and stable named exports in tests.
+
+- Snap selection-sync test — robust loadConfig resolver (SSR stability)
+  - Problem: Vitest SSR reported “loadConfig is not a function” when destructuring from a dynamic import in src/runner/snap/selection-sync.test.ts.
+  - Change: resolve loadConfig via named-or-default (check mod.loadConfig then mod.default.loadConfig) and provide a minimal fallback. Stabilizes the test across SSR/mocks.

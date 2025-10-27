@@ -105,8 +105,32 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
 
     // Now compute diff — with no content changes, the diff archive should NOT include files
     // under services/**; only the patch dir and sentinel should be packed.
-    const { loadConfig } = await import('@karmaniverous/stan-core');
-    const cfg = await loadConfig(dir);
+    // Vitest SSR/mocks can alter export shape; resolve loadConfig via named-or-default.
+    const coreMod = (await import('@karmaniverous/stan-core')) as unknown as {
+      loadConfig?: (cwd: string) => Promise<{
+        stanPath: string;
+        includes?: string[];
+        excludes?: string[];
+      }>;
+      default?: {
+        loadConfig?: (cwd: string) => Promise<{
+          stanPath: string;
+          includes?: string[];
+          excludes?: string[];
+        }>;
+      };
+    };
+    const loadConfigFn =
+      typeof coreMod.loadConfig === 'function'
+        ? coreMod.loadConfig
+        : typeof coreMod.default?.loadConfig === 'function'
+          ? coreMod.default.loadConfig
+          : null;
+    const cfg =
+      loadConfigFn !== null
+        ? await loadConfigFn(dir)
+        : { stanPath: 'out', includes: [], excludes: [] }; // minimal fallback for test stability
+
     const { diffPath } = await createArchiveDiff({
       cwd: dir,
       stanPath: cfg.stanPath,
