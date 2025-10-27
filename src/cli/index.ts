@@ -13,7 +13,18 @@ import { renderAvailableScriptsHelp } from '@/runner/help';
 import { printVersionInfo } from '@/runner/version';
 
 import * as cliUtils from './cli-utils';
-import { performInit, registerInit } from './init';
+import { performInit } from './init';
+// SSR‑robust resolver for registerInit (named or default) to prevent timing issues in tests
+import * as initMod from './init';
+type InitModule = typeof import('./init');
+type RegisterInitFn = InitModule['registerInit'];
+const registerInitResolved: RegisterInitFn =
+  resolveNamedOrDefaultFunction<RegisterInitFn>(
+    initMod as unknown,
+    (m) => (m as InitModule).registerInit,
+    (m) => (m as { default?: Partial<InitModule> }).default?.registerInit,
+    'registerInit',
+  );
 // Robustly resolve registerPatch (named or default export) to tolerate SSR/ESM interop.
 import * as patchMod from './patch';
 import { registerRun } from './runner';
@@ -173,7 +184,7 @@ export const makeCli = (): Command => {
   });
   // Subcommands
   registerRun(cli);
-  registerInit(cli);
+  registerInitResolved(cli);
   registerSnap(cli);
   try {
     registerPatchResolved(cli);

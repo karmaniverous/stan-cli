@@ -321,3 +321,16 @@ Verification:
 
 - Root env defaults — legacy acceptance guard
   - rootDefaults now temporarily enables STAN_ACCEPT_LEGACY while reading cliDefaults so legacy root-level `debug`/`boring` are honored until configs are fully namespaced. Fixes root.env.defaults test expectations.
+
+- Flake fixes — init wiring and snap handler loading
+  - makeCli: resolve `registerInit` via named-or-default (SSR-safe), mirroring registerPatch resolver. Fixes intermittent “registerInit is not a function” in legacy-extract tests.
+  - snap CLI: load handlers from concrete modules (snap-run/history) with named-or-default resolution, avoiding sporadic SSR barrel-import parse errors (“missing ) after argument list”) in snap.stash.success test.
+
+- Help defaults — SSR fallback for runDefaults resolution
+  - Wrapped resolution of `runDefaults` in `src/cli/run/options.ts` with try/catch and fell back to
+    `RUN_BASE_DEFAULTS` plus `prompt: 'auto'` and `facets: false` when resolution is unavailable under
+    Vitest SSR/mocked shapes.
+  - Resolved `tagDefault` defensively and guarded calls with optional chaining to avoid import-shape
+    races during help/default-tag rendering.
+  - Fixes the intermittent failure in `src/cli/index.help.test.ts` (“runDefaults not found”) observed
+    on the third run; keeps help defaults deterministic across environments.

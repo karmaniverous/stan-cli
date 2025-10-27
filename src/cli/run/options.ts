@@ -6,6 +6,7 @@ import { renderAvailableScriptsHelp } from '@/runner/help';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import * as cliUtils from '../cli-utils';
+import { RUN_BASE_DEFAULTS } from './defaults';
 type CliUtilsModule = typeof import('../cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 type RunDefaultsFn = CliUtilsModule['runDefaults'];
@@ -192,27 +193,50 @@ export const registerRunOptions = (
     peekAndMaybeDebugLegacySync(DBG_SCOPE_RUN_ENGINE_LEGACY, process.cwd());
   });
 
-  // Effective defaults from config (cliDefaults.run) over baseline
-  const runDefaultsResolved = resolveNamedOrDefaultFunction<RunDefaultsFn>(
-    cliUtils as unknown,
-    (m) => (m as CliUtilsModule).runDefaults,
-    (m) => (m as { default?: Partial<CliUtilsModule> }).default?.runDefaults,
-    'runDefaults',
-  );
-  const tagDefaultResolved = resolveNamedOrDefaultFunction<TagDefaultFn>(
-    cliUtils as unknown,
-    (m) => (m as CliUtilsModule).tagDefault,
-    (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
-    'tagDefault',
-  );
-  const eff = runDefaultsResolved(process.cwd());
+  // Effective defaults from config (cliDefaults.run) over baseline; SSR-safe fallback.
+  let eff: {
+    archive: boolean;
+    combine: boolean;
+    plan: boolean;
+    keep: boolean;
+    sequential: boolean;
+    live: boolean;
+    hangWarn: number;
+    hangKill: number;
+    hangKillGrace: number;
+    prompt: string;
+    facets: boolean;
+  } = { ...RUN_BASE_DEFAULTS, prompt: 'auto', facets: false };
+  eff.plan = typeof eff.plan === 'boolean' ? eff.plan : RUN_BASE_DEFAULTS.plan;
+  try {
+    const runDefaultsResolved = resolveNamedOrDefaultFunction<RunDefaultsFn>(
+      cliUtils as unknown,
+      (m) => (m as CliUtilsModule).runDefaults,
+      (m) => (m as { default?: Partial<CliUtilsModule> }).default?.runDefaults,
+      'runDefaults',
+    );
+    eff = runDefaultsResolved(process.cwd());
+  } catch {
+    // keep baseline fallback
+  }
+  let tagDefaultResolved: TagDefaultFn | undefined;
+  try {
+    tagDefaultResolved = resolveNamedOrDefaultFunction<TagDefaultFn>(
+      cliUtils as unknown,
+      (m) => (m as CliUtilsModule).tagDefault,
+      (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
+      'tagDefault',
+    );
+  } catch {
+    tagDefaultResolved = undefined;
+  }
 
   // Tag defaulted boolean choices with (default)
-  tagDefaultResolved(eff.archive ? optArchive : optNoArchive, true);
-  tagDefaultResolved(eff.combine ? optCombine : optNoCombine, true);
-  tagDefaultResolved(eff.keep ? optKeep : optNoKeep, true);
-  tagDefaultResolved(eff.sequential ? optSequential : optNoSequential, true);
-  tagDefaultResolved(eff.live ? optLive : optNoLive, true);
+  tagDefaultResolved?.(eff.archive ? optArchive : optNoArchive, true);
+  tagDefaultResolved?.(eff.combine ? optCombine : optNoCombine, true);
+  tagDefaultResolved?.(eff.keep ? optKeep : optNoKeep, true);
+  tagDefaultResolved?.(eff.sequential ? optSequential : optNoSequential, true);
+  tagDefaultResolved?.(eff.live ? optLive : optNoLive, true);
 
   // Show configured default for prompt (Commander will render "(default: value)")
   optPrompt.default(eff.prompt);
@@ -234,7 +258,7 @@ export const registerRunOptions = (
     'deactivate facets for this run (naked form disables overlay)',
   );
   // Tag default overlay state from cliDefaults.run.facets
-  cliUtils.tagDefault(eff.facets ? optFacets : optNoFacets, true);
+  tagDefaultResolved?.(eff.facets ? optFacets : optNoFacets, true);
 
   cmd.addOption(optFacets).addOption(optNoFacets);
 

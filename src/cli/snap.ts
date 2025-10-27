@@ -14,34 +14,66 @@ import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 
-// Lazy snap handlers resolver (SSR/ESM interop safety) without mapped-type pitfalls
-type SnapHandlers = {
-  handleSnap?: (opts?: { stash?: boolean }) => Promise<void>;
-  handleUndo?: () => Promise<void>;
-  handleRedo?: () => Promise<void>;
-  handleSet?: (index: string) => Promise<void>;
-  handleInfo?: () => Promise<void>;
-};
-const loadSnapHandler = async (
-  name: keyof SnapHandlers,
-): Promise<(...args: unknown[]) => Promise<void>> => {
-  const mod = (await import('@/runner/snap')) as unknown as SnapHandlers & {
-    default?: SnapHandlers;
-  };
-  const anyMod = mod as unknown as {
-    [k: string]: unknown;
-    default?: { [k: string]: unknown };
-  };
-  const key = String(name);
-  const cand =
-    typeof anyMod[key] === 'function'
-      ? anyMod[key]
-      : typeof anyMod.default?.[key] === 'function'
-        ? anyMod.default?.[key]
-        : undefined;
-  if (typeof cand !== 'function') throw new Error(`${key} not found`);
-  return cand as (...args: unknown[]) => Promise<void>;
-};
+// Lazy, SSR-robust handler loader from concrete modules (avoid barrel import)
+type SnapRunModule = typeof import('@/runner/snap/snap-run');
+type HistoryModule = typeof import('@/runner/snap/history');
+type HandleSnapFn = SnapRunModule['handleSnap'];
+type HandleUndoFn = HistoryModule['handleUndo'];
+type HandleRedoFn = HistoryModule['handleRedo'];
+type HandleSetFn = HistoryModule['handleSet'];
+type HandleInfoFn = HistoryModule['handleInfo'];
+
+async function loadSnapHandler(
+  name: 'handleSnap' | 'handleUndo' | 'handleRedo' | 'handleSet' | 'handleInfo',
+): Promise<(...args: unknown[]) => Promise<void>> {
+  if (name === 'handleSnap') {
+    const mod = (await import('@/runner/snap/snap-run')) as unknown;
+    const fn = resolveNamedOrDefaultFunction<HandleSnapFn>(
+      mod,
+      (m) => (m as SnapRunModule).handleSnap,
+      (m) => (m as { default?: Partial<SnapRunModule> }).default?.handleSnap,
+      'handleSnap',
+    );
+    return fn as (...a: unknown[]) => Promise<void>;
+  }
+  // history variants
+  const mod = (await import('@/runner/snap/history')) as unknown;
+  if (name === 'handleUndo') {
+    const fn = resolveNamedOrDefaultFunction<HandleUndoFn>(
+      mod,
+      (m) => (m as HistoryModule).handleUndo,
+      (m) => (m as { default?: Partial<HistoryModule> }).default?.handleUndo,
+      'handleUndo',
+    );
+    return fn as (...a: unknown[]) => Promise<void>;
+  }
+  if (name === 'handleRedo') {
+    const fn = resolveNamedOrDefaultFunction<HandleRedoFn>(
+      mod,
+      (m) => (m as HistoryModule).handleRedo,
+      (m) => (m as { default?: Partial<HistoryModule> }).default?.handleRedo,
+      'handleRedo',
+    );
+    return fn as (...a: unknown[]) => Promise<void>;
+  }
+  if (name === 'handleSet') {
+    const fn = resolveNamedOrDefaultFunction<HandleSetFn>(
+      mod,
+      (m) => (m as HistoryModule).handleSet,
+      (m) => (m as { default?: Partial<HistoryModule> }).default?.handleSet,
+      'handleSet',
+    );
+    return fn as (...a: unknown[]) => Promise<void>;
+  }
+  // handleInfo
+  const fn = resolveNamedOrDefaultFunction<HandleInfoFn>(
+    mod,
+    (m) => (m as HistoryModule).handleInfo,
+    (m) => (m as { default?: Partial<HistoryModule> }).default?.handleInfo,
+    'handleInfo',
+  );
+  return fn as (...a: unknown[]) => Promise<void>;
+}
 
 import * as cliUtils from './cli-utils';
 type CliUtilsModule = typeof import('./cli-utils');
