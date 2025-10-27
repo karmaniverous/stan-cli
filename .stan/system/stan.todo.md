@@ -340,3 +340,9 @@ Verification:
 - Snap selection-sync test — robust loadConfig resolver (SSR stability)
   - Problem: Vitest SSR reported “loadConfig is not a function” when destructuring from a dynamic import in src/runner/snap/selection-sync.test.ts.
   - Change: resolve loadConfig via named-or-default (check mod.loadConfig then mod.default.loadConfig) and provide a minimal fallback. Stabilizes the test across SSR/mocks.
+
+- Runner session epoch — hoist exports for SSR stability
+  - Problem: warn.logger.test intermittently failed with “beginEpoch is not a function”
+    due to const-export evaluation timing under Vitest SSR.
+  - Change: convert beginEpoch and isActiveEpoch in
+    src/runner/run/session/epoch.ts to exported function declarations.
