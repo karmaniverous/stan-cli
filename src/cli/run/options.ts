@@ -1,10 +1,14 @@
 import { Command, Option } from 'commander';
 
 import { peekAndMaybeDebugLegacySync } from '@/cli/config/peek';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
-import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
+import * as cliUtils from '../cli-utils';
+import { runDefaults, tagDefault } from '../cli-utils';
+type CliUtilsModule = typeof import('../cli-utils');
+type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 
 export type FlagPresence = {
   sawNoScriptsFlag: boolean;
@@ -166,7 +170,20 @@ export const registerRunOptions = (
     sawExceptFlag = true;
   });
 
-  applyCliSafety(cmd);
+  // Apply Commander safety adapters (SSR-robust)
+  try {
+    const applyCliSafetyResolved: ApplyCliSafetyFn =
+      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+        cliUtils as unknown,
+        (m) => (m as CliUtilsModule).applyCliSafety,
+        (m) =>
+          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
+        'applyCliSafety',
+      );
+    applyCliSafetyResolved?.(cmd);
+  } catch {
+    /* best‑effort */
+  }
 
   // Early legacy engine-config notice (preAction, STAN_DEBUG=1):
   // Emit once per invocation if the config file lacks top-level "stan-core".

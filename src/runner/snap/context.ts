@@ -63,9 +63,19 @@ export const resolveContext = async (
     const tryCall = async (fnMaybe: unknown): Promise<ContextConfig | null> => {
       if (typeof fnMaybe !== 'function') return null;
       try {
-        const out = await (
-          fnMaybe as (cwd: string, scope?: string) => Promise<ContextConfig>
-        )(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
+        // Arity-aware invocation:
+        // - fn.length is the number of declared parameters (not counting rest).
+        // - If the function declares 0 or 1 parameters, pass only cwd.
+        // - Otherwise, pass (cwd, scope) for resolvers that accept the debug scope.
+        const declared = (fnMaybe as { length?: number }).length ?? 2;
+        let out: unknown;
+        if (declared <= 1) {
+          out = await (fnMaybe as (cwd: string) => Promise<ContextConfig>)(cwd);
+        } else {
+          out = await (
+            fnMaybe as (cwd: string, scope?: string) => Promise<ContextConfig>
+          )(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
+        }
         if (
           out &&
           typeof out === 'object' &&

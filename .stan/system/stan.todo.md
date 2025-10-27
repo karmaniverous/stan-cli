@@ -156,4 +156,12 @@
 
 - Snap context resolver — recursive candidate discovery
   - Replaced ad-hoc picks with a recursive enumerator over named/default/nested-default shapes
-    to find any viable resolver function; try candidates in order and accept the first valid config.
+    to find any viable resolver function; try candidates in order and accept the first valid config.
+
+- Snap resolver — arity‑aware invocation
+  - When calling a candidate resolver, pass only (cwd) for zero/one‑arg functions
+    and (cwd, scope) for two‑arg functions to accommodate strict mocks.
+
+- Run help defaults — SSR guard for applyCliSafety
+  - In src/cli/run/options.ts, resolve applyCliSafety via named‑or‑default
+    instead of direct call to avoid “not a function” under SSR.
