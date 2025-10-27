@@ -170,13 +170,15 @@
   - Applied applyCliSafety directly to both the root and the subcommand in src/cli/snap.ts (in addition to the named‑or‑default resolver) to eliminate intermittent “unknown command 'node'” under SSR/mocked shapes.
 
 - Snap context resolver — recursive candidate discovery
-  - Replaced ad-hoc picks with a recursive enumerator over named/default/nested-default shapes
-    to find any viable resolver function; try candidates in order and accept the first valid config.
+  - Replaced ad-hoc picks with a recursive enumerator over named/default/nested-default shapes to find any viable resolver function; try candidates in order and accept the first valid config.
 
 - Snap resolver — arity‑aware invocation
-  - When calling a candidate resolver, pass only (cwd) for zero/one‑arg functions
-    and (cwd, scope) for two‑arg functions to accommodate strict mocks.
+  - When calling a candidate resolver, pass only (cwd) for zero/one‑arg functions and (cwd, scope) for two‑arg functions to accommodate strict mocks.
 
 - Run help defaults — SSR guard for applyCliSafety
-  - In src/cli/run/options.ts, resolve applyCliSafety via named‑or‑default
-    instead of direct call to avoid “not a function” under SSR.
+  - In src/cli/run/options.ts, resolve applyCliSafety via named‑or‑default instead of direct call to avoid “not a function” under SSR.
+
+- Follow-up: snap CLI and default-only resolver
+  - snap CLI: added the same parse-normalization/exit-override fallback used by init/patch so tests never see "unknown command 'node'" even if applyCliSafety cannot be resolved under SSR.
+  - snap context: added a direct function-as-default fast path before the recursive walk when no named resolver is present; short-circuits to the expected config for default-only mocks.
+  - Scope: test-only robustness; no runtime behavior change.

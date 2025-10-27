@@ -90,6 +90,39 @@ export const resolveContext = async (
       return null;
     };
 
+    // Fast path: if there is no visible named resolver and default is a function,
+    // try it immediately before walking nested shapes. This guards against rare SSR/mock
+    // interop cases where nested traversal misses a function-as-default.
+    const hasNamed =
+      typeof (effMod as { resolveEffectiveEngineConfig?: unknown })
+        .resolveEffectiveEngineConfig === 'function' ||
+      typeof (
+        (effMod as { default?: { resolveEffectiveEngineConfig?: unknown } })
+          .default ?? {}
+      ).resolveEffectiveEngineConfig === 'function';
+    if (!hasNamed) {
+      const defMaybe = (effMod as { default?: unknown }).default;
+      if (typeof defMaybe === 'function') {
+        const out = await tryCall(defMaybe);
+        if (out) {
+          engine = out;
+          // Short-circuit: we have a valid config.
+          return {
+            cwd,
+            stanPath: engine.stanPath,
+            maxUndos:
+              (await (async () => {
+                try {
+                  const cli = await loadCliConfig(cwd);
+                  return cli.maxUndos;
+                } catch {
+                  return undefined;
+                }
+              })) ?? 10,
+          };
+        }
+      }
+    }
     // Recursively enumerate plausible function candidates from the module and its nested defaults.
     const candidates: unknown[] = [];
     const seen = new Set<unknown>();
