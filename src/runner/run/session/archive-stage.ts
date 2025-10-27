@@ -3,13 +3,47 @@
  */
 import path from 'node:path';
 
-import { archivePhase, stageImports } from '@/runner/run/archive';
+import * as archiveMod from '@/runner/run/archive';
 import { preparePromptForArchive } from '@/runner/run/prompt';
 import type { RunnerConfig } from '@/runner/run/types';
 import type { RunBehavior } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
 import { readDocsMeta } from '@/runner/system/docs-meta';
 import { sha256File } from '@/runner/util/hash';
+
+type ArchiveModule = typeof import('@/runner/run/archive');
+const getArchivePhase = (): ArchiveModule['archivePhase'] => {
+  const mod = archiveMod as unknown as {
+    archivePhase?: unknown;
+    default?: { archivePhase?: unknown };
+  };
+  const named = mod?.archivePhase;
+  const viaDefault = mod?.default?.archivePhase;
+  const fn =
+    typeof named === 'function'
+      ? (named as ArchiveModule['archivePhase'])
+      : typeof viaDefault === 'function'
+        ? (viaDefault as ArchiveModule['archivePhase'])
+        : undefined;
+  if (!fn) throw new Error('archivePhase not found');
+  return fn;
+};
+const getStageImports = (): ArchiveModule['stageImports'] => {
+  const mod = archiveMod as unknown as {
+    stageImports?: unknown;
+    default?: { stageImports?: unknown };
+  };
+  const named = mod?.stageImports;
+  const viaDefault = mod?.default?.stageImports;
+  const fn =
+    typeof named === 'function'
+      ? (named as ArchiveModule['stageImports'])
+      : typeof viaDefault === 'function'
+        ? (viaDefault as ArchiveModule['stageImports'])
+        : undefined;
+  if (!fn) throw new Error('stageImports not found');
+  return fn;
+};
 
 export const runArchiveStage = async (args: {
   cwd: string;
@@ -21,6 +55,9 @@ export const runArchiveStage = async (args: {
 }): Promise<{ created: string[]; cancelled: boolean }> => {
   const { cwd, config, behavior, ui, promptAbs, promptDisplay } = args;
   const created: string[] = [];
+  // Resolve archive utilities at call time (SSR-robust)
+  const archivePhase = getArchivePhase();
+  const stageImports = getStageImports();
 
   const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
 

@@ -3,8 +3,6 @@
  */
 import type { Command } from 'commander';
 
-import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
-
 // SSR/CJS-robust resolver for registerRunAction: prefer named, fall back to default.registerRunAction.
 import * as runActionMod from '../run/action';
 import * as runOptionsMod from '../run/options';
@@ -29,14 +27,22 @@ const getRegisterRunAction = (): RegisterRunActionFn => {
 };
 type OptionsModule = typeof import('../run/options');
 type RegisterRunOptionsFn = OptionsModule['registerRunOptions'];
-const registerRunOptionsResolved: RegisterRunOptionsFn =
-  resolveNamedOrDefaultFunction<RegisterRunOptionsFn>(
-    runOptionsMod as unknown,
-    (m) => (m as OptionsModule).registerRunOptions,
-    (m) =>
-      (m as { default?: Partial<OptionsModule> }).default?.registerRunOptions,
-    'registerRunOptions',
-  );
+const getRegisterRunOptions = (): RegisterRunOptionsFn => {
+  const mod = runOptionsMod as unknown as {
+    registerRunOptions?: unknown;
+    default?: { registerRunOptions?: unknown };
+  };
+  const named = mod?.registerRunOptions;
+  const viaDefault = mod?.default?.registerRunOptions;
+  const fn =
+    typeof named === 'function'
+      ? (named as RegisterRunOptionsFn)
+      : typeof viaDefault === 'function'
+        ? (viaDefault as RegisterRunOptionsFn)
+        : undefined;
+  if (!fn) throw new Error('registerRunOptions not found');
+  return fn;
+};
 
 /**
  * Register the `run` subcommand on the provided root CLI.
@@ -45,7 +51,9 @@ const registerRunOptionsResolved: RegisterRunOptionsFn =
  * @returns The same root command for chaining.
  */
 export const registerRun = (cli: Command): Command => {
-  const { cmd, getFlagPresence } = registerRunOptionsResolved(cli);
+  // Resolve options/action at call time for SSR robustness
+  const registerRunOptions = getRegisterRunOptions();
+  const { cmd, getFlagPresence } = registerRunOptions(cli);
   const registerRunAction = getRegisterRunAction();
   registerRunAction(cmd, getFlagPresence);
   return cli;

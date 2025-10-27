@@ -10,6 +10,7 @@ import { Command as Commander, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
+import { parseText } from '@/common/config/parse';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
@@ -272,7 +273,7 @@ export const registerSnap = (cli: Commander): Command => {
         else {
           // Transitional: accept legacy root-level cliDefaults when present by
           // temporarily enabling STAN_ACCEPT_LEGACY for this read.
-          let cliCfg: ReturnType<typeof loadCliConfigSync>;
+          let cliCfg: ReturnType<typeof loadCliConfigSync> | undefined;
           const had = Object.prototype.hasOwnProperty.call(
             process.env,
             'STAN_ACCEPT_LEGACY',
@@ -285,13 +286,48 @@ export const registerSnap = (cli: Commander): Command => {
             if (!had) delete process.env.STAN_ACCEPT_LEGACY;
             else process.env.STAN_ACCEPT_LEGACY = prev;
           }
-          stashFinal = Boolean(cliCfg.cliDefaults?.snap?.stash ?? false);
+          if (cliCfg && typeof cliCfg.cliDefaults?.snap?.stash === 'boolean') {
+            stashFinal = cliCfg.cliDefaults.snap.stash;
+          }
         }
       } catch {
         /* ignore */
       }
+      // Manual parsing fallback (namespaced or legacy root) when above failed
+      if (typeof stashFinal === 'undefined') {
+        try {
+          const cfgPath = findConfigPathSync(process.cwd());
+          if (cfgPath) {
+            const { readFileSync } = await import('node:fs');
+            const raw = readFileSync(cfgPath, 'utf8');
+            const rootUnknown = parseText(cfgPath, raw);
+            if (rootUnknown && typeof rootUnknown === 'object') {
+              const root = rootUnknown as Record<string, unknown>;
+              // Prefer namespaced stan-cli.cliDefaults.snap.stash
+              const cliNs =
+                root['stan-cli'] && typeof root['stan-cli'] === 'object'
+                  ? (root['stan-cli'] as Record<string, unknown>)
+                  : null;
+              let val: unknown;
+              if (cliNs) {
+                val = (
+                  cliNs as { cliDefaults?: { snap?: { stash?: unknown } } }
+                ).cliDefaults?.snap?.stash;
+              }
+              // Legacy root fallback
+              if (typeof val === 'undefined') {
+                val = (root as { cliDefaults?: { snap?: { stash?: unknown } } })
+                  .cliDefaults?.snap?.stash;
+              }
+              if (typeof val === 'boolean') stashFinal = val;
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      }
       const fn = await loadSnapHandler('handleSnap');
-      await fn({ stash: Boolean(stashFinal) });
+      await fn({ stash: stashFinal === true });
     });
 
   return cli;

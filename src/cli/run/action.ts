@@ -22,6 +22,11 @@ import type { RunnerConfig } from '@/runner/run/types';
 import { updateDocsMetaOverlay } from '@/runner/system/docs-meta';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
+// SSR‑robust fallback readers for scripts and cliDefaults.run.scripts
+import {
+  readCliScriptsFallback,
+  readRunScriptsDefaultFallback,
+} from './config-fallback';
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
 
@@ -164,13 +169,28 @@ export const registerRunAction = (
     }
 
     // Derive run parameters
-    const scriptsMap = cliCfg.scripts ?? {};
-    const scriptsDefaultCfg =
-      (
-        cliCfg.cliDefaults as
-          | { run?: { scripts?: boolean | string[] } }
-          | undefined
-      )?.run?.scripts ?? undefined;
+    // 1) Scripts: prefer CLI loader; fall back to direct config parse (namespaced or legacy root).
+    let scriptsMap = cliCfg.scripts ?? {};
+    if (!scriptsMap || Object.keys(scriptsMap).length === 0) {
+      try {
+        scriptsMap = readCliScriptsFallback(runCwd);
+      } catch {
+        scriptsMap = {};
+      }
+    }
+    // 2) Default selection: prefer CLI loader; fall back to direct config parse (namespaced or legacy root).
+    let scriptsDefaultCfg: boolean | string[] | undefined = (
+      cliCfg.cliDefaults as
+        | { run?: { scripts?: boolean | string[] } }
+        | undefined
+    )?.run?.scripts;
+    if (typeof scriptsDefaultCfg === 'undefined') {
+      try {
+        scriptsDefaultCfg = readRunScriptsDefaultFallback(runCwd);
+      } catch {
+        /* ignore */
+      }
+    }
 
     const derived = deriveRunParameters({
       options,
@@ -234,7 +254,7 @@ export const registerRunAction = (
 
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
-      scripts: (cliCfg.scripts ?? {}) as Record<string, string>,
+      scripts: (scriptsMap ?? {}) as Record<string, string>,
       includes: config.includes ?? [],
       excludes: [
         ...(config.excludes ?? []),

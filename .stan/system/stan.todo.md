@@ -22,6 +22,17 @@
 
 ## Completed (recent)
 
+- CLI run defaults — robust scripts/selection fallback under SSR
+  - Added src/cli/run/config-fallback.ts to read scripts and cliDefaults.run.scripts
+    directly from stan.config.* (namespaced or legacy root) when lazy import shapes
+    race under SSR/mocks.
+  - Updated src/cli/run/action.ts to:
+    - Prefer loader values; fall back to direct parse when loader returns empty/undefined.
+    - Preserve normal runtime behavior; fix test flakiness in runner.defaults.*:
+      - scripts=true → default selection = all config scripts,
+      - scripts=false + archive=false → selection=[], archive=false,
+      - scripts=["b"] → default selection intersection.
+
 - Snap context — hoist resolver for SSR stability
   - Converted `export const resolveContext = async (...) => {}` to an exported async function declaration to avoid TDZ/SSR binding issues that manifested as “resolveContext is not a function” in `snap.stash.success` tests.
 
@@ -345,4 +356,21 @@ Verification:
   - Problem: warn.logger.test intermittently failed with “beginEpoch is not a function”
     due to const-export evaluation timing under Vitest SSR.
   - Change: convert beginEpoch and isActiveEpoch in
-    src/runner/run/session/epoch.ts to exported function declarations.
+    src/runner/run/session/epoch.ts to exported function declarations.
+
+- Run wiring — defer options resolver (SSR stability)
+  - Problem: runner.defaults.test intermittently failed with “registerRunOptions not found”
+    due to top-level evaluation order.
+  - Change: add getRegisterRunOptions() (named-or-default) in
+    src/cli/runner/index.ts and resolve at call time.
+
+- Snap defaults — robust stash resolution (legacy + fallback)
+  - Problem: snap.defaults.test observed stash=false when cliDefaults.snap.stash=true
+    under transient config-read failures.
+  - Change: in src/cli/snap.ts, attempt loadCliConfigSync with legacy acceptance,
+    then fall back to manual parse of stan.config.* (namespaced and legacy root).
+    Pass stash: (stashFinal === true).
+
+- Archive stage — resolve archivePhase/stageImports at call time
+  - Problem: ui.parity.test hit “archivePhase is not a function” under SSR.
+  - Change: resolve both via named-or-default in src/runner/run/session/archive-stage.ts.
