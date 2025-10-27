@@ -22,6 +22,11 @@
 
 ## Completed (recent)
 
+- Snap context — default-only resolver and TS fix
+  - Added explicit inclusion of a function-as-default candidate in the recursive resolver so default-only mocks resolve to the expected config.
+  - Addressed TS2741 in resolveContext by returning a ContextConfig-typed value after validating stanPath, restoring green typecheck/docs.
+  - Expect the “resolves using default export property (default.resolveEffectiveEngineConfig)” test to pass with stanPath “from-default”.
+
 - Facet overlay — scaffolding and CLI plumbing
   - Added overlay reader/composer, overlay flags, and overlay metadata.
   - Implemented anchor union and inactive‑root excludes; ramp‑up safety prevents drops when anchors are missing.

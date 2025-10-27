@@ -81,7 +81,8 @@ export const resolveContext = async (
           typeof out === 'object' &&
           typeof (out as { stanPath?: unknown }).stanPath === 'string'
         ) {
-          return out;
+          // Safe after the stanPath contract check; normalize to ContextConfig for TS.
+          return out as ContextConfig;
         }
       } catch {
         // continue to next candidate
@@ -124,6 +125,10 @@ export const resolveContext = async (
                 }
               ).resolveEffectiveEngineConfig,
             );
+          }
+          // Function-as-default (common mock shape): include directly as a candidate.
+          if (typeof d === 'function') {
+            candidates.push(d);
           }
           // Walk default
           walk(d, depth + 1);
