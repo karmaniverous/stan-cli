@@ -1,4 +1,5 @@
 // src/runner/run/session/run-session.ts
+import { rm } from 'node:fs/promises';
 import { resolve as resolvePath } from 'node:path';
 
 import { yieldToEventLoop } from '@/runner/run/exec/util';
@@ -319,6 +320,22 @@ export const runSessionOnce = async (args: {
       promptDisplay: resolvedPromptDisplay,
     });
     if (a.cancelled) {
+      detachSignals();
+      return { created, cancelled: true, restartRequested: false };
+    }
+    // Late-cancel guard after archive completed: clean up created artifacts best-effort.
+    if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+      try {
+        await Promise.all(
+          (a.created ?? []).map((p) =>
+            rm(p, {
+              force: true,
+            }),
+          ),
+        );
+      } catch {
+        /* ignore */
+      }
       detachSignals();
       return { created, cancelled: true, restartRequested: false };
     }

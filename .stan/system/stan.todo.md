@@ -19,4 +19,8 @@
 - Fix SSR plan header styling (renderRunPlan)
   - Avoid direct bold() call under SSR/BORING by guarding with isBoring; preserve styling in TTY.
 - Harden Logger UI pre-queue hooks
-  - Wrap onScriptQueued/onArchiveQueued in try/catch to prevent presentation hooks from aborting sessions in SSR.
+  - Wrap onScriptQueued/onArchiveQueued in try/catch to prevent presentation hooks from aborting sessions in SSR.
+
+- Root CLI safety: ensure parse normalization/exitOverride always installed
+  - In makeCli(), unconditionally call patchParseMethods and installExitOverride (idempotent fallback) to prevent Commander process.exit on unknown options in tests.
+- Late-cancel cleanup before/after archive: remove created artifacts when a cancel lands between guards and archive call.

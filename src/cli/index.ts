@@ -2,6 +2,7 @@
  * - Export makeCli(): Command — root CLI factory for the "stan" tool.
  * - Register subcommands: run, init, snap.
  * - Vector to interactive init when no config exists (root invocation with no args).
+ * - Vector to interactive init when no config exists (root invocation with no args).
  * - Avoid invoking process.exit during tests; call cli.exitOverride().
  * - Help for root should include available script keys from config.
  */
@@ -136,6 +137,22 @@ export const makeCli = (): Command => {
   try {
     // Best-effort SSR-safe application of exit override/argv normalization
     applyCliSafetyResolved?.(cli);
+  } catch {
+    /* best‑effort */
+  }
+  // Final safety: ensure parse normalization and exit override even if resolution failed (idempotent).
+  try {
+    (
+      cliUtils as unknown as {
+        patchParseMethods?: (c: Command) => void;
+        installExitOverride?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(cli);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(cli);
   } catch {
     /* best‑effort */
   }
