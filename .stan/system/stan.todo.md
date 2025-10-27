@@ -230,3 +230,21 @@
   - Problem: function‑as‑default resolver succeeded early but a later candidate scan threw “not found” and forced stanPath fallback.
   - Change: record fast‑path success and use it when no later candidate succeeds; throw only when neither path resolves; no change to normal runtime resolution order.
   - Effect: default‑only test resolves stanPath ‘from-default’; named‑only remains green.
+
+- CLI run options — robust defaults and default-tagging under SSR
+  - Problem: Vitest SSR reported “runDefaults is not a function” due to named export timing in src/cli/run/options.ts.
+  - Change: resolve runDefaults and tagDefault via named‑or‑default inside registerRunOptions; keep applyCliSafety robust resolution.
+  - Effect: fixes root.env.defaults tests; no runtime behavior change.
+
+- CLI run wiring — resolve registerRunAction at call time
+  - Problem: “registerRunAction not found” in cli/runner.help.defaults.test due to module‑eval timing when resolving the action at top level.
+  - Change: added getRegisterRunAction() (named‑or‑default) and resolve inside registerRun; keeps options resolver as‑is.
+  - Effect: stabilizes help/defaults suite; no runtime behavior change.
+
+Verification next step:
+
+- Re‑run:
+  - src/runner/snap/context.resolve.test.ts → default‑only path should pass after short‑circuit.
+  - src/cli/runner.help.defaults.test.ts → should pass with runtime resolution.
+  - src/cli/root.env.defaults.test.ts → should pass with SSR‑robust runDefaults/tagDefault.
+  - Full suite sanity; expect green.

@@ -6,7 +6,6 @@ import { renderAvailableScriptsHelp } from '@/runner/help';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import * as cliUtils from '../cli-utils';
-import { runDefaults, tagDefault } from '../cli-utils';
 type CliUtilsModule = typeof import('../cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 
@@ -192,14 +191,14 @@ export const registerRunOptions = (
   });
 
   // Effective defaults from config (cliDefaults.run) over baseline
-  const eff = runDefaults(process.cwd());
+  const eff = cliUtils.runDefaults(process.cwd());
 
   // Tag defaulted boolean choices with (default)
-  tagDefault(eff.archive ? optArchive : optNoArchive, true);
-  tagDefault(eff.combine ? optCombine : optNoCombine, true);
-  tagDefault(eff.keep ? optKeep : optNoKeep, true);
-  tagDefault(eff.sequential ? optSequential : optNoSequential, true);
-  tagDefault(eff.live ? optLive : optNoLive, true);
+  cliUtils.tagDefault(eff.archive ? optArchive : optNoArchive, true);
+  cliUtils.tagDefault(eff.combine ? optCombine : optNoCombine, true);
+  cliUtils.tagDefault(eff.keep ? optKeep : optNoKeep, true);
+  cliUtils.tagDefault(eff.sequential ? optSequential : optNoSequential, true);
+  cliUtils.tagDefault(eff.live ? optLive : optNoLive, true);
 
   // Show configured default for prompt (Commander will render "(default: value)")
   optPrompt.default(eff.prompt);
@@ -221,7 +220,7 @@ export const registerRunOptions = (
     'deactivate facets for this run (naked form disables overlay)',
   );
   // Tag default overlay state from cliDefaults.run.facets
-  tagDefault(eff.facets ? optFacets : optNoFacets, true);
+  cliUtils.tagDefault(eff.facets ? optFacets : optNoFacets, true);
 
   cmd.addOption(optFacets).addOption(optNoFacets);
 

@@ -11,14 +11,22 @@ import * as runOptionsMod from '../run/options';
 
 type ActionModule = typeof import('../run/action');
 type RegisterRunActionFn = ActionModule['registerRunAction'];
-const registerRunActionResolved: RegisterRunActionFn =
-  resolveNamedOrDefaultFunction<RegisterRunActionFn>(
-    runActionMod as unknown,
-    (m) => (m as ActionModule).registerRunAction,
-    (m) =>
-      (m as { default?: Partial<ActionModule> }).default?.registerRunAction,
-    'registerRunAction',
-  );
+const getRegisterRunAction = (): RegisterRunActionFn => {
+  const mod = runActionMod as unknown as {
+    registerRunAction?: unknown;
+    default?: { registerRunAction?: unknown };
+  };
+  const named = mod?.registerRunAction;
+  const viaDefault = mod?.default?.registerRunAction;
+  const fn =
+    typeof named === 'function'
+      ? (named as RegisterRunActionFn)
+      : typeof viaDefault === 'function'
+        ? (viaDefault as RegisterRunActionFn)
+        : undefined;
+  if (!fn) throw new Error('registerRunAction not found');
+  return fn;
+};
 type OptionsModule = typeof import('../run/options');
 type RegisterRunOptionsFn = OptionsModule['registerRunOptions'];
 const registerRunOptionsResolved: RegisterRunOptionsFn =
@@ -38,6 +46,7 @@ const registerRunOptionsResolved: RegisterRunOptionsFn =
  */
 export const registerRun = (cli: Command): Command => {
   const { cmd, getFlagPresence } = registerRunOptionsResolved(cli);
-  registerRunActionResolved(cmd, getFlagPresence);
+  const registerRunAction = getRegisterRunAction();
+  registerRunAction(cmd, getFlagPresence);
   return cli;
 };

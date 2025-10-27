@@ -56,8 +56,8 @@ export const resolveContext = async (
 
   // Engine context (namespaced or legacy), resolved lazily to avoid SSR/ESM
   // evaluation-order hazards during module import.
-  let engine: ContextConfig;
-  let fastCfg: ContextConfig | null = null;
+  let engine: ContextConfig | undefined;
+  const fastCfg: ContextConfig | null = null;
   try {
     const effMod = (await import('@/runner/config/effective')) as unknown;
 
@@ -92,8 +92,7 @@ export const resolveContext = async (
     };
 
     // Fast path: if there is no visible named resolver and default is a function,
-    // prefer it before walking nested shapes. This guards against rare SSR/mock
-    // interop cases where nested traversal misses a function-as-default.
+    // prefer it and accept immediately (skip deeper candidate scan).
     const hasNamed =
       typeof (effMod as { resolveEffectiveEngineConfig?: unknown })
         .resolveEffectiveEngineConfig === 'function' ||
@@ -106,84 +105,86 @@ export const resolveContext = async (
       if (typeof defMaybe === 'function') {
         const out = await tryCall(defMaybe);
         if (out) {
-          // Record fast-path resolution; accept it later if no candidate wins.
-          fastCfg = out;
+          engine = out;
         }
       }
     }
 
-    // Recursively enumerate plausible function candidates from the module and its nested defaults.
-    const candidates: unknown[] = [];
-    const seen = new Set<unknown>();
-    const walk = (obj: unknown, depth = 0): void => {
-      if (!obj || seen.has(obj) || depth > 4) return;
-      seen.add(obj);
+    // If fast path already resolved, skip scanning candidates.
+    if (!engine) {
+      // Recursively enumerate plausible function candidates from the module and its nested defaults.
+      const candidates: unknown[] = [];
+      const seen = new Set<unknown>();
+      const walk = (obj: unknown, depth = 0): void => {
+        if (!obj || seen.has(obj) || depth > 4) return;
+        seen.add(obj);
 
-      // Direct function candidate
-      if (typeof obj === 'function') {
-        candidates.push(obj);
-      }
+        // Direct function candidate
+        if (typeof obj === 'function') {
+          candidates.push(obj);
+        }
 
-      if (typeof obj !== 'object' && typeof obj !== 'function') return;
-      const o = obj as { [k: string]: unknown };
+        if (typeof obj !== 'object' && typeof obj !== 'function') return;
+        const o = obj as { [k: string]: unknown };
 
-      // Named resolver export
-      if (typeof o.resolveEffectiveEngineConfig === 'function') {
-        candidates.push(o.resolveEffectiveEngineConfig);
-      }
+        // Named resolver export
+        if (typeof o.resolveEffectiveEngineConfig === 'function') {
+          candidates.push(o.resolveEffectiveEngineConfig);
+        }
 
-      // Explore nested default(s)
-      if ('default' in o) {
-        const d = o.default;
-        if (d) {
-          if (
-            typeof (d as { resolveEffectiveEngineConfig?: unknown })
-              .resolveEffectiveEngineConfig === 'function'
-          ) {
-            candidates.push(
-              (
-                d as {
-                  resolveEffectiveEngineConfig: unknown;
-                }
-              ).resolveEffectiveEngineConfig,
-            );
-          }
-          // Function-as-default (common mock shape): include directly as a candidate.
-          // Prefer it earlier when no named resolver is present by placing it first.
-          if (typeof d === 'function') {
-            // Prepend to bias default-only shapes toward the intended resolver in tests/SSR.
-            candidates.unshift(d);
-          }
-          // Walk default
-          walk(d, depth + 1);
-          // Some shapes use default.default chains
-          if (
-            typeof d === 'object' &&
-            d &&
-            'default' in (d as { [k: string]: unknown })
-          ) {
-            walk((d as { default?: unknown }).default, depth + 1);
+        // Explore nested default(s)
+        if ('default' in o) {
+          const d = o.default;
+          if (d) {
+            if (
+              typeof (d as { resolveEffectiveEngineConfig?: unknown })
+                .resolveEffectiveEngineConfig === 'function'
+            ) {
+              candidates.push(
+                (
+                  d as {
+                    resolveEffectiveEngineConfig: unknown;
+                  }
+                ).resolveEffectiveEngineConfig,
+              );
+            }
+            // Function-as-default (common mock shape): include directly as a candidate.
+            // Prefer it earlier when no named resolver is present by placing it first.
+            if (typeof d === 'function') {
+              // Prepend to bias default-only shapes toward the intended resolver in tests/SSR.
+              candidates.unshift(d);
+            }
+            // Walk default
+            walk(d, depth + 1);
+            // Some shapes use default.default chains
+            if (
+              typeof d === 'object' &&
+              d &&
+              'default' in (d as { [k: string]: unknown })
+            ) {
+              walk((d as { default?: unknown }).default, depth + 1);
+            }
           }
         }
+      };
+
+      walk(effMod);
+
+      let pickedCfg: ContextConfig | null = null;
+      for (const c of candidates) {
+        pickedCfg = await tryCall(c);
+        if (pickedCfg) break;
       }
-    };
 
-    walk(effMod);
-
-    let pickedCfg: ContextConfig | null = null;
-    for (const c of candidates) {
-      pickedCfg = await tryCall(c);
-      if (pickedCfg) break;
-    }
-
-    if (!pickedCfg) {
-      if (fastCfg) {
-        engine = fastCfg;
+      if (!pickedCfg) {
+        if (fastCfg) {
+          engine = fastCfg;
+        } else {
+          throw new Error('resolveEffectiveEngineConfig not found');
+        }
       } else {
-        throw new Error('resolveEffectiveEngineConfig not found');
+        engine = pickedCfg;
       }
-    } else {
-      engine = pickedCfg;
     }
   } catch {
     // Minimal, safe fallback: derive stanPath only. This preserves snap
@@ -210,5 +211,9 @@ export const resolveContext = async (
     /* ignore */
   }
 
-  return { cwd, stanPath: engine.stanPath, maxUndos: maxUndos ?? 10 };
+  return {
+    cwd,
+    stanPath: engine.stanPath,
+    maxUndos: maxUndos ?? 10,
+  };
 };
