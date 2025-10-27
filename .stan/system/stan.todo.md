@@ -22,6 +22,11 @@
 
 ## Completed (recent)
 
+- Snap default-only resolver and CLI snap handler SSR safety
+  - context: added definitive fast paths for function-as-default and nested default.default and callable-module before candidate scan; avoids fallback to config ‘out’.
+  - cli/snap: resolved handleSnap/Undo/Redo/Set/Info lazily at action time via named-or-default to prevent “not a function” under SSR/mock export shapes.
+  - Expected: snap/context.default-only test passes; snap set/undo/redo path stable.
+
 - Stabilization pass — SSR/ESM and snap resolver
   - Hoisted fragile exports to declarations to avoid “not a function” under SSR:
     - cli-utils.tagDefault

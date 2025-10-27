@@ -13,13 +13,26 @@ import { printHeader } from '@/cli/header';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
-import {
-  handleInfo,
-  handleRedo,
-  handleSet,
-  handleSnap,
-  handleUndo,
-} from '@/runner/snap';
+
+// Lazy snap handlers resolver (SSR/ESM interop safety)
+const loadSnapHandler = async <
+  K extends 'handleSnap' | 'handleUndo' | 'handleRedo' | 'handleSet' | 'handleInfo',
+>(
+  name: K,
+): Promise<(...args: unknown[]) => Promise<void>> => {
+  const mod = (await import('@/runner/snap')) as unknown as {
+    [P in K]?: unknown;
+    default?: { [P in K]?: unknown };
+  };
+  const fn =
+    typeof mod[name] === 'function'
+      ? (mod[name] as unknown)
+      : typeof mod.default?.[name] === 'function'
+        ? (mod.default?.[name] as unknown)
+        : undefined;
+  if (typeof fn !== 'function') throw new Error(`${name} not found`);
+  return fn as (...args: unknown[]) => Promise<void>;
+};
 
 import * as cliUtils from './cli-utils';
 type CliUtilsModule = typeof import('./cli-utils');
@@ -115,14 +128,16 @@ export const registerSnap = (cli: Commander): Command => {
     .command('undo')
     .description('Revert to the previous snapshot in the history stack')
     .action(async () => {
-      await handleUndo();
+      const fn = await loadSnapHandler('handleUndo');
+      await fn();
     });
 
   sub
     .command('redo')
     .description('Advance to the next snapshot in the history stack')
     .action(async () => {
-      await handleRedo();
+      const fn = await loadSnapHandler('handleRedo');
+      await fn();
     });
 
   sub
@@ -130,14 +145,16 @@ export const registerSnap = (cli: Commander): Command => {
     .argument('<index>', 'snapshot index to activate (0-based)')
     .description('Jump to a specific snapshot index and restore it')
     .action(async (indexArg: string) => {
-      await handleSet(indexArg);
+      const fn = await loadSnapHandler('handleSet');
+      await fn(indexArg);
     });
 
   sub
     .command('info')
     .description('Print the snapshot stack and current position')
     .action(async () => {
-      await handleInfo();
+      const fn = await loadSnapHandler('handleInfo');
+      await fn();
     });
 
   // Stash flags with default tagging
@@ -218,7 +235,8 @@ export const registerSnap = (cli: Commander): Command => {
       } catch {
         /* ignore */
       }
-      await handleSnap({ stash: Boolean(stashFinal) });
+      const fn = await loadSnapHandler('handleSnap');
+      await fn({ stash: Boolean(stashFinal) });
     });
 
   return cli;
