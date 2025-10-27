@@ -206,8 +206,7 @@ export const registerRunOptions = (
     hangKillGrace: number;
     prompt: string;
     facets: boolean;
-  } = { ...RUN_BASE_DEFAULTS, prompt: 'auto', facets: false };
-  eff.plan = typeof eff.plan === 'boolean' ? eff.plan : RUN_BASE_DEFAULTS.plan;
+  } = { ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false };
   try {
     const runDefaultsResolved = resolveNamedOrDefaultFunction<RunDefaultsFn>(
       cliUtils as unknown,

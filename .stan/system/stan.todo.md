@@ -333,4 +333,7 @@ Verification:
   - Resolved `tagDefault` defensively and guarded calls with optional chaining to avoid import-shape
     races during help/default-tag rendering.
   - Fixes the intermittent failure in `src/cli/index.help.test.ts` (“runDefaults not found”) observed
-    on the third run; keeps help defaults deterministic across environments.
+    on the third run; keeps help defaults deterministic across environments.
+
+- Amendment: include `plan: true` in the SSR-safe fallback initializer for `eff` in
+  `src/cli/run/options.ts` and remove the follow-up `eff.plan` assignment to satisfy TS/docs/lint.
