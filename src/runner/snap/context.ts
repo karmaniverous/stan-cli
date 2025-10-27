@@ -126,103 +126,119 @@ export const resolveContext = async (
       resolveEffectiveEngineConfig?: unknown;
       default?: { resolveEffectiveEngineConfig?: unknown; default?: unknown };
     };
+
+    // Immediate fast path: function-as-default — call directly before building the list
+    try {
+      const dAny = (mod as unknown as { default?: unknown }).default;
+      if (typeof dAny === 'function') {
+        const fast = await tryCall(dAny, 'default-fn');
+        if (fast) {
+          engine = fast;
+        }
+      }
+    } catch {
+      /* best-effort */
+    }
+
     const candidates: Array<{ fn: unknown; kind: string }> = [];
+    if (!engine) {
+      // Prefer default‑only shapes first (matches common test/mock shapes):
+      // 1) function‑as‑default (still include in list for completeness)
+      const dAny = (mod as unknown as { default?: unknown }).default;
+      if (typeof dAny === 'function')
+        candidates.push({ fn: dAny, kind: 'default-fn' });
+      // 2) default.resolveEffectiveEngineConfig
+      const dObj =
+        dAny && typeof dAny === 'object'
+          ? (dAny as {
+              resolveEffectiveEngineConfig?: unknown;
+              default?: unknown;
+            })
+          : undefined;
+      if (dObj && typeof dObj.resolveEffectiveEngineConfig === 'function') {
+        candidates.push({
+          fn: dObj.resolveEffectiveEngineConfig,
+          kind: 'default.resolve',
+        });
+      }
+      // 3) named export
+      if (typeof mod.resolveEffectiveEngineConfig === 'function') {
+        candidates.push({
+          fn: mod.resolveEffectiveEngineConfig,
+          kind: 'named',
+        });
+      }
+      // 4) nested default.default function (rare)
+      if (dObj && typeof dObj.default === 'function') {
+        candidates.push({ fn: dObj.default, kind: 'default.default-fn' });
+      }
+      // 5) module‑as‑function (edge mocks)
+      if (typeof (mod as unknown) === 'function') {
+        candidates.push({
+          fn: mod as unknown as () => Promise<ContextConfig>,
+          kind: 'module-fn',
+        });
+      }
 
-    // Prefer default‑only shapes first (matches common test/mock shapes):
-    // 1) function‑as‑default
-    const dAny = mod.default;
-    if (typeof dAny === 'function')
-      candidates.push({ fn: dAny, kind: 'default-fn' });
-    // 2) default.resolveEffectiveEngineConfig
-    const dObj =
-      dAny && typeof dAny === 'object'
-        ? (dAny as {
-            resolveEffectiveEngineConfig?: unknown;
-            default?: unknown;
-          })
-        : undefined;
-    if (dObj && typeof dObj.resolveEffectiveEngineConfig === 'function') {
-      candidates.push({
-        fn: dObj.resolveEffectiveEngineConfig,
-        kind: 'default.resolve',
-      });
-    }
-    // 3) named export
-    if (typeof mod.resolveEffectiveEngineConfig === 'function') {
-      candidates.push({
-        fn: mod.resolveEffectiveEngineConfig,
-        kind: 'named',
-      });
-    }
-    // 4) nested default.default function (rare)
-    if (dObj && typeof dObj.default === 'function') {
-      candidates.push({ fn: dObj.default, kind: 'default.default-fn' });
-    }
-    // 5) module‑as‑function (edge mocks)
-    if (typeof (mod as unknown) === 'function') {
-      candidates.push({
-        fn: mod as unknown as () => Promise<ContextConfig>,
-        kind: 'module-fn',
-      });
-    }
-
-    // Also scan the immediate default object for any function-valued properties.
-    // This catches odd default-only mock shapes without waiting for the deeper walk.
-    if (dObj && typeof dObj === 'object') {
-      try {
-        for (const [, v] of Object.entries(dObj)) {
-          if (typeof v === 'function') {
-            // Avoid duplicate candidates (simple identity/label guard)
-            if (!candidates.some((c) => c.fn === v)) {
-              candidates.push({ fn: v, kind: 'default.obj-fn' });
+      // Also scan the immediate default object for any function-valued properties.
+      // This catches odd default-only mock shapes without waiting for the deeper walk.
+      if (dObj && typeof dObj === 'object') {
+        try {
+          for (const [, v] of Object.entries(dObj)) {
+            if (typeof v === 'function') {
+              // Avoid duplicate candidates (simple identity/label guard)
+              if (!candidates.some((c) => c.fn === v)) {
+                candidates.push({ fn: v, kind: 'default.obj-fn' });
+              }
             }
           }
+        } catch {
+          /* best-effort */
         }
-      } catch {
-        /* best-effort */
       }
-    }
-    // Try in order
-    for (const c of candidates) {
-      const out = await tryCall(c.fn, c.kind);
-      if (out) {
-        engine = out;
-        break;
-      }
-    }
-
-    // As a last‑resort, walk nested defaults a couple of levels to catch exotic shapes.
-    if (!engine) {
-      const seen = new Set<unknown>();
-      const walk = (obj: unknown, depth = 0): void => {
-        if (!obj || seen.has(obj) || depth > 3) return;
-        seen.add(obj);
-        if (typeof obj === 'function')
-          candidates.push({
-            fn: obj,
-            kind: 'nested.fn',
-          });
-        if (typeof obj !== 'object' && typeof obj !== 'function') return;
-        const o = obj as { [k: string]: unknown };
-        if (typeof o.resolveEffectiveEngineConfig === 'function')
-          candidates.push({
-            fn: o.resolveEffectiveEngineConfig,
-            kind: 'nested.resolve',
-          });
-        if ('default' in o) walk(o.default, depth + 1);
-      };
-      walk(mod);
+      // Try in order
       for (const c of candidates) {
-        const out = await tryCall(
-          (c as { fn: unknown; kind?: string }).fn ?? c,
-          (c as { kind?: string }).kind ?? 'nested-fn',
-        );
+        const out = await tryCall(c.fn, c.kind);
         if (out) {
           engine = out;
           break;
         }
       }
-      if (!engine) throw new Error('resolveEffectiveEngineConfig not found');
+
+      // As a last‑resort, walk nested defaults a couple of levels to catch exotic shapes.
+      if (!engine) {
+        const seen = new Set<unknown>();
+        const walk = (obj: unknown, depth = 0): void => {
+          if (!obj || seen.has(obj) || depth > 3) return;
+          seen.add(obj);
+          if (typeof obj === 'function')
+            candidates.push({
+              fn: obj,
+              kind: 'nested.fn',
+            });
+
+          if (typeof obj !== 'object' && typeof obj !== 'function') return;
+          const o = obj as { [k: string]: unknown };
+          if (typeof o.resolveEffectiveEngineConfig === 'function')
+            candidates.push({
+              fn: o.resolveEffectiveEngineConfig,
+              kind: 'nested.resolve',
+            });
+          if ('default' in o) walk(o.default, depth + 1);
+        };
+        walk(mod);
+        for (const c of candidates) {
+          const out = await tryCall(
+            (c as { fn: unknown; kind?: string }).fn ?? c,
+            (c as { kind?: string }).kind ?? 'nested-fn',
+          );
+          if (out) {
+            engine = out;
+            break;
+          }
+        }
+        if (!engine) throw new Error('resolveEffectiveEngineConfig not found');
+      }
     }
   } catch {
     // Minimal, safe fallback: derive stanPath only. This preserves snap

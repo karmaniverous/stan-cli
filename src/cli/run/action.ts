@@ -177,6 +177,7 @@ export const registerRunAction = (
       cmd,
       scripts: scriptsMap,
       scriptsDefault: scriptsDefaultCfg,
+      dir: runCwd,
     });
 
     // Facet overlay — determine defaults and per-run overrides (renamed flags)

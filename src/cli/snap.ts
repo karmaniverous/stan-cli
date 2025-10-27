@@ -238,7 +238,21 @@ export const registerSnap = (cli: Commander): Command => {
         const fromCli = src.getOptionValueSource?.('stash') === 'cli';
         if (fromCli) stashFinal = Boolean(opts?.stash);
         else {
-          const cliCfg = loadCliConfigSync(process.cwd());
+          // Transitional: accept legacy root-level cliDefaults when present by
+          // temporarily enabling STAN_ACCEPT_LEGACY for this read.
+          let cliCfg: ReturnType<typeof loadCliConfigSync>;
+          const had = Object.prototype.hasOwnProperty.call(
+            process.env,
+            'STAN_ACCEPT_LEGACY',
+          );
+          const prev = process.env.STAN_ACCEPT_LEGACY;
+          try {
+            if (!had) process.env.STAN_ACCEPT_LEGACY = '1';
+            cliCfg = loadCliConfigSync(process.cwd());
+          } finally {
+            if (!had) delete process.env.STAN_ACCEPT_LEGACY;
+            else process.env.STAN_ACCEPT_LEGACY = prev;
+          }
           stashFinal = Boolean(cliCfg.cliDefaults?.snap?.stash ?? false);
         }
       } catch {

@@ -20,6 +20,7 @@ export const deriveRunParameters = (args: {
   cmd: Command;
   scripts: Record<string, unknown>;
   scriptsDefault?: boolean | string[];
+  dir?: string;
 }): DerivedRun => {
   const { options, scripts, scriptsDefault } = args;
   const src = args.cmd as unknown as {
@@ -38,7 +39,7 @@ export const deriveRunParameters = (args: {
     Array.isArray(exceptOpt) && (exceptOpt as unknown[]).length > 0;
 
   const valSrc = (name: string) => src.getOptionValueSource?.(name) === 'cli';
-  const eff = runDefaults();
+  const eff = runDefaults(args.dir);
   // Avoid unsafe Record casts; pick exact subsets we need.
   const effBools = {
     archive: eff.archive,

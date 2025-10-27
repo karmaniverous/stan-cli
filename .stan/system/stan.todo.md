@@ -21,10 +21,24 @@
 
 ## Completed (recent)
 
+- Snap default-only resolver — immediate fast path
+  - Added a direct function‑as‑default call before candidate discovery, trying (cwd, scope) → (cwd) → () and short‑circuiting on first valid config.
+  - Preserves candidate ordering and keeps a single STAN_DEBUG success trace.
+  - Goal: flip src/runner/snap/context.resolve.test.ts default‑only to “from‑default”.
+
+- Snap defaults (stash) — legacy acceptance during read
+  - In snap CLI action, when flags omit --stash/--no-stash, temporarily enable STAN_ACCEPT_LEGACY while reading cliDefaults.snap.stash so legacy root‑level configs apply deterministically.
+  - Fixes snap.defaults test expecting stash=true from cliDefaults.
+
+- Run defaults (live) — pass repo root
+  - deriveRunParameters now accepts a “dir” and forwards it to runDefaults; run/action passes runCwd so defaults always resolve from the nearest config root.
+  - Fixes live default resolution when cliDefaults.run.live=false is set.
+
+- 
+
 - Snap default-only resolver — compile fix and nested candidate typing
   - Removed a duplicate import of DBG_SCOPE_SNAP_CONTEXT_LEGACY in src/runner/snap/context.ts that broke typecheck/docs.
-  - Fixed nested walk to push candidates as { fn, kind } instead of a bare Function so tryCall actually invokes them.
-  - These changes clear TS2300/TS2345 and keep the permissive invocation order in place, making the default-only path robust.
+  - Fixed nested walk to push candidates as { fn, kind } instead of a bare Function so tryCall actually invokes them.  - These changes clear TS2300/TS2345 and keep the permissive invocation order in place, making the default-only path robust.
   - Expect: default-only test resolves “from-default”; typecheck/build/docs green.
 
 - Snap default‑only resolver — permissive invocation + debug trace
