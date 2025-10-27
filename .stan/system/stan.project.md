@@ -21,6 +21,42 @@ When decomposing a file named `X.ts`:
 
 This convention keeps module boundaries clear, avoids duplicate barrels (file and folder), and makes refactors predictable. Apply this consistently for new decompositions and when regularizing legacy ones.
 
+## SSR/ESM test‑stability playbook (Vitest Option 1)
+
+When tests run under Vitest SSR and worker forks, import‑time evaluation order and export shape can differ from Node runtime. Use this playbook to keep tests deterministic without changing runtime behavior:
+
+- Evaluation‑time hazards and cures
+  - Hoist fragile exports: prefer exported function declarations over `export const fn = (...) => ...` for helpers that other modules resolve dynamically (prevents “X is not a function” under SSR).
+  - Resolve at call‑time, not at module‑eval time:
+    - Use dynamic `await import(...)` inside the action/phase that needs the function.
+    - Pick functions via a “named‑or‑default” resolver:
+      - prefer `mod.named`, fall back to `mod.default.named`, and finally to `mod.default` when it is a callable function.
+  - Keep a minimal fallback when a peer cannot be resolved in tests (never in normal runtime), e.g.:
+    - run help defaults: fall back to a fully shaped baseline `{ ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false }`.
+    - snap defaults: when CLI defaults are unreadable, parse stan.config.\* directly (namespaced first, legacy root fallback) and map only the needed fields.
+
+- CLI parse normalization is idempotent
+  - Always install both parse normalizers on root and subcommands, even as a fallback:
+    - `patchParseMethods()` (normalize argv like `['node','stan',...]` → `[...]`),
+    - `installExitOverride()` (swallow benign Commander exits).
+  - Doing this twice is safe and prevents “unknown command 'node'” in tests.
+
+- Known guardrails to keep
+  - Run help defaults: ensure fallback uses the fully shaped object `{ ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false }`.
+  - Optional helpers like `tagDefault(...)` must be behind `?.` (avoid throwing in help/SSR paths).
+  - Live/hang thresholds: keep numeric baselines (hangWarn 120, hangKill 300, hangKillGrace 10).
+  - Prompt and overlay: default `prompt: 'auto'`; overlay default off unless explicitly enabled.
+
+- Action‑time lazy resolution (patterns)
+  - CLI “run”:
+    - Resolve `resolveEffectiveEngineConfig` dynamically (named‑or‑default).
+    - Resolve CLI config dynamically; if not available, read scripts and `cliDefaults.run.scripts` by parsing stan.config.\* directly (prefer `stan-cli` namespaced; fall back to legacy root).
+  - Snap:
+    - Resolve handlers (`handleSnap|Undo|Redo|Set|Info`) dynamically (named‑or‑default).
+    - For `cliDefaults.snap.stash`, accept legacy by temporarily enabling `STAN_ACCEPT_LEGACY`; if that fails, parse stan.config.\* directly (namespaced, then legacy).
+  - Archive stage:
+    - Resolve `archivePhase` and `stageImports` at call time (named‑or‑default) to avoid import‑time races.
+
 ## 1) Multi‑instance imports and disambiguation (authoritative vs contextual)
 
 - You may see multiple files named “stan.requirements.md” and “stan.todo.md” in a single archive (local + imported copies from other STAN repos).
