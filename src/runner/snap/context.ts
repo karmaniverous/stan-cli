@@ -124,6 +124,22 @@ export const resolveContext = async (
       candidates.push(mod as unknown as () => Promise<ContextConfig>);
     }
 
+    // Also scan the immediate default object for any function-valued properties.
+    // This catches odd default-only mock shapes without waiting for the deeper walk.
+    if (dObj && typeof dObj === 'object') {
+      try {
+        for (const [, v] of Object.entries(dObj)) {
+          if (typeof v === 'function') {
+            // Avoid duplicate candidates (simple identity/label guard)
+            if (!candidates.includes(v)) {
+              candidates.push(v);
+            }
+          }
+        }
+      } catch {
+        /* best-effort */
+      }
+    }
     // Try in order
     for (const c of candidates) {
       const out = await tryCall(c);
