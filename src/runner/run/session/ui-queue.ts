@@ -16,10 +16,25 @@ export const queueUiRows = (
   const toRun = (selection ?? []).filter((k) =>
     Object.prototype.hasOwnProperty.call(config.scripts, k),
   );
-  for (const k of toRun) ui.onScriptQueued(k);
+  // Presentation-only pre-queue; swallow UI callback errors (SSR/mock robustness)
+  for (const k of toRun) {
+    try {
+      ui.onScriptQueued(k);
+    } catch {
+      /* ignore pre-queue errors */
+    }
+  }
   if (includeArchives) {
-    ui.onArchiveQueued('full');
-    ui.onArchiveQueued('diff');
+    try {
+      ui.onArchiveQueued('full');
+    } catch {
+      /* ignore */
+    }
+    try {
+      ui.onArchiveQueued('diff');
+    } catch {
+      /* ignore */
+    }
   }
   return toRun;
 };

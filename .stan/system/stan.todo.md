@@ -15,3 +15,8 @@
   - Added direct config parsing fallbacks for CLI run defaults and snap stash when loaders are unavailable under SSR/mocks.
   - Installed parse normalization/exit override idempotently on root/sub commands to prevent “unknown command 'node'”.
   - Resolved archive and snap stage functions at call time; validated end‑to‑end with loops across flaky suites.
+
+- Fix SSR plan header styling (renderRunPlan)
+  - Avoid direct bold() call under SSR/BORING by guarding with isBoring; preserve styling in TTY.
+- Harden Logger UI pre-queue hooks
+  - Wrap onScriptQueued/onArchiveQueued in try/catch to prevent presentation hooks from aborting sessions in SSR.

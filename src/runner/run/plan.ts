@@ -2,7 +2,7 @@
 import path from 'node:path';
 
 import type { RunnerConfig } from '@/runner/run/types';
-import { bold } from '@/runner/util/color';
+import { bold as styleBold, isBoring } from '@/runner/util/color';
 
 import type { ExecutionMode, RunBehavior, Selection } from './types';
 
@@ -33,8 +33,11 @@ export const renderRunPlan = (
 
   const outputRel = path.join(config.stanPath, 'output').replace(/\\/g, '/');
 
+  // Avoid calling style functions under SSR/BORING; render plain header when not styled
+  const header = isBoring() ? 'STAN run plan' : styleBold('STAN run plan');
+
   const lines = [
-    bold('STAN run plan'),
+    header,
     `mode: ${mode === 'sequential' ? 'sequential' : 'concurrent'}`,
     `output: ${outputRel}/`,
     ...(typeof behavior.prompt === 'string' && behavior.prompt.trim().length
