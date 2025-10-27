@@ -13,7 +13,6 @@ import { renderAvailableScriptsHelp } from '@/runner/help';
 import { printVersionInfo } from '@/runner/version';
 
 import * as cliUtils from './cli-utils';
-import { tagDefault } from './cli-utils';
 import { performInit, registerInit } from './init';
 // Robustly resolve registerPatch (named or default export) to tolerate SSR/ESM interop.
 import * as patchMod from './patch';
@@ -56,6 +55,19 @@ const rootDefaultsResolved: RootDefaultsFn | undefined = (() => {
     return undefined;
   }
 })();
+type TagDefaultFn = CliUtilsModule['tagDefault'];
+const tagDefaultResolved: TagDefaultFn | undefined = (() => {
+  try {
+    return resolveNamedOrDefaultFunction<TagDefaultFn>(
+      cliUtils as unknown,
+      (m) => (m as CliUtilsModule).tagDefault,
+      (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
+      'tagDefault',
+    );
+  } catch {
+    return undefined;
+  }
+})();
 /**
  * Build the root CLI (`stan`) without side effects (safe for tests). *
  * Registers the `run`, `init`, `snap`, and `patch` subcommands, installs
@@ -92,7 +104,7 @@ export const makeCli = (): Command => {
     '-D, --no-debug',
     'disable verbose debug logging',
   );
-  tagDefault(debugDefault ? optDebug : optNoDebug, true);
+  tagDefaultResolved?.(debugDefault ? optDebug : optNoDebug, true);
   cli.addOption(optDebug).addOption(optNoDebug);
 
   const optBoring = new Option(
@@ -103,7 +115,7 @@ export const makeCli = (): Command => {
     '-B, --no-boring',
     'do not disable color/styling',
   );
-  tagDefault(boringDefault ? optBoring : optNoBoring, true);
+  tagDefaultResolved?.(boringDefault ? optBoring : optNoBoring, true);
   cli.addOption(optBoring).addOption(optNoBoring);
 
   cli.option('-v, --version', 'print version and baseline-docs status');

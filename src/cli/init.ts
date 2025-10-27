@@ -57,18 +57,42 @@ export const performInit = (
 };
 
 export const registerInit = (cli: Commander): Command => {
-  try {
-    const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
-      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-        cliUtils as unknown,
-        (m) => (m as CliUtilsModule).applyCliSafety,
-        (m) =>
-          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
-        'applyCliSafety',
-      );
-    applyCliSafetyResolved?.(cli);
-  } catch {
-    /* best-effort */
+  {
+    let applied = false;
+    try {
+      const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
+        resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+          cliUtils as unknown,
+          (m) => (m as CliUtilsModule).applyCliSafety,
+          (m) =>
+            (m as { default?: Partial<CliUtilsModule> }).default
+              ?.applyCliSafety,
+          'applyCliSafety',
+        );
+      if (applyCliSafetyResolved) {
+        applyCliSafetyResolved(cli);
+        applied = true;
+      }
+    } catch {
+      /* best-effort */
+    }
+    if (!applied) {
+      try {
+        (
+          cliUtils as unknown as {
+            installExitOverride?: (c: Command) => void;
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).installExitOverride?.(cli);
+        (
+          cliUtils as unknown as {
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).patchParseMethods?.(cli);
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 
   const sub = cli
@@ -77,18 +101,42 @@ export const registerInit = (cli: Commander): Command => {
       'Create or update stan.config.json|yml by scanning package.json scripts.',
     );
 
-  try {
-    const applyCliSafetySub: ApplyCliSafetyFn | undefined =
-      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-        cliUtils as unknown,
-        (m) => (m as CliUtilsModule).applyCliSafety,
-        (m) =>
-          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
-        'applyCliSafety',
-      );
-    applyCliSafetySub?.(sub);
-  } catch {
-    /* best-effort */
+  {
+    let applied = false;
+    try {
+      const applyCliSafetySub: ApplyCliSafetyFn | undefined =
+        resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+          cliUtils as unknown,
+          (m) => (m as CliUtilsModule).applyCliSafety,
+          (m) =>
+            (m as { default?: Partial<CliUtilsModule> }).default
+              ?.applyCliSafety,
+          'applyCliSafety',
+        );
+      if (applyCliSafetySub) {
+        applyCliSafetySub(sub);
+        applied = true;
+      }
+    } catch {
+      /* best-effort */
+    }
+    if (!applied) {
+      try {
+        (
+          cliUtils as unknown as {
+            installExitOverride?: (c: Command) => void;
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).installExitOverride?.(sub);
+        (
+          cliUtils as unknown as {
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).patchParseMethods?.(sub);
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 
   sub

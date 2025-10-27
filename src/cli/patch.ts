@@ -27,18 +27,43 @@ type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
  */
 export const registerPatch = (cli: Command): Command => {
   // Best‑effort: do not throw if resolution fails in a mocked/SSR environment.
-  try {
-    const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
-      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-        cliUtils as unknown,
-        (m) => (m as CliUtilsModule).applyCliSafety,
-        (m) =>
-          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
-        'applyCliSafety',
-      );
-    applyCliSafetyResolved?.(cli);
-  } catch {
-    /* best-effort */
+  {
+    let applied = false;
+    try {
+      const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
+        resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+          cliUtils as unknown,
+          (m) => (m as CliUtilsModule).applyCliSafety,
+          (m) =>
+            (m as { default?: Partial<CliUtilsModule> }).default
+              ?.applyCliSafety,
+          'applyCliSafety',
+        );
+      if (applyCliSafetyResolved) {
+        applyCliSafetyResolved(cli);
+        applied = true;
+      }
+    } catch {
+      /* best-effort */
+    }
+    if (!applied) {
+      // Fallback: install parse normalization and exit override directly.
+      try {
+        (
+          cliUtils as unknown as {
+            installExitOverride?: (c: Command) => void;
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).installExitOverride?.(cli);
+        (
+          cliUtils as unknown as {
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).patchParseMethods?.(cli);
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 
   const sub = cli
@@ -75,18 +100,43 @@ export const registerPatch = (cli: Command): Command => {
       ),
     )
     .option('-c, --check', 'Validate patch without applying any changes');
-  try {
-    const applyCliSafetySub: ApplyCliSafetyFn | undefined =
-      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-        cliUtils as unknown,
-        (m) => (m as CliUtilsModule).applyCliSafety,
-        (m) =>
-          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
-        'applyCliSafety',
-      );
-    applyCliSafetySub?.(sub);
-  } catch {
-    /* best-effort */
+  {
+    let applied = false;
+    try {
+      const applyCliSafetySub: ApplyCliSafetyFn | undefined =
+        resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
+          cliUtils as unknown,
+          (m) => (m as CliUtilsModule).applyCliSafety,
+          (m) =>
+            (m as { default?: Partial<CliUtilsModule> }).default
+              ?.applyCliSafety,
+          'applyCliSafety',
+        );
+      if (applyCliSafetySub) {
+        applyCliSafetySub(sub);
+        applied = true;
+      }
+    } catch {
+      /* best-effort */
+    }
+    if (!applied) {
+      // Fallback: install parse normalization and exit override directly.
+      try {
+        (
+          cliUtils as unknown as {
+            installExitOverride?: (c: Command) => void;
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).installExitOverride?.(sub);
+        (
+          cliUtils as unknown as {
+            patchParseMethods?: (c: Command) => void;
+          }
+        ).patchParseMethods?.(sub);
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 
   sub.action(

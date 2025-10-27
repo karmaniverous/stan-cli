@@ -127,8 +127,10 @@ export const resolveContext = async (
             );
           }
           // Function-as-default (common mock shape): include directly as a candidate.
+          // Prefer it earlier when no named resolver is present by placing it first.
           if (typeof d === 'function') {
-            candidates.push(d);
+            // Prepend to bias default-only shapes toward the intended resolver in tests/SSR.
+            candidates.unshift(d);
           }
           // Walk default
           walk(d, depth + 1);

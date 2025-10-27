@@ -73,11 +73,11 @@ const backupConfig = async (existingPath?: string | null): Promise<void> => {
  * @param opts - Options controlling migration (when force is false, prompts the user to confirm).
  * @returns The same (possibly mutated) base object.
  */
-export const maybeMigrateLegacyToNamespaced = async (
+export async function maybeMigrateLegacyToNamespaced(
   base: Dict,
   existingPath?: string | null,
   opts?: { force?: boolean },
-): Promise<Dict> => {
+): Promise<Dict> {
   const alreadyNamespaced =
     (hasOwn(base, 'stan-core') && isObject(base['stan-core'])) ||
     (hasOwn(base, 'stan-cli') && isObject(base['stan-cli']));
@@ -145,4 +145,4 @@ export const maybeMigrateLegacyToNamespaced = async (
   attachNode(base, 'stan-core', coreNode);
   attachNode(base, 'stan-cli', cliNode);
   return base;
-};
+}

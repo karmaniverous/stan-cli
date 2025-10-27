@@ -19,7 +19,7 @@ const cwdSafe = (): string => {
 };
 const isStringArray = (v: unknown): v is readonly string[] =>
   Array.isArray(v) && v.every((t) => typeof t === 'string');
-/** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */
+/** Normalize argv from unit tests like ["node","stan", ...] -> [...] */
 export const normalizeArgv = (
   argv?: readonly string[],
 ): readonly string[] | undefined => {
@@ -98,11 +98,11 @@ export function applyCliSafety(cmd: Command): void {
 }
 
 /** Tag an Option description with (DEFAULT) when active. */
-export const tagDefault = (opt: Option, on: boolean): void => {
+export function tagDefault(opt: Option, on: boolean): void {
   if (on && !opt.description.includes('(default)')) {
     opt.description = `${opt.description} (default)`;
   }
-};
+}
 
 /** Load engine config synchronously with best-effort safety (null on failure). */
 export const loadConfigSafe = (dir = cwdSafe()): ContextConfig | null => {

@@ -22,6 +22,16 @@
 
 ## Completed (recent)
 
+- Stabilization pass — SSR/ESM and snap resolver
+  - Hoisted fragile exports to declarations to avoid “not a function” under SSR:
+    - cli-utils.tagDefault
+    - init/service/migrate.maybeMigrateLegacyToNamespaced
+  - Resolved tagDefault via named-or-default in makeCli to remove direct import shape sensitivity.
+  - Ensured argv normalization always installs in init/patch:
+    - Added a small fallback to install parse normalization and exit override directly when applyCliSafety cannot be resolved (prevents “unknown command 'node'”).
+  - Snap context resolver: when no named resolver is visible, prefer a function-as-default candidate first to satisfy the default-only test shape.
+  - Scope: zero behavior change at runtime; improves test stability only.
+
 - Snap context — default-only resolver and TS fix
   - Added explicit inclusion of a function-as-default candidate in the recursive resolver so default-only mocks resolve to the expected config.
   - Addressed TS2741 in resolveContext by returning a ContextConfig-typed value after validating stanPath, restoring green typecheck/docs.
