@@ -91,7 +91,7 @@ export const resolveContext = async (
     };
 
     // Fast path: if there is no visible named resolver and default is a function,
-    // try it immediately before walking nested shapes. This guards against rare SSR/mock
+    // prefer it before walking nested shapes. This guards against rare SSR/mock
     // interop cases where nested traversal misses a function-as-default.
     const hasNamed =
       typeof (effMod as { resolveEffectiveEngineConfig?: unknown })
@@ -105,21 +105,8 @@ export const resolveContext = async (
       if (typeof defMaybe === 'function') {
         const out = await tryCall(defMaybe);
         if (out) {
+          // Accept now; continue to read CLI config below for maxUndos.
           engine = out;
-          // Short-circuit: we have a valid config.
-          return {
-            cwd,
-            stanPath: engine.stanPath,
-            maxUndos:
-              (await (async () => {
-                try {
-                  const cli = await loadCliConfig(cwd);
-                  return cli.maxUndos;
-                } catch {
-                  return undefined;
-                }
-              })) ?? 10,
-          };
         }
       }
     }

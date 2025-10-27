@@ -10,7 +10,6 @@ import { runDefaults } from '@/cli/cli-utils';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
-import * as effMod from '@/runner/config/effective';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import {
@@ -26,20 +25,7 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 import { deriveRunParameters } from './derive';
 import type { FlagPresence } from './options';
 
-// SSR-robust resolver for resolveEffectiveEngineConfig (named-or-default)
-type EffModule = typeof import('@/runner/config/effective');
-type ResolveEffFn = EffModule['resolveEffectiveEngineConfig'];
-const resolveEffectiveEngineConfig: ResolveEffFn =
-  resolveNamedOrDefaultFunction<ResolveEffFn>(
-    effMod as unknown,
-    (m) => (m as EffModule).resolveEffectiveEngineConfig,
-    (m) =>
-      (m as { default?: Partial<EffModule> }).default
-        ?.resolveEffectiveEngineConfig,
-    'resolveEffectiveEngineConfig',
-  );
-
-// Lazy SSR‑safe loader for cli config (named-or-default, resolved at action time)
+// Lazy resolver for CLI config (named-or-default) at action time.
 const loadCliConfigSyncLazy = async (
   dir: string,
 ): Promise<{
@@ -81,6 +67,52 @@ const loadCliConfigSyncLazy = async (
   }
 };
 
+// Lazy resolver for the effective engine config (named-or-default at action time).
+const resolveEngineConfigLazy = async (cwd: string): Promise<ContextConfig> => {
+  try {
+    const mod = (await import('@/runner/config/effective')) as unknown;
+    const fn = resolveNamedOrDefaultFunction<
+      (cwd: string, scope?: string) => Promise<ContextConfig>
+    >(
+      mod,
+      (m) =>
+        (
+          m as {
+            resolveEffectiveEngineConfig?: (
+              c: string,
+              s?: string,
+            ) => Promise<ContextConfig>;
+          }
+        ).resolveEffectiveEngineConfig,
+      (m) =>
+        (
+          m as {
+            default?: {
+              resolveEffectiveEngineConfig?: (
+                c: string,
+                s?: string,
+              ) => Promise<ContextConfig>;
+            };
+          }
+        ).default?.resolveEffectiveEngineConfig,
+      'resolveEffectiveEngineConfig',
+    );
+    return await fn(cwd, 'run.action:engine-legacy');
+  } catch {
+    // Safe fallback: minimal config (stanPath only).
+    try {
+      const core = await import('@karmaniverous/stan-core');
+      const sp =
+        typeof core.resolveStanPathSync === 'function'
+          ? core.resolveStanPathSync(cwd)
+          : '.stan';
+      return { stanPath: sp } as ContextConfig;
+    } catch {
+      return { stanPath: '.stan' } as ContextConfig;
+    }
+  }
+};
+
 export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
@@ -104,10 +136,7 @@ export const registerRunAction = (
     // Early legacy-engine notice remains in options preAction hook; here we resolve
     // effective engine context (namespaced or legacy) for the runner.
     await peekAndMaybeDebugLegacy(DBG_SCOPE_RUN_ENGINE_LEGACY, runCwd);
-    const config: ContextConfig = await resolveEffectiveEngineConfig(
-      runCwd,
-      'run.action:engine-legacy',
-    );
+    const config: ContextConfig = await resolveEngineConfigLazy(runCwd);
 
     // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
     const cliCfg = await loadCliConfigSyncLazy(runCwd);
@@ -135,9 +164,7 @@ export const registerRunAction = (
     }
 
     // Derive run parameters
-    // Narrow scripts map for derive step (default to empty map)
     const scriptsMap = cliCfg.scripts ?? {};
-    // Narrow scripts default (boolean | string[] | undefined) from cliDefaults when present
     const scriptsDefaultCfg =
       (
         cliCfg.cliDefaults as
@@ -159,8 +186,6 @@ export const registerRunAction = (
     };
     const fromCli = (n: string) => src.getOptionValueSource?.(n) === 'cli';
 
-    // -f, --facets [names...]     → overlay ON; activate listed facets; naked -f = all active
-    // -F, --no-facets [names...]  → overlay ON; deactivate listed facets; naked -F = overlay OFF
     const toStringArray = (v: unknown): string[] =>
       Array.isArray(v)
         ? v.filter((x): x is string => typeof x === 'string')
@@ -202,28 +227,22 @@ export const registerRunAction = (
         effective: {},
         autosuspended: [],
         anchorsKeptCounts: {},
-        // diagnostics fallback (no overlay computed): nothing kept by default
         overlapKeptCounts: {},
       };
     }
 
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
-      // Narrow to string map for the runner; unknown entries are filtered at call sites
-      // (script runner treats only string or {script:string} entries as runnable).
       scripts: (cliCfg.scripts ?? {}) as Record<string, string>,
-      // Propagate selection context for the archive phase (legacy-friendly).
       includes: config.includes ?? [],
       excludes: [
         ...(config.excludes ?? []),
         ...((overlay?.enabled ? overlay.excludesOverlay : []) ?? []),
       ],
       imports: config.imports,
-      // High-precedence re-includes (core enforces reserved denials/binary screen)
       ...(overlay?.anchorsOverlay?.length
         ? { anchors: overlay.anchorsOverlay }
         : {}),
-      // Optional facet view lines for the plan
       overlayPlan: (() => {
         if (!overlay) return undefined;
         const lines: string[] = [];
@@ -272,8 +291,6 @@ export const registerRunAction = (
       /* best-effort */
     }
 
-    // Default print-plan behavior from config
-    // DRY: derive from runDefaults so runtime and help tagging share the same source.
     const defaultPrintPlan = runDefaults(runCwd).plan;
 
     const noScripts = (options as { scripts?: unknown }).scripts === false;
@@ -303,10 +320,6 @@ export const registerRunAction = (
       derived.selection,
       derived.mode,
       derived.behavior,
-      // Ensure the session honors the user/config prompt choice:
-      //   - 'auto' (default) or an explicit 'local'|'core'|<path>
-      //   - The session will print a single debug line under STAN_DEBUG=1
-      //     identifying the chosen source/path.
       derived.promptChoice,
     );
   });

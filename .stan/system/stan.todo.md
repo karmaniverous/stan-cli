@@ -182,3 +182,8 @@
   - snap CLI: added the same parse-normalization/exit-override fallback used by init/patch so tests never see "unknown command 'node'" even if applyCliSafety cannot be resolved under SSR.
   - snap context: added a direct function-as-default fast path before the recursive walk when no named resolver is present; short-circuits to the expected config for default-only mocks.
   - Scope: test-only robustness; no runtime behavior change.
+
+- Final follow-through: lazy engine resolver and snap typing fix
+  - run/action: moved resolveEffectiveEngineConfig picking to action time (dynamic import named-or-default) with a minimal fallback, removing the last SSR import-time hazard in live defaults tests.
+  - snap/context: removed the early-return expression, kept the function-as-default preference without short-circuiting, and fixed TS2322/await-thenable; continues to compute maxUndos after resolving engine.
+  - Expectation: runner.live.defaults and snap resolver default-only now pass with typecheck/docs clean.
