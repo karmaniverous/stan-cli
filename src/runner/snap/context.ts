@@ -19,9 +19,9 @@ import { DBG_SCOPE_SNAP_CONTEXT_LEGACY } from '@/runner/util/debug-scopes';
  * @param cwd0 - Directory to start searching from.
  * @returns Resolved `{ cwd, stanPath, maxUndos }`.
  */
-export const resolveContext = async (
+export async function resolveContext(
   cwd0: string,
-): Promise<{ cwd: string; stanPath: string; maxUndos: number }> => {
+): Promise<{ cwd: string; stanPath: string; maxUndos: number }> {
   // Lazily resolve core helpers to avoid SSR/ESM import-time races.
   type CoreModule = typeof import('@karmaniverous/stan-core');
   type FindConfigPathSyncFn = CoreModule['findConfigPathSync'];
@@ -270,4 +270,4 @@ export const resolveContext = async (
     stanPath: engine.stanPath,
     maxUndos: maxUndos ?? 10,
   };
-};
+}

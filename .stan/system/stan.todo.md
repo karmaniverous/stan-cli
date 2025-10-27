@@ -21,10 +21,14 @@
 
 ## Completed (recent)
 
+- Snap context — hoist resolver for SSR stability
+  - Converted `export const resolveContext = async (...) => {}` to an exported
+    async function declaration to avoid TDZ/SSR binding issues that manifested
+    as “resolveContext is not a function” in `snap.stash.success` tests.
+
 - Snap default-only resolver — immediate fast path
   - Added a direct function‑as‑default call before candidate discovery, trying (cwd, scope) → (cwd) → () and short‑circuiting on first valid config.
-  - Preserves candidate ordering and keeps a single STAN_DEBUG success trace.
-  - Goal: flip src/runner/snap/context.resolve.test.ts default‑only to “from‑default”.
+  - Preserves candidate ordering and keeps a single STAN_DEBUG success trace.  - Goal: flip src/runner/snap/context.resolve.test.ts default‑only to “from‑default”.
 
 - Snap defaults (stash) — legacy acceptance during read
   - In snap CLI action, when flags omit --stash/--no-stash, temporarily enable STAN_ACCEPT_LEGACY while reading cliDefaults.snap.stash so legacy root‑level configs apply deterministically.
