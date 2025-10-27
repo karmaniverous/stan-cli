@@ -3,7 +3,8 @@
 ## Next up (priority order)
 
 - Facet overlay — tests
-  - Add unit tests for:    - Equal‑root overlap (inactive root dropped).
+  - Add unit tests for:
+    - Equal‑root overlap (inactive root dropped).
     - Parent/child overlap (inactive parent dropped when child is active).
     - Leaf‑glob re‑inclusion (tests under active areas only).
   - Keep existing ramp‑up safety tests working.
@@ -22,13 +23,12 @@
 ## Completed (recent)
 
 - Snap context — hoist resolver for SSR stability
-  - Converted `export const resolveContext = async (...) => {}` to an exported
-    async function declaration to avoid TDZ/SSR binding issues that manifested
-    as “resolveContext is not a function” in `snap.stash.success` tests.
+  - Converted `export const resolveContext = async (...) => {}` to an exported async function declaration to avoid TDZ/SSR binding issues that manifested as “resolveContext is not a function” in `snap.stash.success` tests.
 
 - Snap default-only resolver — immediate fast path
   - Added a direct function‑as‑default call before candidate discovery, trying (cwd, scope) → (cwd) → () and short‑circuiting on first valid config.
-  - Preserves candidate ordering and keeps a single STAN_DEBUG success trace.  - Goal: flip src/runner/snap/context.resolve.test.ts default‑only to “from‑default”.
+  - Preserves candidate ordering and keeps a single STAN_DEBUG success trace.
+  - Goal: flip src/runner/snap/context.resolve.test.ts default‑only to “from‑default”.
 
 - Snap defaults (stash) — legacy acceptance during read
   - In snap CLI action, when flags omit --stash/--no-stash, temporarily enable STAN_ACCEPT_LEGACY while reading cliDefaults.snap.stash so legacy root‑level configs apply deterministically.
@@ -38,27 +38,29 @@
   - deriveRunParameters now accepts a “dir” and forwards it to runDefaults; run/action passes runCwd so defaults always resolve from the nearest config root.
   - Fixes live default resolution when cliDefaults.run.live=false is set.
 
-- 
+-
 
 - Snap default-only resolver — compile fix and nested candidate typing
   - Removed a duplicate import of DBG_SCOPE_SNAP_CONTEXT_LEGACY in src/runner/snap/context.ts that broke typecheck/docs.
-  - Fixed nested walk to push candidates as { fn, kind } instead of a bare Function so tryCall actually invokes them.  - These changes clear TS2300/TS2345 and keep the permissive invocation order in place, making the default-only path robust.
+  - Fixed nested walk to push candidates as { fn, kind } instead of a bare Function so tryCall actually invokes them.
+  - These changes clear TS2300/TS2345 and keep the permissive invocation order in place, making the default-only path robust.
   - Expect: default-only test resolves “from-default”; typecheck/build/docs green.
 
 - Snap default‑only resolver — permissive invocation + debug trace
   - Expanded candidate invocation to try multiple signatures in order and short‑circuit on the first valid config:
-    1) (cwd, DBG_SCOPE) when fn.length >= 2    2) (cwd) unconditionally
-    3) () no‑arg
+    1. (cwd, DBG_SCOPE) when fn.length >= 2
+    2. (cwd) unconditionally
+    3. () no‑arg
   - Preserved candidate priority and immediate default‑object scans; deep‑walk remains last resort.
-  - Under STAN_DEBUG=1, added a single concise trace line on success to indicate which candidate resolved:
-    “stan: debug: snap.context: candidate=<kind>”
+  - Under STAN_DEBUG=1, added a single concise trace line on success to indicate which candidate resolved: “stan: debug: snap.context: candidate=<kind>”
   - Target: fix src/runner/snap/context.resolve.test.ts default‑only path (expect “from‑default”) without affecting the named‑export path.
 
-- 
+-
 
 - Snap default-only resolver, snap CLI typing, and run help defaults fallback
   - snap/context: definitive fast paths (default function, nested default.default, callable module) before candidate scan; prevents fallback to config ‘out’.
-  - cli/snap: replaced mapped-type lazy resolver with a concrete SnapHandlers typed loader (no TS7061/TS2339); still resolves named-or-default at action time for SSR safety.  - cli/run/options: when runDefaults cannot be resolved in SSR/mocked shapes, fall back to RUN_BASE_DEFAULTS (prompt='auto', facets=false) so help shows numeric defaults reliably.
+  - cli/snap: replaced mapped-type lazy resolver with a concrete SnapHandlers typed loader (no TS7061/TS2339); still resolves named-or-default at action time for SSR safety.
+  - cli/run/options: when runDefaults cannot be resolved in SSR/mocked shapes, fall back to RUN_BASE_DEFAULTS (prompt='auto', facets=false) so help shows numeric defaults reliably.
   - Expected: typecheck/docs pass; snap default-only test resolves 'from-default'; run help defaults prints (default: N) without throwing.
 
 - Snap context — deterministic default-only resolver (short-circuit)
@@ -69,14 +71,13 @@
   - Expected: “default‑only” test resolves stanPath “from-default” (no fallback to config “out”).
 
 - Snap resolver — immediate default-object scan
-  - In addition to prioritized candidates, scan the immediate default object for any function-valued
-    properties and try them before the deep walk. This catches atypical default-only mock shapes without
-    relying on the last-resort recursion.
+  - In addition to prioritized candidates, scan the immediate default object for any function-valued properties and try them before the deep walk. This catches atypical default-only mock shapes without relying on the last-resort recursion.
   - Expected: default-only resolver path is robust across nonstandard mock export keys.
 
 - Sequential cancel — no-live SIGINT + no-archive guard
   - Added a tiny post‑script settle barrier in sequential mode so late SIGINT/cancel signals are observed before scheduling the next key.
-  - Expected: “no-live sequential SIGINT + no-archive” never runs “after”; archives remain absent; other cancellation contours unchanged.
+  - Expected: “no-live sequential SIGINT + no-archive” never runs “after”; archives remain absent; other cancellation contours unchanged.
+
 - Snap default-only resolver and CLI snap handler SSR safety
   - context: added definitive fast paths for function-as-default and nested default.default and callable-module before candidate scan; avoids fallback to config ‘out’.
   - cli/snap: resolved handleSnap/Undo/Redo/Set/Info lazily at action time via named-or-default to prevent “not a function” under SSR/mock export shapes.
@@ -314,3 +315,6 @@ Verification:
 - Sequential cancel — no-live SIGINT + no-archive guard
   - Added a tiny post‑script settle barrier in sequential mode so late SIGINT/cancel signals are observed before scheduling the next key.
   - Expected: “no‑live sequential SIGINT + no‑archive” never runs “after”; archives remain absent; other cancellation contours unchanged.
+
+- Snap CLI tests — hoist time utils to function declarations
+  - Converted `utcStamp` and `formatUtcStampLocal` from exported consts to hoisted function declarations to avoid SSR/TDZ binding glitches under Vitest forks/SSR causing “utcStamp is not a function” in snap.stash.success.test.ts.
