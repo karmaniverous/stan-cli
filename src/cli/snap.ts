@@ -14,24 +14,33 @@ import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 
-// Lazy snap handlers resolver (SSR/ESM interop safety)
-const loadSnapHandler = async <
-  K extends 'handleSnap' | 'handleUndo' | 'handleRedo' | 'handleSet' | 'handleInfo',
->(
-  name: K,
+// Lazy snap handlers resolver (SSR/ESM interop safety) without mapped-type pitfalls
+type SnapHandlers = {
+  handleSnap?: (opts?: { stash?: boolean }) => Promise<void>;
+  handleUndo?: () => Promise<void>;
+  handleRedo?: () => Promise<void>;
+  handleSet?: (index: string) => Promise<void>;
+  handleInfo?: () => Promise<void>;
+};
+const loadSnapHandler = async (
+  name: keyof SnapHandlers,
 ): Promise<(...args: unknown[]) => Promise<void>> => {
-  const mod = (await import('@/runner/snap')) as unknown as {
-    [P in K]?: unknown;
-    default?: { [P in K]?: unknown };
+  const mod = (await import('@/runner/snap')) as unknown as SnapHandlers & {
+    default?: SnapHandlers;
   };
-  const fn =
-    typeof mod[name] === 'function'
-      ? (mod[name] as unknown)
-      : typeof mod.default?.[name] === 'function'
-        ? (mod.default?.[name] as unknown)
+  const anyMod = mod as unknown as {
+    [k: string]: unknown;
+    default?: { [k: string]: unknown };
+  };
+  const key = String(name);
+  const cand =
+    typeof anyMod[key] === 'function'
+      ? anyMod[key]
+      : typeof anyMod.default?.[key] === 'function'
+        ? anyMod.default?.[key]
         : undefined;
-  if (typeof fn !== 'function') throw new Error(`${name} not found`);
-  return fn as (...args: unknown[]) => Promise<void>;
+  if (typeof cand !== 'function') throw new Error(`${key} not found`);
+  return cand as (...args: unknown[]) => Promise<void>;
 };
 
 import * as cliUtils from './cli-utils';
@@ -229,8 +238,8 @@ export const registerSnap = (cli: Commander): Command => {
         const fromCli = src.getOptionValueSource?.('stash') === 'cli';
         if (fromCli) stashFinal = Boolean(opts?.stash);
         else {
-          const cli = loadCliConfigSync(process.cwd());
-          stashFinal = Boolean(cli.cliDefaults?.snap?.stash ?? false);
+          const cliCfg = loadCliConfigSync(process.cwd());
+          stashFinal = Boolean(cliCfg.cliDefaults?.snap?.stash ?? false);
         }
       } catch {
         /* ignore */

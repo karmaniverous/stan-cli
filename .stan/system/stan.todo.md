@@ -22,6 +22,12 @@
 
 ## Completed (recent)
 
+- Snap default-only resolver, snap CLI typing, and run help defaults fallback
+  - snap/context: definitive fast paths (default function, nested default.default, callable module) before candidate scan; prevents fallback to config ‘out’.
+  - cli/snap: replaced mapped-type lazy resolver with a concrete SnapHandlers typed loader (no TS7061/TS2339); still resolves named-or-default at action time for SSR safety.
+  - cli/run/options: when runDefaults cannot be resolved in SSR/mocked shapes, fall back to RUN_BASE_DEFAULTS (prompt='auto', facets=false) so help shows numeric defaults reliably.
+  - Expected: typecheck/docs pass; snap default-only test resolves 'from-default'; run help defaults prints (default: N) without throwing.
+
 - Snap default-only resolver and CLI snap handler SSR safety
   - context: added definitive fast paths for function-as-default and nested default.default and callable-module before candidate scan; avoids fallback to config ‘out’.
   - cli/snap: resolved handleSnap/Undo/Redo/Set/Info lazily at action time via named-or-default to prevent “not a function” under SSR/mock export shapes.
