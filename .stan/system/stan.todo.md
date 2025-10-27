@@ -2,6 +2,39 @@
 
 ## Next up (priority order)
 
+- Test failures tracker (ongoing; prove trajectory)
+  - Runner live defaults — cliDefaults.run.live=false not honored
+    - Symptom: src/cli/runner.live.defaults.test.ts “cliDefaults can disable live; CLI --live re-enables” expects behavior.live=false with no --live flag; received true.
+    - Current understanding:
+      - deriveRunParameters reads defaults via runDefaults() without an explicit repo root; in edge cases this can read the wrong cwd.
+      - Commander option‑source checks (getOptionValueSource('live') === 'cli') must gate the CLI override; otherwise defaults should drive behavior.
+    - Plan (prove and fix):
+      - Pass runCwd (directory of the resolved stan.config.*) to runDefaults in deriveRunParameters so defaults are read from the correct repo root.
+      - Add/confirm focused assertions:
+        - With cliDefaults.run.live=false and no --live/--no-live flags, behavior.live is false.
+        - With the same defaults, adding --live sets behavior.live to true.
+      - Success criteria: test passes; no regressions.
+    - What we tried so far: SSR guards and lazy config resolution are already in place; the remaining gap appears to be the explicit cwd parameter and option‑source gating.
+    - Status: pending (no code change applied yet).
+
+  - Snap context — default‑only effective resolver not chosen
+    - Symptom: src/runner/snap/context.resolve.test.ts “resolves using default export property” expects ‘from-default’; received ‘out’ (stanPath fallback).
+    - Current understanding:
+      - resolveContext performs a default‑function fast path when no named resolver is present, but then continues to scan candidates and throws “resolveEffectiveEngineConfig not found” if none are found — clobbering the earlier valid result and triggering the fallback.
+    - Plan (prove and fix):
+      - Short‑circuit after a successful default‑function resolution (do not require a second candidate pick).
+      - Keep the recursive candidate walker for other shapes (named / nested default.properties), but only run it when the fast path failed.
+      - Add/confirm a test covering:
+        - function‑as‑default (default: async () => config),
+        - nested default.default.resolveEffectiveEngineConfig.
+      - Success criteria: default‑only test passes; named‑only path remains green.
+    - What we tried so far: expanded candidate shapes (named, default, nested) and arity‑aware invocation; the remaining issue is the late throw that overrides a prior success.
+    - Status: pending (no code change applied yet).
+
+  - Evidence and acceptance
+    - After the two fixes above, re‑run the full suite; both failing tests should pass with no regressions.
+    - If desired, temporarily enable STAN_DEBUG=1 when running snap context tests to log which candidate was chosen; ensure this does not alter production behavior.
+
 - Facet overlay — tests
   - Add unit tests for:
     - Equal‑root overlap (inactive root dropped).
