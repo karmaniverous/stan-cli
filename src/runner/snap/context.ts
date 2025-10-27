@@ -62,29 +62,61 @@ export const resolveContext = async (
       '@/runner/config/effective'
     )) as unknown;
 
-    // Candidate caller (arity-aware: 0/1 args => cwd; 2+ => (cwd, scope)).
-    const tryCall = async (fnMaybe: unknown): Promise<ContextConfig | null> => {
-      if (typeof fnMaybe !== 'function') return null;
+    // Decide if we should print a single success trace when STAN_DEBUG=1.
+    const debugOn = (): boolean => process.env.STAN_DEBUG === '1';
+    const debugTrace = (kind: string): void => {
+      if (!debugOn()) return;
       try {
-        const declared = (fnMaybe as { length?: number }).length ?? 2;
-        const out =
-          declared <= 1
-            ? await (fnMaybe as (cwd: string) => Promise<ContextConfig>)(cwd)
-            : await (
-                fnMaybe as (
-                  cwd: string,
-                  scope?: string,
-                ) => Promise<ContextConfig>
-              )(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
-        if (
-          out &&
-          typeof out === 'object' &&
-          typeof (out as { stanPath?: unknown }).stanPath === 'string'
-        ) {
-          return out;
-        }
+        // concise, single-line marker for CI logs
+        console.error(`stan: debug: snap.context: candidate=${kind}`);
       } catch {
-        /* move to next candidate */
+        /* ignore */
+      }
+    };
+
+    // Candidate caller: try multiple signatures and short-circuit on first valid config.
+    const tryCall = async (
+      fnMaybe: unknown,
+      kind: string,
+    ): Promise<ContextConfig | null> => {
+      if (typeof fnMaybe !== 'function') return null;
+      const invoke = async (
+        ...args: unknown[]
+      ): Promise<ContextConfig | null> => {
+        try {
+          const out = await (fnMaybe as (...a: unknown[]) => unknown)(...args);
+          if (
+            out &&
+            typeof out === 'object' &&
+            typeof (out as { stanPath?: unknown }).stanPath === 'string'
+          ) {
+            return out as ContextConfig;
+          }
+        } catch {
+          /* try next signature */
+        }
+        return null;
+      };
+      // Prefer 2+ arity with scope when declared suggests it.
+      const declared = (fnMaybe as { length?: number }).length;
+      if (typeof declared === 'number' && declared >= 2) {
+        const a2 = await invoke(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
+        if (a2) {
+          debugTrace(kind);
+          return a2;
+        }
+      }
+      // Always try (cwd)
+      const a1 = await invoke(cwd);
+      if (a1) {
+        debugTrace(kind);
+        return a1;
+      }
+      // Finally, no-arg call
+      const a0 = await invoke();
+      if (a0) {
+        debugTrace(kind);
+        return a0;
       }
       return null;
     };
@@ -94,12 +126,13 @@ export const resolveContext = async (
       resolveEffectiveEngineConfig?: unknown;
       default?: { resolveEffectiveEngineConfig?: unknown; default?: unknown };
     };
-    const candidates: unknown[] = [];
+    const candidates: Array<{ fn: unknown; kind: string }> = [];
 
     // Prefer default‑only shapes first (matches common test/mock shapes):
     // 1) function‑as‑default
     const dAny = mod.default;
-    if (typeof dAny === 'function') candidates.push(dAny);
+    if (typeof dAny === 'function')
+      candidates.push({ fn: dAny, kind: 'default-fn' });
     // 2) default.resolveEffectiveEngineConfig
     const dObj =
       dAny && typeof dAny === 'object'
@@ -109,19 +142,28 @@ export const resolveContext = async (
           })
         : undefined;
     if (dObj && typeof dObj.resolveEffectiveEngineConfig === 'function') {
-      candidates.push(dObj.resolveEffectiveEngineConfig);
+      candidates.push({
+        fn: dObj.resolveEffectiveEngineConfig,
+        kind: 'default.resolve',
+      });
     }
     // 3) named export
     if (typeof mod.resolveEffectiveEngineConfig === 'function') {
-      candidates.push(mod.resolveEffectiveEngineConfig);
+      candidates.push({
+        fn: mod.resolveEffectiveEngineConfig,
+        kind: 'named',
+      });
     }
     // 4) nested default.default function (rare)
     if (dObj && typeof dObj.default === 'function') {
-      candidates.push(dObj.default);
+      candidates.push({ fn: dObj.default, kind: 'default.default-fn' });
     }
     // 5) module‑as‑function (edge mocks)
     if (typeof (mod as unknown) === 'function') {
-      candidates.push(mod as unknown as () => Promise<ContextConfig>);
+      candidates.push({
+        fn: mod as unknown as () => Promise<ContextConfig>,
+        kind: 'module-fn',
+      });
     }
 
     // Also scan the immediate default object for any function-valued properties.
@@ -131,8 +173,8 @@ export const resolveContext = async (
         for (const [, v] of Object.entries(dObj)) {
           if (typeof v === 'function') {
             // Avoid duplicate candidates (simple identity/label guard)
-            if (!candidates.includes(v)) {
-              candidates.push(v);
+            if (!candidates.some((c) => c.fn === v)) {
+              candidates.push({ fn: v, kind: 'default.obj-fn' });
             }
           }
         }
@@ -142,7 +184,7 @@ export const resolveContext = async (
     }
     // Try in order
     for (const c of candidates) {
-      const out = await tryCall(c);
+      const out = await tryCall(c.fn, c.kind);
       if (out) {
         engine = out;
         break;
@@ -155,16 +197,26 @@ export const resolveContext = async (
       const walk = (obj: unknown, depth = 0): void => {
         if (!obj || seen.has(obj) || depth > 3) return;
         seen.add(obj);
-        if (typeof obj === 'function') candidates.push(obj);
+        if (typeof obj === 'function')
+          candidates.push({
+            fn: obj,
+            kind: 'nested.fn',
+          });
         if (typeof obj !== 'object' && typeof obj !== 'function') return;
         const o = obj as { [k: string]: unknown };
         if (typeof o.resolveEffectiveEngineConfig === 'function')
-          candidates.push(o.resolveEffectiveEngineConfig);
+          candidates.push({
+            fn: o.resolveEffectiveEngineConfig,
+            kind: 'nested.resolve',
+          });
         if ('default' in o) walk(o.default, depth + 1);
       };
       walk(mod);
       for (const c of candidates) {
-        const out = await tryCall(c);
+        const out = await tryCall(
+          (c as { fn: unknown; kind?: string }).fn ?? c,
+          (c as { kind?: string }).kind ?? 'nested-fn',
+        );
         if (out) {
           engine = out;
           break;
