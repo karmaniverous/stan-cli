@@ -9,7 +9,7 @@
       - deriveRunParameters reads defaults via runDefaults() without an explicit repo root; in edge cases this can read the wrong cwd.
       - Commander option‑source checks (getOptionValueSource('live') === 'cli') must gate the CLI override; otherwise defaults should drive behavior.
     - Plan (prove and fix):
-      - Pass runCwd (directory of the resolved stan.config.*) to runDefaults in deriveRunParameters so defaults are read from the correct repo root.
+      - Pass runCwd (directory of the resolved stan.config.\*) to runDefaults in deriveRunParameters so defaults are read from the correct repo root.
       - Add/confirm focused assertions:
         - With cliDefaults.run.live=false and no --live/--no-live flags, behavior.live is false.
         - With the same defaults, adding --live sets behavior.live to true.
@@ -220,3 +220,13 @@
   - run/action: moved resolveEffectiveEngineConfig picking to action time (dynamic import named-or-default) with a minimal fallback, removing the last SSR import-time hazard in live defaults tests.
   - snap/context: removed the early-return expression, kept the function-as-default preference without short-circuiting, and fixed TS2322/await-thenable; continues to compute maxUndos after resolving engine.
   - Expectation: runner.live.defaults and snap resolver default-only now pass with typecheck/docs clean.
+
+- Runner session — hoist installExitHook to declaration (SSR stability)
+  - Problem: Vitest SSR/forks occasionally saw “installExitHook is not a function” due to const export evaluation timing.
+  - Change: converted export const installExitHook to an exported function declaration in src/runner/run/exit.ts.
+  - Effect: eliminates hoist timing hazard; no runtime behavior change; fixes runner/run.test.ts failures.
+
+- Snap context — default-only resolver guard (no late clobber)
+  - Problem: function‑as‑default resolver succeeded early but a later candidate scan threw “not found” and forced stanPath fallback.
+  - Change: record fast‑path success and use it when no later candidate succeeds; throw only when neither path resolves; no change to normal runtime resolution order.
+  - Effect: default‑only test resolves stanPath ‘from-default’; named‑only remains green.

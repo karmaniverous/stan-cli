@@ -57,6 +57,7 @@ export const resolveContext = async (
   // Engine context (namespaced or legacy), resolved lazily to avoid SSR/ESM
   // evaluation-order hazards during module import.
   let engine: ContextConfig;
+  let fastCfg: ContextConfig | null = null;
   try {
     const effMod = (await import('@/runner/config/effective')) as unknown;
 
@@ -105,11 +106,12 @@ export const resolveContext = async (
       if (typeof defMaybe === 'function') {
         const out = await tryCall(defMaybe);
         if (out) {
-          // Accept now; continue to read CLI config below for maxUndos.
-          engine = out;
+          // Record fast-path resolution; accept it later if no candidate wins.
+          fastCfg = out;
         }
       }
     }
+
     // Recursively enumerate plausible function candidates from the module and its nested defaults.
     const candidates: unknown[] = [];
     const seen = new Set<unknown>();
@@ -173,8 +175,16 @@ export const resolveContext = async (
       pickedCfg = await tryCall(c);
       if (pickedCfg) break;
     }
-    if (!pickedCfg) throw new Error('resolveEffectiveEngineConfig not found');
-    engine = pickedCfg;
+
+    if (!pickedCfg) {
+      if (fastCfg) {
+        engine = fastCfg;
+      } else {
+        throw new Error('resolveEffectiveEngineConfig not found');
+      }
+    } else {
+      engine = pickedCfg;
+    }
   } catch {
     // Minimal, safe fallback: derive stanPath only. This preserves snap
     // behavior even when the effective-config module cannot be resolved

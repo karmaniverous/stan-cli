@@ -13,9 +13,9 @@ export type UninstallExitHook = () => void;
  * @param cleanup - Function to invoke on exit/signals.
  * @returns Uninstall function to remove the hook.
  */
-export const installExitHook = (
+export function installExitHook(
   cleanup: () => void | Promise<void>,
-): UninstallExitHook => {
+): UninstallExitHook {
   // signal-exit returns an uninstaller function.
   return onExit(() => {
     try {
@@ -27,4 +27,4 @@ export const installExitHook = (
       // ignore
     }
   });
-};
+}
