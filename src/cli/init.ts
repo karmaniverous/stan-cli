@@ -55,6 +55,25 @@ export async function performInit(
 }
 
 export function registerInit(cli: Commander): Command {
+  // Hard guard: ensure parse normalization and exit override are present on the root
+  // before any SSR-sensitive resolution. Idempotent and safe.
+  try {
+    (
+      cliUtils as unknown as {
+        patchParseMethods?: (c: Command) => void;
+        installExitOverride?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(cli);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(cli);
+  } catch {
+    /* best-effort */
+  }
+
+  // SSR‑robust resolver as before (kept for parity and idempotency)
   {
     let applied = false;
     try {

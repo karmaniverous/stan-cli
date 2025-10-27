@@ -89,36 +89,37 @@ export const resolveContext = async (
       return null;
     };
 
-    // Build ordered candidates (short-circuit on first success).
+    // Build ordered candidates (short‑circuit on first success).
     const mod = effModUnknown as {
       resolveEffectiveEngineConfig?: unknown;
-      default?: { resolveEffectiveEngineConfig?: unknown };
+      default?: { resolveEffectiveEngineConfig?: unknown; default?: unknown };
     };
     const candidates: unknown[] = [];
 
-    // 1) named export
+    // Prefer default‑only shapes first (matches common test/mock shapes):
+    // 1) function‑as‑default
+    const dAny = mod.default;
+    if (typeof dAny === 'function') candidates.push(dAny);
+    // 2) default.resolveEffectiveEngineConfig
+    const dObj =
+      dAny && typeof dAny === 'object'
+        ? (dAny as {
+            resolveEffectiveEngineConfig?: unknown;
+            default?: unknown;
+          })
+        : undefined;
+    if (dObj && typeof dObj.resolveEffectiveEngineConfig === 'function') {
+      candidates.push(dObj.resolveEffectiveEngineConfig);
+    }
+    // 3) named export
     if (typeof mod.resolveEffectiveEngineConfig === 'function') {
       candidates.push(mod.resolveEffectiveEngineConfig);
     }
-    // 2) default.resolveEffectiveEngineConfig
-    const d = mod.default as
-      | {
-          resolveEffectiveEngineConfig?: unknown;
-          default?: unknown;
-        }
-      | undefined;
-    if (d && typeof d === 'object') {
-      const p = (d as { resolveEffectiveEngineConfig?: unknown })
-        .resolveEffectiveEngineConfig;
-      if (typeof p === 'function') candidates.push(p);
-    }
-    // 3) function-as-default (common mock shape)
-    if (typeof d === 'function') candidates.push(d);
     // 4) nested default.default function (rare)
-    if (d && typeof (d as { default?: unknown }).default === 'function') {
-      candidates.push((d as { default: unknown }).default);
+    if (dObj && typeof dObj.default === 'function') {
+      candidates.push(dObj.default);
     }
-    // 5) module-as-function (edge mocks)
+    // 5) module‑as‑function (edge mocks)
     if (typeof (mod as unknown) === 'function') {
       candidates.push(mod as unknown as () => Promise<ContextConfig>);
     }
@@ -132,7 +133,7 @@ export const resolveContext = async (
       }
     }
 
-    // As a last-resort, walk nested defaults a couple of levels to catch exotic shapes.
+    // As a last‑resort, walk nested defaults a couple of levels to catch exotic shapes.
     if (!engine) {
       const seen = new Set<unknown>();
       const walk = (obj: unknown, depth = 0): void => {

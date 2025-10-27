@@ -163,7 +163,20 @@ export const runDefaults = (
     facets?: boolean;
   } = {};
   try {
-    runIn = (loadCliConfigSync(dir).cliDefaults?.run ?? {}) as typeof runIn;
+    // Transitional: always accept legacy cliDefaults when present by
+    // temporarily enabling STAN_ACCEPT_LEGACY during the sync load.
+    const had = Object.prototype.hasOwnProperty.call(
+      process.env,
+      'STAN_ACCEPT_LEGACY',
+    );
+    const prev = process.env.STAN_ACCEPT_LEGACY;
+    try {
+      if (!had) process.env.STAN_ACCEPT_LEGACY = '1';
+      runIn = (loadCliConfigSync(dir).cliDefaults?.run ?? {}) as typeof runIn;
+    } finally {
+      if (!had) delete process.env.STAN_ACCEPT_LEGACY;
+      else process.env.STAN_ACCEPT_LEGACY = prev;
+    }
   } catch {
     // keep empty; use baselines
   }

@@ -30,14 +30,13 @@
 
 - Snap context — deterministic default-only resolver (short-circuit)
   - Simplified candidate ordering and short-circuit on first success:
-    1) named resolver, 2) default.resolveEffectiveEngineConfig,
-    3) function-as-default, 4) nested default.default, 5) module-as-function.
+    1. named resolver, 2) default.resolveEffectiveEngineConfig,
+    2. function-as-default, 4) nested default.default, 5) module-as-function.
   - Per-candidate try/catch; throw only when no candidate resolves; minimal stanPath fallback unchanged.
   - Expected: “default‑only” test resolves stanPath “from-default” (no fallback to config “out”).
 
 - Sequential cancel — no-live SIGINT + no-archive guard
-  - Added a tiny post‑script settle barrier in sequential mode so late SIGINT/cancel
-    signals are observed before scheduling the next key.
+  - Added a tiny post‑script settle barrier in sequential mode so late SIGINT/cancel signals are observed before scheduling the next key.
   - Expected: “no-live sequential SIGINT + no-archive” never runs “after”; archives remain absent; other cancellation contours unchanged.
 
 - Snap default-only resolver and CLI snap handler SSR safety
@@ -267,3 +266,13 @@ Verification:
 - Snap context — finalize default-only resolver; init hoist
   - snap/context: added definitive fast paths for function-as-default and nested default.default; try module-as-function before candidate scan. Keeps recursive scan only as fallback.
   - init CLI: hoisted registerInit export to a function declaration; retained idempotent parse normalization and exit override on root and subcommand for SSR/CLI safety.
+
+- Snap context — deterministic default-only resolver (short-circuit)
+  - Simplified candidate ordering and short‑circuit on first success:
+    - function‑as‑default, 2) default.resolveEffectiveEngineConfig,
+    - named resolver, 4) nested default.default, 5) module‑as‑function.
+  - Per‑candidate try/catch; throw only when no candidate resolves; minimal stanPath fallback unchanged.
+  - Expected: “default‑only” test resolves stanPath “from‑default” (no fallback to config “out”).
+- Sequential cancel — no-live SIGINT + no-archive guard
+  - Added a tiny post‑script settle barrier in sequential mode so late SIGINT/cancel signals are observed before scheduling the next key.
+  - Expected: “no‑live sequential SIGINT + no‑archive” never runs “after”; archives remain absent; other cancellation contours unchanged.
