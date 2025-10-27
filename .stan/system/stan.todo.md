@@ -2,39 +2,6 @@
 
 ## Next up (priority order)
 
-- Test failures tracker (ongoing; prove trajectory)
-  - Runner live defaults — cliDefaults.run.live=false not honored
-    - Symptom: src/cli/runner.live.defaults.test.ts “cliDefaults can disable live; CLI --live re-enables” expects behavior.live=false with no --live flag; received true.
-    - Current understanding:
-      - deriveRunParameters reads defaults via runDefaults() without an explicit repo root; in edge cases this can read the wrong cwd.
-      - Commander option‑source checks (getOptionValueSource('live') === 'cli') must gate the CLI override; otherwise defaults should drive behavior.
-    - Plan (prove and fix):
-      - Pass runCwd (directory of the resolved stan.config.\*) to runDefaults in deriveRunParameters so defaults are read from the correct repo root.
-      - Add/confirm focused assertions:
-        - With cliDefaults.run.live=false and no --live/--no-live flags, behavior.live is false.
-        - With the same defaults, adding --live sets behavior.live to true.
-      - Success criteria: test passes; no regressions.
-    - What we tried so far: SSR guards and lazy config resolution are already in place; the remaining gap appears to be the explicit cwd parameter and option‑source gating.
-    - Status: pending (no code change applied yet).
-
-  - Snap context — default‑only effective resolver not chosen
-    - Symptom: src/runner/snap/context.resolve.test.ts “resolves using default export property” expects ‘from-default’; received ‘out’ (stanPath fallback).
-    - Current understanding:
-      - resolveContext performs a default‑function fast path when no named resolver is present, but then continues to scan candidates and throws “resolveEffectiveEngineConfig not found” if none are found — clobbering the earlier valid result and triggering the fallback.
-    - Plan (prove and fix):
-      - Short‑circuit after a successful default‑function resolution (do not require a second candidate pick).
-      - Keep the recursive candidate walker for other shapes (named / nested default.properties), but only run it when the fast path failed.
-      - Add/confirm a test covering:
-        - function‑as‑default (default: async () => config),
-        - nested default.default.resolveEffectiveEngineConfig.
-      - Success criteria: default‑only test passes; named‑only path remains green.
-    - What we tried so far: expanded candidate shapes (named, default, nested) and arity‑aware invocation; the remaining issue is the late throw that overrides a prior success.
-    - Status: pending (no code change applied yet).
-
-  - Evidence and acceptance
-    - After the two fixes above, re‑run the full suite; both failing tests should pass with no regressions.
-    - If desired, temporarily enable STAN_DEBUG=1 when running snap context tests to log which candidate was chosen; ensure this does not alter production behavior.
-
 - Facet overlay — tests
   - Add unit tests for:
     - Equal‑root overlap (inactive root dropped).
@@ -248,3 +215,32 @@ Verification next step:
   - src/cli/runner.help.defaults.test.ts → should pass with runtime resolution.
   - src/cli/root.env.defaults.test.ts → should pass with SSR‑robust runDefaults/tagDefault.
   - Full suite sanity; expect green.
+
+- CLI init — unconditional parse safety (idempotent)
+  - Problem: “unknown command 'node'” in init wiring tests when parse normalization wasn’t installed due to SSR import shape races.
+  - Change: after robust resolver attempts, unconditionally (best‑effort) apply patchParseMethods and installExitOverride to the root and subcommand; these are idempotent.
+  - Effect: prevents spurious unknown‑command exits in tests; no runtime impact.
+
+- CLI patch — hoisted export and unconditional parse safety
+  - Problem: “registerPatch is not a function” under SSR due to const export timing; potential parse normalization gaps.
+  - Change: export registerPatch as a function declaration; additionally, unconditionally (best‑effort) apply parse normalization and exit override to root and sub (idempotent).
+  - Effect: stabilizes patch CLI tests; no runtime impact.
+
+- CLI run options — SSR‑robust defaults/help tagging
+  - Problem: direct named access to runDefaults/tagDefault can race under SSR.
+  - Change: resolve via named‑or‑default at use time; continue to resolve applyCliSafety robustly.
+  - Effect: keeps root.env.defaults and help‑defaults tests stable; no runtime impact.
+
+- Snap context — module‑as‑function and unconditional default‑function try
+  - Problem: default‑only mock shapes still fell back to config stanPath in rare cases.
+  - Change: always try effMod.default when it is a function (short‑circuit on success) and also try calling the module itself when it is a function before enumerating candidates.
+  - Effect: default‑only resolver stabilizes; named‑only path remains green.
+
+Verification:
+
+- Re‑run focused: snap/context.default‑only, cli/init, cli/patch.fileops‑only.
+- Full suite: expect green with no regressions.
+
+- Snap context — finalize default-only resolver; init hoist
+  - snap/context: added definitive fast paths for function-as-default and nested default.default; try module-as-function before candidate scan. Keeps recursive scan only as fallback.
+  - init CLI: hoisted registerInit export to a function declaration; retained idempotent parse normalization and exit override on root and subcommand for SSR/CLI safety.

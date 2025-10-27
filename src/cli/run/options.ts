@@ -8,6 +8,8 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 import * as cliUtils from '../cli-utils';
 type CliUtilsModule = typeof import('../cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
+type RunDefaultsFn = CliUtilsModule['runDefaults'];
+type TagDefaultFn = CliUtilsModule['tagDefault'];
 
 export type FlagPresence = {
   sawNoScriptsFlag: boolean;
@@ -191,14 +193,26 @@ export const registerRunOptions = (
   });
 
   // Effective defaults from config (cliDefaults.run) over baseline
-  const eff = cliUtils.runDefaults(process.cwd());
+  const runDefaultsResolved = resolveNamedOrDefaultFunction<RunDefaultsFn>(
+    cliUtils as unknown,
+    (m) => (m as CliUtilsModule).runDefaults,
+    (m) => (m as { default?: Partial<CliUtilsModule> }).default?.runDefaults,
+    'runDefaults',
+  );
+  const tagDefaultResolved = resolveNamedOrDefaultFunction<TagDefaultFn>(
+    cliUtils as unknown,
+    (m) => (m as CliUtilsModule).tagDefault,
+    (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
+    'tagDefault',
+  );
+  const eff = runDefaultsResolved(process.cwd());
 
   // Tag defaulted boolean choices with (default)
-  cliUtils.tagDefault(eff.archive ? optArchive : optNoArchive, true);
-  cliUtils.tagDefault(eff.combine ? optCombine : optNoCombine, true);
-  cliUtils.tagDefault(eff.keep ? optKeep : optNoKeep, true);
-  cliUtils.tagDefault(eff.sequential ? optSequential : optNoSequential, true);
-  cliUtils.tagDefault(eff.live ? optLive : optNoLive, true);
+  tagDefaultResolved(eff.archive ? optArchive : optNoArchive, true);
+  tagDefaultResolved(eff.combine ? optCombine : optNoCombine, true);
+  tagDefaultResolved(eff.keep ? optKeep : optNoKeep, true);
+  tagDefaultResolved(eff.sequential ? optSequential : optNoSequential, true);
+  tagDefaultResolved(eff.live ? optLive : optNoLive, true);
 
   // Show configured default for prompt (Commander will render "(default: value)")
   optPrompt.default(eff.prompt);

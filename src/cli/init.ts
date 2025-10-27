@@ -34,7 +34,7 @@ const performInitServiceResolved: PerformInitServiceFn | undefined = (() => {
  * @param cli - Commander root command.
  * @returns The same root command for chaining.
  */
-export const performInit = (
+export async function performInit(
   _cli: Command,
   opts: {
     cwd?: string;
@@ -42,7 +42,7 @@ export const performInit = (
     preserveScripts?: boolean;
     dryRun?: boolean;
   },
-): Promise<string | null> => {
+): Promise<string | null> {
   const fn = performInitServiceResolved;
   if (typeof fn === 'function') return fn(opts);
   // Fallback: attempt named access from the module (SSR edge), else null
@@ -51,12 +51,10 @@ export const performInit = (
       performInitService?: PerformInitServiceFn;
     }
   ).performInitService;
-  return typeof fallback === 'function'
-    ? fallback(opts)
-    : Promise.resolve(null);
-};
+  return typeof fallback === 'function' ? fallback(opts) : null;
+}
 
-export const registerInit = (cli: Commander): Command => {
+export function registerInit(cli: Commander): Command {
   {
     let applied = false;
     try {
@@ -93,6 +91,22 @@ export const registerInit = (cli: Commander): Command => {
         /* best-effort */
       }
     }
+  }
+  // Final safety: unconditionally ensure parse normalization and exit override (idempotent).
+  try {
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+        patchParseMethods?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(cli);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(cli);
+  } catch {
+    /* best-effort */
   }
 
   const sub = cli
@@ -138,6 +152,22 @@ export const registerInit = (cli: Commander): Command => {
       }
     }
   }
+  // Final safety on subcommand as well (idempotent).
+  try {
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+        patchParseMethods?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(sub);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(sub);
+  } catch {
+    /* best-effort */
+  }
 
   sub
     .option(
@@ -173,4 +203,4 @@ export const registerInit = (cli: Commander): Command => {
   );
 
   return cli;
-};
+}

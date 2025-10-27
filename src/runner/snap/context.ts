@@ -105,7 +105,22 @@ export const resolveContext = async (
       if (typeof defMaybe === 'function') {
         const out = await tryCall(defMaybe);
         if (out) {
+          // Accept immediately; skip deeper candidate scan.
           engine = out;
+        }
+      }
+    }
+
+    // If still unresolved, try treating the module itself as a function (some mocks export a callable module).
+    if (!engine) {
+      const modAsFn = effMod;
+      if (
+        typeof (modAsFn as { length?: number }) === 'number' ||
+        typeof modAsFn === 'function'
+      ) {
+        if (typeof modAsFn === 'function') {
+          const out = await tryCall(modAsFn);
+          if (out) engine = out;
         }
       }
     }
@@ -154,6 +169,7 @@ export const resolveContext = async (
               // Prepend to bias default-only shapes toward the intended resolver in tests/SSR.
               candidates.unshift(d);
             }
+            // Some shapes use a callable default nested deeper; include module-as-function via nested defaults too (walk handles).
             // Walk default
             walk(d, depth + 1);
             // Some shapes use default.default chains

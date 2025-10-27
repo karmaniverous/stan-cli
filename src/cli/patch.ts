@@ -25,7 +25,7 @@ type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
  * Register the `patch` subcommand on the provided root CLI. *
  * @param cli - Commander root command. * @returns The same root command for chaining.
  */
-export const registerPatch = (cli: Command): Command => {
+export function registerPatch(cli: Command): Command {
   // Best‑effort: do not throw if resolution fails in a mocked/SSR environment.
   {
     let applied = false;
@@ -64,6 +64,22 @@ export const registerPatch = (cli: Command): Command => {
         /* best-effort */
       }
     }
+  }
+  // Final safety: unconditionally ensure parse normalization and exit override (idempotent).
+  try {
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+        patchParseMethods?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(cli);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(cli);
+  } catch {
+    /* best-effort */
   }
 
   const sub = cli
@@ -138,6 +154,22 @@ export const registerPatch = (cli: Command): Command => {
       }
     }
   }
+  // Final safety on subcommand as well (idempotent).
+  try {
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+        patchParseMethods?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(sub);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(sub);
+  } catch {
+    /* best-effort */
+  }
 
   sub.action(
     async (
@@ -208,4 +240,4 @@ export const registerPatch = (cli: Command): Command => {
   );
 
   return cli;
-};
+}
