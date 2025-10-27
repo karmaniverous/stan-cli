@@ -318,3 +318,6 @@ Verification:
 
 - Snap CLI tests — hoist time utils to function declarations
   - Converted `utcStamp` and `formatUtcStampLocal` from exported consts to hoisted function declarations to avoid SSR/TDZ binding glitches under Vitest forks/SSR causing “utcStamp is not a function” in snap.stash.success.test.ts.
+
+- Root env defaults — legacy acceptance guard
+  - rootDefaults now temporarily enables STAN_ACCEPT_LEGACY while reading cliDefaults so legacy root-level `debug`/`boring` are honored until configs are fully namespaced. Fixes root.env.defaults test expectations.

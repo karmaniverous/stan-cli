@@ -123,11 +123,25 @@ export const rootDefaults = (
   let boringDefault = false;
   let yesDefault = false;
   try {
-    const cli = loadCliConfigSync(dir).cliDefaults;
-    debugDefault = Boolean(cli?.debug ?? false);
-    boringDefault = Boolean(cli?.boring ?? false);
-    // "yes" is not part of the canonical schema; keep a permissive read for transition.
-    yesDefault = Boolean((cli as { yes?: boolean } | undefined)?.yes ?? false);
+    // Transitional: accept legacy top-level cliDefaults by temporarily enabling STAN_ACCEPT_LEGACY.
+    const had = Object.prototype.hasOwnProperty.call(
+      process.env,
+      'STAN_ACCEPT_LEGACY',
+    );
+    const prev = process.env.STAN_ACCEPT_LEGACY;
+    try {
+      if (!had) process.env.STAN_ACCEPT_LEGACY = '1';
+      const cli = loadCliConfigSync(dir).cliDefaults;
+      debugDefault = Boolean(cli?.debug ?? false);
+      boringDefault = Boolean(cli?.boring ?? false);
+      // "yes" is not part of the canonical schema; keep a permissive read for transition.
+      yesDefault = Boolean(
+        (cli as { yes?: boolean } | undefined)?.yes ?? false,
+      );
+    } finally {
+      if (!had) delete process.env.STAN_ACCEPT_LEGACY;
+      else process.env.STAN_ACCEPT_LEGACY = prev;
+    }
   } catch {
     // built-ins only
   }
