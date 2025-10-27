@@ -132,12 +132,10 @@ export const rootDefaults = (
     try {
       if (!had) process.env.STAN_ACCEPT_LEGACY = '1';
       const cli = loadCliConfigSync(dir).cliDefaults;
-      debugDefault = Boolean(cli?.debug ?? false);
-      boringDefault = Boolean(cli?.boring ?? false);
+      debugDefault = cli?.debug ?? false;
+      boringDefault = cli?.boring ?? false;
       // "yes" is not part of the canonical schema; keep a permissive read for transition.
-      yesDefault = Boolean(
-        (cli as { yes?: boolean } | undefined)?.yes ?? false,
-      );
+      yesDefault = (cli as { yes?: boolean } | undefined)?.yes ?? false;
     } finally {
       if (!had) delete process.env.STAN_ACCEPT_LEGACY;
       else process.env.STAN_ACCEPT_LEGACY = prev;

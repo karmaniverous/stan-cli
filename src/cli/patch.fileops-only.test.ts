@@ -12,7 +12,7 @@ vi.mock('@karmaniverous/stan-core', async (importOriginal) => {
   return {
     __esModule: true,
     ...actual,
-    executeFileOps: async () => ({ ok: true, results: [] }),
+    executeFileOps: () => Promise.resolve({ ok: true, results: [] }),
   };
 });
 

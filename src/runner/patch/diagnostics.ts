@@ -101,7 +101,7 @@ export const composeDiffFailureEnvelope = (
   for (const c of caps) {
     const first =
       (c.stderr ?? '').split(/\r?\n/).find((l) => l.trim().length) ?? '';
-    lines.push(`${c.label ?? 'git'}: exit ${c.code ?? 0} — ${first}`);
+    lines.push(`${c.label ?? 'git'}: exit ${String(c.code ?? 0)} — ${first}`);
   }
   for (const f of out?.js?.failed ?? []) {
     lines.push(`jsdiff: ${f.path ?? '(unknown)'}: ${f.reason ?? ''}`);

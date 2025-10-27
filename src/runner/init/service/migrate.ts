@@ -120,7 +120,7 @@ export async function maybeMigrateLegacyToNamespaced(
     if (hasOwn(base, k) && !hasOwn(coreNode, k)) {
       coreNode[k] = base[k];
     }
-    if (hasOwn(base, k)) delete base[k];
+    if (hasOwn(base, k)) Reflect.deleteProperty(base, k);
   }
 
   // Move CLI keys (root -> stan-cli) when not already set under stan-cli.
@@ -128,7 +128,7 @@ export async function maybeMigrateLegacyToNamespaced(
     if (hasOwn(base, k) && !hasOwn(cliNode, k)) {
       cliNode[k] = base[k];
     }
-    if (hasOwn(base, k)) delete base[k];
+    if (hasOwn(base, k)) Reflect.deleteProperty(base, k);
   }
 
   // Special: legacy opts.cliDefaults -> stan-cli.cliDefaults

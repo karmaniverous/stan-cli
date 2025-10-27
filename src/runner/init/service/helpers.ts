@@ -18,20 +18,19 @@ export const ensureNsNode = (
 };
 
 /** Ensure key exists without reordering existing keys. */
-export const ensureKey = <T>(
+export const ensureKey = (
   obj: Record<string, unknown>,
   key: string,
-  value: T,
+  value: unknown,
 ): void => {
-  if (!Object.prototype.hasOwnProperty.call(obj, key))
-    obj[key] = value as unknown;
+  if (!Object.prototype.hasOwnProperty.call(obj, key)) obj[key] = value;
 };
 
 /** Set key value without changing object key order. */
-export const setKey = <T>(
+export const setKey = (
   obj: Record<string, unknown>,
   key: string,
-  value: T,
+  value: unknown,
 ): void => {
-  obj[key] = value as unknown;
+  obj[key] = value;
 };

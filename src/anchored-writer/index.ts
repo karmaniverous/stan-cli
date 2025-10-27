@@ -15,7 +15,7 @@ const CSI = '\x1b['; // Control Sequence Introducer
 const hideCursor = `${CSI}?25l`;
 const showCursor = `${CSI}?25h`;
 const eraseToEOL = `${CSI}K`;
-const moveUpToBOL = (n: number) => (n > 0 ? `${CSI}${n}F` : ''); // to previous line(s), column 1
+const moveUpToBOL = (n: number) => (n > 0 ? `${CSI}${String(n)}F` : ''); // to previous line(s), column 1
 const nextLine = `${CSI}1E`; // move cursor to next line, column 1
 
 export const createAnchoredWriter = (): AnchoredWriter => {

@@ -36,7 +36,10 @@ describe('patch help shows default file from cliDefaults.patch.file', () => {
   it('prints (DEFAULT: <path>) in -f option description', () => {
     const cli = new Command();
     registerPatch(cli);
-    const sub = cli.commands.find((c) => c.name() === 'patch')!;
+    const sub = cli.commands.find((c) => c.name() === 'patch');
+    if (!sub) {
+      throw new Error('patch subcommand not registered');
+    }
     const out = sub.helpInformation();
     // Help lines may wrap; allow newlines between DEFAULT: and the path.
     expect(out).toMatch(

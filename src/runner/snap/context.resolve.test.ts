@@ -31,7 +31,8 @@ describe('snap context: lazy resolver (named-or-default)', () => {
     vi.doMock('@/runner/config/effective', async () =>
       asEsmModule({
         // named-only export
-        resolveEffectiveEngineConfig: async () => ({ stanPath: 'from-named' }),
+        resolveEffectiveEngineConfig: () =>
+          Promise.resolve({ stanPath: 'from-named' }),
       }),
     );
     const { resolveContext } = (await import('@/runner/snap/context')) as {
@@ -51,9 +52,10 @@ describe('snap context: lazy resolver (named-or-default)', () => {
     vi.doMock('@/runner/config/effective', async () =>
       asEsmModule({
         // default itself is the resolver function
-        default: async () => ({
-          stanPath: 'from-default',
-        }),
+        default: () =>
+          Promise.resolve({
+            stanPath: 'from-default',
+          }),
       }),
     );
     const { resolveContext } = (await import('@/runner/snap/context')) as {

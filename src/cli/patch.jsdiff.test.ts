@@ -13,12 +13,13 @@ vi.resetModules();
 vi.doMock('./apply', async () =>
   asEsmModule({
     buildApplyAttempts: () => [],
-    runGitApply: async () => ({
-      ok: false,
-      tried: ['3way-nowarn-p1', '3way-ignore-p1', 'reject-nowarn-p1'],
-      lastCode: 1,
-      captures: [],
-    }),
+    runGitApply: () =>
+      Promise.resolve({
+        ok: false,
+        tried: ['3way-nowarn-p1', '3way-ignore-p1', 'reject-nowarn-p1'],
+        lastCode: 1,
+        captures: [],
+      }),
   }),
 );
 

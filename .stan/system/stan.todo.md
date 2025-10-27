@@ -3,12 +3,10 @@
 ## Next up (priority order)
 
 - Lint remediation (strict typed rules)
-  - Remove unnecessary Boolean()/String() wrappers where types are already boolean/string.
-  - Replace numeric template-literal interpolations flagged by restrict-template-expressions with String(n) (only when not already string).
+  - Sweep remaining “no-unnecessary-condition” and unnecessary optional chaining.
   - Eliminate unnecessary optional chaining and “no-unnecessary-condition” cases; simplify truthiness checks.
   - Fix tests flagged by require-await (drop async or add awaited ticks) and add at least one assertion where required.
   - Avoid non-null assertions in tests; prefer guarded access or expect().toBeDefined().
-  - Sweep for “invalid type of template literal expression” by converting numbers to strings explicitly.
   - Iterate: npm run lint:fix, then npm run lint; keep changes in small, reviewable chunks.
 
 - Knip follow-up (cosmetic)
@@ -17,6 +15,16 @@
 ---
 
 ## Completed (append-only, most recent items last)
+
+- Lint: numeric templates + wrappers
+  - Wrapped numeric template-literal interpolations with String(...) in anchored-writer, run logs, time helpers, archive fast-path, and diagnostics.
+  - Removed unnecessary Boolean/String wrappers in cli-utils root defaults.
+  - Adjusted tests/mocks to avoid require-await and non-null assertions where flagged.
+- Migrate helpers and delete style
+  - Replaced dynamic delete with Reflect.deleteProperty in config migration helper.
+  - Removed single-use generics in init helpers to satisfy no-unnecessary-type-parameters.
+- SSR/ESM robustness
+  - Hardened run subcommand registration to resolve named-or-default exports for options/actions, reducing “registerRunAction not found” under SSR.
 
 - ESLint config migration — strict TS flat config + typecheck fix
   - Replaced JS config with strict TS flat config aligned to stan-core.

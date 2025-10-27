@@ -4,7 +4,7 @@
 export function utcStamp(): string {
   const d = new Date();
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(
+  return `${String(d.getUTCFullYear())}${pad(d.getUTCMonth() + 1)}${pad(
     d.getUTCDate(),
   )}-${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
 }
@@ -23,7 +23,7 @@ export function formatUtcStampLocal(ts: string): string {
   const dt = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
   // Fixed-width local: YYYY-MM-DD HH:MM:SS
   const pad = (n: number) => n.toString().padStart(2, '0');
-  const yyyy = dt.getFullYear();
+  const yyyy = dt.getFullYear().toString();
   const MM = pad(dt.getMonth() + 1);
   const DD = pad(dt.getDate());
   const HH = pad(dt.getHours());

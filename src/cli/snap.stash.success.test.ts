@@ -31,7 +31,7 @@ vi.mock('@/runner/diff', () => ({
 // Mock runGit in the snap layer to force success for stash and pop
 vi.mock('@/runner/snap/git', () => ({
   __esModule: true,
-  runGit: async () => ({ code: 0, stdout: '', stderr: '' }),
+  runGit: () => Promise.resolve({ code: 0, stdout: '', stderr: '' }),
 }));
 
 // Dynamic loader to ensure mocks are installed before the CLI registers actions

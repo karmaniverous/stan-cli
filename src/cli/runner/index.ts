@@ -3,6 +3,8 @@
  */
 import type { Command } from 'commander';
 
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
+
 // SSR/CJS-robust resolver for registerRunAction: prefer named, fall back to default.registerRunAction.
 import * as runActionMod from '../run/action';
 import * as runOptionsMod from '../run/options';
@@ -10,38 +12,32 @@ import * as runOptionsMod from '../run/options';
 type ActionModule = typeof import('../run/action');
 type RegisterRunActionFn = ActionModule['registerRunAction'];
 const getRegisterRunAction = (): RegisterRunActionFn => {
-  const mod = runActionMod as unknown as {
-    registerRunAction?: unknown;
-    default?: { registerRunAction?: unknown };
-  };
-  const named = mod?.registerRunAction;
-  const viaDefault = mod?.default?.registerRunAction;
-  const fn =
-    typeof named === 'function'
-      ? (named as RegisterRunActionFn)
-      : typeof viaDefault === 'function'
-        ? (viaDefault as RegisterRunActionFn)
-        : undefined;
-  if (!fn) throw new Error('registerRunAction not found');
-  return fn;
+  try {
+    return resolveNamedOrDefaultFunction<RegisterRunActionFn>(
+      runActionMod as unknown,
+      (m) => (m as ActionModule).registerRunAction,
+      (m) =>
+        (m as { default?: Partial<ActionModule> }).default?.registerRunAction,
+      'registerRunAction',
+    );
+  } catch {
+    throw new Error('registerRunAction not found');
+  }
 };
 type OptionsModule = typeof import('../run/options');
 type RegisterRunOptionsFn = OptionsModule['registerRunOptions'];
 const getRegisterRunOptions = (): RegisterRunOptionsFn => {
-  const mod = runOptionsMod as unknown as {
-    registerRunOptions?: unknown;
-    default?: { registerRunOptions?: unknown };
-  };
-  const named = mod?.registerRunOptions;
-  const viaDefault = mod?.default?.registerRunOptions;
-  const fn =
-    typeof named === 'function'
-      ? (named as RegisterRunOptionsFn)
-      : typeof viaDefault === 'function'
-        ? (viaDefault as RegisterRunOptionsFn)
-        : undefined;
-  if (!fn) throw new Error('registerRunOptions not found');
-  return fn;
+  try {
+    return resolveNamedOrDefaultFunction<RegisterRunOptionsFn>(
+      runOptionsMod as unknown,
+      (m) => (m as OptionsModule).registerRunOptions,
+      (m) =>
+        (m as { default?: Partial<OptionsModule> }).default?.registerRunOptions,
+      'registerRunOptions',
+    );
+  } catch {
+    throw new Error('registerRunOptions not found');
+  }
 };
 
 /**

@@ -94,7 +94,7 @@ export const archivePhase = async (
         opts?.progress?.start?.('full');
         const startedFull = Date.now();
         const fullPath = path.join(dirs.output, 'archive.tar');
-        await writeFile(fullPath, `TAR-${stamp}`, 'utf8');
+        await writeFile(fullPath, `TAR-${String(stamp)}`, 'utf8');
         opts?.progress?.done?.('full', fullPath, startedFull, Date.now());
         created.archivePath = fullPath;
         if (!silent) {
@@ -112,7 +112,7 @@ export const archivePhase = async (
         opts?.progress?.start?.('diff');
         const startedDiff = Date.now();
         const diffPath = path.join(dirs.output, 'archive.diff.tar');
-        await writeFile(diffPath, `TAR-DIFF-${stamp}`, 'utf8');
+        await writeFile(diffPath, `TAR-DIFF-${String(stamp)}`, 'utf8');
         opts?.progress?.done?.('diff', diffPath, startedDiff, Date.now());
         created.diffPath = diffPath;
         if (!silent) {
