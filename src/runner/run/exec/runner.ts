@@ -157,6 +157,12 @@ export const runScripts = async (
       if (typeof shouldContinue === 'function') {
         await yieldToEventLoop();
         if (!shouldContinue()) break;
+        // Extra settle: absorb late SIGINT/cancel completions before the next spawn.
+        // Particularly important for no-live sequential SIGINT + no-archive.
+        await pause(Math.max(5, preSpawnGuardMs() / 2));
+        if (!shouldContinue()) break;
+        await yieldToEventLoop();
+        if (!shouldContinue()) break;
       }
     }
   } else {

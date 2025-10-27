@@ -57,150 +57,103 @@ export const resolveContext = async (
   // Engine context (namespaced or legacy), resolved lazily to avoid SSR/ESM
   // evaluation-order hazards during module import.
   let engine: ContextConfig | undefined;
-  const fastCfg: ContextConfig | null = null;
   try {
-    const effMod = (await import('@/runner/config/effective')) as unknown;
+    const effModUnknown = (await import(
+      '@/runner/config/effective'
+    )) as unknown;
 
+    // Candidate caller (arity-aware: 0/1 args => cwd; 2+ => (cwd, scope)).
     const tryCall = async (fnMaybe: unknown): Promise<ContextConfig | null> => {
       if (typeof fnMaybe !== 'function') return null;
       try {
-        // Arity-aware invocation:
-        // - fn.length is the number of declared parameters (not counting rest).
-        // - If the function declares 0 or 1 parameters, pass only cwd.
-        // - Otherwise, pass (cwd, scope) for resolvers that accept the debug scope.
         const declared = (fnMaybe as { length?: number }).length ?? 2;
-        let out: unknown;
-        if (declared <= 1) {
-          out = await (fnMaybe as (cwd: string) => Promise<ContextConfig>)(cwd);
-        } else {
-          out = await (
-            fnMaybe as (cwd: string, scope?: string) => Promise<ContextConfig>
-          )(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
-        }
+        const out =
+          declared <= 1
+            ? await (fnMaybe as (cwd: string) => Promise<ContextConfig>)(cwd)
+            : await (
+                fnMaybe as (
+                  cwd: string,
+                  scope?: string,
+                ) => Promise<ContextConfig>
+              )(cwd, DBG_SCOPE_SNAP_CONTEXT_LEGACY);
         if (
           out &&
           typeof out === 'object' &&
           typeof (out as { stanPath?: unknown }).stanPath === 'string'
         ) {
-          // Safe after the stanPath contract check; normalize to ContextConfig for TS.
-          return out as ContextConfig;
+          return out;
         }
       } catch {
-        // continue to next candidate
+        /* move to next candidate */
       }
       return null;
     };
 
-    // Fast path: if there is no visible named resolver and default is a function,
-    // prefer it and accept immediately (skip deeper candidate scan).
-    const hasNamed =
-      typeof (effMod as { resolveEffectiveEngineConfig?: unknown })
-        .resolveEffectiveEngineConfig === 'function' ||
-      typeof (
-        (effMod as { default?: { resolveEffectiveEngineConfig?: unknown } })
-          .default ?? {}
-      ).resolveEffectiveEngineConfig === 'function';
-    if (!hasNamed) {
-      const defMaybe = (effMod as { default?: unknown }).default;
-      if (typeof defMaybe === 'function') {
-        const out = await tryCall(defMaybe);
-        if (out) {
-          // Accept immediately; skip deeper candidate scan.
-          engine = out;
+    // Build ordered candidates (short-circuit on first success).
+    const mod = effModUnknown as {
+      resolveEffectiveEngineConfig?: unknown;
+      default?: { resolveEffectiveEngineConfig?: unknown };
+    };
+    const candidates: unknown[] = [];
+
+    // 1) named export
+    if (typeof mod.resolveEffectiveEngineConfig === 'function') {
+      candidates.push(mod.resolveEffectiveEngineConfig);
+    }
+    // 2) default.resolveEffectiveEngineConfig
+    const d = mod.default as
+      | {
+          resolveEffectiveEngineConfig?: unknown;
+          default?: unknown;
         }
+      | undefined;
+    if (d && typeof d === 'object') {
+      const p = (d as { resolveEffectiveEngineConfig?: unknown })
+        .resolveEffectiveEngineConfig;
+      if (typeof p === 'function') candidates.push(p);
+    }
+    // 3) function-as-default (common mock shape)
+    if (typeof d === 'function') candidates.push(d);
+    // 4) nested default.default function (rare)
+    if (d && typeof (d as { default?: unknown }).default === 'function') {
+      candidates.push((d as { default: unknown }).default);
+    }
+    // 5) module-as-function (edge mocks)
+    if (typeof (mod as unknown) === 'function') {
+      candidates.push(mod as unknown as () => Promise<ContextConfig>);
+    }
+
+    // Try in order
+    for (const c of candidates) {
+      const out = await tryCall(c);
+      if (out) {
+        engine = out;
+        break;
       }
     }
 
-    // If still unresolved, try treating the module itself as a function (some mocks export a callable module).
+    // As a last-resort, walk nested defaults a couple of levels to catch exotic shapes.
     if (!engine) {
-      const modAsFn = effMod;
-      if (
-        typeof (modAsFn as { length?: number }) === 'number' ||
-        typeof modAsFn === 'function'
-      ) {
-        if (typeof modAsFn === 'function') {
-          const out = await tryCall(modAsFn);
-          if (out) engine = out;
-        }
-      }
-    }
-
-    // If fast path already resolved, skip scanning candidates.
-    if (!engine) {
-      // Recursively enumerate plausible function candidates from the module and its nested defaults.
-      const candidates: unknown[] = [];
       const seen = new Set<unknown>();
       const walk = (obj: unknown, depth = 0): void => {
-        if (!obj || seen.has(obj) || depth > 4) return;
+        if (!obj || seen.has(obj) || depth > 3) return;
         seen.add(obj);
-
-        // Direct function candidate
-        if (typeof obj === 'function') {
-          candidates.push(obj);
-        }
-
+        if (typeof obj === 'function') candidates.push(obj);
         if (typeof obj !== 'object' && typeof obj !== 'function') return;
         const o = obj as { [k: string]: unknown };
-
-        // Named resolver export
-        if (typeof o.resolveEffectiveEngineConfig === 'function') {
+        if (typeof o.resolveEffectiveEngineConfig === 'function')
           candidates.push(o.resolveEffectiveEngineConfig);
-        }
-
-        // Explore nested default(s)
-        if ('default' in o) {
-          const d = o.default;
-          if (d) {
-            if (
-              typeof (d as { resolveEffectiveEngineConfig?: unknown })
-                .resolveEffectiveEngineConfig === 'function'
-            ) {
-              candidates.push(
-                (
-                  d as {
-                    resolveEffectiveEngineConfig: unknown;
-                  }
-                ).resolveEffectiveEngineConfig,
-              );
-            }
-            // Function-as-default (common mock shape): include directly as a candidate.
-            // Prefer it earlier when no named resolver is present by placing it first.
-            if (typeof d === 'function') {
-              // Prepend to bias default-only shapes toward the intended resolver in tests/SSR.
-              candidates.unshift(d);
-            }
-            // Some shapes use a callable default nested deeper; include module-as-function via nested defaults too (walk handles).
-            // Walk default
-            walk(d, depth + 1);
-            // Some shapes use default.default chains
-            if (
-              typeof d === 'object' &&
-              d &&
-              'default' in (d as { [k: string]: unknown })
-            ) {
-              walk((d as { default?: unknown }).default, depth + 1);
-            }
-          }
-        }
+        if ('default' in o) walk(o.default, depth + 1);
       };
-
-      walk(effMod);
-
-      let pickedCfg: ContextConfig | null = null;
+      walk(mod);
       for (const c of candidates) {
-        pickedCfg = await tryCall(c);
-        if (pickedCfg) break;
-      }
-
-      if (!pickedCfg) {
-        if (fastCfg) {
-          engine = fastCfg;
-        } else {
-          throw new Error('resolveEffectiveEngineConfig not found');
+        const out = await tryCall(c);
+        if (out) {
+          engine = out;
+          break;
         }
-      } else {
-        engine = pickedCfg;
       }
+      if (!engine) throw new Error('resolveEffectiveEngineConfig not found');
     }
   } catch {
     // Minimal, safe fallback: derive stanPath only. This preserves snap

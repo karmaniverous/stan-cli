@@ -28,6 +28,18 @@
   - cli/run/options: when runDefaults cannot be resolved in SSR/mocked shapes, fall back to RUN_BASE_DEFAULTS (prompt='auto', facets=false) so help shows numeric defaults reliably.
   - Expected: typecheck/docs pass; snap default-only test resolves 'from-default'; run help defaults prints (default: N) without throwing.
 
+- Snap context — deterministic default-only resolver (short-circuit)
+  - Simplified candidate ordering and short-circuit on first success:
+    1) named resolver, 2) default.resolveEffectiveEngineConfig,
+    3) function-as-default, 4) nested default.default, 5) module-as-function.
+  - Per-candidate try/catch; throw only when no candidate resolves; minimal stanPath fallback unchanged.
+  - Expected: “default‑only” test resolves stanPath “from-default” (no fallback to config “out”).
+
+- Sequential cancel — no-live SIGINT + no-archive guard
+  - Added a tiny post‑script settle barrier in sequential mode so late SIGINT/cancel
+    signals are observed before scheduling the next key.
+  - Expected: “no-live sequential SIGINT + no-archive” never runs “after”; archives remain absent; other cancellation contours unchanged.
+
 - Snap default-only resolver and CLI snap handler SSR safety
   - context: added definitive fast paths for function-as-default and nested default.default and callable-module before candidate scan; avoids fallback to config ‘out’.
   - cli/snap: resolved handleSnap/Undo/Redo/Set/Info lazily at action time via named-or-default to prevent “not a function” under SSR/mock export shapes.
