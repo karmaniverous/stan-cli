@@ -23,7 +23,7 @@ export const renderSummary = (
   const sep = ' • ';
   if (boring) {
     return [
-      `${elapsed}`,
+      elapsed,
       `waiting ${counts.waiting.toString()}`,
       `running ${counts.running.toString()}`,
       `quiet ${counts.quiet.toString()}`,
@@ -36,7 +36,7 @@ export const renderSummary = (
     ].join(sep);
   }
   return [
-    `${elapsed}`,
+    elapsed,
     cancel(`⏸︎ ${counts.waiting.toString()}`),
     go(`▶︎ ${counts.running.toString()}`),
     alert(`⏱︎ ${counts.quiet.toString()}`),

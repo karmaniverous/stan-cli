@@ -47,7 +47,7 @@ export const applyInteractiveChoices = async (args: {
   // Scripts (preserve optional)
   const preserving =
     (picked as { preserveScripts?: boolean }).preserveScripts === true ||
-    preserveScripts === true;
+    preserveScripts;
   if (namespaced) {
     const cli = ensureNsNode(base, 'stan-cli');
     if (!preserving) cli.scripts = picked.scripts;

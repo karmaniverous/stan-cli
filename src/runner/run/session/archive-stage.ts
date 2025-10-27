@@ -76,9 +76,12 @@ export const runArchiveStage = async (args: {
     anchors: config.anchors ?? [],
   };
   const progress = {
-    start: (k: 'full' | 'diff') => ui.onArchiveStart(k),
-    done: (k: 'full' | 'diff', p: string, s: number, e: number) =>
-      ui.onArchiveEnd(k, p, cwd, s, e),
+    start: (k: 'full' | 'diff') => {
+      ui.onArchiveStart(k);
+    },
+    done: (k: 'full' | 'diff', p: string, s: number, e: number) => {
+      ui.onArchiveEnd(k, p, cwd, s, e);
+    },
   } as const;
 
   // Ephemeral = non-local source file (e.g., core/path) provided for this run

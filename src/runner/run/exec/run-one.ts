@@ -175,10 +175,12 @@ export const runOne = async (
   }
 
   const exitCode = await new Promise<number>((resolveP, rejectP) => {
-    child.on('error', (e) =>
-      rejectP(e instanceof Error ? e : new Error(String(e))),
-    );
-    child.on('close', (code) => resolveP(code ?? 0));
+    child.on('error', (e) => {
+      rejectP(e instanceof Error ? e : new Error(String(e)));
+    });
+    child.on('close', (code) => {
+      resolveP(code ?? 0);
+    });
   });
   if (interval) clearInterval(interval);
   if (killTimer) clearTimeout(killTimer);

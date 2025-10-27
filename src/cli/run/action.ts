@@ -270,7 +270,7 @@ export const registerRunAction = (
         lines.push(`overlay: ${overlay.enabled ? 'on' : 'off'}`);
         if (overlay.enabled) {
           const inactive = Object.entries(overlay.effective)
-            .filter(([, v]) => v === false)
+            .filter(([, v]) => !v)
             .map(([k]) => k);
           const auto = overlay.autosuspended;
           const anchorsTotal = Object.values(overlay.anchorsKeptCounts).reduce(

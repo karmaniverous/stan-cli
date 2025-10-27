@@ -67,7 +67,7 @@ export const composeFileOpsFailuresEnvelope = (
   for (const r of results) {
     if (r.status === 'failed') {
       const tgt =
-        r.verb === 'mv' ? `${r.src ?? ''} ${r.dest ?? ''}` : `${r.src ?? ''}`;
+        r.verb === 'mv' ? `${r.src ?? ''} ${r.dest ?? ''}` : (r.src ?? '');
       const extra =
         r.errno || r.message
           ? ` — ${r.errno ?? ''} ${r.message ?? ''}`.trim()

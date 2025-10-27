@@ -51,9 +51,9 @@ export const resolvePromptSource = (
     }
     return {
       abs: localAbs,
-      display: `${path
+      display: path
         .join(stanPath, 'system', 'stan.system.md')
-        .replace(/\\/g, '/')}`,
+        .replace(/\\/g, '/'),
       kind: 'local',
     };
   }
@@ -75,9 +75,9 @@ export const resolvePromptSource = (
     if (existsSync(localAbs)) {
       return {
         abs: localAbs,
-        display: `${path
+        display: path
           .join(stanPath, 'system', 'stan.system.md')
-          .replace(/\\/g, '/')}`,
+          .replace(/\\/g, '/'),
         kind: 'local',
       };
     }
@@ -94,7 +94,7 @@ export const resolvePromptSource = (
       if (cliAbs && existsSync(cliAbs)) {
         return {
           abs: cliAbs,
-          display: `${cliAbs.replace(/\\/g, '/')}`,
+          display: cliAbs.replace(/\\/g, '/'),
           kind: 'path',
         };
       }
@@ -115,7 +115,7 @@ export const resolvePromptSource = (
   }
   return {
     abs: pathAbs,
-    display: `${pathAbs.replace(/\\/g, '/')}`,
+    display: pathAbs.replace(/\\/g, '/'),
     kind: 'path',
   };
 };

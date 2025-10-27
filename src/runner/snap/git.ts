@@ -40,5 +40,7 @@ export const runGit = async (cwd: string, args: string[]): Promise<RunResult> =>
       stderr += s;
       if (process.env.STAN_DEBUG === '1') process.stderr.write(s);
     });
-    child.on('close', (code) => resolve({ code: code ?? 0, stdout, stderr }));
+    child.on('close', (code) => {
+      resolve({ code: code ?? 0, stdout, stderr });
+    });
   });

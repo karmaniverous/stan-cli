@@ -26,8 +26,8 @@ export const ensureStanGitignore = async (
     `${rel('patch')}/`,
     // System files: ephemeral state/metadata should never be committed.
     // Keep these gitignored explicitly (and add deterministically if absent).
-    `${rel('system/facet.state.json')}`,
-    `${rel('system/.docs.meta.json')}`,
+    rel('system/facet.state.json'),
+    rel('system/.docs.meta.json'),
   ];
 
   let gi = existsSync(giPath) ? await readFile(giPath, 'utf8') : '';

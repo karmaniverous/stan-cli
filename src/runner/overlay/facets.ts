@@ -145,7 +145,7 @@ export const computeFacetOverlay = async (
   // Precompute active subtree roots across all facets (for tie-breakers and scoped anchors).
   const activeRoots = new Set<string>();
   for (const name of facetNames) {
-    const isActive = effective[name] !== false;
+    const isActive = effective[name];
     const exRoots = collectSubtreeRoots(meta[name]?.exclude);
     if (isActive) for (const r of exRoots) activeRoots.add(posix(r));
   }
@@ -183,7 +183,7 @@ export const computeFacetOverlay = async (
 
   // Ramp-up safety + excludes aggregation
   for (const name of facetNames) {
-    const isActive = effective[name] !== false;
+    const isActive = effective[name];
     const excludes = (meta[name]?.exclude ?? []).map(posix);
     const exRoots = excludes
       .filter(isSubtreePattern)

@@ -21,7 +21,7 @@ When decomposing a file named `X.ts`:
 
 This convention keeps module boundaries clear, avoids duplicate barrels (file and folder), and makes refactors predictable. Apply this consistently for new decompositions and when regularizing legacy ones.
 
-## SSR/ESM test‑stability playbook (Vitest Option 1)
+## SSR/ESM test‑stability playbook
 
 When tests run under Vitest SSR and worker forks, import‑time evaluation order and export shape can differ from Node runtime. Use this playbook to keep tests deterministic without changing runtime behavior:
 

@@ -14,6 +14,12 @@ This plan tracks near‑term and follow‑through work for the stan‑core engin
 
 ## Completed (recent)
 
+- Test stability + lint config: classifier resolver and Prettier config
+  - Resolved a Vitest SSR hazard by resolving `classifyForArchive` at action time using a named‑or‑default dynamic import pattern in both archive and diff paths.
+  - Converted `eslint-config-prettier` to a static import in `eslint.config.ts` (no need for dynamic import).
+  - Integrated an engine‑focused “SSR/ESM test‑stability” section into the project prompt to codify these patterns.
+  - Outcome: fixes “classifyForArchive is not a function” in `src/stan/archive.test.ts`; preserves runtime behavior; keeps engine presentation‑free.
+
 - Patch engine — preserve leading dot in “.stan/…” creation paths
   - Fixed path normalization in jsdiff fallback and last‑resort creation fallback to strip only a literal “./” and preserve “.stan/...”.
   - Added focused tests:

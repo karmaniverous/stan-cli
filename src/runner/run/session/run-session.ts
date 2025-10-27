@@ -122,15 +122,23 @@ export const runSessionOnce = async (args: {
   // Wire UI cancellation keys (q/r)
   try {
     ui.installCancellation(
-      () => cancelCtl.triggerCancel(),
-      liveEnabled ? () => cancelCtl.triggerRestart() : undefined,
+      () => {
+        cancelCtl.triggerCancel();
+      },
+      liveEnabled
+        ? () => {
+            cancelCtl.triggerRestart();
+          }
+        : undefined,
     );
   } catch {
     /* ignore */
   }
 
   // Session-wide SIGINT → cancel (parity)
-  const onSigint = (): void => cancelCtl.triggerCancel();
+  const onSigint = (): void => {
+    cancelCtl.triggerCancel();
+  };
 
   // Exit hook: stop UI, cancel, pause stdin — best-effort
   const detachSignals = attachSessionSignals(onSigint, async () => {

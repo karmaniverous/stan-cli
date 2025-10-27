@@ -37,7 +37,11 @@ export const confirmLoopReversal = async (): Promise<boolean> => {
     output: process.stdout,
   });
   const q = (s: string) =>
-    new Promise<string>((res) => rl.question(s, (a) => res(a)));
+    new Promise<string>((res) => {
+      rl.question(s, (a) => {
+        res(a);
+      });
+    });
   const a = (await q(msg)).trim();
   rl.close();
 

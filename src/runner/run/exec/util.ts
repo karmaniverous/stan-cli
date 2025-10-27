@@ -11,8 +11,10 @@ export const waitForStreamClose = (
   stream: NodeJS.WritableStream,
 ): Promise<void> =>
   new Promise<void>((resolveP, rejectP) => {
-    stream.on('close', () => resolveP());
-    stream.on('error', (e) =>
-      rejectP(e instanceof Error ? e : new Error(String(e))),
-    );
+    stream.on('close', () => {
+      resolveP();
+    });
+    stream.on('error', (e) => {
+      rejectP(e instanceof Error ? e : new Error(String(e)));
+    });
   });

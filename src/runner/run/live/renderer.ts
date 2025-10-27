@@ -73,7 +73,9 @@ export class ProgressRenderer {
     if (this.timer) return;
     if (!this.writer) this.writer = createAnchoredWriter();
     this.writer.start();
-    this.timer = setInterval(() => this.render(), this.opts.refreshMs);
+    this.timer = setInterval(() => {
+      this.render();
+    }, this.opts.refreshMs);
   }
 
   /** Clear any rendered output without persisting it. */
