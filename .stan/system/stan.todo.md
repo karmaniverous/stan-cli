@@ -153,3 +153,7 @@
   - src/runner/run/cancel.matrix.test.ts: add inline disable for vitest/valid-title on dynamic test names.
   - src/runner/run/prompt.resolve.plan.test.ts: remove unused mkdir import.
   - Scope: no behavior changes; reduces lint noise while we continue broader optional‑chain/condition cleanup.
+
+- SSR fallback — registerRun wiring
+  - src/cli/runner/index.ts: add the same tryResolveNamedOrDefault wrapper for registerRunAction and registerRunOptions so overlay mapping and CLI runner wiring are robust under SSR.
+  - Resolves “registerRunAction not found” in overlay excludes mapping tests.
