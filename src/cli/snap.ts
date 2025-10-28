@@ -178,6 +178,20 @@ export function registerSnap(cli: Commander): Command {
       }
     }
   }
+  // Final safety (idempotent): ensure normalization/exit override on root
+  try {
+    (
+      cliUtils as unknown as {
+        patchParseMethods?: (c: Command) => void;
+        installExitOverride?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(cli);
+    (
+      cliUtils as unknown as { installExitOverride?: (c: Command) => void }
+    ).installExitOverride?.(cli);
+  } catch {
+    /* best‑effort */
+  }
   const sub = cli
     .command('snap')
     .description(
@@ -220,6 +234,23 @@ export function registerSnap(cli: Commander): Command {
         /* best-effort */
       }
     }
+  }
+
+  // Final safety on subcommand as well (idempotent).
+  try {
+    (
+      cliUtils as unknown as {
+        patchParseMethods?: (c: Command) => void;
+        installExitOverride?: (c: Command) => void;
+      }
+    ).patchParseMethods?.(sub as unknown as Command);
+    (
+      cliUtils as unknown as {
+        installExitOverride?: (c: Command) => void;
+      }
+    ).installExitOverride?.(sub as unknown as Command);
+  } catch {
+    /* best‑effort */
   }
 
   sub

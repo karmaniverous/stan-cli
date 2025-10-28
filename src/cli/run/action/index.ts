@@ -8,6 +8,7 @@ import { CommanderError } from 'commander';
 import { runDefaults } from '@/cli/cli-utils';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runSelected } from '@/runner/run';
@@ -17,11 +18,7 @@ import { updateDocsMetaOverlay } from '@/runner/system/docs-meta';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
-import {
-  loadCliConfigSyncLazy,
-  loadDeriveRunParameters,
-  resolveEngineConfigLazy,
-} from './loaders';
+import { loadCliConfigSyncLazy, loadDeriveRunParameters } from './loaders';
 import { buildOverlayInputs } from './overlay';
 import { getOptionSource, toStringArray } from './util';
 
@@ -30,6 +27,35 @@ export const registerRunAction = (
   getFlagPresence: () => FlagPresence,
 ): void => {
   cmd.action(async (options: Record<string, unknown>) => {
+    // Resolve engine config lazily with SSR‑robust named‑or‑default selection.
+    const getResolveEngineConfig = async (): Promise<
+      (cwd: string) => Promise<ContextConfig>
+    > => {
+      const mod = (await import('./loaders')) as unknown;
+      try {
+        return resolveNamedOrDefaultFunction<
+          (c: string) => Promise<ContextConfig>
+        >(
+          mod,
+          (m) =>
+            (m as { resolveEngineConfigLazy?: unknown })
+              .resolveEngineConfigLazy as
+              | ((c: string) => Promise<ContextConfig>)
+              | undefined,
+          (m) =>
+            (m as { default?: { resolveEngineConfigLazy?: unknown } }).default
+              ?.resolveEngineConfigLazy as
+              | ((c: string) => Promise<ContextConfig>)
+              | undefined,
+          'resolveEngineConfigLazy',
+        );
+      } catch (e) {
+        const def = (mod as { default?: unknown }).default;
+        if (typeof def === 'function')
+          return def as unknown as (c: string) => Promise<ContextConfig>;
+        throw e instanceof Error ? e : new Error(String(e));
+      }
+    };
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
       getFlagPresence();
     // Authoritative conflict handling: -S cannot be combined with -s/-x
@@ -48,7 +74,8 @@ export const registerRunAction = (
     // Early legacy-engine notice remains in options preAction hook; here we resolve
     // effective engine context (namespaced or legacy) for the runner.
     await peekAndMaybeDebugLegacy(DBG_SCOPE_RUN_ENGINE_LEGACY, runCwd);
-    const config: ContextConfig = await resolveEngineConfigLazy(runCwd);
+    const resolveEngineConfig = await getResolveEngineConfig();
+    const config: ContextConfig = await resolveEngineConfig(runCwd);
 
     // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
     const cliCfg = await loadCliConfigSyncLazy(runCwd);

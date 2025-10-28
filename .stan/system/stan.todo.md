@@ -17,13 +17,11 @@
 ## Completed (append-only, most recent items last)
 
 - Snap “set” navigation — pass raw CLI string
-  - Reverted numeric coercion in `snap set` handler; always forward the raw string
-    to history so 0-based navigation semantics match tests and prior design.
+  - Reverted numeric coercion in `snap set` handler; always forward the raw string to history so 0-based navigation semantics match tests and prior design.
   - File: `src/cli/snap.ts`.
 
 - Init resolver SSR fallback
-  - Added default-as-function fallback for `registerInit` in `src/cli/index.ts`
-    (parity with registerPatch) to fix legacy/mocked export shapes in tests.
+  - Added default-as-function fallback for `registerInit` in `src/cli/index.ts` (parity with registerPatch) to fix legacy/mocked export shapes in tests.
 
 - Facet overlay — fix inactive subtree & leaf‑glob handling
   - Expand inactive facet subtree roots to deny‑list globs (root → root/\*\*) before passing to the engine so entire subtrees are actually dropped.
@@ -223,11 +221,15 @@
 
 - CLI robustness — patch + snap UX
   - src/cli/index.ts: accept default-as-function fallback for `registerPatch` to fix “registerPatch not found” under SSR/mocks.
-  - src/cli/snap.ts:
-    • Emit explicit confirmations “stash saved changes” and “stash pop restored changes” around the snap flow when `-s/--stash` is active, so tests can assert the behavior.
-    • Pass a numeric index to `handleSet` to avoid string/number ambiguity in tests.
+  - src/cli/snap.ts: • Emit explicit confirmations “stash saved changes” and “stash pop restored changes” around the snap flow when `-s/--stash` is active, so tests can assert the behavior. • Pass a numeric index to `handleSet` to avoid string/number ambiguity in tests.
 
 - SSR robustness — hoist snap registration
-  - src/cli/snap.ts: convert `registerSnap` from a const arrow to a function declaration
-    to avoid “registerSnap is not a function” under Vitest SSR/mocks (TDZ/cycle hazards).
-  - Aligns with prior hoists (deriveRunParameters, color helpers).
+  - src/cli/snap.ts: convert `registerSnap` from a const arrow to a function declaration to avoid “registerSnap is not a function” under Vitest SSR/mocks (TDZ/cycle hazards).
+  - Aligns with prior hoists (deriveRunParameters, color helpers).
+
+- Run action SSR fallback (engine config)
+  - Resolve `resolveEngineConfigLazy` at action time with a named‑or‑default picker (callable default fallback) to fix “not a function” under SSR/mocks.
+  - File: `src/cli/run/action/index.ts`.
+
+- Snap CLI safety (root/sub)
+  - Apply parse normalization and exit override unconditionally on root and sub after best‑effort resolution to prevent “unknown command 'node'”.
