@@ -12,9 +12,9 @@ import { loadCliConfigSync } from '@/cli/config/load';
 export const renderAvailableScriptsHelp = (cwd: string): string => {
   try {
     const cfg = loadCliConfigSync(cwd);
-    const keys = Object.keys(cfg.scripts ?? {});
+    const keys = Object.keys(cfg.scripts);
     if (!keys.length) return '';
-    const example = keys[0] ?? 'lint';
+    const example = keys[0] || 'lint';
     return [
       '',
       'Default: runs all scripts and writes archives.',

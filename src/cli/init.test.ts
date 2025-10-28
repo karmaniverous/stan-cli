@@ -10,8 +10,6 @@ import { rmDirWithRetries } from '@/test';
 
 import { performInit, registerInit } from './init';
 
-const read = (p: string) => readFile(p, 'utf8');
-
 describe('init helpers', () => {
   let dir: string;
 
@@ -46,5 +44,8 @@ describe('init helpers', () => {
     registerInit(cli);
     // Dry parse without invoking built-in help to avoid process.exit
     await cli.parseAsync(['node', 'stan', 'init', '--force'], { from: 'user' });
+    // Assert subcommand presence to satisfy expect-expect
+    const names = cli.commands.map((c) => c.name());
+    expect(names).toContain('init');
   });
 });

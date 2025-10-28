@@ -11,7 +11,11 @@ const promptMock = vi.fn();
 vi.mock('inquirer', () => ({
   __esModule: true,
   default: {
-    prompt: (...args: unknown[]) => promptMock(...args),
+    // Ensure the mocked prompt has a Promise return type to quell unsafe-any returns.
+    // The mock is configured via mockResolvedValue in tests.
+    prompt: (...args: unknown[]): Promise<unknown> => {
+      return promptMock(...args) as unknown as Promise<unknown>;
+    },
   },
 }));
 

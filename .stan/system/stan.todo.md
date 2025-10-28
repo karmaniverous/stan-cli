@@ -113,4 +113,13 @@
 - Lint sweep — require‑await + boolean conversion
   - src/cli/snap.defaults.test.ts: replace async vi.fn with non‑async returning Promise.resolve(); reference param to satisfy no‑unused‑vars.
   - src/runner/patch/service.ts: drop Boolean(res.ok) in favor of res.ok.
-  - Next: continue removing unnecessary optional chaining and no‑unnecessary‑condition across CLI runner and tests.
+  - Next: continue removing unnecessary optional chaining and no‑unnecessary‑condition across CLI runner and tests.
+
+- Lint/tests — first sweep fixes
+  - runner/help.ts: remove unnecessary nullish coalescing (scripts always defined); use simple fallback for example.
+  - cli/init.test.ts: add minimal assertion to satisfy vitest/expect-expect; remove unused helper.
+  - runner/overlay/facets.test.ts: remove unused rm import.
+  - init prompts tests: make inquirer mock return Promise<unknown> to address unsafe return of any in:
+    - src/runner/init/prompts.test.ts,
+    - src/runner/init/service.behavior.test.ts.
+  - Scope: incremental; further sweeps will remove remaining unnecessary optional chaining/conditions across CLI runner and session code.

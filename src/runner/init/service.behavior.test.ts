@@ -14,7 +14,11 @@ const writeUtf8 = (p: string, s: string) => writeFile(p, s, 'utf8');
 const promptMock = vi.fn();
 vi.mock('inquirer', () => ({
   __esModule: true,
-  default: { prompt: (...args: unknown[]) => promptMock(...args) },
+  default: {
+    prompt: (...args: unknown[]): Promise<unknown> => {
+      return promptMock(...args) as unknown as Promise<unknown>;
+    },
+  },
 }));
 
 describe('init service behavior (preserve config, migrate opts.cliDefaults, same path/format)', () => {
