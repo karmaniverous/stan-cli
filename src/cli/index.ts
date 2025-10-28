@@ -54,7 +54,7 @@ try {
     (m) => (m as { default?: Partial<PatchModule> }).default?.registerPatch,
     'registerPatch',
   );
-} catch (e) {
+} catch {
   // Extra SSR/mocks fallbacks; swallow on failure (subcommand is optional for tests that don't need it).
   try {
     const def = (patchMod as unknown as { default?: unknown }).default;

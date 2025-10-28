@@ -79,7 +79,7 @@ export function deriveRunInvocation(args: {
     config,
   } = args;
 
-  const allKeys = Object.keys(config?.scripts ?? {});
+  const allKeys = Object.keys(config.scripts ?? {});
   const known = new Set(allKeys);
 
   const scriptsList = dedupePreserve(
@@ -118,3 +118,10 @@ export function deriveRunInvocation(args: {
 
   return { selection: selected, mode, behavior };
 }
+
+// SSR/ESM interop: also export a default object exposing the same API.
+// This helps tests/environments that import a default-shaped module.
+const _defaultExport = {
+  deriveRunInvocation,
+};
+export default _defaultExport;

@@ -243,3 +243,11 @@
   - Created src/cli/snap/: index.ts (registry), safety.ts (idempotent exit/argv guards), handlers.ts (lazy SSR‑robust resolvers), options.ts (stash flags default tagging), action.ts (header/loop guard, stash flow, capture).
   - Preserved SSR safety patterns and concise stash confirmations; retained raw string semantics for “set <index>”.
   - Import stability: “./snap” now targets the folder barrel (index.ts); no call site changes required.
+
+- Tests — stabilize deriveRunInvocation import shape under SSR (runner.combine)
+  - src/cli/run-args.ts: keep the named export and add a default export object that exposes deriveRunInvocation for SSR/default-shaped imports.
+  - Fixes “deriveRunInvocation is not a function” in CLI combine tests under Vitest SSR.
+
+- Lint — src/cli/index.ts cleanup
+  - Remove unused catch parameter in SSR/mocks fallback for registerPatch resolution to satisfy @typescript-eslint/no-unused-vars.
+  - No behavior change; keep SSR resilience intact.
