@@ -96,6 +96,7 @@ describe('cancellation matrix (live/no-live × mode × signal × archive)', () =
     // Keypress requires a TTY; skip invalid combos early.
     if (!c.live && c.cancel === 'keypress') continue;
 
+    // eslint-disable-next-line vitest/valid-title
     it(c.label, async () => {
       // TTY for live, non-TTY otherwise
       try {

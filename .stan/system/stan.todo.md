@@ -128,4 +128,10 @@
   - src/runner/run.combine.archive.behavior.test.ts: dynamically resolve createArchive/createArchiveDiff using named-or-default pattern to fix “not a function” under SSR.
 
 - Lint — remove unused import
-  - src/cli/init.test.ts: drop unused readFile import.
+  - src/cli/init.test.ts: drop unused readFile import.
+
+- Lint/tests — small sweep
+  - src/runner/run.combine.archive.behavior.test.ts: remove unused imports (ContextConfig, runSelected).
+  - src/runner/run/cancel.matrix.test.ts: add inline disable for vitest/valid-title on dynamic test names.
+  - src/runner/run/prompt.resolve.plan.test.ts: remove unused mkdir import.
+  - Scope: no behavior changes; reduces lint noise while we continue broader optional‑chain/condition cleanup.
