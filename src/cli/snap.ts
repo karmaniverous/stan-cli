@@ -244,12 +244,7 @@ export function registerSnap(cli: Commander): Command {
     .description('Jump to a specific snapshot index and restore it')
     .action(async (indexArg: string) => {
       const fn = await loadSnapHandler('handleSet');
-      // Pass a numeric index (tests expect numeric handling).
-      const idx =
-        typeof indexArg === 'string' && indexArg.trim().length
-          ? Number.parseInt(indexArg, 10)
-          : Number.NaN;
-      await fn(Number.isFinite(idx) ? idx : indexArg);
+      await fn(indexArg);
     });
 
   sub
