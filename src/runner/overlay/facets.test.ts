@@ -60,9 +60,9 @@ describe('computeFacetOverlay', () => {
     // effective: a=true (override), b=false (override)
     expect(out.effective.a).toBe(true);
     expect(out.effective.b).toBe(false);
-    // anchors union contains both facet anchors
+    // anchors union contains facet anchors plus the always-anchored facet state file
     expect(out.anchorsOverlay.sort()).toEqual(
-      ['foo/README.md', 'docs/KEEP.md'].sort(),
+      ['foo/README.md', 'docs/KEEP.md', 'stan/system/facet.state.json'].sort(),
     );
     // excludes overlay includes root for b only (inactive with present anchor)
     // stripGlobTail('docs/**') -> 'docs'
@@ -115,7 +115,9 @@ describe('computeFacetOverlay', () => {
     expect(out.anchorsKeptCounts).toMatchObject({ x: 1, y: 0 });
     // excludes overlay is empty; anchorsOverlay still announced
     expect(out.excludesOverlay).toEqual([]);
-    expect(out.anchorsOverlay.sort()).toEqual(['x/A.md', 'y/B.md'].sort());
+    expect(out.anchorsOverlay.sort()).toEqual(
+      ['x/A.md', 'y/B.md', 'stan/system/facet.state.json'].sort(),
+    );
   });
 
   it('naked -f (activate all) overrides state for this run', async () => {
@@ -154,7 +156,9 @@ describe('computeFacetOverlay', () => {
     // Inactive 'docs' root from b is dropped because a has same active root.
     expect(out.excludesOverlay).toEqual([]);
     // Anchors union remains
-    expect(out.anchorsOverlay.sort()).toEqual(['docs/KEEP.md'].sort());
+    expect(out.anchorsOverlay.sort()).toEqual(
+      ['docs/KEEP.md', 'stan/system/facet.state.json'].sort(),
+    );
   });
 
   it('enabled-wins: drop inactive parent when active child root is present', async () => {
@@ -182,7 +186,11 @@ describe('computeFacetOverlay', () => {
     expect(out.excludesOverlay).toEqual([]);
     // Anchors union includes both
     expect(out.anchorsOverlay.sort()).toEqual(
-      ['packages/app/ANCHOR.md', 'packages/KEEP.md'].sort(),
+      [
+        'packages/app/ANCHOR.md',
+        'packages/KEEP.md',
+        'stan/system/facet.state.json',
+      ].sort(),
     );
   });
 

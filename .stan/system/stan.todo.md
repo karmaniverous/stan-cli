@@ -166,3 +166,10 @@
   - Always re-include (anchor) `.stan/system/facet.state.json` so it appears in every full archive, regardless of .gitignore.
   - Declared next-run defaults in `.stan/system/facet.state.json`: `"run": true` and all other facets disabled (`false`) to narrow iteration context.
   - Updated requirements to record the archive-inclusion rule for `facet.state.json`.
+
+- Overlay anchor tests + snap capture path fix
+  - Updated facet overlay tests to include the always-anchored `stan/system/facet.state.json` in `anchorsOverlay` expectations.
+  - Replaced `within(...)` with `path.join(...)` in `src/runner/snap/capture.ts` to eliminate a non-existent import and fix SSR/runtime error “within is not a function”.
+  - Keeps test stability and documents the new invariant that `facet.state.json` is present in full archives regardless of .gitignore.
+
+- Amendment: overlay tests updated to explicitly include the always-anchored "stan/system/facet.state.json" in anchorsOverlay expectations across all relevant cases (overlay enabled/disabled and enabled-wins scenarios). Also narrowed facet defaults in facet.state.json so only the "run" facet is enabled by default (tests, snap disabled) to keep the context tight.
