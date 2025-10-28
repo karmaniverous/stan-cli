@@ -41,7 +41,15 @@
   },
   "tests": {
     "exclude": ["**/*.test.ts", "src/test/**", "src/test-support/**"],
-    "include": ["README.md", "src/test/setup.ts", "src/test-support/run.ts"]
+    "include": [
+      "README.md",
+      "src/test/setup.ts",
+      "src/test-support/run.ts",
+      "src/cli/init.test.ts",
+      "src/cli/root.env.defaults.test.ts",
+      "src/cli/runner.live.defaults.test.ts",
+      "src/runner/run/warn.logger.test.ts"
+    ]
   },
   "vscode": {
     "exclude": [".vscode/**"],
