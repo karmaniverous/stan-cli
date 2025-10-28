@@ -25,16 +25,24 @@ type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 const applySafetyLocal = (cmd: Command): void => {
   // Normalize ["node","stan", ...] → [...]
   const normalizeArgv = (
-    argv?: readonly string[],
+    argv?: readonly unknown[],
   ): readonly string[] | undefined => {
-    if (!Array.isArray(argv)) return argv;
-    if (argv.length < 2) return argv;
-    if (typeof argv[0] !== 'string' || typeof argv[1] !== 'string') return argv;
-    if (argv[0] === 'node' && argv[1] === 'stan') {
-      const trimmed = argv.slice(2) as readonly string[];
-      return trimmed;
+    if (!Array.isArray(argv)) return undefined;
+    if (argv.length < 2)
+      return argv.every((t) => typeof t === 'string')
+        ? (argv as readonly string[])
+        : undefined;
+    const [a0, a1] = argv;
+    if (typeof a0 !== 'string' || typeof a1 !== 'string') {
+      return undefined;
     }
-    return argv;
+    if (a0 === 'node' && a1 === 'stan') {
+      const rest = argv
+        .slice(2)
+        .filter((t): t is string => typeof t === 'string');
+      return rest as readonly string[];
+    }
+    return argv as readonly string[];
   };
   try {
     // Swallow common Commander exits to keep tests quiet.

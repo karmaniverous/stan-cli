@@ -2,6 +2,13 @@
 
 ## Next up (priority order)
 
+- Snap history “set” (0‑based index)
+  - With facet-aware editing guard active this run, enable the “snap” facet now and deliver the history.ts fix next turn.
+  - Then re-run tests; expect cli/snap.test.ts to pass after the 0‑based clamp/persist change.
+
+- Diff anchors verification
+  - After the above, run stan run; stan snap; confirm archive.diff.tar includes only changed files and excludes unchanged anchors (e.g., facet.state.json).
+
 - Lint remediation (strict typed rules)
   - Sweep remaining “no-unnecessary-condition” and unnecessary optional chaining.
   - Eliminate unnecessary optional chaining and “no-unnecessary-condition” cases; simplify truthiness checks.
@@ -260,3 +267,7 @@
 - Lint — src/cli/index.ts cleanup
   - Remove unused catch parameter in SSR/mocks fallback for registerPatch resolution to satisfy @typescript-eslint/no-unused-vars.
   - No behavior change; keep SSR resilience intact.
+
+- Facets — enable “snap” for next run to edit src/runner/snap/history.ts; defer code patch to next turn per guard.
+- CLI runner tests — hoist deriveRunInvocation to a function declaration (fix SSR import shape) and keep default export; tests in cli/runner.combine.test.ts should pass.
+- Patch CLI lint — typed local argv normalizer in src/cli/patch.ts to eliminate unsafe-return any[] without changing behavior.
