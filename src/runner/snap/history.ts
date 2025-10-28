@@ -4,7 +4,7 @@
  *
  * Semantics:
  * - State is persisted as 0-based:
- *   { stack: string[]; index: number }
+ *   \{ stack: string[]; index: number \}
  * - handleSet(index) clamps and persists the provided index verbatim (0-based),
  *   then writes the selected snapshot body to <stanPath>/diff/.archive.snapshot.json.
  * - handleUndo/handleRedo adjust the index within [0, stack.length-1] and
