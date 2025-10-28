@@ -55,7 +55,7 @@ export function deriveRunParameters(args: {
   } as const;
   const boolFinal = (name: keyof typeof effBools, base: boolean): boolean => {
     if (valSrc(name)) return Boolean(options[name]);
-    return effBools[name] ?? base;
+    return effBools[name];
   };
   const numFinal = (name: keyof typeof effNums, base: number): number => {
     if (valSrc(name)) {
@@ -88,10 +88,10 @@ export function deriveRunParameters(args: {
   );
   // Prompt choice: CLI flag overrides cliDefaults; fallback to 'auto'
   const promptChoice =
-    (src.getOptionValueSource?.('prompt') === 'cli' &&
+    src.getOptionValueSource?.('prompt') === 'cli' &&
     typeof (options as { prompt?: unknown }).prompt === 'string'
       ? String((options as { prompt?: unknown }).prompt)
-      : eff.prompt) ?? 'auto';
+      : eff.prompt;
 
   // Option C: --debug forces --no-live (strict).
   // Warning when both --debug and --live were explicitly provided.

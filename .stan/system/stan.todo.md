@@ -201,3 +201,8 @@
   - src/cli/run/action/overlay.ts: remove dead overlay null check; simplify conditions and drop redundant “?? []”.
   - src/cli/snap.ts: replace non-null assertion on default.handleSnap with a guarded local variable.
   - Purpose: reduce @typescript-eslint/no-unnecessary-condition/optional-chaining and no-non-null-assertion hits without altering behavior.
+
+- Lint cleanup (pass 2: derive, prompt plan test)
+  - src/cli/run/derive.ts: remove unnecessary nullish-coalescing for known booleans and prompt default (eff values are non-nullish).
+  - src/runner/run/prompt.resolve.plan.test.ts: drop unused mkdir import.
+  - Purpose: reduce @typescript-eslint/no-unnecessary-condition and unused-vars without changing behavior.
