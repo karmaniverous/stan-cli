@@ -136,9 +136,9 @@ export const computeFacetOverlay = async (
   }
 
   const anchorsOverlaySet = new Set<string>();
-  // Collect final excludes overlay entries (subtree roots and leaf-globs).
+  // Final excludes overlay entries (subtree roots only; leaf-globs are not propagated here).
   const excludesOverlayArr: string[] = [];
-  // Track subtree-root entries separately for enabled-wins filtering.
+  // Track subtree-root entries for enabled-wins filtering.
   const excludesOverlayRoots: string[] = [];
   const autosuspended: string[] = [];
   const anchorsKeptCounts: Record<string, number> = {};
@@ -228,18 +228,16 @@ export const computeFacetOverlay = async (
       inactiveEntries.push({ facet: name, root });
       excludesOverlayRoots.push(root.endsWith('/') ? root : root);
     }
-    // Collect leaf-glob tails to re-include within each active root, and
-    // also propagate the leaf-glob exclude patterns to the engine-level excludes.
+    // Collect leaf-glob tails for scoped re-inclusions under active roots (anchors only).
     for (const g of leafGlobs) {
       const tail = globTail(g);
       if (tail) inactiveLeafTails.add(tail);
-      excludesOverlayArr.push(posix(g));
     }
   }
 
   // Subtree tie-breaker: enabled facet wins (drop inactive roots that equal/overlap with active roots).
   const overlapKeptCounts: Record<string, number> = {};
-  if (excludesOverlayArr.length > 0 && activeRoots.size > 0) {
+  if (inactiveEntries.length > 0 && activeRoots.size > 0) {
     const act = Array.from(activeRoots);
     const keptRoots: string[] = [];
     const keptEntries: Array<{ facet: string; root: string }> = [];
@@ -253,14 +251,9 @@ export const computeFacetOverlay = async (
         keptEntries.push(entry);
       }
     }
-    // Replace root set with filtered roots and then append any leaf-glob excludes gathered above.
-    // Start from the filtered roots set; leaf-globs were already pushed to excludesOverlayArr.
-    const dedup = new Set<string>();
-    for (const r of keptRoots) dedup.add(r);
-    // Re-add existing leaf-globs we collected before.
-    for (const e of excludesOverlayArr) dedup.add(e);
+    // Replace with filtered roots only.
     excludesOverlayArr.length = 0;
-    excludesOverlayArr.push(...Array.from(dedup));
+    excludesOverlayArr.push(...keptRoots);
     // Count kept roots per facet
     for (const { facet } of keptEntries) {
       overlapKeptCounts[facet] = (overlapKeptCounts[facet] ?? 0) + 1;
@@ -270,10 +263,8 @@ export const computeFacetOverlay = async (
     for (const { facet } of inactiveEntries) {
       overlapKeptCounts[facet] = (overlapKeptCounts[facet] ?? 0) + 1;
     }
-    // Append the raw subtree roots alongside the already collected leaf-globs.
-    for (const r of excludesOverlayRoots) excludesOverlayArr.push(r);
-    // Deduplicate
-    const uniq = Array.from(new Set(excludesOverlayArr));
+    // Append the raw subtree roots only.
+    const uniq = Array.from(new Set(excludesOverlayRoots));
     excludesOverlayArr.length = 0;
     excludesOverlayArr.push(...uniq);
   }
@@ -290,13 +281,7 @@ export const computeFacetOverlay = async (
 
   // Deduplicate anchors overlay
   const anchorsOverlay = Array.from(anchorsOverlaySet);
-  // Deduplicate excludes overlay (roots + leaf-globs)
-  {
-    const uniq = new Set<string>();
-    for (const e of excludesOverlayArr) uniq.add(e);
-    excludesOverlayArr.length = 0;
-    excludesOverlayArr.push(...Array.from(uniq));
-  }
+  // Excludes overlay contains subtree roots only (already deduped above).
 
   return {
     enabled: true,

@@ -5,6 +5,8 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { applyCliSafety } from '@/cli/cli-utils';
+
 // Capture runSelected invocations without executing scripts
 const recorded: unknown[][] = [];
 vi.mock('@/runner/run', () => ({
@@ -21,6 +23,9 @@ describe('overlay excludes mapping (subtree roots expanded; leaf-globs propagate
   let dir: string;
 
   beforeEach(async () => {
+    // Clear module state between runs to avoid cross-suite contamination.
+    vi.resetModules();
+    vi.unmock('@/runner/run');
     dir = await mkdtemp(path.join(tmpdir(), 'stan-overlay-map-'));
     process.chdir(dir);
     recorded.length = 0;
@@ -75,11 +80,14 @@ describe('overlay excludes mapping (subtree roots expanded; leaf-globs propagate
     } catch {
       /* ignore */
     }
+    vi.resetModules();
+    vi.unmock('@/runner/run');
     vi.restoreAllMocks();
   });
 
   it('expands subtree roots and propagates leaf-glob excludes into runnerConfig', async () => {
     const cli = new Command();
+    applyCliSafety(cli);
     registerRun(cli);
     await cli.parseAsync(['node', 'stan', 'run', '-s', 'a'], { from: 'user' });
     expect(recorded.length).toBe(1);

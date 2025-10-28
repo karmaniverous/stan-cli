@@ -263,16 +263,54 @@ export const registerRunAction = (
     };
     const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
 
+    // Also include leaf-glob excludes from inactive facets (e.g., "**/*.test.ts").
+    // Read facet.meta.json directly and derive leaf-globs for facets that are
+    // currently inactive per overlay.effective.
+    const leafGlobs: string[] = [];
+    try {
+      if (overlay?.enabled && overlay?.effective) {
+        const fs = await import('node:fs/promises');
+        const pathMod = await import('node:path');
+        const metaAbs = pathMod.join(
+          runCwd,
+          config.stanPath,
+          'system',
+          'facet.meta.json',
+        );
+        const raw = await fs
+          .readFile(metaAbs, 'utf8')
+          .catch(() => null as unknown as string);
+        if (raw) {
+          const meta = JSON.parse(raw) as Record<
+            string,
+            { exclude?: string[] } | undefined
+          >;
+          const isSubtree = (p: string) => {
+            const s = p.trim();
+            return s.endsWith('/**') || s.endsWith('/*');
+          };
+          for (const [name, def] of Object.entries(meta ?? {})) {
+            if (!def || !def.exclude) continue;
+            if (!overlay.effective[name]) {
+              for (const patt of def.exclude) {
+                if (!isSubtree(patt)) leafGlobs.push(patt.replace(/\\+/g, '/'));
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      /* best-effort only */
+    }
+    const engineExcludes = Array.from(
+      new Set<string>([...overlayExcludes, ...leafGlobs]),
+    );
+
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
       scripts: (scriptsMap ?? {}) as Record<string, string>,
       includes: config.includes ?? [],
-      excludes: [
-        ...(config.excludes ?? []),
-        // Inactive facet roots (expanded to "root/**") and any leaf-glob excludes
-        // gathered from inactive facets.
-        ...overlayExcludes,
-      ],
+      excludes: [...(config.excludes ?? []), ...engineExcludes],
       imports: config.imports,
       ...(overlay?.anchorsOverlay?.length
         ? { anchors: overlay.anchorsOverlay }
