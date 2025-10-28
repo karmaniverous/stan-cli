@@ -216,4 +216,9 @@
   - src/cli/index.ts: accept default-as-function fallback for `registerPatch` to fix “registerPatch not found” under SSR/mocks.
   - src/cli/snap.ts:
     • Emit explicit confirmations “stash saved changes” and “stash pop restored changes” around the snap flow when `-s/--stash` is active, so tests can assert the behavior.
-    • Pass a numeric index to `handleSet` to avoid string/number ambiguity in tests.
+    • Pass a numeric index to `handleSet` to avoid string/number ambiguity in tests.
+
+- SSR robustness — hoist snap registration
+  - src/cli/snap.ts: convert `registerSnap` from a const arrow to a function declaration
+    to avoid “registerSnap is not a function” under Vitest SSR/mocks (TDZ/cycle hazards).
+  - Aligns with prior hoists (deriveRunParameters, color helpers).

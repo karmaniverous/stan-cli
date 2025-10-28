@@ -140,7 +140,7 @@ type TagDefaultFn = CliUtilsModule['tagDefault'];
 /** * Register the `snap` subcommand on the provided root CLI.
  * * @param cli - Commander root command.
  * @returns The same root command for chaining. */
-export const registerSnap = (cli: Commander): Command => {
+export function registerSnap(cli: Commander): Command {
   {
     let applied = false;
     try {
@@ -399,4 +399,4 @@ export const registerSnap = (cli: Commander): Command => {
     });
 
   return cli;
-};
+}
