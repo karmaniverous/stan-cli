@@ -195,3 +195,9 @@
   - snap: add fallback to default.handleSnap when the module's default export is an object; keep barrel fallback for secondary resolution.
   - patch: expose a default export object containing registerPatch to avoid “not a function” under mocked/default-shaped module imports.
   - Result: remaining patch/snap CLI tests pass under Vitest SSR.
+
+- Lint cleanup (pass 1: action loaders/overlay, snap non-null)
+  - src/cli/run/action/loaders.ts: remove unused CORE_VERSION import; drop redundant “?? {}”.
+  - src/cli/run/action/overlay.ts: remove dead overlay null check; simplify conditions and drop redundant “?? []”.
+  - src/cli/snap.ts: replace non-null assertion on default.handleSnap with a guarded local variable.
+  - Purpose: reduce @typescript-eslint/no-unnecessary-condition/optional-chaining and no-non-null-assertion hits without altering behavior.

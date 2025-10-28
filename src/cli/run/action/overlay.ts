@@ -53,8 +53,7 @@ export const buildOverlayInputs = async (args: {
   // Map overlay excludes to effective deny-list globs for the engine:
   // - subtree roots like "docs" -> "docs/**"
   // - existing glob patterns (contain *, ?, or [) pass through unchanged.
-  const overlayExcludesRaw =
-    overlay && overlay.enabled ? (overlay.excludesOverlay ?? []) : [];
+  const overlayExcludesRaw = overlay.enabled ? overlay.excludesOverlay : [];
   const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
 
   // Also include leaf-glob excludes from inactive facets (e.g., "**/*.test.ts").
@@ -62,7 +61,7 @@ export const buildOverlayInputs = async (args: {
   // currently inactive per overlay.effective.
   const leafGlobs: string[] = [];
   try {
-    if (overlay && overlay.enabled && overlay.effective) {
+    if (overlay.enabled) {
       const metaAbs = path.join(cwd, stanPath, 'system', 'facet.meta.json');
       const raw = await readFile(metaAbs, 'utf8');
       const meta = JSON.parse(raw) as Record<
@@ -90,28 +89,26 @@ export const buildOverlayInputs = async (args: {
   );
 
   // Facet view lines for plan (same as before; keep compact)
-  const overlayPlan =
-    overlay == null
-      ? undefined
-      : (() => {
-          const lines: string[] = [];
-          lines.push(`overlay: ${overlay.enabled ? 'on' : 'off'}`);
-          if (overlay.enabled) {
-            const inactive = Object.entries(overlay.effective)
-              .filter(([, v]) => !v)
-              .map(([k]) => k);
-            const auto = overlay.autosuspended;
-            const anchorsTotal = Object.values(
-              overlay.anchorsKeptCounts,
-            ).reduce((a, b) => a + b, 0);
-            lines.push(
-              `facets inactive: ${inactive.length ? inactive.join(', ') : 'none'}`,
-            );
-            if (auto.length) lines.push(`auto-suspended: ${auto.join(', ')}`);
-            lines.push(`anchors kept: ${anchorsTotal.toString()}`);
-          }
-          return lines;
-        })();
+  const overlayPlan = (() => {
+    const lines: string[] = [];
+    lines.push(`overlay: ${overlay.enabled ? 'on' : 'off'}`);
+    if (overlay.enabled) {
+      const inactive = Object.entries(overlay.effective)
+        .filter(([, v]) => !v)
+        .map(([k]) => k);
+      const auto = overlay.autosuspended;
+      const anchorsTotal = Object.values(overlay.anchorsKeptCounts).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      lines.push(
+        `facets inactive: ${inactive.length ? inactive.join(', ') : 'none'}`,
+      );
+      if (auto.length) lines.push(`auto-suspended: ${auto.join(', ')}`);
+      lines.push(`anchors kept: ${anchorsTotal.toString()}`);
+    }
+    return lines;
+  })();
 
   return { overlay, engineExcludes, overlayPlan };
 };

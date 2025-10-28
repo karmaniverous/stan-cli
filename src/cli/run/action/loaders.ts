@@ -1,5 +1,4 @@
 import type { ContextConfig } from '@karmaniverous/stan-core';
-import { CORE_VERSION } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
@@ -34,7 +33,7 @@ export const loadCliConfigSyncLazy = async (
             ? (viaDefaultFn as (cwd: string) => unknown)
             : null;
     const out = fn ? (fn(dir) as Record<string, unknown>) : {};
-    return (out ?? {}) as {
+    return out as {
       scripts?: Record<string, unknown>;
       cliDefaults?: Record<string, unknown>;
       patchOpenCommand?: string;

@@ -67,12 +67,11 @@ async function loadSnapHandler(
             | ((...a: unknown[]) => Promise<void>);
         };
         const viaNamed = (barrel as { handleSnap?: unknown }).handleSnap;
+        const defMaybe = (barrel as { default?: { handleSnap?: unknown } })
+          .default;
         const viaDefaultObj =
-          (barrel as { default?: { handleSnap?: unknown } }).default &&
-          typeof (barrel as { default?: { handleSnap?: unknown } }).default ===
-            'object'
-            ? (barrel as { default?: { handleSnap?: unknown } }).default!
-                .handleSnap
+          defMaybe && typeof defMaybe === 'object'
+            ? defMaybe.handleSnap
             : undefined;
         const viaDefaultFn =
           typeof (barrel as { default?: unknown }).default === 'function'
