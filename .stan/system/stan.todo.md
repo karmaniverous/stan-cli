@@ -16,6 +16,11 @@
 
 ## Completed (append-only, most recent items last)
 
+- Facet overlay — fix inactive subtree & leaf‑glob handling
+  - Expand inactive facet subtree roots to deny‑list globs (root → root/**) before passing to the engine so entire subtrees are actually dropped.
+  - Propagate leaf‑glob excludes (e.g., **/*.test.ts) from inactive facets to engine excludes, while retaining scoped re‑inclusion anchors under active roots.
+  - Added CLI test to verify subtree root expansion and leaf‑glob propagation in runnerConfig excludes.
+
 - Tests + lint (selection + mocks)
   - Hoisted deriveRunInvocation to a function declaration to fix SSR “not a function”.
   - Removed redundant Boolean/String wrappers and adjusted tests to satisfy require-await/unused vars.

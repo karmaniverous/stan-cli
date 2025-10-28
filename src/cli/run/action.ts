@@ -252,13 +252,26 @@ export const registerRunAction = (
       };
     }
 
+    // Map overlay excludes to effective deny-list globs for the engine:
+    // - subtree roots like "docs" -> "docs/**"
+    // - existing glob patterns (contain *, ?, or [) pass through unchanged.
+    const overlayExcludesRaw =
+      overlay && overlay.enabled ? (overlay.excludesOverlay ?? []) : [];
+    const ensureSubtreeGlob = (p: string): string => {
+      const s = p.replace(/\/+$/, '');
+      return /[*?\[]/.test(s) ? s : `${s}/**`;
+    };
+    const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
+
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
       scripts: (scriptsMap ?? {}) as Record<string, string>,
       includes: config.includes ?? [],
       excludes: [
         ...(config.excludes ?? []),
-        ...((overlay?.enabled ? overlay.excludesOverlay : []) ?? []),
+        // Inactive facet roots (expanded to "root/**") and any leaf-glob excludes
+        // gathered from inactive facets.
+        ...overlayExcludes,
       ],
       imports: config.imports,
       ...(overlay?.anchorsOverlay?.length
