@@ -233,3 +233,8 @@
 
 - Snap CLI safety (root/sub)
   - Apply parse normalization and exit override unconditionally on root and sub after best‑effort resolution to prevent “unknown command 'node'”.
+
+- Decompose CLI snap module (src/cli/snap.ts) into small, testable units
+  - Created src/cli/snap/: index.ts (registry), safety.ts (idempotent exit/argv guards), handlers.ts (lazy SSR‑robust resolvers), options.ts (stash flags default tagging), action.ts (header/loop guard, stash flow, capture).
+  - Preserved SSR safety patterns and concise stash confirmations; retained raw string semantics for “set <index>”.
+  - Import stability: “./snap” now targets the folder barrel (index.ts); no call site changes required.
