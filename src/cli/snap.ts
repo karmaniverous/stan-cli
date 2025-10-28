@@ -277,7 +277,7 @@ export const registerSnap = (cli: Commander): Command => {
           getOptionValueSource?: (name: string) => string | undefined;
         };
         const fromCli = src.getOptionValueSource?.('stash') === 'cli';
-        if (fromCli) stashFinal = Boolean(opts?.stash);
+        if (fromCli) stashFinal = opts?.stash === true;
         else {
           // Transitional: accept legacy root-level cliDefaults when present by
           // temporarily enabling STAN_ACCEPT_LEGACY for this read.

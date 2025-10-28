@@ -10,11 +10,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Mock runGit directly: return code=1 for "stash -u", else 0
 vi.mock('@/runner/snap/git', () => ({
   __esModule: true,
-  runGit: async (_cwd: string, args: string[]) => ({
-    code: args.join(' ') === 'stash -u' ? 1 : 0,
-    stdout: '',
-    stderr: '',
-  }),
+  runGit: (_cwd: string, args: string[]) =>
+    Promise.resolve({
+      code: args.join(' ') === 'stash -u' ? 1 : 0,
+      stdout: '',
+      stderr: '',
+    }),
 }));
 
 // Mock diff.writeArchiveSnapshot to write a recognizable snapshot body

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const snapSpy = vi.fn(async (_opts?: { stash?: boolean }) => Promise.resolve());
+const snapSpy = vi.fn(async () => Promise.resolve());
 vi.mock('@/runner/snap/snap-run', () => ({
   __esModule: true,
   handleSnap: (opts?: { stash?: boolean }) => snapSpy(opts),

@@ -162,7 +162,7 @@ export const runPatch = async (
     /* ignore persistence failures */
   }
 
-  const check = Boolean(opts.check);
+  const check = opts.check === true;
 
   // 5) File Ops only
   if (hasOps && !hasDiff) {
