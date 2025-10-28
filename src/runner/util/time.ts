@@ -19,7 +19,7 @@ export function utcStamp(): string {
 export function formatUtcStampLocal(ts: string): string {
   const m = ts.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/);
   if (!m) return ts;
-  const [, y, mo, d, h, mi, s] = m.map((x) => Number.parseInt(x ?? '', 10));
+  const [, y, mo, d, h, mi, s] = m.map((x) => Number.parseInt(x, 10));
   const dt = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
   // Fixed-width local: YYYY-MM-DD HH:MM:SS
   const pad = (n: number) => n.toString().padStart(2, '0');

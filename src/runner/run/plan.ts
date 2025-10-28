@@ -29,7 +29,7 @@ export const renderRunPlan = (
   const { selection, config, mode, behavior } = args;
 
   const keys = selection == null ? Object.keys(config.scripts) : selection;
-  const scripts = keys ?? [];
+  const scripts = keys;
 
   const outputRel = path.join(config.stanPath, 'output').replace(/\\/g, '/');
 

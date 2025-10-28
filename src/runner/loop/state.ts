@@ -20,8 +20,12 @@ export const readLoopState = async (
     const p = loopStatePath(cwd, stanPath);
     const raw = await readFile(p, 'utf8');
     const v = JSON.parse(raw) as { last?: string; ts?: string };
-    if (v && (v.last === 'run' || v.last === 'snap' || v.last === 'patch'))
-      return { last: v.last, ts: String(v.ts ?? '') };
+    if (v.last === 'run' || v.last === 'snap' || v.last === 'patch') {
+      return {
+        last: v.last,
+        ts: typeof v.ts === 'string' ? v.ts : '',
+      };
+    }
   } catch {
     // ignore
   }

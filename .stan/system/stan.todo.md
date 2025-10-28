@@ -17,8 +17,8 @@
 ## Completed (append-only, most recent items last)
 
 - Facet overlay — fix inactive subtree & leaf‑glob handling
-  - Expand inactive facet subtree roots to deny‑list globs (root → root/**) before passing to the engine so entire subtrees are actually dropped.
-  - Propagate leaf‑glob excludes (e.g., **/*.test.ts) from inactive facets to engine excludes, while retaining scoped re‑inclusion anchors under active roots.
+  - Expand inactive facet subtree roots to deny‑list globs (root → root/\*\*) before passing to the engine so entire subtrees are actually dropped.
+  - Propagate leaf‑glob excludes (e.g., \*_/_.test.ts) from inactive facets to engine excludes, while retaining scoped re‑inclusion anchors under active roots.
   - Added CLI test to verify subtree root expansion and leaf‑glob propagation in runnerConfig excludes.
 
 - Tests + lint (selection + mocks)
@@ -58,3 +58,9 @@
   - Deactivated: ci, vscode, docs, tests, live-ui (anchors retained).
   - Active: patch, snap, init.
   - Goal: fit broader lint fixes into fewer threads by trimming non-essential trees.
+
+- Lint remediation — runner (optional chain/condition cleanup)
+  - src/runner/run/exec/runner.ts: avoid String(...) for CI detection; widen opts type to include hang thresholds and drop unnecessary casts/optional chaining.
+  - src/runner/loop/state.ts: remove redundant truthiness guard on parsed JSON.
+  - src/runner/run/plan.ts: drop unnecessary nullish coalescing for scripts list.
+  - Outcome: further reduces strict lint errors while keeping behavior unchanged; follow-up will address remaining CLI/test buckets.

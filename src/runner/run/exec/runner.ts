@@ -15,7 +15,7 @@ import type {
 } from '@/runner/run/types';
 
 const configOrder = (config: RunnerConfig): string[] =>
-  Object.keys(config.scripts ?? {});
+  Object.keys(config.scripts);
 
 /**
  * Normalize selection to config order.
@@ -38,9 +38,8 @@ export const normalizeSelection = (
 /** CI-aware truthy detection (accepts common values: 1,true,TRUE). */
 const ciOn = (): boolean => {
   try {
-    const v = String(process.env.CI ?? '')
-      .trim()
-      .toLowerCase();
+    const env = process.env.CI;
+    const v = (typeof env === 'string' ? env : '').trim().toLowerCase();
     return v !== '' && v !== '0' && v !== 'false';
   } catch {
     return false;
@@ -79,7 +78,12 @@ export const runScripts = async (
   mode: ExecutionMode,
   orderFile?: string,
   hooks?: RunHooks,
-  opts?: { silent?: boolean },
+  opts?: {
+    silent?: boolean;
+    hangWarn?: number;
+    hangKill?: number;
+    hangKillGrace?: number;
+  },
   shouldContinue?: () => boolean,
   supervisor?: ProcessSupervisor,
 ): Promise<string[]> => {
@@ -102,7 +106,7 @@ export const runScripts = async (
         : typeof entry === 'object' &&
             entry &&
             'script' in (entry as Record<string, unknown>)
-          ? String((entry as { script: string }).script)
+          ? (entry as { script: string }).script
           : '';
     const warnPatterns =
       entry &&
@@ -127,10 +131,9 @@ export const runScripts = async (
           typeof hooks?.silent === 'boolean'
             ? hooks.silent
             : Boolean(opts?.silent),
-        hangWarn: (opts as unknown as { hangWarn?: number })?.hangWarn,
-        hangKill: (opts as unknown as { hangKill?: number })?.hangKill,
-        hangKillGrace: (opts as unknown as { hangKillGrace?: number })
-          ?.hangKillGrace,
+        hangWarn: opts?.hangWarn,
+        hangKill: opts?.hangKill,
+        hangKillGrace: opts?.hangKillGrace,
         warnPatterns,
       },
       supervisor,

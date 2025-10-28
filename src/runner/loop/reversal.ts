@@ -13,7 +13,7 @@ import { dim, isBoring, warn } from '@/runner/util/color';
 export const confirmLoopReversal = async (): Promise<boolean> => {
   // Non-interactive: proceed by default (CI-compatible; matches other prompts).
   const isTTY = Boolean(
-    (process.stdout as unknown as { isTTY?: boolean })?.isTTY,
+    (process.stdout as unknown as { isTTY?: boolean }).isTTY,
   );
   if (!isTTY) return true;
 
