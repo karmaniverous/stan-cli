@@ -16,6 +16,10 @@
 
 ## Completed (append-only, most recent items last)
 
+- Tests + lint (selection + mocks)
+  - Hoisted deriveRunInvocation to a function declaration to fix SSR “not a function”.
+  - Removed redundant Boolean/String wrappers and adjusted tests to satisfy require-await/unused vars.
+
 - Lint: numeric templates + wrappers
   - Wrapped numeric template-literal interpolations with String(...) in anchored-writer, run logs, time helpers, archive fast-path, and diagnostics.
   - Removed unnecessary Boolean/String wrappers in cli-utils root defaults.

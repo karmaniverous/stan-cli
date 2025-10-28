@@ -28,7 +28,7 @@ describe('script runner PATH augmentation (repo-local node_modules/.bin preceden
       scripts: {
         // Print PATH deterministically; capture in out/output
         showpath:
-          'node -e "process.stdout.write(String(process.env.PATH || process.env.Path || \'\'))"',
+          'node -e "process.stdout.write(process.env.PATH || process.env.Path || \'\')"',
       },
     };
     await runSelected(dir, cfg, ['showpath'], 'concurrent', { archive: false });

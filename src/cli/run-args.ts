@@ -51,7 +51,7 @@ export type DerivedRunInvocation = {
   behavior: RunBehavior;
 };
 
-export const deriveRunInvocation = (args: {
+export function deriveRunInvocation(args: {
   // selection flags (presence and payload)
   scriptsProvided?: boolean;
   scriptsOpt?: unknown;
@@ -66,7 +66,7 @@ export const deriveRunInvocation = (args: {
 
   // config (CLI-owned scripts only)
   config: { scripts?: Record<string, unknown> };
-}): DerivedRunInvocation => {
+}): DerivedRunInvocation {
   const {
     scriptsProvided = false,
     scriptsOpt,
@@ -117,4 +117,4 @@ export const deriveRunInvocation = (args: {
   };
 
   return { selection: selected, mode, behavior };
-};
+}

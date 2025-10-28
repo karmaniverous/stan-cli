@@ -211,8 +211,7 @@ export const runDefaults = (
   // Plan header default: true unless explicitly overridden in cliDefaults.run.plan
   const plan = typeof runIn.plan === 'boolean' ? runIn.plan : true;
   // Overlay default: off unless cliDefaults.run.facets is true
-  const facets =
-    typeof runIn.facets === 'boolean' ? Boolean(runIn.facets) : false;
+  const facets = typeof runIn.facets === 'boolean' ? runIn.facets : false;
 
   return {
     archive: pickBool('archive'),
