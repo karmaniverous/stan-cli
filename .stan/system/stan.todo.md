@@ -67,7 +67,8 @@
 
 - Cancellation fix — ensure non‑TTY keypress fallback
   - src/runner/run/control.ts: always attach the 'data' fallback so tests/non‑TTY paths honor 'q' keypress; keep raw‑mode/keypress wiring under TTY only.
-  - Restores expected behavior in live sequential keypress + archive scenario (archives absent on cancel).
+  - Restores expected behavior in live sequential keypress + archive scenario (archives absent on cancel).
+
 - SSR robustness — hoist run derive
   - src/cli/run/derive.ts: hoist deriveRunParameters to a function declaration to avoid “not a function” under Vitest SSR.
   - Stabilizes CLI run semantics tests that exercise Commander parsing.
@@ -101,4 +102,10 @@
 
 - Lint fixes — action.ts
   - Avoid unbound-method by calling getOptionValueSource inline; move the live-default guard after src is available.
-  - Remove unnecessary String(...) in isSubtree helper.
+  - Remove unnecessary String(...) in isSubtree helper.
+
+- Lint/Typecheck — snap defaults & tests
+  - src/cli/snap.ts: replace Boolean(...) in stash default tagging with !!(...) normalization.
+  - src/cli/snap.defaults.test.ts: make vi.fn accept (opts?) and reference it to satisfy no‑unused‑vars and TS2554.
+  - src/cli/snap.test.ts: remove unused EventEmitter import.
+  - Outcome: typecheck clean; incremental lint reduction. Continue sweeping optional chaining/conditions in subsequent passes.

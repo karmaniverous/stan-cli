@@ -235,7 +235,7 @@ export const registerSnap = (cli: Commander): Command => {
   try {
     const p = findConfigPathSync(process.cwd());
     const cfg = p ? loadCliConfigSync(process.cwd()) : null;
-    const stashDef = Boolean(cfg?.cliDefaults?.snap?.stash ?? false);
+    const stashDef = !!cfg?.cliDefaults?.snap?.stash;
     tagDefaultResolved?.(optStash, stashDef);
     tagDefaultResolved?.(optNoStash, !stashDef);
   } catch {
