@@ -120,7 +120,9 @@ export async function maybeMigrateLegacyToNamespaced(
     if (hasOwn(base, k) && !hasOwn(coreNode, k)) {
       coreNode[k] = base[k];
     }
-    if (hasOwn(base, k)) Reflect.deleteProperty(base, k);
+    if (hasOwn(base, k)) {
+      Reflect.deleteProperty(base, k);
+    }
   }
 
   // Move CLI keys (root -> stan-cli) when not already set under stan-cli.
@@ -128,7 +130,9 @@ export async function maybeMigrateLegacyToNamespaced(
     if (hasOwn(base, k) && !hasOwn(cliNode, k)) {
       cliNode[k] = base[k];
     }
-    if (hasOwn(base, k)) Reflect.deleteProperty(base, k);
+    if (hasOwn(base, k)) {
+      Reflect.deleteProperty(base, k);
+    }
   }
 
   // Special: legacy opts.cliDefaults -> stan-cli.cliDefaults
@@ -138,10 +142,12 @@ export async function maybeMigrateLegacyToNamespaced(
       cliNode.cliDefaults = optsNode.cliDefaults;
     }
     // Remove opts.cliDefaults; drop opts if empty.
-    if (hasOwn(optsNode, 'cliDefaults'))
+    if (hasOwn(optsNode, 'cliDefaults')) {
       Reflect.deleteProperty(optsNode, 'cliDefaults');
-    if (Object.keys(optsNode).length === 0)
+    }
+    if (Object.keys(optsNode).length === 0) {
       Reflect.deleteProperty(base, 'opts');
+    }
   }
 
   attachNode(base, 'stan-core', coreNode);

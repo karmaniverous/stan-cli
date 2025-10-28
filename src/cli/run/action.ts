@@ -27,8 +27,6 @@ import {
   readCliScriptsFallback,
   readRunScriptsDefaultFallback,
 } from './config-fallback';
-import { deriveRunParameters } from './derive';
-import type { FlagPresence } from './options';
 
 // Lazy resolver for CLI config (named-or-default) at action time.
 const loadCliConfigSyncLazy = async (
@@ -122,6 +120,56 @@ export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
 ): void => {
+  // SSR‑robust lazy loader for deriveRunParameters
+  const loadDerive = async (): Promise<{
+    deriveRunParameters: (args: {
+      options: Record<string, unknown>;
+      cmd: Command;
+      scripts: Record<string, unknown>;
+      scriptsDefault?: boolean | string[];
+      dir?: string;
+    }) => {
+      selection: string[];
+      mode: import('@/runner/run').ExecutionMode;
+      behavior: import('@/runner/run').RunBehavior;
+      promptChoice: string;
+    };
+  }> => {
+    const mod = (await import('./derive')) as unknown as {
+      deriveRunParameters?: unknown;
+      default?: unknown;
+    };
+    const named = (mod as { deriveRunParameters?: unknown })
+      .deriveRunParameters;
+    if (typeof named === 'function') {
+      return {
+        deriveRunParameters:
+          named as unknown as typeof import('./derive').deriveRunParameters,
+      };
+    }
+    const defAny = (mod as { default?: unknown }).default;
+    if (
+      defAny &&
+      typeof (defAny as { deriveRunParameters?: unknown })
+        .deriveRunParameters === 'function'
+    ) {
+      return {
+        deriveRunParameters: (
+          defAny as {
+            deriveRunParameters: typeof import('./derive').deriveRunParameters;
+          }
+        ).deriveRunParameters,
+      };
+    }
+    if (typeof defAny === 'function') {
+      return {
+        deriveRunParameters:
+          defAny as unknown as typeof import('./derive').deriveRunParameters,
+      };
+    }
+    throw new Error('deriveRunParameters not found');
+  };
+
   cmd.action(async (options: Record<string, unknown>) => {
     const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
       getFlagPresence();
@@ -145,6 +193,19 @@ export const registerRunAction = (
 
     // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
     const cliCfg = await loadCliConfigSyncLazy(runCwd);
+
+    // Derivation function (SSR-safe)
+    const { deriveRunParameters } = await loadDerive();
+
+    // Safe wrapper for Commander’s getOptionValueSource (avoid unbound method usage)
+    const getOptionSource = (name: string): string | undefined => {
+      const fn = (
+        cmd as unknown as {
+          getOptionValueSource?: (n: string) => string | undefined;
+        }
+      ).getOptionValueSource;
+      return typeof fn === 'function' ? fn.call(cmd, name) : undefined;
+    };
 
     // Loop header + reversal guard
     try {
@@ -180,9 +241,9 @@ export const registerRunAction = (
     }
     // 2) Default selection: prefer CLI loader; fall back to direct config parse (namespaced or legacy root).
     let scriptsDefaultCfg: boolean | string[] | undefined = (
-      cliCfg.cliDefaults as
+      (cliCfg.cliDefaults as
         | { run?: { scripts?: boolean | string[] } }
-        | undefined
+        | undefined) ?? {}
     )?.run?.scripts;
     if (typeof scriptsDefaultCfg === 'undefined') {
       try {
@@ -202,10 +263,7 @@ export const registerRunAction = (
 
     // Facet overlay — determine defaults and per-run overrides (renamed flags)
     const eff = runDefaults(runCwd);
-    const src = cmd as unknown as {
-      getOptionValueSource?: (name: string) => string | undefined;
-    };
-    const fromCli = (n: string) => src.getOptionValueSource?.(n) === 'cli';
+    const fromCli = (n: string) => getOptionSource(n) === 'cli';
 
     const toStringArray = (v: unknown): string[] =>
       Array.isArray(v)
@@ -305,14 +363,10 @@ export const registerRunAction = (
     );
 
     // Defensive: ensure live default honors config when CLI flag not provided.
-    // Commander sets an option key on `options` only when the user passed it.
-    // In SSR/tests, relying on getOptionValueSource() can be brittle; prefer
-    // direct presence check here.
     try {
-      const liveProvided = Object.prototype.hasOwnProperty.call(
-        options,
-        'live',
-      );
+      const liveProvided =
+        Object.prototype.hasOwnProperty.call(options, 'live') &&
+        typeof (options as { live?: unknown }).live === 'boolean';
       if (!liveProvided) {
         derived.behavior.live = eff.live;
       }

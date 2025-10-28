@@ -67,7 +67,7 @@ export const handleUndo = async (): Promise<void> => {
     return;
   }
   const next = await restoreEntryAt(st, st.index - 1, diffDir, snapPath).catch(
-    (err) => {
+    (err: unknown) => {
       console.error('stan: failed to restore snapshot', err);
       return null;
     },
@@ -96,7 +96,7 @@ export const handleRedo = async (): Promise<void> => {
     return;
   }
   const next = await restoreEntryAt(st, st.index + 1, diffDir, snapPath).catch(
-    (err) => {
+    (err: unknown) => {
       console.error('stan: failed to restore snapshot', err);
       return null;
     },

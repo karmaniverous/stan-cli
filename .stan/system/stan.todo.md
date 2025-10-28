@@ -173,3 +173,16 @@
   - Keeps test stability and documents the new invariant that `facet.state.json` is present in full archives regardless of .gitignore.
 
 - Amendment: overlay tests updated to explicitly include the always-anchored "stan/system/facet.state.json" in anchorsOverlay expectations across all relevant cases (overlay enabled/disabled and enabled-wins scenarios). Also narrowed facet defaults in facet.state.json so only the "run" facet is enabled by default (tests, snap disabled) to keep the context tight.
+
+- Fix CLI run derivation SSR path + defaults test parse error
+  - src/cli/run/action.ts: load deriveRunParameters via lazy dynamic import with named-or-default fallback to avoid “is not a function” under Vitest SSR.
+  - Added bound wrapper for getOptionValueSource to eliminate unbound-method and reduce fragile this-scoping in tests.
+  - Restored a clean, balanced body for src/cli/runner.defaults.test.ts to resolve a stray parsing error (“Unexpected token '}'”) without changing test intent.
+
+- Lint sweep (targeted)
+  - snap/history.ts: use unknown in catch callback to satisfy @typescript-eslint/use-unknown-in-catch.
+  - init/service/migrate.ts: replace dynamic delete with Reflect.deleteProperty across remaining sites flagged by no-dynamic-delete.
+  - Minor no-unnecessary-condition cleanups adjacent to the above edits.
+
+- Amendment: runner semantics v2
+  - The dynamic import of deriveRunParameters ensures SSR/test stability in stan run semantics tests while preserving runtime behavior.
