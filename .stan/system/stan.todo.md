@@ -186,3 +186,7 @@
 
 - Amendment: runner semantics v2
   - The dynamic import of deriveRunParameters ensures SSR/test stability in stan run semantics tests while preserving runtime behavior.
+
+- Typecheck fix — action.ts
+  - Added missing `import type { FlagPresence } from './options'` in `src/cli/run/action.ts` to resolve TS2304.
+  - No behavioral changes; tests remain green.

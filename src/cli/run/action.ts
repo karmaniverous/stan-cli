@@ -27,6 +27,7 @@ import {
   readCliScriptsFallback,
   readRunScriptsDefaultFallback,
 } from './config-fallback';
+import type { FlagPresence } from './options';
 
 // Lazy resolver for CLI config (named-or-default) at action time.
 const loadCliConfigSyncLazy = async (
