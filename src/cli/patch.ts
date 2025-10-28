@@ -1,6 +1,7 @@
 /** src/cli/stan/patch.ts
  * CLI adapter for "stan patch" — Commander wiring only.
  */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   findConfigPathSync,
   resolveStanPathSync,
@@ -28,15 +29,17 @@ const applySafetyLocal = (cmd: Command): void => {
     argv?: readonly unknown[],
   ): readonly string[] | undefined => {
     if (!Array.isArray(argv)) return undefined;
-    if (argv.length < 2)
+    if (argv.length < 2) {
       return argv.every((t) => typeof t === 'string')
         ? (argv as readonly string[])
         : undefined;
-    const [a0, a1] = argv;
-    if (typeof a0 !== 'string' || typeof a1 !== 'string') {
+    }
+    const first = argv[0];
+    const second = argv[1];
+    if (typeof first !== 'string' || typeof second !== 'string') {
       return undefined;
     }
-    if (a0 === 'node' && a1 === 'stan') {
+    if (first === 'node' && second === 'stan') {
       const rest = argv
         .slice(2)
         .filter((t): t is string => typeof t === 'string');
@@ -319,9 +322,5 @@ export function registerPatch(cli: Command): Command {
   return cli;
 }
 
-// Provide a default export with the public function for SSR/mocks that
-// consume default-shaped modules, without affecting named imports.
-const _defaultExport = {
-  registerPatch,
-};
-export default _defaultExport;
+// Provide a default export as a callable function for SSR/mocks, while retaining the named export.
+export default registerPatch;

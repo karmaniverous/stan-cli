@@ -2,13 +2,6 @@
 
 ## Next up (priority order)
 
-- Snap history “set” (0‑based index)
-  - With facet-aware editing guard active this run, enable the “snap” facet now and deliver the history.ts fix next turn.
-  - Then re-run tests; expect cli/snap.test.ts to pass after the 0‑based clamp/persist change.
-
-- Diff anchors verification
-  - After the above, run stan run; stan snap; confirm archive.diff.tar includes only changed files and excludes unchanged anchors (e.g., facet.state.json).
-
 - Lint remediation (strict typed rules)
   - Sweep remaining “no-unnecessary-condition” and unnecessary optional chaining.
   - Eliminate unnecessary optional chaining and “no-unnecessary-condition” cases; simplify truthiness checks.
@@ -22,6 +15,18 @@
 ---
 
 ## Completed (append-only, most recent items last)
+
+- Snap navigation — set index 0‑based (no +1)
+  - history.ts now clamps and persists the provided index as 0‑based verbatim and restores from the 0‑based slot. Fixes snap.test.ts “expected 0; got 1”.
+  - File: src/runner/snap/history.ts.
+
+- Patch CLI SSR/export + lint
+  - Default export is now the callable function (retains named export) to satisfy SSR/default-shaped consumers.
+  - Local argv normalizer avoids unsafe destructuring; resolves @typescript-eslint/no-unsafe-assignment.
+  - File: src/cli/patch.ts.
+
+- Facets — snap facet was already active for this run; editing snap history proceeded under guard.
+  - Verify overlay metadata in .stan/system/.docs.meta.json after next run.
 
 - Snap navigation — set index off‑by‑one (0‑based)
   - Updated history.set to treat the incoming CLI index as 0‑based and persist it verbatim (clamped) instead of incrementing.
