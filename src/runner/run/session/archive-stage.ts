@@ -62,7 +62,7 @@ export const runArchiveStage = async (args: {
   const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
 
   // DRY: shared engine config and UI progress hooks for archivePhase calls.
-  const baseCfg: {
+  const baseCfgFull: {
     stanPath: string;
     includes?: string[];
     excludes?: string[];
@@ -74,6 +74,20 @@ export const runArchiveStage = async (args: {
     excludes: config.excludes ?? [],
     imports: config.imports,
     anchors: config.anchors ?? [],
+  };
+  // For DIFF: do NOT pass anchors. Anchors are high‑precedence re‑includes;
+  // applying them to DIFF can force unchanged files into the diff archive.
+  // We want DIFF to reflect changed files only.
+  const baseCfgDiff: {
+    stanPath: string;
+    includes?: string[];
+    excludes?: string[];
+    imports?: Record<string, string[]>;
+  } = {
+    stanPath: config.stanPath,
+    includes: config.includes ?? [],
+    excludes: config.excludes ?? [],
+    imports: config.imports,
   };
   const progress = {
     start: (k: 'full' | 'diff') => {
@@ -163,7 +177,7 @@ export const runArchiveStage = async (args: {
         const diffOut = await archivePhase(
           {
             cwd,
-            config: baseCfg,
+            config: baseCfgDiff,
             includeOutputs: Boolean(behavior.combine),
           },
           {
@@ -180,7 +194,7 @@ export const runArchiveStage = async (args: {
         const fullOut = await archivePhase(
           {
             cwd,
-            config: baseCfg,
+            config: baseCfgFull,
             includeOutputs: Boolean(behavior.combine),
           },
           {
@@ -200,7 +214,7 @@ export const runArchiveStage = async (args: {
       const diffOut = await archivePhase(
         {
           cwd,
-          config: baseCfg,
+          config: baseCfgDiff,
           includeOutputs: Boolean(behavior.combine),
         },
         {
@@ -230,7 +244,7 @@ export const runArchiveStage = async (args: {
         const fullOut = await archivePhase(
           {
             cwd,
-            config: baseCfg,
+            config: baseCfgFull,
             includeOutputs: Boolean(behavior.combine),
           },
           {
@@ -277,20 +291,34 @@ export const runArchiveStage = async (args: {
   }
 
   try {
-    const { archivePath, diffPath } = await archivePhase(
+    // DIFF (no anchors)
+    const d = await archivePhase(
       {
         cwd,
-        config: baseCfg,
+        config: baseCfgDiff,
         includeOutputs: Boolean(behavior.combine),
       },
       {
         silent: true,
-        which: 'both',
+        which: 'diff',
         progress,
       },
     );
-    if (archivePath) created.push(archivePath);
-    if (diffPath) created.push(diffPath);
+    if (d.diffPath) created.push(d.diffPath);
+    // FULL (with anchors)
+    const f = await archivePhase(
+      {
+        cwd,
+        config: baseCfgFull,
+        includeOutputs: Boolean(behavior.combine),
+      },
+      {
+        silent: true,
+        which: 'full',
+        progress,
+      },
+    );
+    if (f.archivePath) created.push(f.archivePath);
   } finally {
     await promptRestore?.().catch(() => void 0);
   }

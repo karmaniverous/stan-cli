@@ -248,6 +248,11 @@
   - src/cli/run-args.ts: keep the named export and add a default export object that exposes deriveRunInvocation for SSR/default-shaped imports.
   - Fixes “deriveRunInvocation is not a function” in CLI combine tests under Vitest SSR.
 
+- Diff archive — do not pass anchors to DIFF
+  - src/runner/run/session/archive-stage.ts: pass anchors only to FULL; DIFF uses a config without anchors.
+  - Prevents anchored files such as `.stan/system/facet.state.json` from appearing in `archive.diff.tar` unless they actually changed.
+  - Keeps FULL archives inclusive per overlay/anchors policy while preserving “changed-only” semantics for DIFF.
+
 - Tests — stabilize loaders resolution under SSR (runner.defaults)
   - src/cli/run/action/loaders.ts: add a default export object exposing named helpers (resolveEngineConfigLazy, loadCliConfigSyncLazy, loadDeriveRunParameters) so default-shaped imports work.
   - Fixes “resolveEngineConfigLazy not found” in run defaults tests.
