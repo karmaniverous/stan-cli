@@ -5,11 +5,12 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Accept an optional argument so call sites can assert payload; reference it to
-// satisfy no-unused-vars while returning a resolved promise for parity.
-const snapSpy = vi.fn(async (opts?: { stash?: boolean }) => {
+// Accept an optional argument so call sites can assert payload.
+// Reference it to satisfy no-unused-vars, and return a resolved promise
+// without using an async function to avoid require-await.
+const snapSpy = vi.fn((opts?: { stash?: boolean }) => {
   void opts;
-  return;
+  return Promise.resolve();
 });
 vi.mock('@/runner/snap/snap-run', () => ({
   __esModule: true,

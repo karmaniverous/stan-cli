@@ -109,3 +109,8 @@
   - src/cli/snap.defaults.test.ts: make vi.fn accept (opts?) and reference it to satisfy no‑unused‑vars and TS2554.
   - src/cli/snap.test.ts: remove unused EventEmitter import.
   - Outcome: typecheck clean; incremental lint reduction. Continue sweeping optional chaining/conditions in subsequent passes.
+
+- Lint sweep — require‑await + boolean conversion
+  - src/cli/snap.defaults.test.ts: replace async vi.fn with non‑async returning Promise.resolve(); reference param to satisfy no‑unused‑vars.
+  - src/runner/patch/service.ts: drop Boolean(res.ok) in favor of res.ok.
+  - Next: continue removing unnecessary optional chaining and no‑unnecessary‑condition across CLI runner and tests.

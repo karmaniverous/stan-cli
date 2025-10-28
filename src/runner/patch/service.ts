@@ -168,7 +168,7 @@ export const runPatch = async (
   if (hasOps && !hasDiff) {
     try {
       const res = await executeFileOps(cwd, opsPlan.ops, check);
-      const ok = Boolean(res.ok);
+      const ok = res.ok;
       if (ok) {
         const msg = check ? 'file ops check passed' : 'file ops applied';
         console.log(`stan: ${statusOk(msg)}`);
