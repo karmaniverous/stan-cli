@@ -132,3 +132,10 @@ export const loadDeriveRunParameters = async (): Promise<
   if (typeof viaDefaultFn === 'function') return viaDefaultFn;
   throw new Error('deriveRunParameters not found');
 };
+
+// Default export for SSR/default-shaped consumers.
+export default {
+  loadCliConfigSyncLazy,
+  resolveEngineConfigLazy,
+  loadDeriveRunParameters,
+};

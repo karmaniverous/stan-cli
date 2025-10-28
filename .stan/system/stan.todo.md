@@ -248,6 +248,10 @@
   - src/cli/run-args.ts: keep the named export and add a default export object that exposes deriveRunInvocation for SSR/default-shaped imports.
   - Fixes “deriveRunInvocation is not a function” in CLI combine tests under Vitest SSR.
 
+- Tests — stabilize loaders resolution under SSR (runner.defaults)
+  - src/cli/run/action/loaders.ts: add a default export object exposing named helpers (resolveEngineConfigLazy, loadCliConfigSyncLazy, loadDeriveRunParameters) so default-shaped imports work.
+  - Fixes “resolveEngineConfigLazy not found” in run defaults tests.
+
 - Lint — src/cli/index.ts cleanup
   - Remove unused catch parameter in SSR/mocks fallback for registerPatch resolution to satisfy @typescript-eslint/no-unused-vars.
   - No behavior change; keep SSR resilience intact.
