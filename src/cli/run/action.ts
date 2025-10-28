@@ -304,17 +304,22 @@ export const registerRunAction = (
       new Set<string>([...overlayExcludes, ...leafGlobs]),
     );
 
-    // Defensive: ensure live default honors config when CLI flag omitted.
-    // (deriveRunParameters already does this, but SSR/option-source quirks can arise;
-    // re-apply here for robustness.)  Call method inline to avoid unbound-method.
+    // Defensive: ensure live default honors config when CLI flag not provided.
+    // Commander sets an option key on `options` only when the user passed it.
+    // In SSR/tests, relying on getOptionValueSource() can be brittle; prefer
+    // direct presence check here.
     try {
-      const liveFromCli = src.getOptionValueSource?.('live') === 'cli';
-      if (!liveFromCli) {
+      const liveProvided = Object.prototype.hasOwnProperty.call(
+        options,
+        'live',
+      );
+      if (!liveProvided) {
         derived.behavior.live = eff.live;
       }
     } catch {
       /* best-effort */
     }
+
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
       scripts: (scriptsMap ?? {}) as Record<string, string>,

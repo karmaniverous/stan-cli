@@ -42,6 +42,39 @@ async function loadSnapHandler(
       if (typeof d === 'function') {
         return d as (...a: unknown[]) => Promise<void>;
       }
+      // Fallback: attempt the barrel in case SSR/test bundling reshaped exports.
+      try {
+        const barrel = (await import('@/runner/snap')) as unknown as {
+          handleSnap?: unknown;
+          default?:
+            | { handleSnap?: unknown }
+            | ((...a: unknown[]) => Promise<void>);
+        };
+        const viaNamed = (barrel as { handleSnap?: unknown }).handleSnap;
+        const viaDefaultObj =
+          (barrel as { default?: { handleSnap?: unknown } }).default &&
+          typeof (barrel as { default?: { handleSnap?: unknown } }).default ===
+            'object'
+            ? (barrel as { default?: { handleSnap?: unknown } }).default!
+                .handleSnap
+            : undefined;
+        const viaDefaultFn =
+          typeof (barrel as { default?: unknown }).default === 'function'
+            ? ((barrel as { default?: (...a: unknown[]) => Promise<void> })
+                .default as (...a: unknown[]) => Promise<void>)
+            : undefined;
+        const resolved =
+          (typeof viaNamed === 'function'
+            ? (viaNamed as (...a: unknown[]) => Promise<void>)
+            : undefined) ??
+          (typeof viaDefaultObj === 'function'
+            ? (viaDefaultObj as (...a: unknown[]) => Promise<void>)
+            : undefined) ??
+          viaDefaultFn;
+        if (resolved) return resolved;
+      } catch {
+        /* swallow and rethrow original */
+      }
       throw e;
     }
   }

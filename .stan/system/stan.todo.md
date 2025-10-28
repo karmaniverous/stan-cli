@@ -65,6 +65,17 @@
   - src/runner/run/plan.ts: drop unnecessary nullish coalescing for scripts list.
   - Outcome: further reduces strict lint errors while keeping behavior unchanged; follow-up will address remaining CLI/test buckets.
 
+- Test stability & UX fixes
+  - Snap handler SSR fallback
+    - Updated src/cli/snap.ts to fall back to loading from the barrel (“@/runner/snap”) when “@/runner/snap/snap-run” doesn’t expose handleSnap under SSR/test bundling.
+    - Unblocks snap.stash.success.test.ts in SSR.
+  - Live keypress cancellation → no archives
+    - Added an extra immediate cancel gate at the start of the archive phase in src/runner/run/session/run-session.ts to prevent late-archiving after ‘q’.
+    - Addresses “live concurrent keypress + archive” failure (archives must be absent on cancellation).
+  - Live default honors cliDefaults without explicit flag
+    - In src/cli/run/action.ts, set behavior.live from cliDefaults when the user did not pass --live/--no-live (presence check on parsed options for SSR robustness).
+    - Fixes runner.live.defaults test when cliDefaults.run.live=false.
+
 - Cancellation fix — ensure non‑TTY keypress fallback
   - src/runner/run/control.ts: always attach the 'data' fallback so tests/non‑TTY paths honor 'q' keypress; keep raw‑mode/keypress wiring under TTY only.
   - Restores expected behavior in live sequential keypress + archive scenario (archives absent on cancel).
@@ -122,6 +133,7 @@
   - init prompts tests: make inquirer mock return Promise<unknown> to address unsafe return of any in:
     - src/runner/init/prompts.test.ts,
     - src/runner/init/service.behavior.test.ts.
+  - Snap/Run stability & defaults (see above) — tests green locally after changes.
   - Scope: incremental; further sweeps will remove remaining unnecessary optional chaining/conditions across CLI runner and session code.
 
 - Tests — SSR/ESM-robust core API resolution in combine behavior test

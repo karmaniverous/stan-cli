@@ -310,6 +310,18 @@ export const runSessionOnce = async (args: {
 
   // ARCHIVE PHASE
   if (behavior.archive) {
+    // Extra late-cancel guard: absorb cancellations that arrive immediately
+    // before archive-phase scheduling. This prevents any archives from being
+    // created in live/concurrent keypress scenarios.
+    if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+      detachSignals();
+      try {
+        (process.stdin as unknown as { pause?: () => void }).pause?.();
+      } catch {
+        /* ignore */
+      }
+      return { created, cancelled: true, restartRequested: false };
+    }
     const runArchive: RunArchiveStageFn = getRunArchiveStage();
     const a: { created: string[]; cancelled: boolean } = await runArchive({
       cwd,
