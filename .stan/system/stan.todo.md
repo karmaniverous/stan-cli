@@ -68,3 +68,18 @@
 - Cancellation fix — ensure non‑TTY keypress fallback
   - src/runner/run/control.ts: always attach the 'data' fallback so tests/non‑TTY paths honor 'q' keypress; keep raw‑mode/keypress wiring under TTY only.
   - Restores expected behavior in live sequential keypress + archive scenario (archives absent on cancel).
+- SSR robustness — hoist run derive
+  - src/cli/run/derive.ts: hoist deriveRunParameters to a function declaration to avoid “not a function” under Vitest SSR.
+  - Stabilizes CLI run semantics tests that exercise Commander parsing.
+
+- SSR robustness — hoist color exports and add resolver fallbacks
+  - src/runner/util/color.ts: convert exports to function declarations to avoid TDZ/SSR timing issues (“isBoring is not a function”).
+  - src/runner/run/service.ts: accept default-as-function fallback for renderRunPlan when module shape varies under SSR.
+  - src/cli/snap.ts: accept default-as-function fallback for handleSnap dynamic import.
+  - Outcome: stabilizes snap/run plan handlers and UI parity under Vitest forks/SSR.
+
+- Lint remediation — env/string coercions
+  - src/cli/config/load.ts: replace String(env) with safe narrowing; remove redundant truthiness guard when probing schema.parse.
+  - src/runner/config/effective.ts: replace String(env) with safe narrowing in legacyAccepted.
+  - src/cli/config/schema.ts: avoid String(...) in coerceBool; trim/lowercase directly on string.
+  - Outcome: reduces no-unnecessary-type-conversion and no-unnecessary-condition warnings without behavior changes.

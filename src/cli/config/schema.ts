@@ -33,7 +33,7 @@ const coerceBool = z
   .transform((v) => {
     if (typeof v === 'boolean') return v;
     if (typeof v === 'number') return v === 1;
-    const s = String(v).trim().toLowerCase();
+    const s = v.trim().toLowerCase();
     if (s === '1' || s === 'true') return true;
     if (s === '0' || s === 'false') return false;
     return undefined;

@@ -4,7 +4,7 @@
  */
 import chalk from 'chalk';
 
-export const isBoring = (): boolean => {
+export function isBoring(): boolean {
   // Compute TTY dynamically so tests and callers can toggle isTTY/env reliably.
   const tty = Boolean((process.stdout as unknown as { isTTY?: boolean }).isTTY);
   return (
@@ -13,20 +13,38 @@ export const isBoring = (): boolean => {
     process.env.FORCE_COLOR === '0' ||
     !tty
   );
-};
+}
 
 /** Semantic aliases (unstyled in BORING/non‑TTY) */
-export const ok = (s: string): string => (isBoring() ? s : chalk.green(s));
-export const alert = (s: string): string => (isBoring() ? s : chalk.cyan(s));
-export const go = (s: string): string => (isBoring() ? s : chalk.blue(s));
-export const error = (s: string): string => (isBoring() ? s : chalk.red(s));
-export const stop = (s: string): string => (isBoring() ? s : chalk.black(s));
-export const cancel = (s: string): string => (isBoring() ? s : chalk.gray(s));
-export const warn = (s: string): string =>
-  isBoring() ? s : chalk.hex('#FFA500')(s); // orange
+export function ok(s: string): string {
+  return isBoring() ? s : chalk.green(s);
+}
+export function alert(s: string): string {
+  return isBoring() ? s : chalk.cyan(s);
+}
+export function go(s: string): string {
+  return isBoring() ? s : chalk.blue(s);
+}
+export function error(s: string): string {
+  return isBoring() ? s : chalk.red(s);
+}
+export function stop(s: string): string {
+  return isBoring() ? s : chalk.black(s);
+}
+export function cancel(s: string): string {
+  return isBoring() ? s : chalk.gray(s);
+}
+export function warn(s: string): string {
+  return isBoring() ? s : chalk.hex('#FFA500')(s);
+} // orange
 
 /** Text styles (unstyled in BORING/non‑TTY) */
-export const bold = (s: string): string => (isBoring() ? s : chalk.bold(s));
-export const dim = (s: string): string => (isBoring() ? s : chalk.dim(s));
-export const underline = (s: string): string =>
-  isBoring() ? s : chalk.underline(s);
+export function bold(s: string): string {
+  return isBoring() ? s : chalk.bold(s);
+}
+export function dim(s: string): string {
+  return isBoring() ? s : chalk.dim(s);
+}
+export function underline(s: string): string {
+  return isBoring() ? s : chalk.underline(s);
+}

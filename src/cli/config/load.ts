@@ -26,9 +26,8 @@ import {
 /** Phase‑2: accept legacy only when explicitly enabled by env. */
 const legacyAccepted = (): boolean => {
   try {
-    const v = String(process.env.STAN_ACCEPT_LEGACY ?? '')
-      .trim()
-      .toLowerCase();
+    const env = process.env.STAN_ACCEPT_LEGACY;
+    const v = (typeof env === 'string' ? env : '').trim().toLowerCase();
     return v === '1' || v === 'true';
   } catch {
     return false;
@@ -91,9 +90,8 @@ const parseCliNode = (
   try {
     // Guard rare SSR edge where the binding might be unavailable in a worker.
     const hasSchema =
-      cliConfigSchema &&
       typeof (cliConfigSchema as unknown as { parse?: unknown }).parse ===
-        'function';
+      'function';
     if (hasSchema) {
       parsed = cliConfigSchema.parse(node);
     } else {

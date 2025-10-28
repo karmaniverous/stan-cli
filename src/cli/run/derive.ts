@@ -15,13 +15,13 @@ export type DerivedRun = {
  * Derive selection/mode/behavior given parsed options, the configured defaults,
  * and Commander option sources.
  */
-export const deriveRunParameters = (args: {
+export function deriveRunParameters(args: {
   options: Record<string, unknown>;
   cmd: Command;
   scripts: Record<string, unknown>;
   scriptsDefault?: boolean | string[];
   dir?: string;
-}): DerivedRun => {
+}): DerivedRun {
   const { options, scripts, scriptsDefault } = args;
   const src = args.cmd as unknown as {
     getOptionValueSource?: (name: string) => string | undefined;
@@ -163,4 +163,4 @@ export const deriveRunParameters = (args: {
     behavior,
     promptChoice,
   };
-};
+}

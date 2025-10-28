@@ -29,13 +29,21 @@ async function loadSnapHandler(
 ): Promise<(...args: unknown[]) => Promise<void>> {
   if (name === 'handleSnap') {
     const mod = (await import('@/runner/snap/snap-run')) as unknown;
-    const fn = resolveNamedOrDefaultFunction<HandleSnapFn>(
-      mod,
-      (m) => (m as SnapRunModule).handleSnap,
-      (m) => (m as { default?: Partial<SnapRunModule> }).default?.handleSnap,
-      'handleSnap',
-    );
-    return fn as (...a: unknown[]) => Promise<void>;
+    try {
+      const fn = resolveNamedOrDefaultFunction<HandleSnapFn>(
+        mod,
+        (m) => (m as SnapRunModule).handleSnap,
+        (m) => (m as { default?: Partial<SnapRunModule> }).default?.handleSnap,
+        'handleSnap',
+      );
+      return fn as (...a: unknown[]) => Promise<void>;
+    } catch (e) {
+      const d = (mod as { default?: unknown }).default;
+      if (typeof d === 'function') {
+        return d as (...a: unknown[]) => Promise<void>;
+      }
+      throw e;
+    }
   }
   // history variants
   const mod = (await import('@/runner/snap/history')) as unknown;

@@ -45,9 +45,8 @@ const normalizeImports = (
 /** Phase‑2: accept legacy engine shape only when explicitly enabled by env. */
 const legacyAccepted = (): boolean => {
   try {
-    const v = String(process.env.STAN_ACCEPT_LEGACY ?? '')
-      .trim()
-      .toLowerCase();
+    const env = process.env.STAN_ACCEPT_LEGACY;
+    const v = (typeof env === 'string' ? env : '').trim().toLowerCase();
     return v === '1' || v === 'true';
   } catch {
     return false;
