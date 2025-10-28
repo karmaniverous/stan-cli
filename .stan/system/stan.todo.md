@@ -16,6 +16,11 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap navigation — set index off‑by‑one (0‑based)
+  - Updated history.set to treat the incoming CLI index as 0‑based and persist it verbatim (clamped) instead of incrementing.
+  - Fixes “expected index 0, received 1” in snap navigation test.
+  - File: src/runner/snap/history.ts.
+
 - Snap “set” navigation — pass raw CLI string
   - Reverted numeric coercion in `snap set` handler; always forward the raw string to history so 0-based navigation semantics match tests and prior design.
   - File: `src/cli/snap.ts`.
