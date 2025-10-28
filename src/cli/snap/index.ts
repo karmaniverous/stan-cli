@@ -4,10 +4,43 @@
 import type { Command } from 'commander';
 import { Command as Commander } from 'commander';
 
-import { registerSnapAction } from './action';
+// SSR‑robust resolver (named or default) to avoid module‑shape issues in tests
+import * as snapActionMod from './action';
 import { loadSnapHandler } from './handlers';
 import { attachSnapOptions } from './options';
 import { applyCliSafetyTo } from './safety';
+
+const tryResolveNamedOrDefault = <F>(
+  mod: unknown,
+  pickNamed: (m: unknown) => F | undefined,
+  pickDefault: (m: unknown) => F | undefined,
+  label?: string,
+): F => {
+  try {
+    const named = pickNamed(mod);
+    if (typeof named === 'function') return named as F;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const viaDefault = pickDefault(mod);
+    if (typeof viaDefault === 'function') return viaDefault as F;
+  } catch {
+    /* ignore */
+  }
+  const what = label && label.trim().length ? label.trim() : 'export';
+  throw new Error(`${what} not found`);
+};
+
+type ActionModule = typeof import('./action');
+const getRegisterSnapAction = (): ActionModule['registerSnapAction'] =>
+  tryResolveNamedOrDefault<ActionModule['registerSnapAction']>(
+    snapActionMod as unknown,
+    (m) => (m as ActionModule).registerSnapAction,
+    (m) =>
+      (m as { default?: Partial<ActionModule> }).default?.registerSnapAction,
+    'registerSnapAction',
+  );
 
 /**
  * Register the `snap` subcommand on the provided root CLI.
@@ -67,7 +100,10 @@ export function registerSnap(cli: Commander): Command {
   attachSnapOptions(sub);
 
   // Main action (stash + capture)
-  registerSnapAction(sub);
+  {
+    const registerSnapAction = getRegisterSnapAction();
+    registerSnapAction(sub);
+  }
 
   return cli;
 }

@@ -28,9 +28,13 @@ const applySafetyLocal = (cmd: Command): void => {
     argv?: readonly string[],
   ): readonly string[] | undefined => {
     if (!Array.isArray(argv)) return argv;
-    return argv.length >= 2 && argv[0] === 'node' && argv[1] === 'stan'
-      ? argv.slice(2)
-      : argv;
+    if (argv.length < 2) return argv;
+    if (typeof argv[0] !== 'string' || typeof argv[1] !== 'string') return argv;
+    if (argv[0] === 'node' && argv[1] === 'stan') {
+      const trimmed = argv.slice(2) as readonly string[];
+      return trimmed;
+    }
+    return argv;
   };
   try {
     // Swallow common Commander exits to keep tests quiet.
@@ -120,7 +124,7 @@ export function registerPatch(cli: Command): Command {
           }
         ).patchParseMethods?.(cli);
       } catch {
-        /* best-effort */
+        /* best‑effort */
       }
       // Final local safety to cover missing helpers under SSR/mocks.
       applySafetyLocal(cli);
@@ -140,7 +144,7 @@ export function registerPatch(cli: Command): Command {
       }
     ).installExitOverride?.(cli);
   } catch {
-    /* best-effort */
+    /* best‑effort */
   }
   // Also apply local safety idempotently to guard tests further.
   applySafetyLocal(cli);
