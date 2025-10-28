@@ -32,13 +32,28 @@ import { registerRun } from './runner';
 import { registerSnap } from './snap';
 type PatchModule = typeof import('./patch');
 type RegisterPatchFn = PatchModule['registerPatch'];
-const registerPatchResolved: RegisterPatchFn =
-  resolveNamedOrDefaultFunction<RegisterPatchFn>(
+let registerPatchResolved: RegisterPatchFn;
+try {
+  registerPatchResolved = resolveNamedOrDefaultFunction<RegisterPatchFn>(
     patchMod as unknown,
     (m) => (m as PatchModule).registerPatch,
     (m) => (m as { default?: Partial<PatchModule> }).default?.registerPatch,
     'registerPatch',
   );
+} catch (e) {
+  // Extra SSR/mocks fallback: accept default export when it is a callable function
+  try {
+    const def = (patchMod as unknown as { default?: unknown }).default;
+    if (typeof def === 'function') {
+      registerPatchResolved = def as unknown as RegisterPatchFn;
+    } else {
+      throw e instanceof Error ? e : new Error(String(e));
+    }
+  } catch {
+    throw e instanceof Error ? e : new Error(String(e));
+  }
+}
+
 type CliUtilsModule = typeof import('./cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 type RootDefaultsFn = CliUtilsModule['rootDefaults'];

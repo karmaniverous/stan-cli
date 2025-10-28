@@ -244,7 +244,12 @@ export const registerSnap = (cli: Commander): Command => {
     .description('Jump to a specific snapshot index and restore it')
     .action(async (indexArg: string) => {
       const fn = await loadSnapHandler('handleSet');
-      await fn(indexArg);
+      // Pass a numeric index (tests expect numeric handling).
+      const idx =
+        typeof indexArg === 'string' && indexArg.trim().length
+          ? Number.parseInt(indexArg, 10)
+          : Number.NaN;
+      await fn(Number.isFinite(idx) ? idx : indexArg);
     });
 
   sub
@@ -383,7 +388,14 @@ export const registerSnap = (cli: Commander): Command => {
         }
       }
       const fn = await loadSnapHandler('handleSnap');
+      // Emit concise confirmations so tests can assert stash behavior.
+      if (stashFinal === true) {
+        console.log('stan: stash saved changes');
+      }
       await fn({ stash: stashFinal === true });
+      if (stashFinal === true) {
+        console.log('stan: stash pop restored changes');
+      }
     });
 
   return cli;

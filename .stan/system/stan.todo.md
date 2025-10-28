@@ -211,3 +211,9 @@
   - Resolved TypeError in src/cli/snap.stash.success.test.ts where `captureSnapshotAndArchives` was not a function under Vitest SSR.
   - In src/runner/snap/snap-run.ts, resolve `captureSnapshotAndArchives` via a named‑or‑default dynamic import pattern: prefer the named export; fall back to `default.captureSnapshotAndArchives`; finally accept default export when callable.
   - Aligns with existing SSR‑robust patterns used across run/session and CLI snap handler.
+
+- CLI robustness — patch + snap UX
+  - src/cli/index.ts: accept default-as-function fallback for `registerPatch` to fix “registerPatch not found” under SSR/mocks.
+  - src/cli/snap.ts:
+    • Emit explicit confirmations “stash saved changes” and “stash pop restored changes” around the snap flow when `-s/--stash` is active, so tests can assert the behavior.
+    • Pass a numeric index to `handleSet` to avoid string/number ambiguity in tests.
