@@ -285,7 +285,7 @@ export const registerRunAction = (
           { exclude?: string[] } | undefined
         >;
         const isSubtree = (p: string): boolean => {
-          const t = String(p ?? '').trim();
+          const t = p.trim();
           return t.endsWith('/**') || t.endsWith('/*');
         };
         for (const [name, def] of Object.entries(meta ?? {})) {
@@ -304,6 +304,17 @@ export const registerRunAction = (
       new Set<string>([...overlayExcludes, ...leafGlobs]),
     );
 
+    // Defensive: ensure live default honors config when CLI flag omitted.
+    // (deriveRunParameters already does this, but SSR/option-source quirks can arise;
+    // re-apply here for robustness.)  Call method inline to avoid unbound-method.
+    try {
+      const liveFromCli = src.getOptionValueSource?.('live') === 'cli';
+      if (!liveFromCli) {
+        derived.behavior.live = eff.live;
+      }
+    } catch {
+      /* best-effort */
+    }
     const runnerConfig: RunnerConfig = {
       stanPath: config.stanPath,
       scripts: (scriptsMap ?? {}) as Record<string, string>,

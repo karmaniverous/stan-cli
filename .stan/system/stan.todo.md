@@ -93,4 +93,12 @@
   - Tests remain green; typecheck clean.
 
 - Fix typecheck in snap stash success test
-  - src/cli/snap.stash.success.test.ts: add missing writeFile import and remove unused rm import to resolve TS2304 and no-unsafe-call/unused-vars lint.
+  - src/cli/snap.stash.success.test.ts: add missing writeFile import and remove unused rm import to resolve TS2304 and no-unsafe-call/unused-vars lint.
+
+- Live default robustness (honor cliDefaults.run.live without CLI flag)
+  - src/cli/run/action.ts: defensively re-apply live default from runDefaults when --live/--no-live not provided, ensuring tests pass even under SSR/option-source quirks.
+  - Validates that cliDefaults.run.live=false disables live unless overridden by --live.
+
+- Lint fixes — action.ts
+  - Avoid unbound-method by calling getOptionValueSource inline; move the live-default guard after src is available.
+  - Remove unnecessary String(...) in isSubtree helper.
