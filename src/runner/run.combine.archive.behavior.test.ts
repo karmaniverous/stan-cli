@@ -42,9 +42,21 @@ describe('combine archiving behavior (outputs inside archives)', () => {
       'utf8',
     );
 
-    const { createArchiveDiff } = await import('@karmaniverous/stan-core');
+    // SSR/ESM-robust dynamic resolver for core APIs
+    const core = (await import('@karmaniverous/stan-core')) as unknown as {
+      createArchiveDiff?: unknown;
+      default?: { createArchiveDiff?: unknown };
+    };
+    const createArchiveDiffFn =
+      typeof core.createArchiveDiff === 'function'
+        ? (core.createArchiveDiff as (typeof import('@karmaniverous/stan-core'))['createArchiveDiff'])
+        : typeof core.default?.createArchiveDiff === 'function'
+          ? (core.default
+              .createArchiveDiff as (typeof import('@karmaniverous/stan-core'))['createArchiveDiff'])
+          : undefined;
+    if (!createArchiveDiffFn) throw new Error('createArchiveDiff not found');
 
-    const { diffPath } = await createArchiveDiff({
+    const { diffPath } = await createArchiveDiffFn({
       cwd: dir,
       stanPath: out,
       baseName: 'archive',
@@ -62,9 +74,21 @@ describe('combine archiving behavior (outputs inside archives)', () => {
 
     await writeFile(path.join(dir, out, 'file.txt'), 'x', 'utf8');
 
-    const { createArchive } = await import('@karmaniverous/stan-core');
+    // SSR/ESM-robust dynamic resolver for core APIs
+    const core2 = (await import('@karmaniverous/stan-core')) as unknown as {
+      createArchive?: unknown;
+      default?: { createArchive?: unknown };
+    };
+    const createArchiveFn =
+      typeof core2.createArchive === 'function'
+        ? (core2.createArchive as (typeof import('@karmaniverous/stan-core'))['createArchive'])
+        : typeof core2.default?.createArchive === 'function'
+          ? (core2.default
+              .createArchive as (typeof import('@karmaniverous/stan-core'))['createArchive'])
+          : undefined;
+    if (!createArchiveFn) throw new Error('createArchive not found');
 
-    const archivePath = await createArchive(dir, out, {
+    const archivePath = await createArchiveFn(dir, out, {
       includeOutputDir: true,
     });
     expect(existsSync(archivePath)).toBe(true);

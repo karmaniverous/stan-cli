@@ -123,3 +123,9 @@
     - src/runner/init/prompts.test.ts,
     - src/runner/init/service.behavior.test.ts.
   - Scope: incremental; further sweeps will remove remaining unnecessary optional chaining/conditions across CLI runner and session code.
+
+- Tests — SSR/ESM-robust core API resolution in combine behavior test
+  - src/runner/run.combine.archive.behavior.test.ts: dynamically resolve createArchive/createArchiveDiff using named-or-default pattern to fix “not a function” under SSR.
+
+- Lint — remove unused import
+  - src/cli/init.test.ts: drop unused readFile import.
