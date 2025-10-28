@@ -189,4 +189,9 @@
 
 - Typecheck fix — action.ts
   - Added missing `import type { FlagPresence } from './options'` in `src/cli/run/action.ts` to resolve TS2304.
-  - No behavioral changes; tests remain green.
+  - No behavioral changes; tests remain green.
+
+- Stabilize SSR export shapes for snap/patch tests
+  - snap: add fallback to default.handleSnap when the module's default export is an object; keep barrel fallback for secondary resolution.
+  - patch: expose a default export object containing registerPatch to avoid “not a function” under mocked/default-shaped module imports.
+  - Result: remaining patch/snap CLI tests pass under Vitest SSR.

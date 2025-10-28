@@ -241,3 +241,10 @@ export function registerPatch(cli: Command): Command {
 
   return cli;
 }
+
+// Provide a default export with the public function for SSR/mocks that
+// consume default-shaped modules, without affecting named imports.
+const _defaultExport = {
+  registerPatch,
+};
+export default _defaultExport;

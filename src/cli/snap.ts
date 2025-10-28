@@ -38,9 +38,25 @@ async function loadSnapHandler(
       );
       return fn as (...a: unknown[]) => Promise<void>;
     } catch (e) {
-      const d = (mod as { default?: unknown }).default;
-      if (typeof d === 'function') {
-        return d as (...a: unknown[]) => Promise<void>;
+      // Fallbacks for SSR/bundler export shapes:
+      // 1) default export is a callable function
+      try {
+        const d = (mod as { default?: unknown }).default;
+        if (typeof d === 'function') {
+          return d as (...a: unknown[]) => Promise<void>;
+        }
+      } catch {
+        /* ignore */
+      }
+      // 2) default export is an object exposing handleSnap
+      try {
+        const dh = (mod as { default?: { handleSnap?: unknown } }).default
+          ?.handleSnap;
+        if (typeof dh === 'function') {
+          return dh as (...a: unknown[]) => Promise<void>;
+        }
+      } catch {
+        /* ignore */
       }
       // Fallback: attempt the barrel in case SSR/test bundling reshaped exports.
       try {
