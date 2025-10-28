@@ -8,6 +8,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { resolveStanPathSync } from '@karmaniverous/stan-core';
+
 export type HistoryState = {
   stack: string[]; // ISO strings or labels
   index: number; // 0‑based
@@ -80,4 +82,59 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
   const out: HistoryState = { ...cur, index: next };
   await writeState(p, out);
   return out;
+};
+
+/**
+ * CLI handlers (snap subcommands)
+ * - resolve stanPath robustly
+ * - operate on the history file under <stanPath>/diff/.snap.history.json
+ */
+const resolveHistoryPath = (): string => {
+  const cwd = process.cwd();
+  let stanPath = '.stan';
+  try {
+    stanPath = resolveStanPathSync(cwd);
+  } catch {
+    /* best‑effort fallback */
+  }
+  return statePath(cwd, stanPath);
+};
+
+export const handleUndo = async (): Promise<void> => {
+  try {
+    const p = resolveHistoryPath();
+    await undo(p);
+  } catch {
+    /* best‑effort */
+  }
+};
+
+export const handleRedo = async (): Promise<void> => {
+  try {
+    const p = resolveHistoryPath();
+    await redo(p);
+  } catch {
+    /* best‑effort */
+  }
+};
+
+export const handleSet = async (indexArg: string): Promise<void> => {
+  try {
+    const p = resolveHistoryPath();
+    await setIndex(p, indexArg);
+  } catch {
+    /* best‑effort */
+  }
+};
+
+export const handleInfo = async (): Promise<void> => {
+  try {
+    const st = await readState(resolveHistoryPath());
+    if (!st) return;
+    console.log(
+      `stan: snap history: index ${st.index.toString()} of ${st.stack.length.toString()}`,
+    );
+  } catch {
+    /* best‑effort */
+  }
 };

@@ -16,6 +16,10 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap CLI handlers — export handleSet/Undo/Redo/Info
+  - Added CLI-facing exports in src/runner/snap/history.ts so snap subcommands resolve under SSR/mocks.
+  - Preserves new 0‑based history semantics.
+
 - Snap navigation — set index 0‑based (no +1)
   - history.ts now clamps and persists the provided index as 0‑based verbatim and restores from the 0‑based slot. Fixes snap.test.ts “expected 0; got 1”.
   - File: src/runner/snap/history.ts.
