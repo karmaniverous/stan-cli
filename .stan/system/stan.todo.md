@@ -76,6 +76,12 @@
     - In src/cli/run/action.ts, set behavior.live from cliDefaults when the user did not pass --live/--no-live (presence check on parsed options for SSR robustness).
     - Fixes runner.live.defaults test when cliDefaults.run.live=false.
 
+- SSR fallback — resolveNamedOrDefaultFunction guard in run/service
+  - src/runner/run/service.ts: wrap calls to resolveNamedOrDefaultFunction with a local tryResolveNamedOrDefault that:
+    - uses the helper when it is a callable function,
+    - otherwise manually resolves named/default exports,
+    - throws a consistent error label when neither is available.
+  - Addresses “resolveNamedOrDefaultFunction is not a function” under Vitest SSR in cancellation matrix tests.
 - Cancellation fix — ensure non‑TTY keypress fallback
   - src/runner/run/control.ts: always attach the 'data' fallback so tests/non‑TTY paths honor 'q' keypress; keep raw‑mode/keypress wiring under TTY only.
   - Restores expected behavior in live sequential keypress + archive scenario (archives absent on cancel).

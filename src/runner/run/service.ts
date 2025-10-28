@@ -1,6 +1,7 @@
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
+// Note: under SSR/tests, the helper above can be unavailable or reshaped; we guard for that below.
 import type { RunnerConfig } from '@/runner/run/types';
 
 import * as planMod from './plan';
@@ -12,9 +13,45 @@ import * as uiMod from './ui';
 // SSR‑robust resolver for renderRunPlan (named or default)
 type PlanModule = typeof import('./plan');
 type RenderRunPlanFn = PlanModule['renderRunPlan'];
+
+// SSR/test-robust wrapper: prefer the helper when callable; otherwise manually pick named/default.
+const tryResolveNamedOrDefault = <F>(
+  mod: unknown,
+  pickNamed: (m: unknown) => F | undefined,
+  pickDefault: (m: unknown) => F | undefined,
+  label?: string,
+): F => {
+  try {
+    if (typeof resolveNamedOrDefaultFunction === 'function') {
+      return resolveNamedOrDefaultFunction<F>(
+        mod,
+        pickNamed,
+        pickDefault,
+        label,
+      );
+    }
+  } catch {
+    // ignore helper failures and attempt manual resolution
+  }
+  try {
+    const named = pickNamed(mod);
+    if (typeof named === 'function') return named as F;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const viaDefault = pickDefault(mod);
+    if (typeof viaDefault === 'function') return viaDefault as F;
+  } catch {
+    /* ignore */
+  }
+  const what = label && label.trim().length ? label.trim() : 'export';
+  throw new Error(`resolveNamedOrDefaultFunction: ${what} not found`);
+};
+
 const getRenderRunPlan = (): RenderRunPlanFn => {
   try {
-    return resolveNamedOrDefaultFunction<RenderRunPlanFn>(
+    return tryResolveNamedOrDefault<RenderRunPlanFn>(
       planMod as unknown,
       (m) => (m as PlanModule).renderRunPlan,
       (m) => (m as { default?: Partial<PlanModule> }).default?.renderRunPlan,
