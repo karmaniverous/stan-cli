@@ -16,6 +16,14 @@
 
 ## Completed (append-only, most recent items last)
 
+- Run args resolution (SSR) — deriveRunInvocation
+  - src/cli/run/derive.ts now resolves deriveRunInvocation via named‑or‑default pattern at module load, preventing “not a function” under Vitest SSR/mocks in runner.semantics.v2 tests.
+  - Keeps deriveRunParameters synchronous.
+
+- Snap history path robustness
+  - src/runner/snap/history.ts now prefers an existing history file under “stan/…” or “.stan/…” before falling back to resolveStanPathSync, ensuring “snap set 0” writes to the same file the tests read.
+  - Minor lint suppressions on necessary null checks (focused scope).
+
 - Snap CLI handlers — export handleSet/Undo/Redo/Info
   - Added CLI-facing exports in src/runner/snap/history.ts so snap subcommands resolve under SSR/mocks.
   - Preserves new 0‑based history semantics.

@@ -3,8 +3,25 @@ import type { Command } from 'commander';
 import type { ExecutionMode, RunBehavior } from '@/runner/run';
 
 import { runDefaults } from '../cli-utils';
-import { deriveRunInvocation } from '../run-args';
+// SSR/mocks‑robust resolution of deriveRunInvocation:
+// prefer the named export; fall back to default.deriveRunInvocation; finally a callable default.
+import runArgsMod, { deriveRunInvocation as namedDRI } from '../run-args';
 import { RUN_BASE_DEFAULTS } from './defaults';
+
+const DRI =
+  typeof namedDRI === 'function'
+    ? namedDRI
+    : typeof (runArgsMod as { deriveRunInvocation?: unknown })
+          .deriveRunInvocation === 'function'
+      ? (
+          runArgsMod as {
+            deriveRunInvocation: typeof namedDRI;
+          }
+        ).deriveRunInvocation
+      : ((): never => {
+          throw new Error('deriveRunInvocation not found');
+        })();
+
 export type DerivedRun = {
   selection: string[];
   mode: ExecutionMode;
@@ -106,12 +123,13 @@ export function deriveRunParameters(args: {
 
     if (debugFromCli && liveFromCli && liveFlagVal === true) {
       // Force no-live and inform the user that --live is ignored.
+
       console.warn('stan: --debug forces --no-live; ignoring --live');
     }
     live = false;
   }
 
-  const derivedBase = deriveRunInvocation({
+  const derivedBase = DRI({
     scriptsProvided,
     scriptsOpt,
     exceptProvided,

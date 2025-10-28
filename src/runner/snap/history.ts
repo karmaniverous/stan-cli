@@ -5,6 +5,7 @@
  * - Clamp incoming indices; do not apply +/-1 adjustments.
  */
 
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -25,6 +26,7 @@ export const readState = async (p: string): Promise<HistoryState | null> => {
   try {
     const raw = await readFile(p, 'utf8');
     const v = JSON.parse(raw) as Partial<HistoryState>;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!v || !Array.isArray(v.stack) || typeof v.index !== 'number') {
       return null;
     }
@@ -47,6 +49,7 @@ export const setIndex = async (
   rawIndex: string,
 ): Promise<HistoryState | null> => {
   const cur = await readState(p);
+
   if (!cur) return null;
   const n = Number.parseInt(rawIndex, 10);
   const next = Number.isFinite(n)
@@ -68,6 +71,7 @@ export const push = async (p: string, label: string): Promise<HistoryState> => {
 
 export const undo = async (p: string): Promise<HistoryState | null> => {
   const cur = await readState(p);
+
   if (!cur) return null;
   const next = clamp(cur.index - 1, 0, cur.stack.length - 1);
   const out: HistoryState = { ...cur, index: next };
@@ -77,6 +81,7 @@ export const undo = async (p: string): Promise<HistoryState | null> => {
 
 export const redo = async (p: string): Promise<HistoryState | null> => {
   const cur = await readState(p);
+
   if (!cur) return null;
   const next = clamp(cur.index + 1, 0, cur.stack.length - 1);
   const out: HistoryState = { ...cur, index: next };
@@ -91,6 +96,17 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();
+  // Prefer whichever history file already exists to avoid writing to the wrong workspace.
+  const candidates = ['stan', '.stan'] as const;
+  for (const sp of candidates) {
+    try {
+      const hp = statePath(cwd, sp);
+      if (existsSync(hp)) return hp;
+    } catch {
+      /* ignore */
+    }
+  }
+  // Fallbacks: try engine resolver; then default to ".stan".
   let stanPath = '.stan';
   try {
     stanPath = resolveStanPathSync(cwd);
