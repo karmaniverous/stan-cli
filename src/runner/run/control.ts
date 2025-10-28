@@ -49,15 +49,16 @@ export class RunnerControl {
     );
     const stdinTTY = Boolean((stdin as { isTTY?: boolean }).isTTY);
     const isTTY = stdoutTTY && stdinTTY;
-    if (!isTTY) return; // non‑TTY: SIGINT is sufficient
 
-    // Enable keypress events and raw mode.
-    try {
-      emitKeypressEvents(stdin);
-      stdin.setRawMode?.(true);
-      stdin.resume?.();
-    } catch {
-      // best‑effort
+    // Enable keypress events and raw mode only when TTY is available.
+    if (isTTY) {
+      try {
+        emitKeypressEvents(stdin);
+        stdin.setRawMode?.(true);
+        stdin.resume?.();
+      } catch {
+        // best‑effort
+      }
     }
 
     this.keyHandler = (_chunk, keyMaybe) => {
@@ -71,7 +72,7 @@ export class RunnerControl {
       if (name === 'r') this.onRestart?.();
     };
 
-    // Minimal data fallback (compat with tests that emit 'data', 'q').
+    // Minimal data fallback (compat with tests and non‑TTY that emit 'data', 'q').
     this.dataHandler = (d: unknown) => {
       try {
         if (typeof d === 'string') {
@@ -95,8 +96,12 @@ export class RunnerControl {
       }
     };
 
-    // Attach listeners
-    stdin.on?.('keypress', this.keyHandler as (...args: unknown[]) => void);
+    // Attach listeners:
+    // - Always attach 'data' fallback (works in TTY and non‑TTY).
+    // - Attach 'keypress' only when TTY is available.
+    if (isTTY) {
+      stdin.on?.('keypress', this.keyHandler as (...args: unknown[]) => void);
+    }
     stdin.on?.('data', this.dataHandler as (...args: unknown[]) => void);
   }
 

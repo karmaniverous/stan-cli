@@ -64,3 +64,7 @@
   - src/runner/loop/state.ts: remove redundant truthiness guard on parsed JSON.
   - src/runner/run/plan.ts: drop unnecessary nullish coalescing for scripts list.
   - Outcome: further reduces strict lint errors while keeping behavior unchanged; follow-up will address remaining CLI/test buckets.
+
+- Cancellation fix — ensure non‑TTY keypress fallback
+  - src/runner/run/control.ts: always attach the 'data' fallback so tests/non‑TTY paths honor 'q' keypress; keep raw‑mode/keypress wiring under TTY only.
+  - Restores expected behavior in live sequential keypress + archive scenario (archives absent on cancel).
