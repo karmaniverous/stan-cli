@@ -5,7 +5,7 @@ import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import type { RunnerConfig } from '@/runner/run/types';
 
 import * as planMod from './plan';
-import { runSessionOnce } from './session';
+import * as sessionMod from './session';
 import type { ExecutionMode, RunBehavior } from './types';
 import type { RunnerUI } from './ui';
 import * as uiMod from './ui';
@@ -62,6 +62,28 @@ const getRenderRunPlan = (): RenderRunPlanFn => {
     const def = (planMod as unknown as { default?: unknown }).default;
     if (typeof def === 'function') {
       return def as RenderRunPlanFn;
+    }
+    throw e instanceof Error ? e : new Error(String(e));
+  }
+};
+
+// SSR‑robust resolver for runSessionOnce (named or default)
+type SessionModule = typeof import('./session');
+type RunSessionOnceFn = SessionModule['runSessionOnce'];
+const getRunSessionOnce = (): RunSessionOnceFn => {
+  try {
+    return tryResolveNamedOrDefault<RunSessionOnceFn>(
+      sessionMod as unknown,
+      (m) => (m as SessionModule).runSessionOnce,
+      (m) =>
+        (m as { default?: Partial<SessionModule> }).default?.runSessionOnce,
+      'runSessionOnce',
+    );
+  } catch (e) {
+    // Extra fallback: accept default export when it is a callable function
+    const def = (sessionMod as unknown as { default?: unknown }).default;
+    if (typeof def === 'function') {
+      return def as RunSessionOnceFn;
     }
     throw e instanceof Error ? e : new Error(String(e));
   }
@@ -164,7 +186,7 @@ export const runSelected = async (
   // Outer loop: allow live-mode restart (press 'r') to repeat a session once per trigger.
   let printedPlan = false;
   for (;;) {
-    const { created, cancelled, restartRequested } = await runSessionOnce({
+    const { created, cancelled, restartRequested } = await getRunSessionOnce()({
       cwd,
       config,
       selection: selected,

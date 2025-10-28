@@ -96,6 +96,11 @@
   - src/cli/snap.ts: accept default-as-function fallback for handleSnap dynamic import.
   - Outcome: stabilizes snap/run plan handlers and UI parity under Vitest forks/SSR.
 
+- SSR fallback — runSessionOnce resolver
+  - src/runner/run/service.ts: resolve runSessionOnce via tryResolveNamedOrDefault
+    against './session' (named or default), with callable default fallback.
+  - Fixes “runSessionOnce is not a function” in PATH augmentation tests under SSR.
+
 - Lint remediation — env/string coercions
   - src/cli/config/load.ts: replace String(env) with safe narrowing; remove redundant truthiness guard when probing schema.parse.
   - src/runner/config/effective.ts: replace String(env) with safe narrowing in legacyAccepted.
