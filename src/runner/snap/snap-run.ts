@@ -1,114 +1,66 @@
-/* src/stan/snap/snap-run.ts
- * Snapshot capture operation with optional stash.
+// src/runner/snap/snap-run.ts
+/**
+ * Snap entry point — creates/updates the diff snapshot (optionally with stash).
+ * SSR-robust: resolves captureSnapshotAndArchives at call time to tolerate
+ * named/default export shape differences under Vitest SSR/bundlers.
  */
-import { writeArchiveSnapshot } from '@karmaniverous/stan-core';
 
-import { loadCliConfig } from '@/cli/config/load';
-import { resolvePromptSource } from '@/runner/run/prompt';
-import { updateDocsMetaPrompt } from '@/runner/system/docs-meta';
-import { sha256File } from '@/runner/util/hash';
+import path from 'node:path';
 
-import { utcStamp } from '../util/time';
-import { captureSnapshotAndArchives } from './capture';
-import { resolveContext } from './context';
-import { runGit } from './git';
-import { readSelection } from './selection';
-export const handleSnap = async (opts?: { stash?: boolean }): Promise<void> => {
-  const { cwd, stanPath, maxUndos } = await resolveContext(process.cwd());
-  const wantStash = Boolean(opts?.stash);
-  let attemptPop = false;
+import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
-  if (wantStash) {
-    const res = await runGit(cwd, ['stash', '-u']);
-    if (res.code === 0 && !/No local changes to save/i.test(res.stdout)) {
-      attemptPop = true;
-      console.log('stan: stash saved changes');
-    } else if (res.code === 0) {
-      // Nothing to stash is a successful no-op; print a concise confirmation.
-      console.log('stan: no local changes to stash');
-    } else if (res.code !== 0) {
-      console.error(
-        'stan: git stash -u failed; snapshot aborted (no changes made)',
-      );
-      // Visual separation from next prompt
-      console.log('');
-      return;
-    }
-  }
+/** Dynamic resolver for './capture'.captureSnapshotAndArchives */
+type CaptureFn = (args: {
+  cwd: string;
+  stanPath: string;
+  historyDir: string;
+  stash?: boolean;
+}) => Promise<void>;
 
-  // Resolve selection from repo config so the snapshot and diff use the same rules
-  const { includes: cfgIncludes, excludes: cfgExcludes } = await readSelection(
-    cwd,
-  ).catch(() => ({
-    stanPath,
-    includes: [] as string[],
-    excludes: [] as string[],
-  }));
+const resolveCaptureSnapshotAndArchives = async (): Promise<CaptureFn> => {
+  const mod = (await import('./capture')) as unknown as {
+    captureSnapshotAndArchives?: unknown;
+    default?:
+      | {
+          captureSnapshotAndArchives?: unknown;
+        }
+      | ((...a: unknown[]) => Promise<unknown>);
+  };
 
-  try {
-    await writeArchiveSnapshot({
-      cwd,
-      stanPath,
-      includes: cfgIncludes,
-      excludes: cfgExcludes,
-    });
-  } catch (e) {
-    console.error('stan: snapshot write failed', e);
-    if (wantStash && attemptPop) {
-      const pop = await runGit(cwd, ['stash', 'pop']);
-      if (pop.code !== 0) {
-        console.error('stan: git stash pop failed');
-      }
-    }
-    // Visual separation from next prompt
-    console.log('');
-    return;
-  }
+  const named = (mod as { captureSnapshotAndArchives?: unknown })
+    .captureSnapshotAndArchives;
+  if (typeof named === 'function') return named as CaptureFn;
 
-  // Record effective prompt identity (baseline-at-snap): source/hash/path?
-  try {
-    const cli = await loadCliConfig(cwd);
-    const choice =
-      typeof cli.cliDefaults?.run?.prompt === 'string' &&
-      cli.cliDefaults.run.prompt.trim().length
-        ? cli.cliDefaults.run.prompt.trim()
-        : 'auto';
-    const rp = resolvePromptSource(cwd, stanPath, choice);
-    // Hash the effective source bytes
-    let hash: string | undefined;
-    try {
-      hash = await sha256File(rp.abs);
-    } catch {
-      hash = undefined;
-    }
-    const pathForMeta = rp.kind === 'path' ? rp.abs : undefined;
-    await updateDocsMetaPrompt(cwd, stanPath, {
-      source: rp.kind,
-      hash,
-      path: pathForMeta,
-    });
-  } catch {
-    // best-effort; missing hash/path is acceptable
-  }
+  const viaDefaultObj = (
+    mod as { default?: { captureSnapshotAndArchives?: unknown } }
+  ).default?.captureSnapshotAndArchives;
+  if (typeof viaDefaultObj === 'function') return viaDefaultObj as CaptureFn;
 
-  const ts = utcStamp();
-  await captureSnapshotAndArchives({
-    cwd,
-    stanPath,
-    ts,
-    maxUndos,
-  });
+  const viaDefaultFn =
+    typeof (mod as { default?: unknown }).default === 'function'
+      ? ((mod as { default: (...a: unknown[]) => Promise<unknown> })
+          .default as CaptureFn)
+      : undefined;
+  if (typeof viaDefaultFn === 'function') return viaDefaultFn;
 
-  if (wantStash && attemptPop) {
-    const pop = await runGit(cwd, ['stash', 'pop']);
-    if (pop.code !== 0) {
-      console.error('stan: git stash pop failed');
-    } else {
-      console.log('stan: stash pop restored changes');
-    }
-  }
-
-  console.log('stan: snapshot updated');
-  // Visual separation from next prompt
-  console.log('');
+  throw new Error('captureSnapshotAndArchives not found in "./capture"');
 };
+
+/**
+ * Handle `stan snap`:
+ * - Optionally stashes (git stash -u) before snapshot and pops after.
+ * - Writes/updates <stanPath>/diff/.archive.snapshot.json via capture layer.
+ */
+export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
+  const cwd = process.cwd();
+  const stanPath = resolveStanPathSync(cwd);
+  const historyDir = path.join(cwd, stanPath, 'diff');
+
+  const capture = await resolveCaptureSnapshotAndArchives();
+  await capture({
+    cwd,
+    stanPath,
+    historyDir,
+    stash: Boolean(opts?.stash),
+  });
+}

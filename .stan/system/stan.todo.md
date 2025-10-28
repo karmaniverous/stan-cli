@@ -206,3 +206,8 @@
   - src/cli/run/derive.ts: remove unnecessary nullish-coalescing for known booleans and prompt default (eff values are non-nullish).
   - src/runner/run/prompt.resolve.plan.test.ts: drop unused mkdir import.
   - Purpose: reduce @typescript-eslint/no-unnecessary-condition and unused-vars without changing behavior.
+
+- Fix snap handler SSR capture resolver
+  - Resolved TypeError in src/cli/snap.stash.success.test.ts where `captureSnapshotAndArchives` was not a function under Vitest SSR.
+  - In src/runner/snap/snap-run.ts, resolve `captureSnapshotAndArchives` via a named‑or‑default dynamic import pattern: prefer the named export; fall back to `default.captureSnapshotAndArchives`; finally accept default export when callable.
+  - Aligns with existing SSR‑robust patterns used across run/session and CLI snap handler.
