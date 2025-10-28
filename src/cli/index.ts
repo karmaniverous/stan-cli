@@ -19,13 +19,27 @@ import { performInit } from './init';
 import * as initMod from './init';
 type InitModule = typeof import('./init');
 type RegisterInitFn = InitModule['registerInit'];
-const registerInitResolved: RegisterInitFn =
-  resolveNamedOrDefaultFunction<RegisterInitFn>(
+let registerInitResolved: RegisterInitFn;
+try {
+  registerInitResolved = resolveNamedOrDefaultFunction<RegisterInitFn>(
     initMod as unknown,
     (m) => (m as InitModule).registerInit,
     (m) => (m as { default?: Partial<InitModule> }).default?.registerInit,
     'registerInit',
   );
+} catch (e) {
+  // Extra SSR/mocks fallback: accept default export when it is a callable function
+  try {
+    const def = (initMod as unknown as { default?: unknown }).default;
+    if (typeof def === 'function') {
+      registerInitResolved = def as unknown as RegisterInitFn;
+    } else {
+      throw e instanceof Error ? e : new Error(String(e));
+    }
+  } catch {
+    throw e instanceof Error ? e : new Error(String(e));
+  }
+}
 // Robustly resolve registerPatch (named or default export) to tolerate SSR/ESM interop.
 import * as patchMod from './patch';
 import { registerRun } from './runner';

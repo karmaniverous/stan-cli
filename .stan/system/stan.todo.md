@@ -16,6 +16,15 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap “set” navigation — pass raw CLI string
+  - Reverted numeric coercion in `snap set` handler; always forward the raw string
+    to history so 0-based navigation semantics match tests and prior design.
+  - File: `src/cli/snap.ts`.
+
+- Init resolver SSR fallback
+  - Added default-as-function fallback for `registerInit` in `src/cli/index.ts`
+    (parity with registerPatch) to fix legacy/mocked export shapes in tests.
+
 - Facet overlay — fix inactive subtree & leaf‑glob handling
   - Expand inactive facet subtree roots to deny‑list globs (root → root/\*\*) before passing to the engine so entire subtrees are actually dropped.
   - Propagate leaf‑glob excludes (e.g., \*_/_.test.ts) from inactive facets to engine excludes, while retaining scoped re‑inclusion anchors under active roots.

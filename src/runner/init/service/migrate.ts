@@ -52,7 +52,7 @@ const attachNode = (
   node: Dict,
 ): void => {
   if (Object.keys(node).length > 0) root[key] = node;
-  else if (hasOwn(root, key)) delete root[key];
+  else if (hasOwn(root, key)) Reflect.deleteProperty(root, key);
 };
 
 /** Best‑effort config backup. */
