@@ -1,166 +1,186 @@
+// src/runner/snap/history.ts
 /**
- * src/runner/snap/history.ts
+ * Snap history helpers: persist a stack of snapshot bodies and navigate them.
  *
- * Minimal history helpers for snap navigation.
- * - State file: <stanPath>/diff/.snap.history.json
- * - Index semantics: 0-based (persist verbatim, clamped).
- * - Undo/redo: adjust index within bounds (no external restore/invocation).
- * - Info: best-effort console print (non-fatal).
+ * Semantics:
+ * - State is persisted as 0-based:
+ *   { stack: string[]; index: number }
+ * - handleSet(index) clamps and persists the provided index verbatim (0-based),
+ *   then writes the selected snapshot body to <stanPath>/diff/.archive.snapshot.json.
+ * - handleUndo/handleRedo adjust the index within [0, stack.length-1] and
+ *   update the snapshot file accordingly.
+ * - handleInfo prints a concise summary (size, index).
  *
- * Note: These helpers operate solely on the history file to satisfy CLI tests
- * that assert index and trimming behavior. Any external restore logic (e.g.,
- * copying snapshot files) is intentionally out of scope here and should be
- * handled by higher-level runners if needed.
+ * Notes:
+ * - No-op safely when history is missing/empty.
+ * - Best-effort I/O; failures are swallowed to avoid noisy CLI behavior.
  */
 
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-type SnapEntry = { ts: string; id: string };
+import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
 type HistoryState = {
-  stack: SnapEntry[];
+  stack: string[];
   index: number; // 0-based
-  maxUndos?: number; // optional retention policy
 };
 
-const DEFAULT_STATE: HistoryState = { stack: [], index: -1 };
+const historyPath = (cwd: string, stanPath: string): string =>
+  path.join(cwd, stanPath, 'diff', '.snap.history.json');
 
-const clamp = (n: number, lo: number, hi: number): number =>
-  Math.min(hi, Math.max(lo, n));
+const snapshotPath = (cwd: string, stanPath: string): string =>
+  path.join(cwd, stanPath, 'diff', '.archive.snapshot.json');
 
-async function readJson<T>(abs: string): Promise<T | null> {
+const readJson = async <T>(abs: string): Promise<T | null> => {
   try {
     const raw = await readFile(abs, 'utf8');
     const v = JSON.parse(raw) as unknown;
-    return (v && typeof v === 'object' ? (v as T) : null) ?? null;
+    return v && typeof v === 'object' ? (v as T) : null;
   } catch {
     return null;
   }
-}
-
-async function writeJson<T>(abs: string, v: T): Promise<void> {
-  await writeFile(abs, JSON.stringify(v, null, 2), 'utf8');
-}
-
-// Resolve the working directory and stanPath heuristically.
-// The CLI already invokes these commands from the repo root; here we only
-// need stanPath to build the state file path. Fallback to ".stan".
-async function resolveStanPath(cwd: string): Promise<string> {
-  // Best-effort: require() avoided; keep local heuristics simple.
-  // If a project needs stricter resolution, the caller should pass the
-  // already-resolved stanPath and wire dedicated helpers.
-  const candidates = ['.stan', 'stan'];
-  for (const s of candidates) {
-    try {
-      // Check for the system folder to reduce false positives
-      // (ignore errors; best-effort).
-      await readFile(path.join(cwd, s, 'system', 'stan.system.md'));
-      return s;
-    } catch {
-      /* ignore */
-    }
-  }
-  return '.stan';
-}
-
-const statePath = async (cwd: string): Promise<string> => {
-  const stanPath = await resolveStanPath(cwd);
-  return path.join(cwd, stanPath, 'diff', '.snap.history.json');
 };
 
-async function readState(p: string): Promise<HistoryState> {
-  const st = await readJson<HistoryState>(p);
-  if (!st || !Array.isArray(st.stack) || typeof st.index !== 'number') {
-    return { ...DEFAULT_STATE };
-  }
-  // Defensive normalization
-  const idx = clamp(
-    st.index,
-    st.stack.length ? 0 : -1,
-    Math.max(-1, st.stack.length - 1),
-  );
-  return { stack: st.stack.slice(), index: idx, maxUndos: st.maxUndos };
-}
-
-async function writeState(p: string, st: HistoryState): Promise<void> {
-  // Clamp before persisting
-  const idx = clamp(
-    st.index,
-    st.stack.length ? 0 : -1,
-    Math.max(-1, st.stack.length - 1),
-  );
-  await writeJson(p, { ...st, index: idx });
-}
-
-/**
- * Undo: move the index back by one when possible (no external restore here).
- */
-export async function handleUndo(): Promise<void> {
-  const cwd = process.cwd();
-  const p = await statePath(cwd);
-  const st = await readState(p);
-  if (st.index <= 0) {
-    // Already at earliest (or empty)
-    await writeState(p, { ...st, index: st.stack.length ? 0 : -1 });
-    return;
-  }
-  await writeState(p, { ...st, index: st.index - 1 });
-}
-
-/**
- * Redo: move the index forward by one when possible (no external restore here).
- */
-export async function handleRedo(): Promise<void> {
-  const cwd = process.cwd();
-  const p = await statePath(cwd);
-  const st = await readState(p);
-  if (st.stack.length === 0) {
-    await writeState(p, { ...st, index: -1 });
-    return;
-  }
-  if (st.index >= st.stack.length - 1) {
-    await writeState(p, { ...st, index: st.stack.length - 1 });
-    return;
-  }
-  await writeState(p, { ...st, index: st.index + 1 });
-}
-
-/**
- * Set: jump to a specific 0-based index. The CLI already forwards the raw
- * string from the command line; we persist the parsed value verbatim (clamped).
- */
-export async function handleSet(indexArg: string | number): Promise<void> {
-  const cwd = process.cwd();
-  const p = await statePath(cwd);
-  const st = await readState(p);
-
-  const nParsed = Number.parseInt(String(indexArg), 10);
-  const n0 = Number.isFinite(nParsed) ? nParsed : 0;
-  const next = clamp(
-    n0,
-    st.stack.length ? 0 : -1,
-    Math.max(-1, st.stack.length - 1),
-  );
-
-  if (st.index === next) return;
-  await writeState(p, { ...st, index: next });
-}
-
-/**
- * Info: print a concise view (non-fatal; tests read state directly).
- */
-export async function handleInfo(): Promise<void> {
-  const cwd = process.cwd();
-  const p = await statePath(cwd);
-  const st = await readState(p);
+const writeJson = async (abs: string, v: unknown): Promise<void> => {
   try {
-    const lines = [
-      `snap history: ${st.stack.length.toString()} entries`,
-      `current index: ${st.index.toString()}`,
-    ];
-    console.log(lines.join('\n'));
+    await writeFile(abs, JSON.stringify(v, null, 2), 'utf8');
   } catch {
     /* ignore */
   }
-}
+};
+
+const clampIndex = (i: number, size: number): number => {
+  if (!Number.isFinite(i)) return 0;
+  if (size <= 0) return 0;
+  if (i < 0) return 0;
+  if (i >= size) return size - 1;
+  return i;
+};
+
+const loadState = async (
+  cwd: string,
+  stanPath: string,
+): Promise<HistoryState | null> => {
+  const p = historyPath(cwd, stanPath);
+  if (!existsSync(p)) return null;
+  const s = await readJson<HistoryState>(p);
+  if (!s || !Array.isArray(s.stack) || typeof s.index !== 'number') return null;
+  return s;
+};
+
+const saveState = async (
+  cwd: string,
+  stanPath: string,
+  s: HistoryState,
+): Promise<void> => {
+  await writeJson(historyPath(cwd, stanPath), s);
+};
+
+const writeSnapshotBody = async (
+  cwd: string,
+  stanPath: string,
+  body: string,
+): Promise<void> => {
+  try {
+    await writeFile(snapshotPath(cwd, stanPath), body, 'utf8');
+  } catch {
+    /* ignore */
+  }
+};
+
+/** Jump to an explicit 0-based index in the history and update the snapshot file. */
+export const handleSet = async (indexArg: string): Promise<void> => {
+  const cwd = process.cwd();
+  let stanPath = '.stan';
+  try {
+    stanPath = resolveStanPathSync(cwd);
+  } catch {
+    /* keep default */
+  }
+
+  const state = await loadState(cwd, stanPath);
+  if (!state || state.stack.length === 0) return;
+
+  const parsed = Number.parseInt(indexArg, 10);
+  const nextIdx = clampIndex(parsed, state.stack.length);
+
+  const next: HistoryState = { stack: state.stack, index: nextIdx };
+  await saveState(cwd, stanPath, next);
+
+  const body = state.stack[nextIdx] ?? '';
+  await writeSnapshotBody(cwd, stanPath, body);
+};
+
+/** Move one step back in history (if possible) and update the snapshot file. */
+export const handleUndo = async (): Promise<void> => {
+  const cwd = process.cwd();
+  let stanPath = '.stan';
+  try {
+    stanPath = resolveStanPathSync(cwd);
+  } catch {
+    /* keep default */
+  }
+
+  const state = await loadState(cwd, stanPath);
+  if (!state || state.stack.length === 0) return;
+
+  const nextIdx = clampIndex(state.index - 1, state.stack.length);
+  const next: HistoryState = { stack: state.stack, index: nextIdx };
+  await saveState(cwd, stanPath, next);
+
+  const body = state.stack[nextIdx] ?? '';
+  await writeSnapshotBody(cwd, stanPath, body);
+};
+
+/** Move one step forward in history (if possible) and update the snapshot file. */
+export const handleRedo = async (): Promise<void> => {
+  const cwd = process.cwd();
+  let stanPath = '.stan';
+  try {
+    stanPath = resolveStanPathSync(cwd);
+  } catch {
+    /* keep default */
+  }
+
+  const state = await loadState(cwd, stanPath);
+  if (!state || state.stack.length === 0) return;
+
+  const nextIdx = clampIndex(state.index + 1, state.stack.length);
+  const next: HistoryState = { stack: state.stack, index: nextIdx };
+  await saveState(cwd, stanPath, next);
+
+  const body = state.stack[nextIdx] ?? '';
+  await writeSnapshotBody(cwd, stanPath, body);
+};
+
+/** Print a concise summary of the current history stack and position. */
+export const handleInfo = async (): Promise<void> => {
+  const cwd = process.cwd();
+  let stanPath = '.stan';
+  try {
+    stanPath = resolveStanPathSync(cwd);
+  } catch {
+    /* keep default */
+  }
+
+  const state = await loadState(cwd, stanPath);
+  if (!state) {
+    try {
+      console.log('stan: snap history: none');
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+  const size = state.stack.length;
+  const idx = clampIndex(state.index, size);
+  try {
+    console.log(
+      `stan: snap history: size ${size.toString()}, index ${idx.toString()}`,
+    );
+  } catch {
+    /* ignore */
+  }
+};

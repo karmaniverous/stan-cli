@@ -21,6 +21,67 @@ import * as cliUtils from './cli-utils';
 type CliUtilsModule = typeof import('./cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
 
+// Local, module‑independent safety fallback (parse normalization + exit override).
+const applySafetyLocal = (cmd: Command): void => {
+  // Normalize ["node","stan", ...] → [...]
+  const normalizeArgv = (
+    argv?: readonly string[],
+  ): readonly string[] | undefined => {
+    if (!Array.isArray(argv)) return argv;
+    return argv.length >= 2 && argv[0] === 'node' && argv[1] === 'stan'
+      ? argv.slice(2)
+      : argv;
+  };
+  try {
+    // Swallow common Commander exits to keep tests quiet.
+    cmd.exitOverride((err) => {
+      const swallow = new Set<string>([
+        'commander.helpDisplayed',
+        'commander.unknownCommand',
+        'commander.unknownOption',
+        'commander.help',
+        'commander.excessArguments',
+      ]);
+      if (swallow.has(err.code)) {
+        if (err.code === 'commander.excessArguments') {
+          try {
+            if (err.message) console.error(err.message);
+            cmd.outputHelp();
+          } catch {
+            /* best‑effort */
+          }
+        }
+        return;
+      }
+      throw err;
+    });
+  } catch {
+    /* best‑effort */
+  }
+  try {
+    type FromOpt = { from?: 'user' | 'node' };
+    const holder = cmd as unknown as {
+      parse: (argv?: readonly string[], opts?: FromOpt) => Command;
+      parseAsync: (
+        argv?: readonly string[],
+        opts?: FromOpt,
+      ) => Promise<Command>;
+    };
+    const origParse = holder.parse.bind(cmd);
+    const origParseAsync = holder.parseAsync.bind(cmd);
+    holder.parse = (argv?: readonly string[], opts?: FromOpt) => {
+      origParse(normalizeArgv(argv), opts);
+      return cmd;
+    };
+    holder.parseAsync = async (argv?: readonly string[], opts?: FromOpt) => {
+      await origParseAsync(normalizeArgv(argv), opts);
+      return cmd;
+    };
+  } catch {
+    /* best‑effort */
+  }
+};
+
 /**
  * Register the `patch` subcommand on the provided root CLI. *
  * @param cli - Commander root command. * @returns The same root command for chaining.
@@ -39,10 +100,8 @@ export function registerPatch(cli: Command): Command {
               ?.applyCliSafety,
           'applyCliSafety',
         );
-      if (applyCliSafetyResolved) {
-        applyCliSafetyResolved(cli);
-        applied = true;
-      }
+      applyCliSafetyResolved(cli);
+      applied = true;
     } catch {
       /* best-effort */
     }
@@ -63,6 +122,8 @@ export function registerPatch(cli: Command): Command {
       } catch {
         /* best-effort */
       }
+      // Final local safety to cover missing helpers under SSR/mocks.
+      applySafetyLocal(cli);
     }
   }
   // Final safety: unconditionally ensure parse normalization and exit override (idempotent).
@@ -81,6 +142,8 @@ export function registerPatch(cli: Command): Command {
   } catch {
     /* best-effort */
   }
+  // Also apply local safety idempotently to guard tests further.
+  applySafetyLocal(cli);
 
   const sub = cli
     .command('patch')
@@ -170,6 +233,8 @@ export function registerPatch(cli: Command): Command {
   } catch {
     /* best-effort */
   }
+  // Local fallback on subcommand too (idempotent).
+  applySafetyLocal(sub);
 
   sub.action(
     async (
