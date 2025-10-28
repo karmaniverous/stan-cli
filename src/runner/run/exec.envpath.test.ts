@@ -34,7 +34,7 @@ describe('script runner PATH augmentation (repo-local node_modules/.bin preceden
     await runSelected(dir, cfg, ['showpath'], 'concurrent', { archive: false });
     const out = path.join(dir, 'out', 'output', 'showpath.txt');
     const body = await read(out);
-    const first = String(body).split(delimiter)[0] ?? '';
+    const first = body.split(delimiter)[0] ?? '';
     expect(first.replace(/\\+/g, '/')).toBe(
       path.join(dir, 'node_modules', '.bin').replace(/\\+/g, '/'),
     );

@@ -78,7 +78,7 @@ export const runSessionOnce = async (args: {
         const srcKind =
           (rp as unknown as { kind?: 'local' | 'core' | 'path' }).kind ??
           'path';
-        const p = String(resolvedPromptAbs ?? '').replace(/\\/g, '/');
+        const p = (resolvedPromptAbs ?? '').replace(/\\/g, '/');
         console.error(`stan: debug: prompt: ${srcKind} ${p}`);
       }
     } catch {

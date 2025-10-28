@@ -10,7 +10,7 @@ import { asEsmModule } from '@/test/mock-esm';
 // Install mocks before importing the SUT — Vitest Option 1:
 // resetModules + doMock + dynamic import to control evaluation order.
 vi.resetModules();
-vi.doMock('./apply', async () =>
+vi.doMock('./apply', () =>
   asEsmModule({
     buildApplyAttempts: () => [],
     runGitApply: () =>

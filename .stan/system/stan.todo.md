@@ -82,4 +82,12 @@
   - src/cli/config/load.ts: replace String(env) with safe narrowing; remove redundant truthiness guard when probing schema.parse.
   - src/runner/config/effective.ts: replace String(env) with safe narrowing in legacyAccepted.
   - src/cli/config/schema.ts: avoid String(...) in coerceBool; trim/lowercase directly on string.
-  - Outcome: reduces no-unnecessary-type-conversion and no-unnecessary-condition warnings without behavior changes.
+  - Outcome: reduces no-unnecessary-type-conversion and no-unnecessary-condition warnings without behavior changes.
+
+- Lint remediation — phase 1 (trivial conversions + dynamic delete)
+  - Replace dynamic delete in init/service/migrate.ts with Reflect.deleteProperty for opts.cliDefaults and base.opts.
+  - Remove unnecessary String(...) in init/service/stanpath.ts and run/session/run-session.ts.
+  - Drop String(...) in exec.envpath.test.ts PATH assertion.
+  - Fix require-await by making vi.doMock factory non-async in cli/patch.jsdiff.test.ts.
+  - Remove unused EventEmitter import in cli/snap.stash.success.test.ts.
+  - Tests remain green; typecheck clean.

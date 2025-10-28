@@ -138,8 +138,10 @@ export async function maybeMigrateLegacyToNamespaced(
       cliNode.cliDefaults = optsNode.cliDefaults;
     }
     // Remove opts.cliDefaults; drop opts if empty.
-    if (hasOwn(optsNode, 'cliDefaults')) delete optsNode.cliDefaults;
-    if (Object.keys(optsNode).length === 0) delete base.opts;
+    if (hasOwn(optsNode, 'cliDefaults'))
+      Reflect.deleteProperty(optsNode, 'cliDefaults');
+    if (Object.keys(optsNode).length === 0)
+      Reflect.deleteProperty(base, 'opts');
   }
 
   attachNode(base, 'stan-core', coreNode);
