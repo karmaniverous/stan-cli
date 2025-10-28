@@ -90,4 +90,7 @@
   - Drop String(...) in exec.envpath.test.ts PATH assertion.
   - Fix require-await by making vi.doMock factory non-async in cli/patch.jsdiff.test.ts.
   - Remove unused EventEmitter import in cli/snap.stash.success.test.ts.
-  - Tests remain green; typecheck clean.
+  - Tests remain green; typecheck clean.
+
+- Fix typecheck in snap stash success test
+  - src/cli/snap.stash.success.test.ts: add missing writeFile import and remove unused rm import to resolve TS2304 and no-unsafe-call/unused-vars lint.
