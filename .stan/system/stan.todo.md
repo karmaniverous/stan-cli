@@ -97,8 +97,7 @@
   - Outcome: stabilizes snap/run plan handlers and UI parity under Vitest forks/SSR.
 
 - SSR fallback — runSessionOnce resolver
-  - src/runner/run/service.ts: resolve runSessionOnce via tryResolveNamedOrDefault
-    against './session' (named or default), with callable default fallback.
+  - src/runner/run/service.ts: resolve runSessionOnce via tryResolveNamedOrDefault against './session' (named or default), with callable default fallback.
   - Fixes “runSessionOnce is not a function” in PATH augmentation tests under SSR.
 
 - Lint remediation — env/string coercions
@@ -162,3 +161,8 @@
 - SSR fallback — registerRun wiring
   - src/cli/runner/index.ts: add the same tryResolveNamedOrDefault wrapper for registerRunAction and registerRunOptions so overlay mapping and CLI runner wiring are robust under SSR.
   - Resolves “registerRunAction not found” in overlay excludes mapping tests.
+
+- Overlay state anchoring + defaults
+  - Always re-include (anchor) `.stan/system/facet.state.json` so it appears in every full archive, regardless of .gitignore.
+  - Declared next-run defaults in `.stan/system/facet.state.json`: `"run": true` and all other facets disabled (`false`) to narrow iteration context.
+  - Updated requirements to record the archive-inclusion rule for `facet.state.json`.

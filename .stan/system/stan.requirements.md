@@ -121,6 +121,11 @@ Overlay lives entirely in the CLI. Core remains facet‑agnostic and receives on
     - include: “anchors” that must always be kept (e.g., READMEs, indices).
   - `facet.state.json` (ephemeral): name → boolean; `true` = active (no drop), `false` = inactive (drop its exclude patterns). Omitted facets default to active.
 
+Archive inclusion (full archives)
+
+- `facet.state.json` is always included in full archives (anchored) whether or not it is gitignored. This guarantees downstream assistants can deterministically read the next‑run facet defaults from attached artifacts.
+- This inclusion does not override reserved denials (e.g., `.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`, and archive outputs under `<stanPath>/output/…`).
+
 - Reserved denials and precedence (engine‑documented behavior, enforced by core):
   - Anchors may re‑include paths after `.gitignore` and excludes but never override reserved denials:
     - `.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`,

@@ -164,6 +164,17 @@ export const computeFacetOverlay = async (
     }
   }
 
+  // Always anchor the facet state file so it is included in full archives
+  // regardless of .gitignore entries or overlay state. This allows the
+  // assistant and tooling to reason about the next-run facet defaults.
+  // Note: anchors honor reserved denials in the engine; this path is safe.
+  try {
+    const facetState = posix(path.join(stanPath, 'system', 'facet.state.json'));
+    anchorsOverlaySet.add(facetState);
+  } catch {
+    /* best-effort */
+  }
+
   // If overlay disabled, do not add any excludes, but still report anchorsKept counts.
   if (!input.enabled) {
     // Count anchors that exist physically for metadata
