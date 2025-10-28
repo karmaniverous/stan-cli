@@ -23,9 +23,6 @@ describe('overlay excludes mapping (subtree roots expanded; leaf-globs propagate
   let dir: string;
 
   beforeEach(async () => {
-    // Clear module state between runs to avoid cross-suite contamination.
-    vi.resetModules();
-    vi.unmock('@/runner/run');
     dir = await mkdtemp(path.join(tmpdir(), 'stan-overlay-map-'));
     process.chdir(dir);
     recorded.length = 0;
@@ -80,8 +77,6 @@ describe('overlay excludes mapping (subtree roots expanded; leaf-globs propagate
     } catch {
       /* ignore */
     }
-    vi.resetModules();
-    vi.unmock('@/runner/run');
     vi.restoreAllMocks();
   });
 

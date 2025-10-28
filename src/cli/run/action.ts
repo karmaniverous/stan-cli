@@ -257,9 +257,11 @@ export const registerRunAction = (
     // - existing glob patterns (contain *, ?, or [) pass through unchanged.
     const overlayExcludesRaw =
       overlay && overlay.enabled ? (overlay.excludesOverlay ?? []) : [];
+    const hasGlob = (s: string): boolean =>
+      s.includes('*') || s.includes('?') || s.includes('[');
     const ensureSubtreeGlob = (p: string): string => {
       const s = p.replace(/\/+$/, '');
-      return /[*?\[]/.test(s) ? s : `${s}/**`;
+      return hasGlob(s) ? s : `${s}/**`;
     };
     const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
 
@@ -268,33 +270,29 @@ export const registerRunAction = (
     // currently inactive per overlay.effective.
     const leafGlobs: string[] = [];
     try {
-      if (overlay?.enabled && overlay?.effective) {
-        const fs = await import('node:fs/promises');
-        const pathMod = await import('node:path');
-        const metaAbs = pathMod.join(
+      if (overlay && overlay.enabled && overlay.effective) {
+        const { readFile } = await import('node:fs/promises');
+        const { join } = await import('node:path');
+        const metaAbs = join(
           runCwd,
           config.stanPath,
           'system',
           'facet.meta.json',
         );
-        const raw = await fs
-          .readFile(metaAbs, 'utf8')
-          .catch(() => null as unknown as string);
-        if (raw) {
-          const meta = JSON.parse(raw) as Record<
-            string,
-            { exclude?: string[] } | undefined
-          >;
-          const isSubtree = (p: string) => {
-            const s = p.trim();
-            return s.endsWith('/**') || s.endsWith('/*');
-          };
-          for (const [name, def] of Object.entries(meta ?? {})) {
-            if (!def || !def.exclude) continue;
-            if (!overlay.effective[name]) {
-              for (const patt of def.exclude) {
-                if (!isSubtree(patt)) leafGlobs.push(patt.replace(/\\+/g, '/'));
-              }
+        const raw = await readFile(metaAbs, 'utf8');
+        const meta = JSON.parse(raw) as Record<
+          string,
+          { exclude?: string[] } | undefined
+        >;
+        const isSubtree = (p: string): boolean => {
+          const t = String(p ?? '').trim();
+          return t.endsWith('/**') || t.endsWith('/*');
+        };
+        for (const [name, def] of Object.entries(meta ?? {})) {
+          if (!def || !Array.isArray(def.exclude)) continue;
+          if (!overlay.effective[name]) {
+            for (const patt of def.exclude) {
+              if (!isSubtree(patt)) leafGlobs.push(patt.replace(/\\+/g, '/'));
             }
           }
         }

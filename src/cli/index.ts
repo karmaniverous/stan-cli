@@ -160,6 +160,7 @@ export const makeCli = (): Command => {
   // Propagate -d/--debug to subcommands (set before any subcommand action)
   cli.hook('preAction', (thisCommand) => {
     try {
+      const envDebugActive = process.env.STAN_DEBUG === '1';
       const root = thisCommand.parent ?? thisCommand;
       const holder = root as unknown as {
         opts?: () => { debug?: boolean; boring?: boolean };
@@ -176,8 +177,15 @@ export const makeCli = (): Command => {
       const boringFromCli =
         src && src('boring') === 'cli' ? Boolean(opts.boring) : undefined;
 
-      const debugFinal =
-        typeof debugFromCli === 'boolean' ? debugFromCli : debugDefault;
+      // Preserve an explicit STAN_DEBUG=1 from the environment unless the user
+      // negates it via CLI flags; otherwise fall back to config defaults.
+      let debugFinal = debugDefault;
+      if (typeof debugFromCli === 'boolean') {
+        debugFinal = debugFromCli;
+      } else if (envDebugActive) {
+        debugFinal = true;
+      }
+
       const boringFinal =
         typeof boringFromCli === 'boolean' ? boringFromCli : boringDefault;
       if (debugFinal) process.env.STAN_DEBUG = '1';
