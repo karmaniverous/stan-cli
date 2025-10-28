@@ -2,6 +2,7 @@
 import type { Command } from 'commander';
 
 import * as cliUtils from '@/cli/cli-utils';
+import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 
 type CliUtilsModule = typeof import('@/cli/cli-utils');
 type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
@@ -11,16 +12,6 @@ export function applyCliSafetyTo(cmd: Command): void {
   // Prefer named-or-default adapter; quietly fall back to direct methods.
   let applied = false;
   try {
-    // Lazy resolve without importing the helper here to avoid cyclic SSR issues.
-    const { resolveNamedOrDefaultFunction } =
-      require('@/common/interop/resolve') as {
-        resolveNamedOrDefaultFunction: <F>(
-          mod: unknown,
-          pickNamed: (m: unknown) => F | undefined,
-          pickDefault: (m: unknown) => F | undefined,
-          label?: string,
-        ) => F;
-      };
     const fn = resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
       cliUtils as unknown,
       (m) => (m as CliUtilsModule).applyCliSafety,
@@ -35,29 +26,17 @@ export function applyCliSafetyTo(cmd: Command): void {
   }
   if (!applied) {
     try {
-      (
-        cliUtils as unknown as {
-          installExitOverride?: (c: Command) => void;
-          patchParseMethods?: (c: Command) => void;
-        }
-      ).installExitOverride?.(cmd);
-      (
-        cliUtils as unknown as {
-          patchParseMethods?: (c: Command) => void;
-        }
-      ).patchParseMethods?.(cmd);
+      // Known helpers exist; call directly under fallback.
+      cliUtils.installExitOverride(cmd);
+      cliUtils.patchParseMethods(cmd);
     } catch {
       /* best-effort */
     }
   }
   // Final safety (idempotent) to prevent “unknown command 'node'” in tests.
   try {
-    (
-      cliUtils as unknown as { patchParseMethods?: (c: Command) => void }
-    ).patchParseMethods?.(cmd);
-    (
-      cliUtils as unknown as { installExitOverride?: (c: Command) => void }
-    ).installExitOverride?.(cmd);
+    cliUtils.patchParseMethods(cmd);
+    cliUtils.installExitOverride(cmd);
   } catch {
     /* best-effort */
   }

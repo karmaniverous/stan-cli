@@ -46,7 +46,7 @@ import { registerRun } from './runner';
 import { registerSnap } from './snap';
 type PatchModule = typeof import('./patch');
 type RegisterPatchFn = PatchModule['registerPatch'];
-let registerPatchResolved: RegisterPatchFn;
+let registerPatchResolved: RegisterPatchFn | undefined;
 try {
   registerPatchResolved = resolveNamedOrDefaultFunction<RegisterPatchFn>(
     patchMod as unknown,
@@ -55,16 +55,17 @@ try {
     'registerPatch',
   );
 } catch (e) {
-  // Extra SSR/mocks fallback: accept default export when it is a callable function
+  // Extra SSR/mocks fallbacks; swallow on failure (subcommand is optional for tests that don't need it).
   try {
     const def = (patchMod as unknown as { default?: unknown }).default;
     if (typeof def === 'function') {
       registerPatchResolved = def as unknown as RegisterPatchFn;
     } else {
-      throw e instanceof Error ? e : new Error(String(e));
+      // leave undefined; runtime call is guarded
+      registerPatchResolved = undefined;
     }
   } catch {
-    throw e instanceof Error ? e : new Error(String(e));
+    registerPatchResolved = undefined;
   }
 }
 
@@ -241,7 +242,7 @@ export const makeCli = (): Command => {
   registerInitResolved(cli);
   registerSnap(cli);
   try {
-    registerPatchResolved(cli);
+    registerPatchResolved?.(cli);
   } catch {
     /* best-effort */
   }

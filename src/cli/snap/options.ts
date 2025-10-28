@@ -1,8 +1,9 @@
 // src/cli/snap/options.ts
 import { findConfigPathSync } from '@karmaniverous/stan-core';
-import type { Command, Option } from 'commander';
+import type { Command } from 'commander';
 import { Option as Opt } from 'commander';
 
+import * as cliUtils from '@/cli/cli-utils';
 import { loadCliConfigSync } from '@/cli/config/load';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 
@@ -23,7 +24,7 @@ export function attachSnapOptions(sub: Command): void {
   let tagDefaultResolved: TagDefaultFn | undefined;
   try {
     tagDefaultResolved = resolveNamedOrDefaultFunction<TagDefaultFn>(
-      require('@/cli/cli-utils') as unknown,
+      cliUtils as unknown,
       (m) => (m as CliUtilsModule).tagDefault,
       (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
       'tagDefault',

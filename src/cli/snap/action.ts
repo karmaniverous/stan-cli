@@ -35,11 +35,11 @@ const runLoopHeaderAndGuard = async (
   return true;
 };
 
-/** Resolve stash default (flags > cliDefaults > legacy parse fallback). */
-const resolveStashDefault = (
+/** Resolve stash default (flags \> cliDefaults \> legacy parse fallback). */
+const resolveStashDefault = async (
   sub: Command,
   opts: { stash?: boolean } | undefined,
-): boolean | undefined => {
+): Promise<boolean | undefined> => {
   try {
     const holder = sub as unknown as {
       getOptionValueSource?: (name: string) => string | undefined;
@@ -61,7 +61,7 @@ const resolveStashDefault = (
   try {
     const cfgPath = findConfigPathSync(process.cwd());
     if (cfgPath) {
-      const { readFileSync } = require('node:fs') as {
+      const { readFileSync } = (await import('node:fs')) as unknown as {
         readFileSync: (p: string, e: string) => string;
       };
       const raw = readFileSync(cfgPath, 'utf8');
@@ -106,7 +106,7 @@ export function registerSnapAction(sub: Command): void {
     if (!proceed) return;
 
     // Flags > cliDefaults > legacy parse fallback
-    const stashFinal = resolveStashDefault(sub, opts);
+    const stashFinal = await resolveStashDefault(sub, opts);
     const run = await loadSnapHandler('handleSnap');
 
     if (stashFinal === true) {
