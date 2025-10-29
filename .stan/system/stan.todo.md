@@ -16,6 +16,12 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap — handler resolver hardening (CLI)
+  - loadSnapHandler now tolerates function-as-default, default.default, module-as-function, and scans default objects; adds barrel fallback for '@/runner/snap'. Also fixes TS typing by explicitly typing resolved handlers. Stabilizes snap.stash.success under exotic mocks.
+
+- Snap history — resolve existing file across common stanPath names
+  - resolveHistoryPath now probes the configured stanPath first, then 'stan', then '.stan' and falls back to the configured path when none exist. Keeps 0‑based semantics for read/write. Fixes intermittent 'snap set 0' mismatch by ensuring the handler targets the file the tests create.
+
 - Snap — write diff snapshot before capture
   - handleSnap now writes/refreshes <stanPath>/diff/.archive.snapshot.json (via core writeArchiveSnapshot) before saving to history, fixing empty/invalid snapshot in SSR/CI.
   - SSR-robust dynamic resolution of core helpers (named/default).

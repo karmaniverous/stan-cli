@@ -5,6 +5,7 @@
  * - Clamp incoming indices; do not apply +/-1 adjustments.
  */
 
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -104,14 +105,27 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();
-  // Always operate on the configured history file in this workspace.
-  let resolved = '.stan';
+  // Prefer the configured stanPath; probe legacy fallbacks when an existing
+  // history file resides under a different common workspace name.
+  let configured: string = '.stan';
   try {
-    resolved = resolveStanPathSync(cwd);
+    configured = resolveStanPathSync(cwd);
   } catch {
     /* keep default */
   }
-  return statePath(cwd, resolved);
+  const candidates: string[] = Array.from(
+    new Set<string>([configured, 'stan', '.stan'].filter(Boolean)),
+  );
+  for (const sp of candidates) {
+    const p = statePath(cwd, sp);
+    try {
+      if (existsSync(p)) return p;
+    } catch {
+      /* ignore unreadable paths; try next */
+    }
+  }
+  // None exist yet: select the configured workspace path.
+  return statePath(cwd, configured);
 };
 
 export const handleUndo = async (): Promise<void> => {
