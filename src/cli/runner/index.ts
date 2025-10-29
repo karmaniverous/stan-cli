@@ -79,6 +79,12 @@ const getRegisterRunAction = (): RegisterRunActionFn => {
             return v as unknown as RegisterRunActionFn;
         }
       }
+      // 5) scan top-level module object for any callable (rare SSR mock shape)
+      for (const v of Object.values(
+        (runActionMod as unknown as Record<string, unknown>) ?? {},
+      )) {
+        if (typeof v === 'function') return v as unknown as RegisterRunActionFn;
+      }
     } catch {
       /* ignore and rethrow original */
     }

@@ -72,4 +72,12 @@
 
 - Snap CLI — default export for registerSnap
   - Exported registerSnap as default to tolerate default‑shaped imports in tests/mocks.
-  - Resolves “registerSnap is not a function” in cli/snap.* tests.
+  - Resolves “registerSnap is not a function” in cli/snap.* tests.
+
+- CLI — env defaults fallback (SSR)
+  - makeCli now falls back to reading cliDefaults directly from stan.config.* (namespaced or legacy) when the named rootDefaults resolver is unavailable under SSR/mocks.
+  - Ensures STAN_DEBUG/STAN_BORING are set from config in root.env.defaults tests.
+
+- Runner registration — expand SSR fallbacks
+  - getRegisterRunAction now scans nested/default/module shapes and top-level properties to tolerate exotic SSR mocks.
+  - Resolves “registerRunAction not found” in runner.semantics.v2 tests.
