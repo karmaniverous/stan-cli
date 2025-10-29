@@ -319,6 +319,11 @@
   - Replaced monolithic src/runner/run/session/archive-stage.ts with a directory module: imports.ts (SSR resolvers), config.ts (base FULL/DIFF builders), progress.ts (UI callbacks), prompt-ephemeral.ts (hash/meta decision), prompt-prepare.ts (materialize/restore), run-ephemeral.ts, run-normal.ts, and index.ts (orchestrator).
   - Preserved anchors‑excluded DIFF, staged imports once, and UI progress behavior.
 
+- Snap history set — prefer latest existing history file
+  - Updated resolveHistoryPath() to select the most recently updated history file among the configured stanPath, “stan”, and “.stan” when multiple exist.
+  - Ensures “snap set <index>” updates the same file tests and previous commands operate on, addressing a lingering off‑by‑one read after set.
+  - File: src/runner/snap/history.ts.
+
 - Remove legacy patch monolith; narrow lint in decomposed modules
   - Deleted src/cli/patch.ts so CLI resolves the folder barrel (src/cli/patch/index.ts). Fixes “statusOk is not defined” by eliminating stale code path.
   - Escaped “\>” in TSDoc for src/cli/patch/input.ts to silence tsdoc/syntax warnings.
