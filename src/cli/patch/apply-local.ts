@@ -17,7 +17,8 @@ export const applyUnifiedDiffLocally = async (
   const firstTarget = parseFirstTarget(cleaned);
   // Try git‑apply via local shim (mockable)
   try {
-    const mod = (await import('../apply')) as unknown as {
+    const modUnknown: unknown = await import('../apply');
+    const mod = modUnknown as {
       runGitApply?: (args: {
         cwd: string;
         patchAbs: string;

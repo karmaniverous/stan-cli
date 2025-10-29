@@ -318,3 +318,9 @@
 - Decompose archive stage (session) into small modules
   - Replaced monolithic src/runner/run/session/archive-stage.ts with a directory module: imports.ts (SSR resolvers), config.ts (base FULL/DIFF builders), progress.ts (UI callbacks), prompt-ephemeral.ts (hash/meta decision), prompt-prepare.ts (materialize/restore), run-ephemeral.ts, run-normal.ts, and index.ts (orchestrator).
   - Preserved anchors‑excluded DIFF, staged imports once, and UI progress behavior.
+
+- Remove legacy patch monolith; narrow lint in decomposed modules
+  - Deleted src/cli/patch.ts so CLI resolves the folder barrel (src/cli/patch/index.ts). Fixes “statusOk is not defined” by eliminating stale code path.
+  - Escaped “\>” in TSDoc for src/cli/patch/input.ts to silence tsdoc/syntax warnings.
+  - Avoided unsafe array destructuring in src/cli/patch/safety.ts (normalizeArgv).
+  - Routed dynamic import via unknown before narrowing in src/cli/patch/apply-local.ts to remove unsafe-any.

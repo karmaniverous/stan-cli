@@ -17,7 +17,8 @@ const normalizeArgv = (
       ? (argv as readonly string[])
       : undefined;
   }
-  const [first, second] = argv;
+  const first = argv[0];
+  const second = argv[1];
   if (typeof first !== 'string' || typeof second !== 'string') return undefined;
   if (first === 'node' && second === 'stan') {
     const rest = argv
@@ -69,11 +70,11 @@ export const applySafetyLocal = (cmd: Command): void => {
     const origParse = holder.parse.bind(cmd);
     const origParseAsync = holder.parseAsync.bind(cmd);
     holder.parse = (argv?: readonly string[], opts?: FromOpt) => {
-      origParse(normalizeArgv(argv), opts);
+      origParse(normalizeArgv(argv as unknown[] | undefined), opts);
       return cmd;
     };
     holder.parseAsync = async (argv?: readonly string[], opts?: FromOpt) => {
-      await origParseAsync(normalizeArgv(argv), opts);
+      await origParseAsync(normalizeArgv(argv as unknown[] | undefined), opts);
       return cmd;
     };
   } catch {

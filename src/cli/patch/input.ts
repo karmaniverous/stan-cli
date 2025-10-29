@@ -1,5 +1,5 @@
 /** src/cli/patch/input.ts
- * Input acquisition helper (argument > -f file > clipboard/service path).
+ * Input acquisition helper (argument \> -f file \> clipboard/service path).
  */
 import { readFile } from 'node:fs/promises';
 
