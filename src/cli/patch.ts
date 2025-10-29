@@ -4,7 +4,7 @@
  * Behavior:
  * - File Ops or other non-diff inputs: delegate to the service (engine pipeline).
  * - Unified diff inputs: attempt git-apply via a local "./apply" shim (mockable in tests);
- *   on failure, fall back to jsdiff from @karmaniverous/stan-core (preserves EOLs).
+ *   on failure, fall back to jsdiff from \@karmaniverous/stan-core (preserves EOLs).
  *
  * Notes:
  * - This keeps the engine as the primary pipeline for general behavior while
@@ -325,7 +325,7 @@ export function registerPatch(cli: Command): Command {
         if (ok) {
           const tail = firstTarget ? ` -> ${firstTarget}` : '';
           const msg = opts?.check ? 'patch check passed' : 'patch applied';
-          console.log(`stan: ${msg}${tail}`);
+          console.log(`stan: ${statusOk(msg)}${tail}`);
           console.log('');
           return;
         }

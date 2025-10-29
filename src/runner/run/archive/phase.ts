@@ -1,6 +1,3 @@
-import { writeFile } from 'node:fs/promises';
-import path from 'node:path';
-
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 
@@ -80,58 +77,6 @@ export const archivePhase = async (
   const doCleanup = opts?.cleanup !== false;
   const dirs = stanDirs(cwd, config.stanPath);
 
-  // Vitest-only fast path to avoid relying on 'tar' mocks when test suites call vi.restoreAllMocks()
-  const testFastPath =
-    process.env.NODE_ENV === 'test' && process.env.STAN_TEST_REAL_TAR !== '1';
-  if (testFastPath) {
-    const stamp = Date.now();
-    const created: { archivePath?: string; diffPath?: string } = {};
-    try {
-      if (!silent && (which === 'both' || which === 'full')) {
-        console.log(`stan: start "${alert('archive')}"`);
-      }
-      if (which === 'both' || which === 'full') {
-        opts?.progress?.start?.('full');
-        const startedFull = Date.now();
-        const fullPath = path.join(dirs.output, 'archive.tar');
-        await writeFile(fullPath, `TAR-${String(stamp)}`, 'utf8');
-        opts?.progress?.done?.('full', fullPath, startedFull, Date.now());
-        created.archivePath = fullPath;
-        if (!silent) {
-          console.log(
-            `stan: ${ok('done')} "${alert('archive')}" -> ${alert(
-              fullPath.replace(/\\/g, '/'),
-            )}`,
-          );
-        }
-      }
-      if (!silent && (which === 'both' || which === 'diff')) {
-        console.log(`stan: start "${alert('archive (diff)')}"`);
-      }
-      if (which === 'both' || which === 'diff') {
-        opts?.progress?.start?.('diff');
-        const startedDiff = Date.now();
-        const diffPath = path.join(dirs.output, 'archive.diff.tar');
-        await writeFile(diffPath, `TAR-DIFF-${String(stamp)}`, 'utf8');
-        opts?.progress?.done?.('diff', diffPath, startedDiff, Date.now());
-        created.diffPath = diffPath;
-        if (!silent) {
-          console.log(
-            `stan: ${ok('done')} "${alert('archive (diff)')}" -> ${alert(
-              diffPath.replace(/\\/g, '/'),
-            )}`,
-          );
-        }
-      }
-    } finally {
-      // fall through to cleanup for combine/patch dir behavior
-    }
-    if (doCleanup) {
-      if (includeOutputs) await cleanupOutputsAfterCombine(dirs.output);
-      await cleanupPatchDirAfterArchive(cwd, config.stanPath);
-    }
-    return created;
-  }
   if (!silent && (which === 'both' || which === 'full')) {
     console.log(`stan: start "${alert('archive')}"`);
   }
