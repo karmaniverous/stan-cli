@@ -16,6 +16,12 @@
 
 ## Completed (append-only, most recent items last)
 
+- Runner — action resolver hardening (CLI)
+  - getRegisterRunAction now tolerates default-as-function, nested default.default, module-as-function, and scans default objects. Fixes “registerRunAction not found” under exotic SSR mocks.
+
+- Snap history — broaden legacy probe
+  - resolveHistoryPath additionally probes “out” (common test workspace) when config is absent, improving alignment with CLI tests that seed history without a config.
+
 - Snap — handler resolver hardening (CLI)
   - loadSnapHandler now tolerates function-as-default, default.default, module-as-function, and scans default objects; adds barrel fallback for '@/runner/snap'. Also fixes TS typing by explicitly typing resolved handlers. Stabilizes snap.stash.success under exotic mocks.
 

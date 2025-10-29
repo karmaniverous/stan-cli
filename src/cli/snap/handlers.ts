@@ -72,6 +72,15 @@ export async function loadSnapHandler(
       } catch {
         /* ignore */
       }
+      // 5a) scan top-level module for any callable property (edge mocks)
+      try {
+        const entries = Object.values((mod as Record<string, unknown>) ?? {});
+        for (const v of entries) {
+          if (typeof v === 'function') return v as SnapHandler;
+        }
+      } catch {
+        /* ignore */
+      }
       // 6) Barrel fallback for SSR/test bundling reshapes
       try {
         const barrel = (await import('@/runner/snap')) as unknown as {
@@ -137,6 +146,15 @@ export async function loadSnapHandler(
           } catch {
             /* ignore */
           }
+        }
+        // 6e) scan top-level barrel module for any callable (last-resort)
+        try {
+          const top = Object.values((barrel as Record<string, unknown>) ?? {});
+          for (const v of top) {
+            if (typeof v === 'function') return v as SnapHandler;
+          }
+        } catch {
+          /* ignore */
         }
         if (resolved) return resolved;
       } catch {

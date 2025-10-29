@@ -114,7 +114,14 @@ const resolveHistoryPath = (): string => {
     /* keep default */
   }
   const candidates: string[] = Array.from(
-    new Set<string>([configured, 'stan', '.stan'].filter(Boolean)),
+    new Set<string>(
+      [
+        configured,
+        'stan',
+        '.stan',
+        'out', // common workspace used in tests; probe best‑effort
+      ].filter(Boolean),
+    ),
   );
   for (const sp of candidates) {
     const p = statePath(cwd, sp);

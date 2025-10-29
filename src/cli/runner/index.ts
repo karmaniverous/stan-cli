@@ -47,13 +47,43 @@ const tryResolveNamedOrDefault = <F>(
 };
 
 const getRegisterRunAction = (): RegisterRunActionFn => {
-  return tryResolveNamedOrDefault<RegisterRunActionFn>(
-    runActionMod as unknown,
-    (m) => (m as ActionModule).registerRunAction,
-    (m) =>
-      (m as { default?: Partial<ActionModule> }).default?.registerRunAction,
-    'registerRunAction',
-  );
+  try {
+    return tryResolveNamedOrDefault<RegisterRunActionFn>(
+      runActionMod as unknown,
+      (m) => (m as ActionModule).registerRunAction,
+      (m) =>
+        (m as { default?: Partial<ActionModule> }).default?.registerRunAction,
+      'registerRunAction',
+    );
+  } catch (e) {
+    // Extra SSR fallbacks:
+    // 1) default as function
+    try {
+      const defAny = (runActionMod as unknown as { default?: unknown }).default;
+      if (typeof defAny === 'function')
+        return defAny as unknown as RegisterRunActionFn;
+      // 2) nested default.default
+      const nested =
+        defAny && typeof defAny === 'object'
+          ? (defAny as { default?: unknown }).default
+          : undefined;
+      if (typeof nested === 'function')
+        return nested as unknown as RegisterRunActionFn;
+      // 3) module-as-function
+      if (typeof (runActionMod as unknown) === 'function')
+        return runActionMod as unknown as RegisterRunActionFn;
+      // 4) scan default object for any callable
+      if (defAny && typeof defAny === 'object') {
+        for (const v of Object.values(defAny as Record<string, unknown>)) {
+          if (typeof v === 'function')
+            return v as unknown as RegisterRunActionFn;
+        }
+      }
+    } catch {
+      /* ignore and rethrow original */
+    }
+    throw e instanceof Error ? e : new Error(String(e));
+  }
 };
 type OptionsModule = typeof import('../run/options');
 type RegisterRunOptionsFn = OptionsModule['registerRunOptions'];
