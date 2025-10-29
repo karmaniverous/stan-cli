@@ -54,6 +54,14 @@
   - Reverted selection to: configured stanPath (when present) → 'stan' → '.stan' → configured fallback, matching test expectations and eliminating lingering off‑by‑one after `snap set 0`.
   - File: src/runner/snap/history.ts.
 
+- Logger UI — remove async dynamic import; SSR‑robust sink instantiation
+  - Replaced top‑level await/dynamic import with a static import and a class‑or‑function instantiation fallback for LoggerSink.
+  - Fixes TS1308 and Rollup PARSE_ERROR in logger‑ui; unblocks run.combine and coverage remap.
+
+- Snap — fix capture invocation (ts/maxUndos)
+  - handleSnap now resolves context and passes { ts, maxUndos } to captureSnapshotAndArchives (no historyDir/stash args).
+  - Resolves “path must be string” in capture; unblocks stash/pop and history navigation assertions.
+
 - Snap CLI handler — expand SSR shapes for handleSnap
   - loadSnapHandler now tolerates function‑as‑default, default.default, module‑as‑function, and scans default objects for callable properties; applies the same to barrel fallback.
   - Fixes “handleSnap not found” under exotic test mocks; removes an unused import in history.ts.

@@ -1,69 +1,48 @@
 // src/stan/run/ui/logger-ui.ts
 
-import { ProgressModel } from '@/runner/run/progress';
+import {
+  LoggerSink as LoggerSinkAny,
+  ProgressModel,
+} from '@/runner/run/progress';
 import { createUiEndForwarders } from '@/runner/run/ui/forward';
 
 import { queueScript, startArchive, startScript } from './lifecycle';
 import type { ArchiveKind, RunnerUI } from './types';
-
-/** SSR/mock‑robust instantiation for LoggerSink. Accepts class constructor or function shapes. */
-const createLoggerSink = (
-  model: ProgressModel,
-): { start: () => void; stop: () => void } => {
-  // Access shapes: named export, default.LoggerSink, or default as function.
-  const mod = (await Promise.resolve().then(
-    () => import('@/runner/run/progress'),
-  )) as unknown as {
-    LoggerSink?: unknown;
-    default?: { LoggerSink?: unknown } | ((...a: unknown[]) => unknown);
-  };
-  const pick =
-    (mod as { LoggerSink?: unknown }).LoggerSink ??
-    (mod.default &&
-    typeof mod.default === 'object' &&
-    (mod.default as { LoggerSink?: unknown }).LoggerSink
-      ? (mod.default as { LoggerSink?: unknown }).LoggerSink
-      : undefined);
-  const cwd = process.cwd();
-  // Try constructor form first, then callable form.
-  if (typeof pick === 'function') {
-    try {
-      return new (pick as unknown as new (...a: unknown[]) => {
-        start: () => void;
-        stop: () => void;
-      })(model, cwd);
-    } catch {
-      return (
-        pick as unknown as (
-          m: ProgressModel,
-          c: string,
-        ) => {
-          start: () => void;
-          stop: () => void;
-        }
-      )(model, cwd);
-    }
-  }
-  if (typeof mod.default === 'function') {
-    return (
-      mod.default as unknown as (
-        m: ProgressModel,
-        c: string,
-      ) => {
-        start: () => void;
-        stop: () => void;
-      }
-    )(model, cwd);
-  }
-  throw new Error('LoggerSink not available');
-};
 
 export class LoggerUI implements RunnerUI {
   private readonly model = new ProgressModel();
   private readonly sink: { start: () => void; stop: () => void };
   private forwards: ReturnType<typeof createUiEndForwarders> | null = null;
   constructor() {
-    this.sink = createLoggerSink(this.model);
+    // SSR/mock‑robust: LoggerSink may be a constructor or a factory function in tests/mocks.
+    const cwd = process.cwd();
+    let sink: { start: () => void; stop: () => void } | null = null;
+    const anySink = LoggerSinkAny as unknown;
+    if (typeof anySink === 'function') {
+      // Try class constructor first
+      try {
+        sink = new (anySink as unknown as new (
+          m: ProgressModel,
+          c: string,
+        ) => { start: () => void; stop: () => void })(this.model, cwd);
+      } catch {
+        // Fall back to callable factory
+        try {
+          sink = (
+            anySink as unknown as (
+              m: ProgressModel,
+              c: string,
+            ) => { start: () => void; stop: () => void }
+          )(this.model, cwd);
+        } catch {
+          sink = null;
+        }
+      }
+    }
+    if (!sink) {
+      throw new Error('LoggerSink not available');
+    }
+    this.sink = sink;
     this.forwards = createUiEndForwarders(this.model, { useDurations: false });
   }
   start(): void {

@@ -9,12 +9,14 @@ import path from 'node:path';
 
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
+import { utcStamp } from '@/runner/util/time';
+
 /** Dynamic resolver for './capture'.captureSnapshotAndArchives */
 type CaptureFn = (args: {
   cwd: string;
   stanPath: string;
-  historyDir: string;
-  stash?: boolean;
+  ts: string;
+  maxUndos: number;
 }) => Promise<void>;
 
 const resolveCaptureSnapshotAndArchives = async (): Promise<CaptureFn> => {
@@ -183,12 +185,33 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
     // best-effort: capturing still proceeds even if snapshot write fails
   }
 
-  const capture = await resolveCaptureSnapshotAndArchives();
-  await capture({
+  // Resolve effective context (cwd/stanPath/maxUndos)
+  let ctx: { cwd: string; stanPath: string; maxUndos: number } = {
     cwd,
     stanPath,
-    historyDir,
-    stash: Boolean(opts?.stash),
+    maxUndos: 10,
+  };
+  try {
+    const ctxMod = (await import('@/runner/snap/context')) as {
+      resolveContext?: (c: string) => Promise<{
+        cwd: string;
+        stanPath: string;
+        maxUndos: number;
+      }>;
+    };
+    if (typeof ctxMod.resolveContext === 'function') {
+      ctx = await ctxMod.resolveContext(cwd);
+    }
+  } catch {
+    /* keep best-effort defaults */
+  }
+
+  const capture = await resolveCaptureSnapshotAndArchives();
+  await capture({
+    cwd: ctx.cwd,
+    stanPath: ctx.stanPath,
+    ts: utcStamp(),
+    maxUndos: ctx.maxUndos,
   });
 
   // Best‑effort: pop stash after capture when requested.
