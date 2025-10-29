@@ -1,6 +1,7 @@
 // src/cli/snap/handlers.ts
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 
+// NOTE: This loader is intentionally SSR‑robust to tolerate exotic mock shapes.
 type SnapRunModule = typeof import('@/runner/snap/snap-run');
 type HistoryModule = typeof import('@/runner/snap/history');
 type HandleSnapFn = SnapRunModule['handleSnap'];
@@ -44,6 +45,36 @@ export async function loadSnapHandler(
       } catch {
         /* ignore */
       }
+      // 3) nested default.default function (edge SSR)
+      try {
+        const nested = (mod as { default?: { default?: unknown } }).default
+          ?.default;
+        if (typeof nested === 'function')
+          return nested as (...a: unknown[]) => Promise<void>;
+      } catch {
+        /* ignore */
+      }
+      // 4) module‑as‑function (rare mocks)
+      try {
+        if (typeof mod === 'function')
+          return mod as (...a: unknown[]) => Promise<void> as unknown as (
+            ...a: unknown[]
+          ) => Promise<void>;
+      } catch {
+        /* ignore */
+      }
+      // 5) scan default object for any callable property (last resort)
+      try {
+        const d = (mod as { default?: unknown }).default;
+        if (d && typeof d === 'object') {
+          for (const v of Object.values(d as Record<string, unknown>)) {
+            if (typeof v === 'function')
+              return v as (...a: unknown[]) => Promise<void>;
+          }
+        }
+      } catch {
+        /* ignore */
+      }
       // 3) Barrel fallback for SSR/test bundling reshapes
       try {
         const barrel = (await import('@/runner/snap')) as unknown as {
@@ -61,7 +92,7 @@ export async function loadSnapHandler(
             ? ((barrel as { default?: (...a: unknown[]) => Promise<void> })
                 .default as (...a: unknown[]) => Promise<void>)
             : undefined;
-        const resolved =
+        let resolved =
           (typeof viaNamed === 'function'
             ? (viaNamed as (...a: unknown[]) => Promise<void>)
             : undefined) ??
@@ -69,6 +100,46 @@ export async function loadSnapHandler(
             ? (viaDefaultObj as (...a: unknown[]) => Promise<void>)
             : undefined) ??
           viaDefaultFn;
+        // Extra barrel fallbacks mirroring above
+        if (!resolved) {
+          try {
+            const bNested = (
+              barrel as {
+                default?: { default?: unknown };
+              }
+            ).default?.default;
+            if (typeof bNested === 'function') resolved = bNested;
+          } catch {
+            /* ignore */
+          }
+        }
+        if (!resolved) {
+          try {
+            if (typeof (barrel as unknown) === 'function')
+              resolved = barrel as (
+                ...a: unknown[]
+              ) => Promise<void> as unknown as (
+                ...a: unknown[]
+              ) => Promise<void>;
+          } catch {
+            /* ignore */
+          }
+        }
+        if (!resolved) {
+          try {
+            const bd = (barrel as { default?: unknown }).default;
+            if (bd && typeof bd === 'object') {
+              for (const v of Object.values(bd as Record<string, unknown>)) {
+                if (typeof v === 'function') {
+                  resolved = v as (...a: unknown[]) => Promise<void>;
+                  break;
+                }
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         if (resolved) return resolved;
       } catch {
         /* ignore; rethrow original */

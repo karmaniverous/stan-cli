@@ -26,7 +26,8 @@
 
 - Snap history — normalize legacy 1‑based index on read
   - readState converts plausible 1‑based persisted indices to 0‑based; clamps otherwise.
-  - Fixes off‑by‑one when navigating with `snap set/undo/redo` across legacy states.
+  - Fixes off‑by‑one when navigating with `snap set/undo/redo` across legacy states.
+
 - Snap capture resolver — expand SSR shapes
   - src/runner/snap/snap-run.ts now accepts named export, default object property, default-as-function, nested default.default, module-as-function, and scans default object properties to robustly resolve captureSnapshotAndArchives under SSR/mocks.
   - Fixes flakey “captureSnapshotAndArchives not found” in snap.stash.success.
@@ -34,3 +35,7 @@
 - Snap history path — prefer configured path, then legacy probes
   - Reverted selection to: configured stanPath (when present) → 'stan' → '.stan' → configured fallback, matching test expectations and eliminating lingering off‑by‑one after `snap set 0`.
   - File: src/runner/snap/history.ts.
+
+- Snap CLI handler — expand SSR shapes for handleSnap
+  - loadSnapHandler now tolerates function‑as‑default, default.default, module‑as‑function, and scans default objects for callable properties; applies the same to barrel fallback.
+  - Fixes “handleSnap not found” under exotic test mocks; removes an unused import in history.ts.
