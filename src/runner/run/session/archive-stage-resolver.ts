@@ -13,8 +13,8 @@ export const getRunArchiveStage = (): RunArchiveStageFn => {
     runArchiveStage?: unknown;
     default?: { runArchiveStage?: unknown };
   };
-  const named = mod?.runArchiveStage;
-  const viaDefault = mod?.default?.runArchiveStage;
+  const named = mod.runArchiveStage;
+  const viaDefault = mod.default?.runArchiveStage;
   const fn =
     typeof named === 'function'
       ? (named as RunArchiveStageFn)

@@ -120,7 +120,7 @@ const parseCliNode = (
     (parsed as { scripts?: Record<string, unknown> }).scripts ?? {},
   );
   return {
-    scripts: (parsed.scripts ?? {}) as ScriptMap,
+    scripts: parsed.scripts as ScriptMap,
     cliDefaults: parsed.cliDefaults,
     patchOpenCommand: parsed.patchOpenCommand ?? DEFAULT_OPEN_COMMAND,
     maxUndos: parsed.maxUndos,

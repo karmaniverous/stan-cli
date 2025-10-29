@@ -20,7 +20,7 @@ const resolveDRI = (): DeriveRunInvocationFn => {
   }
   try {
     const viaProp = (runArgsMod as { deriveRunInvocation?: unknown })
-      ?.deriveRunInvocation;
+      .deriveRunInvocation;
     if (typeof viaProp === 'function') {
       return viaProp as DeriveRunInvocationFn;
     }
@@ -28,7 +28,7 @@ const resolveDRI = (): DeriveRunInvocationFn => {
     /* ignore */
   }
   try {
-    const defAny = (runArgsMod as { default?: unknown })?.default;
+    const defAny = (runArgsMod as { default?: unknown }).default;
     if (typeof defAny === 'function') {
       return defAny as unknown as DeriveRunInvocationFn;
     }

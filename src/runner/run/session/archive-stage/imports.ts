@@ -9,8 +9,8 @@ export const getArchivePhase = (): ArchiveModule['archivePhase'] => {
     archivePhase?: unknown;
     default?: { archivePhase?: unknown };
   };
-  const named = mod?.archivePhase;
-  const viaDefault = mod?.default?.archivePhase;
+  const named = mod.archivePhase;
+  const viaDefault = mod.default?.archivePhase;
   const fn =
     typeof named === 'function'
       ? (named as ArchiveModule['archivePhase'])
@@ -27,8 +27,8 @@ export const getStageImports = (): ArchiveModule['stageImports'] => {
     stageImports?: unknown;
     default?: { stageImports?: unknown };
   };
-  const named = mod?.stageImports;
-  const viaDefault = mod?.default?.stageImports;
+  const named = mod.stageImports;
+  const viaDefault = mod.default?.stageImports;
   const fn =
     typeof named === 'function'
       ? (named as ArchiveModule['stageImports'])

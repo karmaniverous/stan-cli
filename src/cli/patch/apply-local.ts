@@ -9,6 +9,28 @@ import { applyWithJsDiff } from '@karmaniverous/stan-core';
 
 import { parseFirstTarget } from './detect';
 
+type RunGitApplyFn = (args: {
+  cwd: string;
+  patchAbs: string;
+  cleaned: string;
+  stripOrder?: number[];
+}) => Promise<{ ok: boolean }>;
+
+const pickRunGitApply = (modUnknown: unknown): RunGitApplyFn | null => {
+  const mod = modUnknown as {
+    runGitApply?: unknown;
+    default?: { runGitApply?: unknown };
+  };
+  const cand = (
+    typeof mod.runGitApply === 'function'
+      ? mod.runGitApply
+      : typeof mod.default?.runGitApply === 'function'
+        ? mod.default.runGitApply
+        : undefined
+  ) as RunGitApplyFn | undefined;
+  return typeof cand === 'function' ? cand : null;
+};
+
 export const applyUnifiedDiffLocally = async (
   cwd: string,
   cleaned: string,
@@ -18,35 +40,15 @@ export const applyUnifiedDiffLocally = async (
   // Try git‑apply via local shim (mockable)
   try {
     const modUnknown: unknown = await import('../apply');
-    const mod = modUnknown as {
-      runGitApply?: (args: {
-        cwd: string;
-        patchAbs: string;
-        cleaned: string;
-        stripOrder?: number[];
-      }) => Promise<{ ok: boolean }>;
-      default?:
-        | {
-            runGitApply?: (args: {
-              cwd: string;
-              patchAbs: string;
-              cleaned: string;
-              stripOrder?: number[];
-            }) => Promise<{ ok: boolean }>;
-          }
-        | ((...a: unknown[]) => unknown);
-    };
-    const runGitApply =
-      (mod as { runGitApply?: unknown }).runGitApply ??
-      (mod as { default?: { runGitApply?: unknown } }).default?.runGitApply;
-    if (typeof runGitApply === 'function') {
+    const runGitApply = pickRunGitApply(modUnknown);
+    if (runGitApply) {
       const gitOut = await runGitApply({
         cwd,
         patchAbs: path.join(cwd, '.stan', 'patch', '.patch'),
         cleaned,
         stripOrder: [1, 0],
       });
-      if (gitOut && gitOut.ok) {
+      if (gitOut.ok) {
         return { ok: true, firstTarget };
       }
     }
