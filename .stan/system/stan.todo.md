@@ -16,6 +16,12 @@
 
 ## Completed (append-only, most recent items last)
 
+- Patch help (-f) — show configured default file in help
+  - Build the -f/--file option description with a “(DEFAULT: …)” suffix at construction time so Commander’s help reliably includes the configured cliDefaults.patch.file. Fixes patch.help.defaults test.
+
+- Live renderer — final-frame flush contains [OK] for diff
+  - After archives complete, force an immediate ui.flushNow() so the last live frame includes [OK] for both archive rows even in very fast runs. Stabilizes live.order.flush test without altering normal finalize behavior.
+
 - Snap history — CLI subcommands operate on shared SnapState
   - Aligned src/runner/snap/history.ts to read/write the shared diff/.snap.state.json shape ({ entries, index, maxUndos }) written by capture. set/undo/redo now update the same file and pointer semantics remain 0‑based as expected.
 

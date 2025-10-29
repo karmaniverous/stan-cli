@@ -354,6 +354,14 @@ export const runSessionOnce = async (args: {
     created.push(...a.created);
   }
 
+  // Ensure the final OK states for archive rows are visible immediately
+  // before returning (stabilizes live.order.flush under fast runs).
+  try {
+    (ui as unknown as { flushNow?: () => void }).flushNow?.();
+  } catch {
+    /* ignore */
+  }
+
   // Detach signals & exit
   liveTrace.session.info('normal path: detach signals, returning to caller');
   detachSignals();

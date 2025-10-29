@@ -37,23 +37,24 @@ export function registerPatch(cli: Commander): Command {
     )
     .argument('[input]', 'Patch data (unified diff)');
 
-  // Build -f option and append default file path from config when present
-  const optFile = new Option(
-    '-f, --file [filename]',
-    'Read patch from file as source',
-  );
+  // Compute DEFAULT suffix for -f from config up-front, then construct the option
+  let defaultSuffix = '';
   try {
-    const p = findConfigPathSync(process.cwd());
-    if (p) {
+    const cfgPath = findConfigPathSync(process.cwd());
+    if (cfgPath) {
       const cfg = loadCliConfigSync(process.cwd());
       const df = cfg.cliDefaults?.patch?.file;
       if (typeof df === 'string' && df.trim().length > 0) {
-        optFile.description = `${optFile.description} (DEFAULT: ${df.trim()})`;
+        defaultSuffix = ` (DEFAULT: ${df.trim()})`;
       }
     }
   } catch {
     /* best-effort */
   }
+  const optFile = new Option(
+    '-f, --file [filename]',
+    `Read patch from file as source${defaultSuffix}`,
+  );
 
   sub
     .addOption(optFile)
