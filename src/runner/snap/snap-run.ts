@@ -99,6 +99,66 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
   const stanPath = resolveStanPathSync(cwd);
   const historyDir = path.join(cwd, stanPath, 'diff');
 
+  // Deterministically write/refresh the diff snapshot before capturing to history.
+  // SSR-robust: resolve core helpers at call time; tolerate named/default export shapes.
+  try {
+    const coreModUnknown: unknown = await import('@karmaniverous/stan-core');
+    const core = coreModUnknown as {
+      loadConfig?: (cwd: string) => Promise<{
+        stanPath: string;
+        includes?: string[];
+        excludes?: string[];
+      }>;
+      writeArchiveSnapshot?: (args: {
+        cwd: string;
+        stanPath: string;
+        includes?: string[];
+        excludes?: string[];
+      }) => Promise<string>;
+      default?: {
+        loadConfig?: (cwd: string) => Promise<{
+          stanPath: string;
+          includes?: string[];
+          excludes?: string[];
+        }>;
+        writeArchiveSnapshot?: (args: {
+          cwd: string;
+          stanPath: string;
+          includes?: string[];
+          excludes?: string[];
+        }) => Promise<string>;
+      };
+    };
+    const loadConfigFn =
+      typeof core.loadConfig === 'function'
+        ? core.loadConfig
+        : typeof core.default?.loadConfig === 'function'
+          ? core.default.loadConfig
+          : null;
+    const writeSnapshotFn =
+      typeof core.writeArchiveSnapshot === 'function'
+        ? core.writeArchiveSnapshot
+        : typeof core.default?.writeArchiveSnapshot === 'function'
+          ? core.default.writeArchiveSnapshot
+          : null;
+    if (writeSnapshotFn) {
+      let includes: string[] = [];
+      let excludes: string[] = [];
+      try {
+        const cfg = loadConfigFn ? await loadConfigFn(cwd) : null;
+        includes = Array.isArray(cfg?.includes) ? cfg.includes : [];
+        excludes = Array.isArray(cfg?.excludes) ? cfg.excludes : [];
+      } catch {
+        // best-effort
+        includes = [];
+        excludes = [];
+      }
+      await writeSnapshotFn({ cwd, stanPath, includes, excludes });
+    }
+  } catch {
+    // best-effort: capturing still proceeds even if snapshot write fails
+  }
+
   const capture = await resolveCaptureSnapshotAndArchives();
   await capture({
     cwd,

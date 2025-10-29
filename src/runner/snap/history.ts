@@ -30,8 +30,17 @@ export const readState = async (p: string): Promise<HistoryState | null> => {
     if (!v || !Array.isArray(v.stack) || typeof v.index !== 'number') {
       return null;
     }
-    // Ensure 0‑based on read (tolerate legacy persisted +1 by clamping)
-    const idx = clamp(v.index, 0, v.stack.length ? v.stack.length - 1 : 0);
+    // Ensure 0‑based on read (tolerate legacy persisted +1 by converting when plausible).
+    // If a legacy file persisted 1-based indices (1..length), convert to 0-based by subtracting 1.
+    // Otherwise clamp as-is (already 0-based or malformed).
+    const max = v.stack.length > 0 ? v.stack.length - 1 : 0;
+    const rawIdx = v.index;
+    const idx =
+      typeof rawIdx === 'number' && v.stack.length > 0
+        ? rawIdx >= 1 && rawIdx <= v.stack.length
+          ? rawIdx - 1
+          : clamp(rawIdx, 0, max)
+        : 0;
     return { stack: v.stack, index: idx };
   } catch {
     return null;

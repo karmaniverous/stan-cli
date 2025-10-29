@@ -16,6 +16,14 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap — write diff snapshot before capture
+  - handleSnap now writes/refreshes <stanPath>/diff/.archive.snapshot.json (via core writeArchiveSnapshot) before saving to history, fixing empty/invalid snapshot in SSR/CI.
+  - SSR-robust dynamic resolution of core helpers (named/default).
+
+- Snap history — normalize legacy 1‑based index on read
+  - readState converts plausible 1‑based persisted indices to 0‑based; clamps otherwise.
+  - Fixes off‑by‑one when navigating with `snap set/undo/redo` across legacy states.
+
 - Snap capture resolver — expand SSR shapes
   - src/runner/snap/snap-run.ts now accepts named export, default object property, default-as-function, nested default.default, module-as-function, and scans default object properties to robustly resolve captureSnapshotAndArchives under SSR/mocks.
   - Fixes flakey “captureSnapshotAndArchives not found” in snap.stash.success.
