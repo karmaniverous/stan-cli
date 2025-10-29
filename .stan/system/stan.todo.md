@@ -309,3 +309,8 @@
 
 - Plan fallback under SSR
   - src/runner/run/service.ts: wrap renderRunPlan resolution; on failure, print a minimal static plan (fixes “renderRunPlan not found” in run tests).
+
+- Decompose CLI patch module and fix terminal status
+  - Split the monolithic src/cli/patch.ts into focused modules under src/cli/patch/: safety.ts (Commander guards), detect.ts (diff detection), input.ts (source read), apply-local.ts (git-apply shim + jsdiff fallback), register.ts (subcommand wiring), index.ts (barrel). Kept "./patch" import stability.
+  - Fixed missing statusOk import on the local success path; now logs statusOk("patch applied"/"patch check passed") so tests/typecheck pass.
+  - Escaped "\@karmaniverous" in module TSDoc to silence tsdoc/syntax.
