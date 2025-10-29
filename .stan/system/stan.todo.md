@@ -16,6 +16,9 @@
 
 ## Completed (append-only, most recent items last)
 
+- Patch barrel — SSR/mock‑friendly default shape
+  - Changed src/cli/patch/index.ts to export default as an object { registerPatch } instead of a bare function. This allows test helpers that spread default (asEsmModule(...)) to retain a registerPatch property, fixing the jsdiff fallback suite’s “registerPatch is not a function” error while keeping named export intact for normal use.
+
 - Patch help (-f) — show configured default file in help
   - Build the -f/--file option description with a “(DEFAULT: …)” suffix at construction time so Commander’s help reliably includes the configured cliDefaults.patch.file. Fixes patch.help.defaults test.
 
