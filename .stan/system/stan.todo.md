@@ -16,6 +16,9 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap history — accept stringified index in readState
+  - Coerce persisted `index` to a number before normalization; proceed only when finite. Fixes a case where tests seed history with `"index": "1"` and `snap set 0` previously became a no-op.
+
 - Snap history — prefer "out" when probing existing files
   - Adjusted resolveHistoryPath to probe “out” first, then the configured stanPath, then “stan”, then “.stan”. This aligns CLI subcommands with tests that seed history under “out/…”, and ensures `snap set 0` updates the same file the test reads.
 

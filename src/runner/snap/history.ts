@@ -27,14 +27,18 @@ export const readState = async (p: string): Promise<HistoryState | null> => {
     const raw = await readFile(p, 'utf8');
     const v = JSON.parse(raw) as Partial<HistoryState>;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!v || !Array.isArray(v.stack) || typeof v.index !== 'number') {
+    if (!v || !Array.isArray(v.stack) || typeof v.index === 'undefined') {
       return null;
     }
-    // Ensure 0‑based on read (tolerate legacy persisted +1 by converting when plausible).
+    // Coerce persisted index and ensure 0‑based on read (tolerate legacy +1 by converting when plausible).
     // If a legacy file persisted 1-based indices (1..length), convert to 0-based by subtracting 1.
     // Otherwise clamp as-is (already 0-based or malformed).
     const max = v.stack.length > 0 ? v.stack.length - 1 : 0;
-    const rawIdx = v.index;
+    const rawIdxNum = Number((v as { index: unknown }).index);
+    if (!Number.isFinite(rawIdxNum)) {
+      return null;
+    }
+    const rawIdx = rawIdxNum;
     const idx =
       typeof rawIdx === 'number' && v.stack.length > 0
         ? rawIdx >= 1 && rawIdx <= v.stack.length
