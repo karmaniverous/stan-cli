@@ -5,7 +5,7 @@
  * - Clamp incoming indices; do not apply +/-1 adjustments.
  */
 
-import { existsSync, statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -96,39 +96,28 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();
-  // Prefer the configured stanPath; if multiple candidates exist, pick the most recently updated.
+  // Prefer the configured stanPath history (namespaced/core) when available.
   let resolved = '.stan';
   try {
     resolved = resolveStanPathSync(cwd);
   } catch {
     /* keep default */
   }
-  const uniq = new Set<string>();
-  const candidates = [
-    statePath(cwd, resolved),
-    statePath(cwd, 'stan'),
-    statePath(cwd, '.stan'),
-  ].filter((p) => {
-    if (uniq.has(p)) return false;
-    uniq.add(p);
-    return true;
-  });
-
-  // Select the existing path with the latest mtime (best-effort).
-  let best: { p: string; m: number } | null = null;
-  for (const p of candidates) {
+  try {
+    const hp = statePath(cwd, resolved);
+    if (existsSync(hp)) return hp;
+  } catch {
+    /* ignore */
+  }
+  // Then try legacy common folders to avoid writing into a wrong workspace.
+  for (const sp of ['stan', '.stan'] as const) {
     try {
-      if (!existsSync(p)) continue;
-      const st = statSync(p);
-      const m =
-        typeof st.mtimeMs === 'number' ? st.mtimeMs : st.mtime.getTime();
-      if (!best || m > best.m) best = { p, m };
+      const hp = statePath(cwd, sp);
+      if (existsSync(hp)) return hp;
     } catch {
       /* ignore */
     }
   }
-  if (best) return best.p;
-  // None exist yet: default to the configured stanPath.
   return statePath(cwd, resolved);
 };
 

@@ -223,3 +223,9 @@ export function registerInit(cli: Commander): Command {
 
   return cli;
 }
+
+// SSR/default-shaped consumers: provide a default object with the same API.
+export default {
+  performInit,
+  registerInit,
+};

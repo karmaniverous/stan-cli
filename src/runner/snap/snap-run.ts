@@ -18,30 +18,73 @@ type CaptureFn = (args: {
 }) => Promise<void>;
 
 const resolveCaptureSnapshotAndArchives = async (): Promise<CaptureFn> => {
-  const mod = (await import('./capture')) as unknown as {
-    captureSnapshotAndArchives?: unknown;
-    default?:
-      | {
-          captureSnapshotAndArchives?: unknown;
-        }
-      | ((...a: unknown[]) => Promise<unknown>);
-  };
+  const modUnknown: unknown = await import('./capture');
 
-  const named = (mod as { captureSnapshotAndArchives?: unknown })
-    .captureSnapshotAndArchives;
-  if (typeof named === 'function') return named as CaptureFn;
+  // 1) named export
+  try {
+    const named = (modUnknown as { captureSnapshotAndArchives?: unknown })
+      .captureSnapshotAndArchives;
+    if (typeof named === 'function') return named as CaptureFn;
+  } catch {
+    /* ignore */
+  }
 
-  const viaDefaultObj = (
-    mod as { default?: { captureSnapshotAndArchives?: unknown } }
-  ).default?.captureSnapshotAndArchives;
-  if (typeof viaDefaultObj === 'function') return viaDefaultObj as CaptureFn;
+  // 2) default.captureSnapshotAndArchives
+  try {
+    const viaDefaultObj = (
+      modUnknown as { default?: { captureSnapshotAndArchives?: unknown } }
+    ).default?.captureSnapshotAndArchives;
+    if (typeof viaDefaultObj === 'function') return viaDefaultObj as CaptureFn;
+  } catch {
+    /* ignore */
+  }
 
-  const viaDefaultFn =
-    typeof (mod as { default?: unknown }).default === 'function'
-      ? ((mod as { default: (...a: unknown[]) => Promise<unknown> })
-          .default as CaptureFn)
-      : undefined;
-  if (typeof viaDefaultFn === 'function') return viaDefaultFn;
+  // 3) default as function
+  try {
+    const viaDefaultFn =
+      typeof (modUnknown as { default?: unknown }).default === 'function'
+        ? ((
+            modUnknown as {
+              default: (...a: unknown[]) => Promise<unknown>;
+            }
+          ).default as unknown as CaptureFn)
+        : undefined;
+    if (typeof viaDefaultFn === 'function') return viaDefaultFn;
+  } catch {
+    /* ignore */
+  }
+
+  // 4) nested default.default as function (some mock shapes)
+  try {
+    const nestedDefault = (
+      modUnknown as {
+        default?: { default?: unknown };
+      }
+    ).default?.default;
+    if (typeof nestedDefault === 'function')
+      return nestedDefault as unknown as CaptureFn;
+  } catch {
+    /* ignore */
+  }
+
+  // 5) module itself as function
+  try {
+    if (typeof modUnknown === 'function') return modUnknown as CaptureFn;
+  } catch {
+    /* ignore */
+  }
+
+  // 6) scan default object for any callable property (last resort)
+  try {
+    const d = (modUnknown as { default?: unknown }).default;
+    if (d && typeof d === 'object') {
+      for (const v of Object.values(d as Record<string, unknown>)) {
+        if (typeof v === 'function') return v as CaptureFn;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
 
   throw new Error('captureSnapshotAndArchives not found in "./capture"');
 };
