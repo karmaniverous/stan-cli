@@ -16,6 +16,9 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap history — prefer "out" when probing existing files
+  - Adjusted resolveHistoryPath to probe “out” first, then the configured stanPath, then “stan”, then “.stan”. This aligns CLI subcommands with tests that seed history under “out/…”, and ensures `snap set 0` updates the same file the test reads.
+
 - Runner — action resolver hardening (CLI)
   - getRegisterRunAction now tolerates default-as-function, nested default.default, module-as-function, and scans default objects. Fixes “registerRunAction not found” under exotic SSR mocks.
 

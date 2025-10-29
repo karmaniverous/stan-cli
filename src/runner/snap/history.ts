@@ -113,15 +113,10 @@ const resolveHistoryPath = (): string => {
   } catch {
     /* keep default */
   }
+  // Probe order: prefer "out" first (common in tests), then configured, then legacy names.
+  const ordered = ['out', configured, 'stan', '.stan'] as const;
   const candidates: string[] = Array.from(
-    new Set<string>(
-      [
-        configured,
-        'stan',
-        '.stan',
-        'out', // common workspace used in tests; probe best‑effort
-      ].filter(Boolean),
-    ),
+    new Set<string>(ordered.filter(Boolean).map((s) => s)),
   );
   for (const sp of candidates) {
     const p = statePath(cwd, sp);
