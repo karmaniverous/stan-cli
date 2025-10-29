@@ -16,6 +16,15 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap CLI resolver robustness (registerSnapAction) + Patch jsdiff fallback
+  - Hardened snap registry to resolve registerSnapAction across SSR/mock shapes:
+    - prefer named export,
+    - fall back to default.registerSnapAction,
+    - accept function-as-default.
+  - Added a thin CLI apply adapter (src/cli/apply.ts) so tests can vi.doMock('./apply').
+  - Updated patch action to prefer the local "./apply".runGitApply path and fall back to jsdiff via engine when git-apply fails; otherwise use the engine pipeline directly.
+  - Outcome: fixes intermittent “registerSnapAction not found” in snap CLI tests and resolves jsdiff fallback timeout in patch jsdiff test; preserves runtime behavior.
+
 - Run args resolution (SSR) — deriveRunInvocation
   - src/cli/run/derive.ts now resolves deriveRunInvocation via named‑or‑default pattern at module load, preventing “not a function” under Vitest SSR/mocks in runner.semantics.v2 tests.
   - Keeps deriveRunParameters synchronous.

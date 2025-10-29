@@ -16,15 +16,24 @@ const tryResolveNamedOrDefault = <F>(
   pickDefault: (m: unknown) => F | undefined,
   label?: string,
 ): F => {
+  // 1) named export
   try {
     const named = pickNamed(mod);
     if (typeof named === 'function') return named as F;
   } catch {
     /* ignore */
   }
+  // 2) default.registerX
   try {
     const viaDefault = pickDefault(mod);
     if (typeof viaDefault === 'function') return viaDefault as F;
+  } catch {
+    /* ignore */
+  }
+  // 3) function-as-default (common in SSR/tests)
+  try {
+    const defAny = (mod as { default?: unknown }).default;
+    if (typeof defAny === 'function') return defAny as unknown as F;
   } catch {
     /* ignore */
   }
@@ -33,14 +42,23 @@ const tryResolveNamedOrDefault = <F>(
 };
 
 type ActionModule = typeof import('./action');
-const getRegisterSnapAction = (): ActionModule['registerSnapAction'] =>
-  tryResolveNamedOrDefault<ActionModule['registerSnapAction']>(
-    snapActionMod as unknown,
-    (m) => (m as ActionModule).registerSnapAction,
-    (m) =>
-      (m as { default?: Partial<ActionModule> }).default?.registerSnapAction,
-    'registerSnapAction',
-  );
+const getRegisterSnapAction = (): ActionModule['registerSnapAction'] => {
+  const mod = snapActionMod as unknown;
+  // named
+  const named = (mod as ActionModule).registerSnapAction as unknown;
+  if (typeof named === 'function')
+    return named as ActionModule['registerSnapAction'];
+  // default.registerSnapAction
+  const viaDefault = (mod as { default?: Partial<ActionModule> }).default
+    ?.registerSnapAction as unknown;
+  if (typeof viaDefault === 'function')
+    return viaDefault as ActionModule['registerSnapAction'];
+  // default as function
+  const defAny = (mod as { default?: unknown }).default;
+  if (typeof defAny === 'function')
+    return defAny as unknown as ActionModule['registerSnapAction'];
+  throw new Error('registerSnapAction not found');
+};
 
 /**
  * Register the `snap` subcommand on the provided root CLI.
