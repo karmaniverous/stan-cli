@@ -8,19 +8,46 @@ import { runDefaults } from '../cli-utils';
 import runArgsMod, { deriveRunInvocation as namedDRI } from '../run-args';
 import { RUN_BASE_DEFAULTS } from './defaults';
 
-const DRI =
-  typeof namedDRI === 'function'
-    ? namedDRI
-    : typeof (runArgsMod as { deriveRunInvocation?: unknown })
-          .deriveRunInvocation === 'function'
-      ? (
-          runArgsMod as {
-            deriveRunInvocation: typeof namedDRI;
-          }
-        ).deriveRunInvocation
-      : ((): never => {
-          throw new Error('deriveRunInvocation not found');
-        })();
+type DeriveRunInvocationFn =
+  (typeof import('../run-args'))['deriveRunInvocation'];
+
+/** SSR/mock‑robust resolver for deriveRunInvocation (named → default.property → default as function). */
+const resolveDRI = (): DeriveRunInvocationFn => {
+  try {
+    if (typeof namedDRI === 'function') return namedDRI;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const viaProp = (runArgsMod as { deriveRunInvocation?: unknown })
+      ?.deriveRunInvocation;
+    if (typeof viaProp === 'function') {
+      return viaProp as DeriveRunInvocationFn;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const defAny = (runArgsMod as { default?: unknown })?.default;
+    if (typeof defAny === 'function') {
+      return defAny as unknown as DeriveRunInvocationFn;
+    }
+    if (
+      defAny &&
+      typeof (defAny as { deriveRunInvocation?: unknown })
+        .deriveRunInvocation === 'function'
+    ) {
+      return (
+        defAny as {
+          deriveRunInvocation: DeriveRunInvocationFn;
+        }
+      ).deriveRunInvocation;
+    }
+  } catch {
+    /* ignore */
+  }
+  throw new Error('deriveRunInvocation not found');
+};
 
 export type DerivedRun = {
   selection: string[];
@@ -55,7 +82,6 @@ export function deriveRunParameters(args: {
   const exceptProvided =
     Array.isArray(exceptOpt) && (exceptOpt as unknown[]).length > 0;
 
-  const valSrc = (name: string) => src.getOptionValueSource?.(name) === 'cli';
   const eff = runDefaults(args.dir);
   // Avoid unsafe Record casts; pick exact subsets we need.
   const effBools = {
@@ -70,12 +96,14 @@ export function deriveRunParameters(args: {
     hangKill: eff.hangKill,
     hangKillGrace: eff.hangKillGrace,
   } as const;
-  const boolFinal = (name: keyof typeof effBools, base: boolean): boolean => {
-    if (valSrc(name)) return Boolean(options[name]);
+
+  const boolFinal = (name: keyof typeof effBools): boolean => {
+    if (src.getOptionValueSource?.(name) === 'cli')
+      return Boolean(options[name]);
     return effBools[name];
   };
   const numFinal = (name: keyof typeof effNums, base: number): number => {
-    if (valSrc(name)) {
+    if (src.getOptionValueSource?.(name) === 'cli') {
       const raw = options[name];
       const n = typeof raw === 'number' ? raw : Number(raw);
       return Number.isFinite(n) && n > 0 ? n : base;
@@ -85,13 +113,16 @@ export function deriveRunParameters(args: {
   };
 
   // Booleans (from CLI when provided; else config; else baseline)
-  const combine = boolFinal('combine', RUN_BASE_DEFAULTS.combine);
-  const keep = boolFinal('keep', RUN_BASE_DEFAULTS.keep);
-  const sequential = boolFinal('sequential', RUN_BASE_DEFAULTS.sequential);
-  let live = boolFinal('live', RUN_BASE_DEFAULTS.live);
-  let archive = boolFinal('archive', RUN_BASE_DEFAULTS.archive);
+  const combine = boolFinal('combine');
+  const keep = boolFinal('keep');
+  const sequential = boolFinal('sequential');
+  let live = boolFinal('live');
+  let archive = boolFinal('archive');
   // Explicit -A from CLI always wins
-  if (valSrc('archive') && (options as { archive?: boolean }).archive === false)
+  if (
+    src.getOptionValueSource?.('archive') === 'cli' &&
+    (options as { archive?: boolean }).archive === false
+  )
     archive = false;
   // combine implies archive
   if (combine) archive = true;
@@ -123,12 +154,13 @@ export function deriveRunParameters(args: {
 
     if (debugFromCli && liveFromCli && liveFlagVal === true) {
       // Force no-live and inform the user that --live is ignored.
-
       console.warn('stan: --debug forces --no-live; ignoring --live');
     }
     live = false;
   }
 
+  // Resolve deriveRunInvocation lazily at call‑time (SSR‑robust).
+  const DRI = resolveDRI();
   const derivedBase = DRI({
     scriptsProvided,
     scriptsOpt,
