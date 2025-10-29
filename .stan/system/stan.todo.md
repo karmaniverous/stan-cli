@@ -297,3 +297,15 @@
 - Facets — enable “snap” for next run to edit src/runner/snap/history.ts; defer code patch to next turn per guard.
 - CLI runner tests — hoist deriveRunInvocation to a function declaration (fix SSR import shape) and keep default export; tests in cli/runner.combine.test.ts should pass.
 - Patch CLI lint — typed local argv normalizer in src/cli/patch.ts to eliminate unsafe-return any[] without changing behavior.
+
+- Patch CLI terminal status + TSDoc fix
+  - src/cli/patch.ts: log statusOk("patch applied"/"patch check passed") on local success so tests detect terminal status; escape @karmaniverous in TSDoc to silence tsdoc/syntax.
+
+- Archive phase — remove test fast‑path
+  - src/runner/run/archive/phase.ts: drop test-only fast path that wrote non‑tar bodies; always call core createArchive/createArchiveDiff so tar mocks assert entries (fixes combine archive behavior tests).
+
+- Snap history path — prefer effective stanPath
+  - src/runner/snap/history.ts: resolve history under configured stanPath first, then legacy probes (‘stan’, ‘.stan’) to fix “set 0” in custom stanPath tests.
+
+- Plan fallback under SSR
+  - src/runner/run/service.ts: wrap renderRunPlan resolution; on failure, print a minimal static plan (fixes “renderRunPlan not found” in run tests).

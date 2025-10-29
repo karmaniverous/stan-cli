@@ -1,6 +1,7 @@
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
+import path from 'node:path';
 // Note: under SSR/tests, the helper above can be unavailable or reshaped; we guard for that below.
 import type { RunnerConfig } from '@/runner/run/types';
 

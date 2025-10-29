@@ -96,9 +96,21 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();
-  // Prefer whichever history file already exists to avoid writing to the wrong workspace.
-  const candidates = ['stan', '.stan'] as const;
-  for (const sp of candidates) {
+  // Prefer the configured stanPath history (namespaced/core) when available.
+  let resolved = '.stan';
+  try {
+    resolved = resolveStanPathSync(cwd);
+  } catch {
+    /* keep default */
+  }
+  try {
+    const hp = statePath(cwd, resolved);
+    if (existsSync(hp)) return hp;
+  } catch {
+    /* ignore */
+  }
+  // Then try legacy common folders to avoid writing into a wrong workspace.
+  for (const sp of ['stan', '.stan'] as const) {
     try {
       const hp = statePath(cwd, sp);
       if (existsSync(hp)) return hp;
@@ -106,14 +118,7 @@ const resolveHistoryPath = (): string => {
       /* ignore */
     }
   }
-  // Fallbacks: try engine resolver; then default to ".stan".
-  let stanPath = '.stan';
-  try {
-    stanPath = resolveStanPathSync(cwd);
-  } catch {
-    /* best‑effort fallback */
-  }
-  return statePath(cwd, stanPath);
+  return statePath(cwd, resolved);
 };
 
 export const handleUndo = async (): Promise<void> => {
