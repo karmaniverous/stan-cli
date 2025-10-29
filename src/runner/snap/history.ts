@@ -1,8 +1,8 @@
-// src/runner/snap/history.ts
-/**
+/* src/runner/snap/history.ts
  * Snapshot history helpers
  * - Indexing is 0‑based across read/write.
  * - Clamp incoming indices; do not apply +/-1 adjustments.
+ * - Backed by <stanPath>/diff/.snap.state.json (shared constant).
  */
 
 import { existsSync } from 'node:fs';
@@ -11,13 +11,15 @@ import path from 'node:path';
 
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
+import { STATE_FILE } from './shared';
+
 export type HistoryState = {
   stack: string[]; // ISO strings or labels
   index: number; // 0‑based
 };
 
 export const statePath = (cwd: string, stanPath: string): string =>
-  path.join(cwd, stanPath, 'diff', '.snap.history.json');
+  path.join(cwd, stanPath, 'diff', STATE_FILE);
 
 const clamp = (n: number, lo: number, hi: number): number =>
   Math.max(lo, Math.min(hi, n));
@@ -105,7 +107,7 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
 /**
  * CLI handlers (snap subcommands)
  * - resolve stanPath robustly
- * - operate on the history file under <stanPath>/diff/.snap.history.json
+ * - operate on the history file under <stanPath>/diff/.snap.state.json
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();

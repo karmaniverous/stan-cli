@@ -6,7 +6,16 @@ import { ensureDir } from 'fs-extra';
 export const STATE_FILE = '.snap.state.json';
 export const SNAP_DIR = 'snapshots';
 export const ARCH_DIR = 'archives';
-export const within = (...parts: string[]): string => path.join(...parts);
+/**
+ * Join path segments safely, filtering out undefined/empty parts.
+ * This makes callers robust to optional path values in tests/SSR.
+ */
+export const within = (...parts: Array<string | undefined>): string => {
+  const filtered = parts.filter(
+    (p): p is string => typeof p === 'string' && p.length > 0,
+  );
+  return path.join(...filtered);
+};
 
 /**
  * Ensure all provided directories exist (best‑effort).

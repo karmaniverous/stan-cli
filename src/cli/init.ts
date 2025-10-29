@@ -224,8 +224,8 @@ export function registerInit(cli: Commander): Command {
   return cli;
 }
 
-// SSR/default-shaped consumers: provide a default object with the same API.
-export default {
-  performInit,
-  registerInit,
-};
+// SSR/default-shaped consumers: provide a callable default that delegates
+// to the named registerInit. This matches CLI index fallbacks and tests.
+export default function registerInitDefault(cli: Commander): Command {
+  return registerInit(cli);
+}

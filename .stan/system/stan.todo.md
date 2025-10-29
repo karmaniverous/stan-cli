@@ -93,3 +93,8 @@
 - Runner registration — expand SSR fallbacks
   - getRegisterRunAction now scans nested/default/module shapes and top-level properties to tolerate exotic SSR mocks.
   - Resolves “registerRunAction not found” in runner.semantics.v2 tests.
+
+- Snap history — align handlers to single state filename
+  - Fixed a filename mismatch where capture wrote `diff/.snap.state.json` but history handlers operated on `diff/.snap.history.json`.
+  - History helpers now import `STATE_FILE` from `snap/shared` and use the same `diff/.snap.state.json` path for set/undo/redo/info.
+  - Resolves the remaining snap index assertion (`expected 0, got 1`) in the CLI snap history test.
