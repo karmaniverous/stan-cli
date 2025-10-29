@@ -85,16 +85,16 @@ export const runSessionOnce = async (args: {
       /* ignore */
     }
   } catch (e) {
+    // Proceed without an injected prompt: archiving will continue in non-ephemeral mode.
+    // Keep a concise notice and continue; this maintains UI parity under SSR/mocks.
     const msg =
       e instanceof Error ? e.message : typeof e === 'string' ? e : String(e);
-    console.error(`stan: error: unable to resolve system prompt (${msg})`);
+    console.error(
+      `stan: warn: proceeding without resolved system prompt (${msg})`,
+    );
     console.log('');
-    try {
-      ui.stop();
-    } catch {
-      /* ignore */
-    }
-    return { created: [], cancelled: true, restartRequested: false };
+    resolvedPromptDisplay = 'auto (unresolved)';
+    resolvedPromptAbs = null;
   }
 
   // Print plan once per outer loop (delegated by caller)

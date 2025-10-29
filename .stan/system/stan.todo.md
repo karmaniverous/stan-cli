@@ -16,6 +16,15 @@
 
 ## Completed (append-only, most recent items last)
 
+- Snap history — CLI subcommands operate on shared SnapState
+  - Aligned src/runner/snap/history.ts to read/write the shared diff/.snap.state.json shape ({ entries, index, maxUndos }) written by capture. set/undo/redo now update the same file and pointer semantics remain 0‑based as expected.
+
+- UI parity — proceed without prompt on SSR/mocks
+  - Changed run-session to treat prompt resolution failures as non-fatal: proceed with archiving without injecting a prompt (non‑ephemeral path). Restores archive creation in both live and no‑live runs under tests that lack a packaged prompt, fixing UI parity.
+
+- Lint (touch‑what‑you‑fix)
+  - Removed an unused import in run/service.ts (path), chipping away at the reported lint errors.
+
 - Snap history — accept stringified index in readState
   - Coerce persisted `index` to a number before normalization; proceed only when finite. Fixes a case where tests seed history with `"index": "1"` and `snap set 0` previously became a no-op.
 

@@ -1,107 +1,55 @@
 /* src/runner/snap/history.ts
- * Snapshot history helpers
+ * Snapshot history helpers (CLI handlers over shared SnapState).
  * - Indexing is 0‑based across read/write.
  * - Clamp incoming indices; do not apply +/-1 adjustments.
- * - Backed by <stanPath>/diff/.snap.state.json (shared constant).
+ * - Backed by <stanPath>/diff/.snap.state.json (shared constant and shape).
  */
-
 import { existsSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
-import { STATE_FILE } from './shared';
-
-export type HistoryState = {
-  stack: string[]; // ISO strings or labels
-  index: number; // 0‑based
-};
-
-export const statePath = (cwd: string, stanPath: string): string =>
-  path.join(cwd, stanPath, 'diff', STATE_FILE);
+import { readJson, type SnapState, STATE_FILE, writeJson } from './shared';
 
 const clamp = (n: number, lo: number, hi: number): number =>
   Math.max(lo, Math.min(hi, n));
 
-export const readState = async (p: string): Promise<HistoryState | null> => {
-  try {
-    const raw = await readFile(p, 'utf8');
-    const v = JSON.parse(raw) as Partial<HistoryState>;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!v || !Array.isArray(v.stack) || typeof v.index === 'undefined') {
-      return null;
-    }
-    // Coerce persisted index and ensure 0‑based on read (tolerate legacy +1 by converting when plausible).
-    // If a legacy file persisted 1-based indices (1..length), convert to 0-based by subtracting 1.
-    // Otherwise clamp as-is (already 0-based or malformed).
-    const max = v.stack.length > 0 ? v.stack.length - 1 : 0;
-    const rawIdxNum = Number((v as { index: unknown }).index);
-    if (!Number.isFinite(rawIdxNum)) {
-      return null;
-    }
-    const rawIdx = rawIdxNum;
-    const idx =
-      typeof rawIdx === 'number' && v.stack.length > 0
-        ? rawIdx >= 1 && rawIdx <= v.stack.length
-          ? rawIdx - 1
-          : clamp(rawIdx, 0, max)
-        : 0;
-    return { stack: v.stack, index: idx };
-  } catch {
-    return null;
-  }
+export const statePath = (cwd: string, stanPath: string): string =>
+  path.join(cwd, stanPath, 'diff', STATE_FILE);
+
+const readSnapState = async (p: string): Promise<SnapState | null> => {
+  return (await readJson<SnapState>(p)) ?? null;
 };
 
-export const writeState = async (p: string, s: HistoryState): Promise<void> => {
-  const idx = clamp(s.index, 0, s.stack.length ? s.stack.length - 1 : 0);
-  const out: HistoryState = { stack: s.stack, index: idx };
-  await writeFile(p, JSON.stringify(out, null, 2), 'utf8');
+const writeSnapState = async (p: string, s: SnapState): Promise<void> => {
+  const max = s.entries.length > 0 ? s.entries.length - 1 : 0;
+  const idx = clamp(s.index, 0, max);
+  await writeJson(p, { ...s, index: idx });
 };
 
-export const setIndex = async (
-  p: string,
-  rawIndex: string,
-): Promise<HistoryState | null> => {
-  const cur = await readState(p);
-
-  if (!cur) return null;
+const setIndexSnap = async (p: string, rawIndex: string): Promise<void> => {
+  const cur = await readSnapState(p);
+  if (!cur) return;
   const n = Number.parseInt(rawIndex, 10);
-  const next = Number.isFinite(n)
-    ? clamp(n, 0, cur.stack.length - 1)
-    : cur.index;
-  const out: HistoryState = { ...cur, index: next };
-  await writeState(p, out);
-  return out;
+  const max = cur.entries.length > 0 ? cur.entries.length - 1 : 0;
+  const next = Number.isFinite(n) ? clamp(n, 0, max) : cur.index;
+  await writeSnapState(p, { ...cur, index: next });
 };
 
-export const push = async (p: string, label: string): Promise<HistoryState> => {
-  const cur = (await readState(p)) ?? { stack: [], index: -1 };
-  const pruned = cur.stack.slice(0, Math.max(0, cur.index + 1));
-  const nextStack = [...pruned, label];
-  const next: HistoryState = { stack: nextStack, index: nextStack.length - 1 };
-  await writeState(p, next);
-  return next;
+const undoSnap = async (p: string): Promise<void> => {
+  const cur = await readSnapState(p);
+  if (!cur) return;
+  const max = cur.entries.length > 0 ? cur.entries.length - 1 : 0;
+  const next = clamp(cur.index - 1, 0, max);
+  await writeSnapState(p, { ...cur, index: next });
 };
 
-export const undo = async (p: string): Promise<HistoryState | null> => {
-  const cur = await readState(p);
-
-  if (!cur) return null;
-  const next = clamp(cur.index - 1, 0, cur.stack.length - 1);
-  const out: HistoryState = { ...cur, index: next };
-  await writeState(p, out);
-  return out;
-};
-
-export const redo = async (p: string): Promise<HistoryState | null> => {
-  const cur = await readState(p);
-
-  if (!cur) return null;
-  const next = clamp(cur.index + 1, 0, cur.stack.length - 1);
-  const out: HistoryState = { ...cur, index: next };
-  await writeState(p, out);
-  return out;
+const redoSnap = async (p: string): Promise<void> => {
+  const cur = await readSnapState(p);
+  if (!cur) return;
+  const max = cur.entries.length > 0 ? cur.entries.length - 1 : 0;
+  const next = clamp(cur.index + 1, 0, max);
+  await writeSnapState(p, { ...cur, index: next });
 };
 
 /**
@@ -111,8 +59,7 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();
-  // Prefer the configured stanPath; probe legacy fallbacks when an existing
-  // history file resides under a different common workspace name.
+  // Prefer the configured stanPath; probe legacy/common names for existing files.
   let configured: string = '.stan';
   try {
     configured = resolveStanPathSync(cwd);
@@ -139,7 +86,7 @@ const resolveHistoryPath = (): string => {
 export const handleUndo = async (): Promise<void> => {
   try {
     const p = resolveHistoryPath();
-    await undo(p);
+    await undoSnap(p);
   } catch {
     /* best‑effort */
   }
@@ -148,7 +95,7 @@ export const handleUndo = async (): Promise<void> => {
 export const handleRedo = async (): Promise<void> => {
   try {
     const p = resolveHistoryPath();
-    await redo(p);
+    await redoSnap(p);
   } catch {
     /* best‑effort */
   }
@@ -157,7 +104,7 @@ export const handleRedo = async (): Promise<void> => {
 export const handleSet = async (indexArg: string): Promise<void> => {
   try {
     const p = resolveHistoryPath();
-    await setIndex(p, indexArg);
+    await setIndexSnap(p, indexArg);
   } catch {
     /* best‑effort */
   }
@@ -165,10 +112,10 @@ export const handleSet = async (indexArg: string): Promise<void> => {
 
 export const handleInfo = async (): Promise<void> => {
   try {
-    const st = await readState(resolveHistoryPath());
+    const st = await readSnapState(resolveHistoryPath());
     if (!st) return;
     console.log(
-      `stan: snap history: index ${st.index.toString()} of ${st.stack.length.toString()}`,
+      `stan: snap history: index ${st.index.toString()} of ${st.entries.length.toString()}`,
     );
   } catch {
     /* best‑effort */

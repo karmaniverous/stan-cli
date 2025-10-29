@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
