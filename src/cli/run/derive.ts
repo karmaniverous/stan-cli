@@ -214,3 +214,16 @@ export function deriveRunParameters(args: {
     promptChoice,
   };
 }
+
+// SSR/mock‑friendly default export: delegate to the named function.
+export default function deriveRunParametersDefault(args: {
+  options: Record<string, unknown>;
+  cmd: Command;
+  scripts: Record<string, unknown>;
+  scriptsDefault?: boolean | string[];
+  dir?: string;
+}): DerivedRun {
+  // Defer to the canonical implementation to keep behavior centralized.
+  // This default exists solely to satisfy loader fallbacks in SSR/mocks.
+  return deriveRunParameters(args);
+}

@@ -5,8 +5,6 @@
  * named/default export shape differences under Vitest SSR/bundlers.
  */
 
-import path from 'node:path';
-
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
 import { utcStamp } from '@/runner/util/time';
@@ -99,7 +97,6 @@ const resolveCaptureSnapshotAndArchives = async (): Promise<CaptureFn> => {
 export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
   const cwd = process.cwd();
   const stanPath = resolveStanPathSync(cwd);
-  const historyDir = path.join(cwd, stanPath, 'diff');
 
   // If stashing is requested, attempt it first. Abort on failure (no snapshot/history).
   if (opts?.stash) {

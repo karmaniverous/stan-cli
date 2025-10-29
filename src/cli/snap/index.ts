@@ -125,3 +125,6 @@ export function registerSnap(cli: Commander): Command {
 
   return cli;
 }
+
+// Provide a default export to satisfy SSR/default-shaped consumers.
+export default registerSnap;

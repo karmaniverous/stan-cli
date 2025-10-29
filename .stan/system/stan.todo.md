@@ -65,3 +65,11 @@
 - Snap CLI handler — expand SSR shapes for handleSnap
   - loadSnapHandler now tolerates function‑as‑default, default.default, module‑as‑function, and scans default objects for callable properties; applies the same to barrel fallback.
   - Fixes “handleSnap not found” under exotic test mocks; removes an unused import in history.ts.
+
+- Run derive — default export shim for SSR/mocks
+  - Added a default export that delegates to the named deriveRunParameters to satisfy loader fallbacks in tests.
+  - Unblocks root.env.defaults.* under Vitest SSR.
+
+- Snap CLI — default export for registerSnap
+  - Exported registerSnap as default to tolerate default‑shaped imports in tests/mocks.
+  - Resolves “registerSnap is not a function” in cli/snap.* tests.
