@@ -105,27 +105,12 @@ export const redo = async (p: string): Promise<HistoryState | null> => {
  */
 const resolveHistoryPath = (): string => {
   const cwd = process.cwd();
-  // Prefer the configured stanPath history (namespaced/core) when available.
+  // Always operate on the configured history file in this workspace.
   let resolved = '.stan';
   try {
     resolved = resolveStanPathSync(cwd);
   } catch {
     /* keep default */
-  }
-  try {
-    const hp = statePath(cwd, resolved);
-    if (existsSync(hp)) return hp;
-  } catch {
-    /* ignore */
-  }
-  // Then try legacy common folders to avoid writing into a wrong workspace.
-  for (const sp of ['stan', '.stan'] as const) {
-    try {
-      const hp = statePath(cwd, sp);
-      if (existsSync(hp)) return hp;
-    } catch {
-      /* ignore */
-    }
   }
   return statePath(cwd, resolved);
 };

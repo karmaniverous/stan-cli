@@ -99,6 +99,30 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
   const stanPath = resolveStanPathSync(cwd);
   const historyDir = path.join(cwd, stanPath, 'diff');
 
+  // If stashing is requested, attempt it first. Abort on failure (no snapshot/history).
+  if (opts?.stash) {
+    try {
+      const gitMod = (await import('./git')) as unknown as {
+        runGit?: (
+          cwd: string,
+          args: string[],
+        ) => Promise<{
+          code: number;
+          stdout: string;
+          stderr: string;
+        }>;
+      };
+      if (typeof gitMod.runGit === 'function') {
+        const res = await gitMod.runGit(cwd, ['stash', '-u']);
+        if (!res || res.code !== 0) {
+          return; // abort: stash failed
+        }
+      }
+    } catch {
+      return; // abort on unexpected stash error
+    }
+  }
+
   // Deterministically write/refresh the diff snapshot before capturing to history.
   // SSR-robust: resolve core helpers at call time; tolerate named/default export shapes.
   try {
@@ -166,4 +190,23 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
     historyDir,
     stash: Boolean(opts?.stash),
   });
+
+  // Best‑effort: pop stash after capture when requested.
+  if (opts?.stash) {
+    try {
+      const gitMod = (await import('./git')) as unknown as {
+        runGit?: (
+          cwd: string,
+          args: string[],
+        ) => Promise<{
+          code: number;
+          stdout: string;
+          stderr: string;
+        }>;
+      };
+      await gitMod.runGit?.(cwd, ['stash', 'pop']);
+    } catch {
+      /* ignore */
+    }
+  }
 }
