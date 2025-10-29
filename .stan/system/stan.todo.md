@@ -314,3 +314,7 @@
   - Split the monolithic src/cli/patch.ts into focused modules under src/cli/patch/: safety.ts (Commander guards), detect.ts (diff detection), input.ts (source read), apply-local.ts (git-apply shim + jsdiff fallback), register.ts (subcommand wiring), index.ts (barrel). Kept "./patch" import stability.
   - Fixed missing statusOk import on the local success path; now logs statusOk("patch applied"/"patch check passed") so tests/typecheck pass.
   - Escaped "\@karmaniverous" in module TSDoc to silence tsdoc/syntax.
+
+- Decompose archive stage (session) into small modules
+  - Replaced monolithic src/runner/run/session/archive-stage.ts with a directory module: imports.ts (SSR resolvers), config.ts (base FULL/DIFF builders), progress.ts (UI callbacks), prompt-ephemeral.ts (hash/meta decision), prompt-prepare.ts (materialize/restore), run-ephemeral.ts, run-normal.ts, and index.ts (orchestrator).
+  - Preserved anchors‑excluded DIFF, staged imports once, and UI progress behavior.
