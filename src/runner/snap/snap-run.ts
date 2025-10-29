@@ -204,9 +204,15 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
   }
 
   const capture = await resolveCaptureSnapshotAndArchives();
+  // Final stanPath guard: if context failed to provide a non-empty path,
+  // fall back to resolveStanPathSync(cwd) to avoid undefined joins.
+  const stanPathEffective =
+    typeof ctx.stanPath === 'string' && ctx.stanPath.trim().length > 0
+      ? ctx.stanPath
+      : resolveStanPathSync(cwd);
   await capture({
     cwd: ctx.cwd,
-    stanPath: ctx.stanPath,
+    stanPath: stanPathEffective,
     ts: utcStamp(),
     maxUndos: ctx.maxUndos,
   });

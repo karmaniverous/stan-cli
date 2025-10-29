@@ -22,6 +22,18 @@
 - Snap history — prefer "out" when probing existing files
   - Adjusted resolveHistoryPath to probe “out” first, then the configured stanPath, then “stan”, then “.stan”. This aligns CLI subcommands with tests that seed history under “out/…”, and ensures `snap set 0` updates the same file the test reads.
 
+- Root env defaults — synchronous first-read fallback in makeCli
+  - When the named rootDefaults resolver is unavailable under SSR, makeCli now parses stan.config.\* synchronously and coerces cliDefaults.{debug,boring,yes}.
+  - Fixes root.env.defaults test that observed STAN_DEBUG unset on the first preAction.
+
+- Run registration — default export shim for default-shaped imports
+  - Added a callable default export in src/cli/run/action/index.ts that delegates to registerRunAction.
+  - Satisfies default-shaped mock imports in runner.semantics.v2 tests.
+
+- Snap capture — stanPath guard in handleSnap
+  - When resolveContext fails to provide a non-empty stanPath, handleSnap now falls back to resolveStanPathSync(cwd) before invoking capture.
+  - Prevents undefined path joins during snapshot/archives capture; unblocks stash-success path in snap CLI tests.
+
 - Runner — action resolver hardening (CLI)
   - getRegisterRunAction now tolerates default-as-function, nested default.default, module-as-function, and scans default objects. Fixes “registerRunAction not found” under exotic SSR mocks.
 
@@ -68,16 +80,16 @@
 
 - Run derive — default export shim for SSR/mocks
   - Added a default export that delegates to the named deriveRunParameters to satisfy loader fallbacks in tests.
-  - Unblocks root.env.defaults.* under Vitest SSR.
+  - Unblocks root.env.defaults.\* under Vitest SSR.
 
 - Snap CLI — default export for registerSnap
   - Exported registerSnap as default to tolerate default‑shaped imports in tests/mocks.
-  - Resolves “registerSnap is not a function” in cli/snap.* tests.
+  - Resolves “registerSnap is not a function” in cli/snap.\* tests.
 
 - CLI — env defaults fallback (SSR)
-  - makeCli now falls back to reading cliDefaults directly from stan.config.* (namespaced or legacy) when the named rootDefaults resolver is unavailable under SSR/mocks.
+  - makeCli now falls back to reading cliDefaults directly from stan.config.\* (namespaced or legacy) when the named rootDefaults resolver is unavailable under SSR/mocks.
   - Ensures STAN_DEBUG/STAN_BORING are set from config in root.env.defaults tests.
 
 - Runner registration — expand SSR fallbacks
   - getRegisterRunAction now scans nested/default/module shapes and top-level properties to tolerate exotic SSR mocks.
-  - Resolves “registerRunAction not found” in runner.semantics.v2 tests.
+  - Resolves “registerRunAction not found” in runner.semantics.v2 tests.

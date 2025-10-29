@@ -7,8 +7,12 @@
  * - Help for root should include available script keys from config.
  */
 
+import { readFileSync } from 'node:fs';
+
+import { findConfigPathSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 
+import { parseText } from '@/common/config/parse';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 import { printVersionInfo } from '@/runner/version';
@@ -119,6 +123,58 @@ const tagDefaultResolved: TagDefaultFn | undefined = (() => {
  * @returns New Commander `Command` instance.
  */
 export const makeCli = (): Command => {
+  // Synchronous fallback for root env defaults (SSR-friendly):
+  // When the named resolver is unavailable, parse stan.config.* directly
+  // and coerce cliDefaults.{debug,boring,yes}.
+  const readRootDefaultsFromConfig = (
+    dir: string,
+  ): {
+    debugDefault: boolean;
+    boringDefault: boolean;
+    yesDefault: boolean;
+  } | null => {
+    try {
+      const p = findConfigPathSync(dir);
+      if (!p) return null;
+      const raw = readFileSync(p, 'utf8');
+      const rootUnknown: unknown = parseText(p, raw);
+      const root =
+        rootUnknown && typeof rootUnknown === 'object'
+          ? (rootUnknown as Record<string, unknown>)
+          : {};
+      const cliNs =
+        root['stan-cli'] && typeof root['stan-cli'] === 'object'
+          ? (root['stan-cli'] as Record<string, unknown>)
+          : null;
+      // Coercer for 1/0, true/false, string variants
+      const toBool = (v: unknown): boolean => {
+        if (typeof v === 'boolean') return v;
+        if (typeof v === 'number') return v === 1;
+        if (typeof v === 'string') {
+          const s = v.trim().toLowerCase();
+          return s === '1' || s === 'true';
+        }
+        return false;
+      };
+      const pick = (node: Record<string, unknown> | null | undefined) => {
+        const d = node && typeof node === 'object' ? node : {};
+        const def =
+          d['cliDefaults'] && typeof d['cliDefaults'] === 'object'
+            ? (d['cliDefaults'] as Record<string, unknown>)
+            : {};
+        const debugDefault = toBool((def as { debug?: unknown }).debug);
+        const boringDefault = toBool((def as { boring?: unknown }).boring);
+        // "yes" is permissive: not part of canonical schema, but keep transitional read.
+        const yesDefault = toBool((def as { yes?: unknown }).yes);
+        return { debugDefault, boringDefault, yesDefault };
+      };
+      if (cliNs) return pick(cliNs);
+      // Legacy root fallback
+      return pick(root);
+    } catch {
+      return null;
+    }
+  };
   const cli = new Command();
   // Resolve effective defaults from config (when present); fall back to built‑ins.
   const safeRootDefaults = (): {
@@ -127,10 +183,16 @@ export const makeCli = (): Command => {
     yesDefault: boolean;
   } => {
     try {
-      return rootDefaultsResolved
-        ? rootDefaultsResolved(process.cwd())
-        : { debugDefault: false, boringDefault: false, yesDefault: false };
+      if (rootDefaultsResolved) {
+        return rootDefaultsResolved(process.cwd());
+      }
+      // SSR fallback: read directly from stan.config.* synchronously
+      const viaConfig = readRootDefaultsFromConfig(process.cwd());
+      if (viaConfig) return viaConfig;
+      return { debugDefault: false, boringDefault: false, yesDefault: false };
     } catch {
+      const viaConfig = readRootDefaultsFromConfig(process.cwd());
+      if (viaConfig) return viaConfig;
       return { debugDefault: false, boringDefault: false, yesDefault: false };
     }
   };

@@ -255,5 +255,12 @@ export const registerRunAction = (
   });
 };
 
-// SSR-robust fallback export for modules that use a default export shape.
-export default { registerRunAction };
+// SSR-robust fallback export for modules that use a default export shape:
+// also provide a callable default that delegates to the named function.
+export default function defaultRegisterRunAction(
+  cmd: Command,
+  getFlagPresence: () => FlagPresence,
+): void {
+  // Delegate to the canonical implementation
+  registerRunAction(cmd, getFlagPresence);
+}
