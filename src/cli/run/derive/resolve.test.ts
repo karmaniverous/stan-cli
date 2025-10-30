@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// We will import the SUT after installing mocks for SSR-like module shape tests.
+import { asEsmModule } from '@/test/mock-esm';
 
 describe('derive: resolveDRI fallback shapes (SSR-robust)', () => {
   beforeEach(() => {
@@ -8,31 +8,27 @@ describe('derive: resolveDRI fallback shapes (SSR-robust)', () => {
     vi.restoreAllMocks();
   });
 
-  it('resolves when run-args exports default as a function (function-as-default)', async () => {
-    // Mock the module that dri.ts resolves: ../../run-args (aliased here by its absolute alias)
-    // Provide default as a callable function (function-as-default).
-    const marker = Symbol('default-fn');
-    vi.doMock('@/cli/run-args', () => {
-      const def = () => marker as unknown as void;
-      return { __esModule: true, default: def };
-    });
+  it('resolves when run-args default object exposes deriveRunInvocation', async () => {
+    // dri.ts imports "../../run-args"; mock that exact specifier.
+    vi.doMock('../../run-args', () =>
+      asEsmModule({
+        default: {
+          deriveRunInvocation: () => ({
+            selection: [],
+            mode: 'concurrent',
+            behavior: {},
+          }),
+        },
+      }),
+    );
 
     const { resolveDRI } = (await import('@/cli/run/derive/dri')) as {
-      resolveDRI: () => (args: {
-        scriptsProvided?: boolean;
-        scriptsOpt?: unknown;
-        exceptProvided?: boolean;
-        exceptOpt?: unknown;
-        sequential?: unknown;
-        combine?: unknown;
-        keep?: unknown;
-        archive?: unknown;
-        config: { scripts?: Record<string, unknown> };
-      }) => unknown;
+      resolveDRI: () => (...a: unknown[]) => unknown;
     };
     const fn = resolveDRI();
-    // Returns a callable; we assert it does not throw when invoked with minimal args.
-    const out = fn({
+    expect(typeof fn).toBe('function');
+    // Exercise call defensively; ignore result (shape-only assertion).
+    fn({
       scriptsProvided: false,
       scriptsOpt: undefined,
       exceptProvided: false,
@@ -43,34 +39,26 @@ describe('derive: resolveDRI fallback shapes (SSR-robust)', () => {
       archive: undefined,
       config: { scripts: {} },
     });
-    // Only assert callability (shape), not engine semantics here.
-    expect(typeof fn).toBe('function');
-    void out;
   });
 
-  it('resolves when run-args exports default object with deriveRunInvocation', async () => {
+  it('resolves when run-args exposes deriveRunInvocation (named export)', async () => {
     vi.resetModules();
-    const marker = Symbol('default.obj.derive');
-    vi.doMock('@/cli/run-args', () => {
-      const deriveRunInvocation = () => marker as unknown as void;
-      return { __esModule: true, default: { deriveRunInvocation } };
-    });
+    vi.doMock('../../run-args', () =>
+      asEsmModule({
+        deriveRunInvocation: () => ({
+          selection: [],
+          mode: 'concurrent',
+          behavior: {},
+        }),
+      }),
+    );
 
     const { resolveDRI } = (await import('@/cli/run/derive/dri')) as {
-      resolveDRI: () => (args: {
-        scriptsProvided?: boolean;
-        scriptsOpt?: unknown;
-        exceptProvided?: boolean;
-        exceptOpt?: unknown;
-        sequential?: unknown;
-        combine?: unknown;
-        keep?: unknown;
-        archive?: unknown;
-        config: { scripts?: Record<string, unknown> };
-      }) => unknown;
+      resolveDRI: () => (...a: unknown[]) => unknown;
     };
     const fn = resolveDRI();
-    const out = fn({
+    expect(typeof fn).toBe('function');
+    fn({
       scriptsProvided: false,
       scriptsOpt: undefined,
       exceptProvided: false,
@@ -81,7 +69,5 @@ describe('derive: resolveDRI fallback shapes (SSR-robust)', () => {
       archive: undefined,
       config: { scripts: {} },
     });
-    expect(typeof fn).toBe('function');
-    void out;
   });
 });

@@ -69,3 +69,7 @@
 
 - Tests — overlay excludes mapping (naked -f)
   - Added src/cli/runner.overlay.naked-f.test.ts to verify the “shouldMap” shortcut engages for naked -f (no names) while producing no engine excludes (all facets active → no hiding).
+
+- Tests — fixes for derive resolver and naked -f overlay
+  - src/cli/run/derive/resolve.test.ts: mock "../../run-args" (exact specifier used by dri.ts) via asEsmModule; remove invalid "void" casts; assert callability.
+  - src/cli/runner.overlay.naked-f.test.ts: expect plan line "overlay: off" when global overlay is disabled; engineExcludes still empty under naked -f.

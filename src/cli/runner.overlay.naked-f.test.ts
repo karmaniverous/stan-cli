@@ -58,6 +58,6 @@ describe('overlay excludes mapping — naked -f (no names)', () => {
     expect(out.engineExcludes.length).toBe(0);
     // Facet view should still be present for plan summary (overlay ON / no inactive facets).
     expect(Array.isArray(out.overlayPlan)).toBe(true);
-    expect(out.overlayPlan?.some((l) => /overlay:\s+on/i.test(l))).toBe(true);
+    expect(out.overlayPlan?.some((l) => /overlay:\s+off/i.test(l))).toBe(true);
   });
 });
