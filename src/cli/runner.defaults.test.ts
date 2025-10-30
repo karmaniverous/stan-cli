@@ -34,6 +34,35 @@ function applySafetyLocal(cmd: Command): void {
   } catch {
     // best‑effort
   }
+  // Normalize test argv like ["node","stan", ...] -> [...]
+  type FromOpt = { from?: 'user' | 'node' };
+  const holder = cmd as unknown as {
+    parse: (argv?: readonly string[], opts?: FromOpt) => Command;
+    parseAsync: (argv?: readonly string[], opts?: FromOpt) => Promise<Command>;
+  };
+  const origParse = holder.parse.bind(cmd);
+  const origParseAsync = holder.parseAsync.bind(cmd);
+  const normalizeArgv = (
+    argv?: readonly string[],
+  ): readonly string[] | undefined => {
+    if (!Array.isArray(argv)) return undefined;
+    if (argv.length >= 2 && argv[0] === 'node' && argv[1] === 'stan') {
+      return argv.slice(2);
+    }
+    return argv;
+  };
+  try {
+    holder.parse = (argv?: readonly string[], opts?: FromOpt) => {
+      origParse(normalizeArgv(argv), opts);
+      return cmd;
+    };
+    holder.parseAsync = async (argv?: readonly string[], opts?: FromOpt) => {
+      await origParseAsync(normalizeArgv(argv), opts);
+      return cmd;
+    };
+  } catch {
+    // best‑effort
+  }
 }
 
 describe('run defaults from opts.cliDefaults.run', () => {

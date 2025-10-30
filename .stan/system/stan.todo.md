@@ -20,6 +20,10 @@
     - Keep session post-archive cleanup (best‑effort) as a backstop.
     - Add focused assertions if new race surfaces.
 
+- Cancel matrix — ensure archives absent on any cancel return
+  - src/runner/run/session/run-session.ts: added best‑effort removal of archive.tar and archive.diff.tar on all cancel-return paths (pre‑archive, late‑cancel guards, pre‑scheduling), in addition to the existing post‑archive cleanup backstop.
+  - Keeps artifacts clean for both live concurrent and live sequential keypress scenarios.
+
 - Overlay excludes mapping (facet composition)
   - Recheck facet overlay excludes/anchors propagation into RunnerConfig after recent changes; fix any propagation gaps.
 
@@ -93,6 +97,10 @@
   - src/runner/run/session/run-session.ts: replaced optional chaining on UI hooks (prepareForNewSession/flushNow) and stdin.pause with typeof guards.
 - Stability — SSR fallbacks for archive stage resolvers (no behavior change)
   - src/runner/run/session/archive-stage/imports.ts: accept default-as-function, module-as-function, and shallow default scans for archivePhase/stageImports.
+
+- Tests — CLI defaults argv normalization
+  - src/cli/runner.defaults.test.ts: local safety adapter now also normalizes argv like ["node","stan", ...] to avoid Commander treating "node" as a subcommand under SSR/mocks. Prevents inadvertent process.exit during parse.
+  - Stabilizes runner.defaults tests without relying on internal cli-utils shapes.
 
 - Cancellation robustness — early abort in archive stage
   - src/runner/run/session/archive-stage/index.ts: accept optional shouldContinue and abort when false.

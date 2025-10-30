@@ -22,12 +22,11 @@ export const getArchivePhase = (): ArchiveModule['archivePhase'] => {
     return defAny as unknown as ArchiveModule['archivePhase'];
   }
 
-  // 3) default.archivePhase (default object with property)
+  // 3) default.archivePhase (default object with property) + shallow scan
   if (defAny && typeof defAny === 'object') {
     const viaProp = (defAny as { archivePhase?: unknown }).archivePhase;
     if (typeof viaProp === 'function')
       return viaProp as ArchiveModule['archivePhase'];
-    // 4) Shallow scan of values on default object (edge mocks)
     for (const v of Object.values(defAny as Record<string, unknown>)) {
       if (typeof v === 'function') {
         return v as ArchiveModule['archivePhase'];

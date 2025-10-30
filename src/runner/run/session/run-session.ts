@@ -188,6 +188,14 @@ export const runSessionOnce = async (args: {
 
   const created: string[] = [];
 
+  // Helper: best‑effort removal of any archives that may exist
+  const removeArchivesIfAny = async (): Promise<void> => {
+    await Promise.allSettled([
+      rm(resolvePath(outAbs, 'archive.tar'), { force: true }),
+      rm(resolvePath(outAbs, 'archive.diff.tar'), { force: true }),
+    ]);
+  };
+
   // SCRIPTS PHASE
   if (toRun.length > 0) {
     const artifacts = await runScriptsPhase({
@@ -213,6 +221,7 @@ export const runSessionOnce = async (args: {
 
   // Cancellation short-circuit (skip archives)
   if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+    await removeArchivesIfAny().catch(() => void 0);
     try {
       ui.stop();
     } catch {
@@ -256,6 +265,7 @@ export const runSessionOnce = async (args: {
     /* ignore */
   }
   if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+    await removeArchivesIfAny().catch(() => void 0);
     try {
       ui.stop();
     } catch {
@@ -299,6 +309,7 @@ export const runSessionOnce = async (args: {
     } catch {
       /* ignore */
     }
+    await removeArchivesIfAny().catch(() => void 0);
     try {
       ui.stop();
     } catch {
@@ -321,6 +332,7 @@ export const runSessionOnce = async (args: {
     // before archive-phase scheduling. This prevents any archives from being
     // created in live/concurrent keypress scenarios.
     if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+      await removeArchivesIfAny().catch(() => void 0);
       detachSignals();
       try {
         const pause = (process.stdin as unknown as { pause?: () => void })
@@ -360,6 +372,7 @@ export const runSessionOnce = async (args: {
       } catch {
         /* ignore */
       }
+      await removeArchivesIfAny().catch(() => void 0);
       detachSignals();
       return { created, cancelled: true, restartRequested: false };
     }
