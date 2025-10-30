@@ -201,3 +201,9 @@ Amendment:
 - Typecheck follow‑through (run action overlay resolver)
   - src/cli/run/action/index.ts: explicitly typed the resolved buildOverlayInputs at the call site (FacetOverlayOutput contract) to fix TS2322.
   - No behavior change; narrows unknown to the expected function type once.
+
+### Facet reconfiguration for modular focus
+
+- Reconfigured facets to be more granular and module-oriented, replacing the previous coarse-grained structure. This allows for smaller, more focused archives that better encapsulate specific areas of the codebase, such as the `run` command's logic.
+- Created a new `.stan/system/facet.state.json` file to enable a specific set of facets (`run`, `run-ui`, `run-session`, `run-exec`, `tests`, `config`) designed to provide a focused context for addressing the current concentration of lint errors and test failures.
+- Updated `.stan/system/facet.meta.json` with the new, more modular facet definitions.
