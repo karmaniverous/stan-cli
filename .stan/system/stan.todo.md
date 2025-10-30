@@ -96,3 +96,7 @@
 - Facet overlay — disable snap to reduce archive size while focusing live/cancel tests
   - Turned off `snap` facet (snap modules currently passing and not under investigation).
   - Kept `live-ui`, `run-session`, and `run-archive` enabled to triage remaining failing tests.
+
+- Facet overlay — enable run‑exec for cancellation triage
+  - Turned on `run-exec` to include execution helpers involved in keypress/SIGINT handling and process supervision while investigating cancel + archive cases.
+  - Kept `live-ui`, `run-session`, and `run-archive` enabled; `snap` remains disabled to minimize archive size.
