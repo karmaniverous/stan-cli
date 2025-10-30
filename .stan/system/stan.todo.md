@@ -120,4 +120,10 @@
 - Facet overlay — decompose "run" into tighter facets and adjust defaults
   - Replaced coarse "run" facet with "run-exec", "run-session", and "run-archive"; added "overlay" and "prompt" facets with narrow anchors.
   - Defaults: run-session/run-archive active; run-exec/overlay/prompt inactive. Keeps current work surfaces visible while reducing archive size.
-  - Anchors retained for breadcrumbs (index modules) to preserve global navigation.
+  - Anchors retained for breadcrumbs (index modules) to preserve global navigation.
+
+- Lint sweep (part 1: touch‑what‑you‑fix)
+  - src/cli/patch/safety.ts: tightened normalizeArgv narrowing to avoid no‑unsafe‑assignment without changing behavior.
+  - src/runner/init/docs.ts: removed unnecessary optional chaining on a non‑nullish JSON object.
+  - src/cli/snap/index.ts: removed an unused internal helper to resolve the unused‑symbol lint.
+  - Next up (tracked): address remaining no‑unnecessary‑condition/optional‑chaining cases, require‑await in flagged tests, and unused locals per lint report.

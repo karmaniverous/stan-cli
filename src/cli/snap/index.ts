@@ -10,37 +10,6 @@ import { loadSnapHandler } from './handlers';
 import { attachSnapOptions } from './options';
 import { applyCliSafetyTo } from './safety';
 
-const tryResolveNamedOrDefault = <F>(
-  mod: unknown,
-  pickNamed: (m: unknown) => F | undefined,
-  pickDefault: (m: unknown) => F | undefined,
-  label?: string,
-): F => {
-  // 1) named export
-  try {
-    const named = pickNamed(mod);
-    if (typeof named === 'function') return named as F;
-  } catch {
-    /* ignore */
-  }
-  // 2) default.registerX
-  try {
-    const viaDefault = pickDefault(mod);
-    if (typeof viaDefault === 'function') return viaDefault as F;
-  } catch {
-    /* ignore */
-  }
-  // 3) function-as-default (common in SSR/tests)
-  try {
-    const defAny = (mod as { default?: unknown }).default;
-    if (typeof defAny === 'function') return defAny as unknown as F;
-  } catch {
-    /* ignore */
-  }
-  const what = label && label.trim().length ? label.trim() : 'export';
-  throw new Error(`${what} not found`);
-};
-
 type ActionModule = typeof import('./action');
 const getRegisterSnapAction = (): ActionModule['registerSnapAction'] => {
   const mod = snapActionMod as unknown;

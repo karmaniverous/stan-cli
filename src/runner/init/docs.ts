@@ -33,7 +33,7 @@ export const ensureDocs = async (
     const raw = await readFile(pkgPath, 'utf8');
     const pkg = JSON.parse(raw) as { version?: string };
     const version =
-      typeof pkg?.version === 'string' && pkg.version.length > 0
+      typeof pkg.version === 'string' && pkg.version.length > 0
         ? pkg.version
         : undefined;
     if (version) {
