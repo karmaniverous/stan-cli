@@ -31,9 +31,34 @@
     "exclude": ["src/runner/patch/**"],
     "include": ["src/runner/patch/service.ts"]
   },
-  "run": {
-    "exclude": ["src/runner/run/**"],
-    "include": ["src/runner/run/index.ts"]
+  "run-exec": {
+    "exclude": ["src/runner/run/exec/**"],
+    "include": ["src/runner/run/exec/index.ts"]
+  },
+  "run-session": {
+    "exclude": ["src/runner/run/session/**"],
+    "include": ["src/runner/run/session/index.ts"]
+  },
+  "run-archive": {
+    "exclude": [
+      "src/runner/run/archive/**",
+      "src/runner/run/session/archive-stage/**"
+    ],
+    "include": [
+      "src/runner/run/archive/index.ts",
+      "src/runner/run/session/archive-stage/index.ts"
+    ]
+  },
+  "overlay": {
+    "exclude": ["src/runner/overlay/**"],
+    "include": ["src/runner/overlay/facets.ts"]
+  },
+  "prompt": {
+    "exclude": ["src/runner/prompt/**"],
+    "include": [
+      "src/runner/prompt/index.ts",
+      "src/runner/run/prompt.ts"
+    ]
   },
   "snap": {
     "exclude": ["src/runner/snap/**"],

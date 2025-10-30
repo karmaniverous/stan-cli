@@ -116,3 +116,8 @@
   - Fixed a filename mismatch where capture wrote `diff/.snap.state.json` but history handlers operated on `diff/.snap.history.json`.
   - History helpers now import `STATE_FILE` from `snap/shared` and use the same `diff/.snap.state.json` path for set/undo/redo/info.
   - Resolves the remaining snap index assertion (`expected 0, got 1`) in the CLI snap history test.
+
+- Facet overlay — decompose "run" into tighter facets and adjust defaults
+  - Replaced coarse "run" facet with "run-exec", "run-session", and "run-archive"; added "overlay" and "prompt" facets with narrow anchors.
+  - Defaults: run-session/run-archive active; run-exec/overlay/prompt inactive. Keeps current work surfaces visible while reducing archive size.
+  - Anchors retained for breadcrumbs (index modules) to preserve global navigation.
