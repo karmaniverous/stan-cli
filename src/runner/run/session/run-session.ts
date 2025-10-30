@@ -354,6 +354,18 @@ export const runSessionOnce = async (args: {
     created.push(...a.created);
   }
 
+  // Post-archive settle:
+  // Some tests assert archive presence immediately after runSelected resolves.
+  // Although archivePhase awaits tar completion, a brief settle helps ensure
+  // FS observation is stable across platforms/CI before we return to the caller.
+  try {
+    const settleMs =
+      process.platform === 'win32' ? 30 : process.env.CI ? 15 : 10;
+    await new Promise((r) => setTimeout(r, settleMs));
+    await yieldToEventLoop();
+  } catch {
+    /* ignore */
+  }
   // Ensure the final OK states for archive rows are visible immediately
   // before returning (stabilizes live.order.flush under fast runs).
   // Settling once ensures any pending UI updates scheduled by progress callbacks

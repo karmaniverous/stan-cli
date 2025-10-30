@@ -39,6 +39,12 @@
 
 ## Completed (append-only, most recent items last)
 
+- UI parity — stabilize immediate archive visibility after run
+  - src/runner/run/session/run-session.ts: add a brief post‑archive settle
+    (timeout + yieldToEventLoop) after archivePhase completes, before final
+    flush/return. Improves cross‑platform stability for tests that assert
+    presence of archive.tar and archive.diff.tar immediately after runSelected.
+
 - Derive loader — expand SSR/mocks fallbacks to restore CLI run semantics tests
   - src/cli/run/action/loaders.ts: loadDeriveRunParameters now tolerates default.default,
     module-as-function, and scans default/top-level callable shapes (parity with other loaders).
