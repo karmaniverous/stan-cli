@@ -216,20 +216,9 @@ export const registerRunAction = (
         throw e instanceof Error ? e : new Error(String(e));
       }
     };
-    const buildOverlay = await loadBuildOverlayInputs();
-    const buildOverlayTyped = buildOverlay as unknown as (args: {
-      cwd: string;
-      stanPath: string;
-      enabled: boolean;
-      activateNames: string[];
-      deactivateNames: string[];
-      nakedActivateAll: boolean;
-    }) => Promise<{
-      overlay: FacetOverlayOutput | null;
-      engineExcludes: string[];
-      overlayPlan?: string[];
-    }>;
-    const overlayInputs = await buildOverlayTyped({
+    const buildOverlay =
+      (await loadBuildOverlayInputs()) as unknown as (typeof import('../action/overlay'))['buildOverlayInputs'];
+    const overlayInputs = await buildOverlay({
       cwd: runCwd,
       stanPath: config.stanPath,
       enabled: overlayEnabled,

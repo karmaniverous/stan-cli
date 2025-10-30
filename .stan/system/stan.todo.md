@@ -192,3 +192,12 @@ Amendment:
     - run-session/cleanup.ts (archive deletion/pause/settle helpers),
     - run-session/cancel.ts (unified cancel/restart returns),
     - run-session/guards.ts (centralized cancel guards), run-session/finalize.ts (post-archive settle + flush).
+
+- Decompose CLI root (src/cli/index.ts) into small modules under src/cli/root/\*\*
+  - Added resolvers.ts (SSR‑robust dynamic resolvers), defaults.ts (local sync parser for root debug/boring/yes), env.ts (preAction env propagation), subcommands.ts (centralized registration), and action.ts (root action).
+  - Reduced src/cli/index.ts to a thin orchestrator; preserved public makeCli() and CLI behavior.
+  - Motivation: apply Single‑Responsibility at module level and keep long‑file rule intact; improve testability and SSR shape resilience without functional changes.
+
+- Typecheck follow‑through (run action overlay resolver)
+  - src/cli/run/action/index.ts: explicitly typed the resolved buildOverlayInputs at the call site (FacetOverlayOutput contract) to fix TS2322.
+  - No behavior change; narrows unknown to the expected function type once.
