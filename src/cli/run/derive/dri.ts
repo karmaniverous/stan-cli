@@ -1,10 +1,10 @@
 // src/cli/run/derive/dri.ts
 // SSR/mocks‑robust resolution of deriveRunInvocation:
 // prefer the named export; fall back to default.deriveRunInvocation; finally a callable default.
-import runArgsMod, { deriveRunInvocation as namedDRI } from '../run-args';
+import runArgsMod, { deriveRunInvocation as namedDRI } from '../../run-args';
 
 export type DeriveRunInvocationFn =
-  (typeof import('../run-args'))['deriveRunInvocation'];
+  (typeof import('../../run-args'))['deriveRunInvocation'];
 
 /** SSR/mock‑robust resolver for deriveRunInvocation (named → default.property → default as function). */
 export const resolveDRI = (): DeriveRunInvocationFn => {

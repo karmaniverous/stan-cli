@@ -141,4 +141,8 @@
     - derive/index.ts (composition)
     - derive/run-defaults.ts (SSR‑robust defaults)
     - derive/dri.ts (named‑or‑default resolver)
-    - derive/types.ts (local shapes). Existing imports of "../derive" continue to work.
+    - derive/types.ts (local shapes). Existing imports of "../derive" continue to work.
+
+- Decomposition follow‑through — path fixes
+  - src/cli/run/derive/dri.ts: fix relative import to ../../run-args.
+  - src/cli/run/derive/run-defaults.ts: fix relative import to ../../cli-utils.

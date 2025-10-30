@@ -5,7 +5,7 @@ import { findConfigPathSync } from '@karmaniverous/stan-core';
 
 import { parseText } from '@/common/config/parse';
 
-import * as cliUtils from '../cli-utils';
+import * as cliUtils from '../../cli-utils';
 import { RUN_BASE_DEFAULTS } from '../defaults';
 import type { RunDefaultsShape } from './types';
 
