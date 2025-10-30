@@ -40,25 +40,16 @@
 ## Completed (append-only, most recent items last)
 
 - Overlay excludes mapping — honor explicit facet overrides
-  - src/cli/run/action/overlay.ts: map engine excludes when overlay is enabled
-    OR explicit per‑run facet overrides are provided (‑f/‑F names or naked ‑f),
-    and propagate leaf‑globs under the same guard. Ensures subtree roots expand
-    to "<root>/**" and leaf‑globs (e.g., "**/*.test.ts") pass through as expected
-    in CLI overlay mapping tests.
+  - src/cli/run/action/overlay.ts: map engine excludes when overlay is enabled OR explicit per‑run facet overrides are provided (‑f/‑F names or naked ‑f), and propagate leaf‑globs under the same guard. Ensures subtree roots expand to "<root>/**" and leaf‑globs (e.g., "**/\*.test.ts") pass through as expected in CLI overlay mapping tests.
 
 - Lint nibble — remove redundant nullish coalescing in derive loader
-  - src/cli/run/action/loaders.ts: dropped “?? undefined” flagged by
-    @typescript-eslint/no-unnecessary-condition (no behavior change).
+  - src/cli/run/action/loaders.ts: dropped “?? undefined” flagged by @typescript-eslint/no-unnecessary-condition (no behavior change).
 
 - UI parity — stabilize immediate archive visibility after run
-  - src/runner/run/session/run-session.ts: add a brief post‑archive settle
-    (timeout + yieldToEventLoop) after archivePhase completes, before final
-    flush/return. Improves cross‑platform stability for tests that assert
-    presence of archive.tar and archive.diff.tar immediately after runSelected.
+  - src/runner/run/session/run-session.ts: add a brief post‑archive settle (timeout + yieldToEventLoop) after archivePhase completes, before final flush/return. Improves cross‑platform stability for tests that assert presence of archive.tar and archive.diff.tar immediately after runSelected.
 
 - Derive loader — expand SSR/mocks fallbacks to restore CLI run semantics tests
-  - src/cli/run/action/loaders.ts: loadDeriveRunParameters now tolerates default.default,
-    module-as-function, and scans default/top-level callable shapes (parity with other loaders).
+  - src/cli/run/action/loaders.ts: loadDeriveRunParameters now tolerates default.default, module-as-function, and scans default/top-level callable shapes (parity with other loaders).
   - Fixes deriveRunParameters resolution under Vitest SSR; unblocks runner.semantics.v2.
 
 - Decompose run derive module (smaller files; stable import path)
@@ -71,3 +62,10 @@
 - Decomposition follow‑through — path fixes
   - src/cli/run/derive/dri.ts: fix relative import to ../../run-args.
   - src/cli/run/derive/run-defaults.ts: fix relative import to ../../cli-utils.
+
+- Tests — derive loader fallbacks (SSR resilience)
+  - Added src/cli/run/derive/resolve.test.ts to exercise resolveDRI against default-shaped modules (function-as-default and default object property).
+  - Locks the SSR fallback behavior for derive loader resolution.
+
+- Tests — overlay excludes mapping (naked -f)
+  - Added src/cli/runner.overlay.naked-f.test.ts to verify the “shouldMap” shortcut engages for naked -f (no names) while producing no engine excludes (all facets active → no hiding).
