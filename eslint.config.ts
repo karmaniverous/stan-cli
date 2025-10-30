@@ -63,6 +63,7 @@ const config = [
       // TS preferences (parity with prior JS config)
       '@typescript-eslint/no-explicit-any': ['error'],
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       // TSDoc hygiene (quiet)
       'tsdoc/syntax': ['warn'],
     },

@@ -207,3 +207,11 @@ Amendment:
 - Reconfigured facets to be more granular and module-oriented, replacing the previous coarse-grained structure. This allows for smaller, more focused archives that better encapsulate specific areas of the codebase, such as the `run` command's logic.
 - Created a new `.stan/system/facet.state.json` file to enable a specific set of facets (`run`, `run-ui`, `run-session`, `run-exec`, `tests`, `config`) designed to provide a focused context for addressing the current concentration of lint errors and test failures.
 - Updated `.stan/system/facet.meta.json` with the new, more modular facet definitions.
+
+### Lint Remediation and Type-Checking Fixes
+
+- Addressed a large number of `no-unnecessary-condition` lint errors by removing redundant optional chaining and nullish coalescing operators across the codebase.
+- Fixed `no-unused-vars` errors by removing unused imports and variables.
+- Corrected `no-unsafe-assignment` errors in test files by providing explicit types.
+- Resolved a `no-misused-spread` error in a test mock.
+- Updated `eslint.config.ts` to ignore unused variables that start with an underscore.

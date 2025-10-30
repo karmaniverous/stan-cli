@@ -174,9 +174,8 @@ export const loadDeriveRunParameters = async (): Promise<
             ) => ReturnType<
               (typeof import('../derive'))['deriveRunParameters']
             >;
-          }
-        ).default as (typeof import('../derive'))['deriveRunParameters'])
-      : undefined;
+      }
+    ).default as (typeof import('../derive'))['deriveRunParameters'];
   if (typeof viaDefaultFn === 'function') return viaDefaultFn;
   // 4) nested default.default function (edge SSR wrappers)
   try {

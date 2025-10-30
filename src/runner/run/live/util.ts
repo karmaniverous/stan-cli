@@ -50,7 +50,7 @@ export const computeCounts = (
     else if (st.kind === 'done') c.ok += 1;
     else if (st.kind === 'timedout') c.timeout += 1;
     else if (st.kind === 'cancelled') c.cancelled += 1;
-    else if (st.kind === 'error' || st.kind === 'killed') c.fail += 1;
+    else if (['error', 'killed'].includes(st.kind)) c.fail += 1;
   }
   return c;
 };

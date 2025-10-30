@@ -81,9 +81,9 @@ export const runSessionOnce = async (args: {
     try {
       if (process.env.STAN_DEBUG === '1') {
         const srcKind =
-          (rp as unknown as { kind?: 'local' | 'core' | 'path' }).kind ??
+          (rp as unknown as { kind?: 'local' | 'core' | 'path' }).kind ||
           'path';
-        const p = (resolvedPromptAbs ?? '').replace(/\\/g, '/');
+        const p = (resolvedPromptAbs || '').replace(/\\/g, '/');
         console.error(`stan: debug: prompt: ${srcKind} ${p}`);
       }
     } catch {

@@ -62,7 +62,7 @@ export const buildOverlayInputs = async (args: {
   // Map overlay excludes to effective deny-list globs for the engine:
   // - subtree roots like "docs" -> "docs/**"
   // - existing glob patterns (contain *, ?, or [) pass through unchanged.
-  const overlayExcludesRaw = shouldMap ? (overlay?.excludesOverlay ?? []) : [];
+  const overlayExcludesRaw = shouldMap ? overlay.excludesOverlay : [];
   const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
 
   // Also include leaf-glob excludes from inactive facets (e.g., "**/*.test.ts").

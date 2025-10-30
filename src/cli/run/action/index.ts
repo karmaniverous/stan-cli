@@ -8,9 +8,7 @@ import {
 import type { Command } from 'commander';
 
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
-import { printHeader } from '@/cli/header';
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
-import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';

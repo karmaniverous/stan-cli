@@ -11,8 +11,8 @@ export const resolveScriptsForRun = async (args: {
 }> => {
   const { cwd, cliCfg } = args;
   // 1) Scripts map — prefer loader result; fallback to direct parse
-  let scriptsMap = (cliCfg.scripts as Record<string, string> | undefined) ?? {};
-  if (!scriptsMap || Object.keys(scriptsMap).length === 0) {
+  let scriptsMap = (cliCfg.scripts as Record<string, string> | undefined) || {};
+  if (Object.keys(scriptsMap).length === 0) {
     try {
       const { readCliScriptsFallback } = await import('../config-fallback');
       scriptsMap = readCliScriptsFallback(cwd);
