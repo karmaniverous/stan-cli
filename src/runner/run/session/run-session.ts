@@ -160,7 +160,10 @@ export const runSessionOnce = async (args: {
       /* ignore */
     }
     try {
-      (process.stdin as unknown as { pause?: () => void }).pause?.();
+      const pause = (process.stdin as unknown as { pause?: () => void }).pause;
+      if (typeof pause === 'function') {
+        pause();
+      }
     } catch {
       /* ignore */
     }
@@ -168,16 +171,17 @@ export const runSessionOnce = async (args: {
 
   // Prepare UI: clear any previous rows and queue fresh ones
   try {
-    (
-      ui as unknown as { prepareForNewSession?: () => void }
-    )?.prepareForNewSession?.();
+    const prep = (ui as unknown as { prepareForNewSession?: () => void })
+      .prepareForNewSession;
+    if (typeof prep === 'function') prep();
   } catch {
     /* ignore */
   }
   const toRun = queueUiRows(ui, selection, config, Boolean(behavior.archive));
   cancelCtl.markQueued(toRun);
   try {
-    (ui as unknown as { flushNow?: () => void })?.flushNow?.();
+    const flush = (ui as unknown as { flushNow?: () => void }).flushNow;
+    if (typeof flush === 'function') flush();
   } catch {
     /* ignore */
   }
@@ -223,7 +227,10 @@ export const runSessionOnce = async (args: {
       /* ignore */
     }
     try {
-      (process.stdin as unknown as { pause?: () => void }).pause?.();
+      const pause = (process.stdin as unknown as { pause?: () => void }).pause;
+      if (typeof pause === 'function') {
+        pause();
+      }
     } catch {
       /* ignore */
     }
@@ -316,7 +323,11 @@ export const runSessionOnce = async (args: {
     if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
       detachSignals();
       try {
-        (process.stdin as unknown as { pause?: () => void }).pause?.();
+        const pause = (process.stdin as unknown as { pause?: () => void })
+          .pause;
+        if (typeof pause === 'function') {
+          pause();
+        }
       } catch {
         /* ignore */
       }
@@ -376,7 +387,10 @@ export const runSessionOnce = async (args: {
     /* ignore */
   }
   try {
-    (ui as unknown as { flushNow?: () => void }).flushNow?.();
+    const flush = (ui as unknown as { flushNow?: () => void }).flushNow;
+    if (typeof flush === 'function') {
+      flush();
+    }
   } catch {
     /* ignore */
   }

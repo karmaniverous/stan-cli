@@ -54,8 +54,11 @@ export class RunnerControl {
     if (isTTY) {
       try {
         emitKeypressEvents(stdin);
-        stdin.setRawMode?.(true);
-        stdin.resume?.();
+        const setRawMode = (stdin as { setRawMode?: (v: boolean) => void })
+          .setRawMode;
+        if (typeof setRawMode === 'function') setRawMode(true);
+        const resume = (stdin as { resume?: () => void }).resume;
+        if (typeof resume === 'function') resume();
       } catch {
         // best‑effort
       }
@@ -100,9 +103,25 @@ export class RunnerControl {
     // - Always attach 'data' fallback (works in TTY and non‑TTY).
     // - Attach 'keypress' only when TTY is available.
     if (isTTY) {
-      stdin.on?.('keypress', this.keyHandler as (...args: unknown[]) => void);
+      const onKey = (
+        stdin as { on?: (e: string, h: (...a: unknown[]) => void) => void }
+      ).on;
+      if (typeof onKey === 'function') {
+        onKey(
+          'keypress',
+          this.keyHandler as unknown as (...args: unknown[]) => void,
+        );
+      }
     }
-    stdin.on?.('data', this.dataHandler as (...args: unknown[]) => void);
+    const onData = (
+      stdin as { on?: (e: string, h: (...a: unknown[]) => void) => void }
+    ).on;
+    if (typeof onData === 'function') {
+      onData(
+        'data',
+        this.dataHandler as unknown as (...args: unknown[]) => void,
+      );
+    }
   }
 
   detach(): void {
@@ -118,22 +137,29 @@ export class RunnerControl {
         handler: (...args: unknown[]) => void,
       ) => void;
     };
+    const off = (
+      stdin as { off?: (e: string, h: (...a: unknown[]) => void) => void }
+    ).off;
+    const rl = (
+      stdin as {
+        removeListener?: (e: string, h: (...a: unknown[]) => void) => void;
+      }
+    ).removeListener;
     const remove =
-      (stdin.off?.bind(stdin) as
-        | ((e: string, h: (...args: unknown[]) => void) => void)
-        | undefined) ??
-      (stdin.removeListener?.bind(stdin) as
-        | ((e: string, h: (...args: unknown[]) => void) => void)
-        | undefined);
+      typeof off === 'function'
+        ? off.bind(stdin)
+        : typeof rl === 'function'
+          ? rl.bind(stdin)
+          : null;
 
     try {
-      if (remove && this.keyHandler) {
+      if (remove && typeof this.keyHandler === 'function') {
         remove(
           'keypress',
           this.keyHandler as unknown as (...args: unknown[]) => void,
         );
       }
-      if (remove && this.dataHandler) {
+      if (remove && typeof this.dataHandler === 'function') {
         remove(
           'data',
           this.dataHandler as unknown as (...args: unknown[]) => void,
@@ -144,8 +170,11 @@ export class RunnerControl {
     }
 
     try {
-      stdin.setRawMode?.(false);
-      stdin.pause?.();
+      const setRawMode = (stdin as { setRawMode?: (v: boolean) => void })
+        .setRawMode;
+      if (typeof setRawMode === 'function') setRawMode(false);
+      const pause = (stdin as { pause?: () => void }).pause;
+      if (typeof pause === 'function') pause();
     } catch {
       /* ignore */
     }

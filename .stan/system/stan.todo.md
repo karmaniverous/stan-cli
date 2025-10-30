@@ -82,3 +82,9 @@
 
 - Lint nibble — remove unnecessary coalescing in derive
   - src/cli/run/derive/index.ts: replaced Object.keys(scripts ?? {}) with Object.keys(scripts) (scripts is non‑nullable in the signature).
+
+- Lint sweep — optional chaining on non‑nullable values
+  - src/runner/run/control.ts: replaced optional chaining on stdin/UI methods with explicit typeof guards (setRawMode/resume/on/off/removeListener/pause).
+  - src/runner/run/session/run-session.ts: replaced optional chaining on UI hooks (prepareForNewSession/flushNow) and stdin.pause with typeof guards.
+- Stability — SSR fallbacks for archive stage resolvers (no behavior change)
+  - src/runner/run/session/archive-stage/imports.ts: accept default-as-function, module-as-function, and shallow default scans for archivePhase/stageImports.
