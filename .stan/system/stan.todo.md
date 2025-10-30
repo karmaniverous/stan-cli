@@ -39,6 +39,11 @@
 
 ## Completed (append-only, most recent items last)
 
+- Derive loader — expand SSR/mocks fallbacks to restore CLI run semantics tests
+  - src/cli/run/action/loaders.ts: loadDeriveRunParameters now tolerates default.default,
+    module-as-function, and scans default/top-level callable shapes (parity with other loaders).
+  - Fixes deriveRunParameters resolution under Vitest SSR; unblocks runner.semantics.v2.
+
 - Decompose run derive module (smaller files; stable import path)
   - Replaced monolith src/cli/run/derive.ts with a directory module:
     - derive/index.ts (composition)
