@@ -184,3 +184,11 @@ Amendment:
     - Bumped the pre‑archive settle from 140ms to 220ms on win32.
     - Added an immediate late guard right before scheduling the archive stage to absorb just‑arrived keypress cancellations.
   - Intent: eliminate residual archives in “keypress + archive” cases (live concurrent / live sequential) by avoiding phase entry after cancel.
+
+- Decomposition — split run-session.ts into cohesive helpers
+  - Replaced the monolith src/runner/run/session/run-session.ts with a directory module:
+    - run-session/index.ts (public entry),
+    - run-session/orchestrator.ts (small main),
+    - run-session/cleanup.ts (archive deletion/pause/settle helpers),
+    - run-session/cancel.ts (unified cancel/restart returns),
+    - run-session/guards.ts (centralized cancel guards), run-session/finalize.ts (post-archive settle + flush).
