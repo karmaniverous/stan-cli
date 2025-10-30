@@ -92,3 +92,7 @@
 - Facet overlay — enable live‑ui facet to pursue live UI test failures
   - Turned on `live-ui` to include anchored writer, live renderer, and UI modules in archives for immediate triage of failing live tests.
   - Kept other facets disabled (except run‑session, run‑archive, snap) to minimize archive size; will adjust enablement in subsequent turns as test/lint work advances.
+
+- Facet overlay — disable snap to reduce archive size while focusing live/cancel tests
+  - Turned off `snap` facet (snap modules currently passing and not under investigation).
+  - Kept `live-ui`, `run-session`, and `run-archive` enabled to triage remaining failing tests.
