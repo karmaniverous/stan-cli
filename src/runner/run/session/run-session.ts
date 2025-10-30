@@ -385,7 +385,7 @@ export const runSessionOnce = async (args: {
   // FS observation is stable across platforms/CI before we return to the caller.
   try {
     const settleMs =
-      process.platform === 'win32' ? 30 : process.env.CI ? 15 : 10;
+      process.platform === 'win32' ? 120 : process.env.CI ? 20 : 10;
     await new Promise((r) => setTimeout(r, settleMs));
     await yieldToEventLoop();
   } catch {

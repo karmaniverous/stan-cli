@@ -20,6 +20,8 @@ type ArchivePhase = (
       start: (k: 'full' | 'diff') => void;
       done: (k: 'full' | 'diff', p: string, s: number, e: number) => void;
     };
+    /** Optional late-cancel guard forwarded into archive phase. */
+    shouldContinue?: () => boolean;
   },
 ) => Promise<{ archivePath?: string; diffPath?: string }>;
 
@@ -83,14 +85,24 @@ export const runNonEphemeral = async (args: {
       return created;
     const d = await archivePhase(
       { cwd, config: baseDiff, includeOutputs: Boolean(behavior.combine) },
-      { silent: true, which: 'diff', progress },
+      {
+        silent: true,
+        which: 'diff',
+        progress,
+        shouldContinue,
+      },
     );
     if (d.diffPath) created.push(d.diffPath);
     if (typeof shouldContinue === 'function' && !shouldContinue())
       return created;
     const f = await archivePhase(
       { cwd, config: baseFull, includeOutputs: Boolean(behavior.combine) },
-      { silent: true, which: 'full', progress },
+      {
+        silent: true,
+        which: 'full',
+        progress,
+        shouldContinue,
+      },
     );
     if (f.archivePath) created.push(f.archivePath);
   } finally {

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -213,19 +214,40 @@ export const runSelected = async (
     if (cancelled) {
       // Secondary guard: ensure on-disk archives are absent on cancellation
       // even if a late race created them; best-effort only.
-      try {
-        const outAbs = path.join(cwd, config.stanPath, 'output');
+      const outAbs = path.join(cwd, config.stanPath, 'output');
+      const tarP = path.join(outAbs, 'archive.tar');
+      const diffP = path.join(outAbs, 'archive.diff.tar');
+      const settle = async (ms: number) =>
+        new Promise<void>((r) => setTimeout(r, ms));
+      // Two-pass delete with settle in between (Windows handles may lag briefly).
+      const deleteOnce = async () => {
         await Promise.allSettled([
-          rm(path.join(outAbs, 'archive.tar'), { force: true }),
-          rm(path.join(outAbs, 'archive.diff.tar'), { force: true }),
+          rm(tarP, { force: true }),
+          rm(diffP, { force: true }),
         ]);
+      };
+      try {
+        await deleteOnce();
+      } catch {
+        /* ignore */
+      }
+      try {
+        const win = process.platform === 'win32';
+        await settle(win ? 80 : 30);
+      } catch {
+        /* ignore */
+      }
+      try {
+        if (existsSync(tarP) || existsSync(diffP)) {
+          await deleteOnce();
+        }
       } catch {
         /* ignore */
       }
       // Brief settle to reflect deletions across platforms
       try {
         await new Promise((r) =>
-          setTimeout(r, process.platform === 'win32' ? 30 : 15),
+          setTimeout(r, process.platform === 'win32' ? 60 : 20),
         );
       } catch {
         /* ignore */

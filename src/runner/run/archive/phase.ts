@@ -68,6 +68,10 @@ export const archivePhase = async (
      * Useful for multi-call flows; pass cleanup: true for the final call.
      */
     cleanup?: boolean;
+    /**
+     * Optional late-cancel guard to abort before starting each phase.
+     */
+    shouldContinue?: () => boolean;
   },
 ): Promise<{ archivePath?: string; diffPath?: string }> => {
   const { cwd, config, includeOutputs } = args;
@@ -76,6 +80,10 @@ export const archivePhase = async (
   const doStage = opts?.stage !== false;
   const doCleanup = opts?.cleanup !== false;
   const dirs = stanDirs(cwd, config.stanPath);
+  const shouldContinue =
+    typeof opts?.shouldContinue === 'function'
+      ? opts.shouldContinue
+      : undefined;
 
   if (!silent && (which === 'both' || which === 'full')) {
     console.log(`stan: start "${alert('archive')}"`);
@@ -85,9 +93,13 @@ export const archivePhase = async (
   let diffPath: string | undefined;
   try {
     // Stage imports (if any) so they are included in selected archives.
-    if (doStage) await stageImports(cwd, config.stanPath, config.imports);
+    if (doStage) {
+      if (shouldContinue && !shouldContinue()) return { archivePath, diffPath };
+      await stageImports(cwd, config.stanPath, config.imports);
+    }
 
     if (which === 'both' || which === 'full') {
+      if (shouldContinue && !shouldContinue()) return { archivePath, diffPath };
       opts?.progress?.start?.('full');
       const startedFull = Date.now();
       archivePath = await createArchive(cwd, config.stanPath, {
@@ -110,6 +122,7 @@ export const archivePhase = async (
       console.log(`stan: start "${alert('archive (diff)')}"`);
     }
     if (which === 'both' || which === 'diff') {
+      if (shouldContinue && !shouldContinue()) return { archivePath, diffPath };
       opts?.progress?.start?.('diff');
       const startedDiff = Date.now();
       const out = await createArchiveDiff({

@@ -157,3 +157,16 @@ Amendment:
 
 - Root env defaults — SSR/mock‑robust engine config fallback
   - src/cli/run/action/index.ts: when resolveEngineConfigLazy cannot be resolved under SSR/mocks, derive a minimal ContextConfig via resolveStanPathSync (fallback ".stan") to keep `stan run -p` and env default tests from throwing.
+
+## Completed (append-only, most recent items last)
+
+- Cancel matrix — late-cancel hardening at archive boundary
+  - src/runner/run/archive/phase.ts: added shouldContinue() to opts and guarded immediately before starting FULL and DIFF. Prevents starting archive creation when a keypress cancel lands just before phase start.
+  - src/runner/run/session/archive-stage/run-ephemeral.ts, run-normal.ts: threaded shouldContinue through archivePhase calls (both paths).
+  - Result: no new archives are created after cancellation; queued archive rows still appear but finalize as CANCELLED without artifacts on disk.
+
+- Cancellation cleanup — two-pass delete + settle (Windows-friendly)
+  - src/runner/run/service.ts: on cancel, attempt two-pass deletion of archive.tar and archive.diff.tar with a short settle and re-check (longer on Windows) before returning. Reduces residual artifacts when tar creation and cancel race.
+
+- UI parity visibility — stabilize immediate assertions
+  - src/runner/run/session/run-session.ts: increased post-archive settle on Windows (30ms → 120ms) so existence checks right after runSelected resolve reliably in live/non-live parity tests.

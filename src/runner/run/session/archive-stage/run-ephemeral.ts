@@ -24,6 +24,8 @@ type ArchivePhase = (
       start: (k: 'full' | 'diff') => void;
       done: (k: 'full' | 'diff', p: string, s: number, e: number) => void;
     };
+    /** Optional late-cancel guard forwarded into archive phase. */
+    shouldContinue?: () => boolean;
   },
 ) => Promise<{ archivePath?: string; diffPath?: string }>;
 
@@ -109,14 +111,28 @@ export const runEphemeral = async (args: {
         return created;
       const d = await archivePhase(
         { cwd, config: baseDiff, includeOutputs: Boolean(behavior.combine) },
-        { silent: true, which: 'diff', stage: false, cleanup: false, progress },
+        {
+          silent: true,
+          which: 'diff',
+          stage: false,
+          cleanup: false,
+          progress,
+          shouldContinue,
+        },
       );
       if (d.diffPath) created.push(d.diffPath);
       if (typeof shouldContinue === 'function' && !shouldContinue())
         return created;
       const f = await archivePhase(
         { cwd, config: baseFull, includeOutputs: Boolean(behavior.combine) },
-        { silent: true, which: 'full', stage: false, cleanup: true, progress },
+        {
+          silent: true,
+          which: 'full',
+          stage: false,
+          cleanup: true,
+          progress,
+          shouldContinue,
+        },
       );
       if (f.archivePath) created.push(f.archivePath);
     } finally {
@@ -128,7 +144,14 @@ export const runEphemeral = async (args: {
       return created;
     const d = await archivePhase(
       { cwd, config: baseDiff, includeOutputs: Boolean(behavior.combine) },
-      { silent: true, which: 'diff', stage: false, cleanup: false, progress },
+      {
+        silent: true,
+        which: 'diff',
+        stage: false,
+        cleanup: false,
+        progress,
+        shouldContinue,
+      },
     );
     if (d.diffPath) created.push(d.diffPath);
     if (typeof shouldContinue === 'function' && !shouldContinue())
@@ -144,7 +167,14 @@ export const runEphemeral = async (args: {
         return created;
       const f = await archivePhase(
         { cwd, config: baseFull, includeOutputs: Boolean(behavior.combine) },
-        { silent: true, which: 'full', stage: false, cleanup: true, progress },
+        {
+          silent: true,
+          which: 'full',
+          stage: false,
+          cleanup: true,
+          progress,
+          shouldContinue,
+        },
       );
       if (f.archivePath) created.push(f.archivePath);
     } finally {
