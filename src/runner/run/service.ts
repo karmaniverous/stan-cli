@@ -219,35 +219,30 @@ export const runSelected = async (
       const diffP = path.join(outAbs, 'archive.diff.tar');
       const settle = async (ms: number) =>
         new Promise<void>((r) => setTimeout(r, ms));
-      // Two-pass delete with settle in between (Windows handles may lag briefly).
-      const deleteOnce = async () => {
+      // Robust bounded retry: try a few short cycles to absorb lingering handles.
+      const isGone = () => !existsSync(tarP) && !existsSync(diffP);
+      const attemptDelete = async (): Promise<void> => {
         await Promise.allSettled([
           rm(tarP, { force: true }),
           rm(diffP, { force: true }),
         ]);
       };
-      try {
-        await deleteOnce();
-      } catch {
-        /* ignore */
-      }
-      try {
-        const win = process.platform === 'win32';
-        await settle(win ? 80 : 30);
-      } catch {
-        /* ignore */
-      }
-      try {
-        if (existsSync(tarP) || existsSync(diffP)) {
-          await deleteOnce();
+      const maxTries = 6;
+      for (let i = 0; i < maxTries; i += 1) {
+        try {
+          await attemptDelete();
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore */
+        if (isGone()) break;
+        // Platform-aware small settle between attempts.
+        const win = process.platform === 'win32';
+        await settle(win ? 160 : 40);
       }
       // Brief settle to reflect deletions across platforms
       try {
         await new Promise((r) =>
-          setTimeout(r, process.platform === 'win32' ? 60 : 20),
+          setTimeout(r, process.platform === 'win32' ? 80 : 25),
         );
       } catch {
         /* ignore */

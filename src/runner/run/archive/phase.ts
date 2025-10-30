@@ -1,3 +1,5 @@
+import { rm } from 'node:fs/promises';
+
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
 
@@ -109,6 +111,17 @@ export const archivePhase = async (
         anchors: config.anchors ?? [],
       });
       opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
+      // Late-cancel cleanup: if a cancellation arrived right after FULL completed,
+      // prefer to remove the freshly created archive immediately to avoid any
+      // visibility races at the session boundary (best‑effort).
+      if (shouldContinue && !shouldContinue()) {
+        try {
+          await rm(archivePath, { force: true });
+        } catch {
+          /* ignore */
+        }
+        return { archivePath: undefined, diffPath };
+      }
       if (!silent) {
         console.log(
           `stan: ${ok('done')} "${alert('archive')}" -> ${alert(
@@ -137,6 +150,16 @@ export const archivePhase = async (
       });
       diffPath = out.diffPath;
       opts?.progress?.done?.('diff', diffPath, startedDiff, Date.now());
+      // Late-cancel cleanup: if cancellation lands immediately after DIFF,
+      // remove the diff archive before returning so nothing leaks to disk.
+      if (shouldContinue && !shouldContinue()) {
+        try {
+          await rm(diffPath, { force: true });
+        } catch {
+          /* ignore */
+        }
+        return { archivePath, diffPath: undefined };
+      }
       if (!silent) {
         console.log(
           `stan: ${ok('done')} "${alert('archive (diff)')}" -> ${alert(

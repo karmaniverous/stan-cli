@@ -328,6 +328,13 @@ export const runSessionOnce = async (args: {
 
   // ARCHIVE PHASE
   if (behavior.archive) {
+    // One more ultra-late cancel guard with a brief settle to absorb
+    // keypress cancellations that arrive right before scheduling.
+    try {
+      await yieldToEventLoop();
+    } catch {
+      /* ignore */
+    }
     // Extra late-cancel guard: absorb cancellations that arrive immediately
     // before archive-phase scheduling. This prevents any archives from being
     // created in live/concurrent keypress scenarios.
@@ -344,6 +351,15 @@ export const runSessionOnce = async (args: {
         /* ignore */
       }
       return { created, cancelled: true, restartRequested: false };
+    }
+    // Small platform-aware settle prior to calling into the archive stage helps
+    // absorb a just-arrived keypress cancellation on slower filesystems.
+    try {
+      await new Promise((r) =>
+        setTimeout(r, process.platform === 'win32' ? 140 : 30),
+      );
+    } catch {
+      /* ignore */
     }
     const runArchive: RunArchiveStageFn = getRunArchiveStage();
     const a: { created: string[]; cancelled: boolean } = await runArchive({
@@ -385,7 +401,7 @@ export const runSessionOnce = async (args: {
   // FS observation is stable across platforms/CI before we return to the caller.
   try {
     const settleMs =
-      process.platform === 'win32' ? 120 : process.env.CI ? 20 : 10;
+      process.platform === 'win32' ? 140 : process.env.CI ? 25 : 15;
     await new Promise((r) => setTimeout(r, settleMs));
     await yieldToEventLoop();
   } catch {
