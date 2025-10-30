@@ -139,7 +139,7 @@ export function deriveRunParameters(args: {
   });
 
   const noScripts = (options as { scripts?: unknown }).scripts === false;
-  const allKeys = Object.keys(scripts ?? {});
+  const allKeys = Object.keys(scripts);
   let selection: string[] = [];
   if (noScripts) {
     selection = [];

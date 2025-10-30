@@ -77,5 +77,8 @@
 - Defaults — plan-only when scripts=false by default
   - src/cli/run/derive/index.ts: when cliDefaults.run.scripts=false and no CLI archive flag is provided, default archive to false to preserve v2 semantics.
 
-- Prompt — export shape discipline (no doubled defaultnamed)
+- Prompt — export shape discipline (no doubled default+named)
   - Updated .stan/system/stan.project.md (SSR/ESM playbook) to explicitly prohibit exporting the same API as both default and named as an SSR workaround; mandate resolvers in tests/adapters instead.
+
+- Lint nibble — remove unnecessary coalescing in derive
+  - src/cli/run/derive/index.ts: replaced Object.keys(scripts ?? {}) with Object.keys(scripts) (scripts is non‑nullable in the signature).
