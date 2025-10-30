@@ -50,10 +50,19 @@ export const buildOverlayInputs = async (args: {
     };
   }
 
+  // Decide whether to map excludes even when the global overlay flag is off:
+  // - If explicit per‑run overrides (-f/-F names) are provided, we still derive
+  //   engine excludes/leaf‑globs so callers can observe the intended mapping.
+  const shouldMap =
+    enabled ||
+    (Array.isArray(args.activateNames) && args.activateNames.length > 0) ||
+    (Array.isArray(args.deactivateNames) && args.deactivateNames.length > 0) ||
+    args.nakedActivateAll;
+
   // Map overlay excludes to effective deny-list globs for the engine:
   // - subtree roots like "docs" -> "docs/**"
   // - existing glob patterns (contain *, ?, or [) pass through unchanged.
-  const overlayExcludesRaw = overlay.enabled ? overlay.excludesOverlay : [];
+  const overlayExcludesRaw = shouldMap ? overlay.excludesOverlay : [];
   const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
 
   // Also include leaf-glob excludes from inactive facets (e.g., "**/*.test.ts").
@@ -61,7 +70,7 @@ export const buildOverlayInputs = async (args: {
   // currently inactive per overlay.effective.
   const leafGlobs: string[] = [];
   try {
-    if (overlay.enabled) {
+    if (shouldMap) {
       const metaAbs = path.join(cwd, stanPath, 'system', 'facet.meta.json');
       const raw = await readFile(metaAbs, 'utf8');
       const meta = JSON.parse(raw) as Record<

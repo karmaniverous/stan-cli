@@ -39,6 +39,13 @@
 
 ## Completed (append-only, most recent items last)
 
+- Overlay excludes mapping — honor explicit facet overrides
+  - src/cli/run/action/overlay.ts: map engine excludes when overlay is enabled
+    OR explicit per‑run facet overrides are provided (‑f/‑F names or naked ‑f),
+    and propagate leaf‑globs under the same guard. Ensures subtree roots expand
+    to "<root>/**" and leaf‑globs (e.g., "**/*.test.ts") pass through as expected
+    in CLI overlay mapping tests.
+
 - Lint nibble — remove redundant nullish coalescing in derive loader
   - src/cli/run/action/loaders.ts: dropped “?? undefined” flagged by
     @typescript-eslint/no-unnecessary-condition (no behavior change).
