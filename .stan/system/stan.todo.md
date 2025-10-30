@@ -134,4 +134,11 @@
 
 - Live UI — settle before final flush; derive.ts lint cleanup
   - src/runner/run/session/run-session.ts: await a single event-loop tick before flushNow() so fast archive phases always present “[OK]” for both full and diff rows in the last frame (stabilizes live.order.flush).
-  - src/cli/run/derive.ts: replace CommonJS require with readFileSync from node:fs and simplify a truthy guard flagged by lint. Behavior unchanged.
+  - src/cli/run/derive.ts: replace CommonJS require with readFileSync from node:fs and simplify a truthy guard flagged by lint. Behavior unchanged.
+
+- Decompose run derive module (smaller files; stable import path)
+  - Replaced monolith src/cli/run/derive.ts with a directory module:
+    - derive/index.ts (composition)
+    - derive/run-defaults.ts (SSR‑robust defaults)
+    - derive/dri.ts (named‑or‑default resolver)
+    - derive/types.ts (local shapes). Existing imports of "../derive" continue to work.
