@@ -147,81 +147,47 @@ export const loadDeriveRunParameters = async (): Promise<
 > => {
   const mod = (await import('../derive')) as unknown as {
     deriveRunParameters?: unknown;
-    default?:
-      | Partial<typeof import('../derive')>
-      | ((
-          ...args: Parameters<
-            (typeof import('../derive'))['deriveRunParameters']
-          >
-        ) => ReturnType<(typeof import('../derive'))['deriveRunParameters']>);
+    default?: unknown;
   };
-  const viaNamed = (mod as { deriveRunParameters?: unknown })
-    .deriveRunParameters;
-  if (typeof viaNamed === 'function')
-    return viaNamed as (typeof import('../derive'))['deriveRunParameters'];
-  const viaDefaultObj = (
-    mod as { default?: Partial<typeof import('../derive')> }
-  ).default?.deriveRunParameters;
-  if (typeof viaDefaultObj === 'function') return viaDefaultObj;
-  const viaDefaultFn =
-    typeof (mod as { default?: unknown }).default === 'function'
-      ? ((
-          mod as {
-            default?: (
-              ...a: Parameters<
-                (typeof import('../derive'))['deriveRunParameters']
-              >
-            ) => ReturnType<
-              (typeof import('../derive'))['deriveRunParameters']
-            >;
-      }
-    ).default as (typeof import('../derive'))['deriveRunParameters'];
-  if (typeof viaDefaultFn === 'function') return viaDefaultFn;
-  // 4) nested default.default function (edge SSR wrappers)
-  try {
-    const nested = (
-      mod as {
-        default?: { default?: unknown };
-      }
-    ).default?.default;
-    if (typeof nested === 'function') {
-      return nested as unknown as (typeof import('../derive'))['deriveRunParameters'];
-    }
-  } catch {
-    /* ignore */
+
+  // 1) Named export
+  const named = (mod as { deriveRunParameters?: unknown }).deriveRunParameters;
+  if (typeof named === 'function') {
+    return named as (typeof import('../derive'))['deriveRunParameters'];
   }
-  // 5) module-as-function (rare mocks)
-  try {
-    if (typeof (mod as unknown) === 'function') {
-      return mod as unknown as (typeof import('../derive'))['deriveRunParameters'];
-    }
-  } catch {
-    /* ignore */
+
+  // 2) default as function
+  const defAny = (mod as { default?: unknown }).default;
+  if (typeof defAny === 'function') {
+    return defAny as unknown as (typeof import('../derive'))['deriveRunParameters'];
   }
-  // 6) scan default object for any callable property (last resort)
-  try {
-    const d = (mod as { default?: unknown }).default;
-    if (d && typeof d === 'object') {
-      for (const v of Object.values(d as Record<string, unknown>)) {
-        if (typeof v === 'function') {
-          return v as unknown as (typeof import('../derive'))['deriveRunParameters'];
-        }
-      }
+
+  // 3) default.deriveRunParameters or shallow scan of default object
+  if (defAny && typeof defAny === 'object') {
+    const viaProp = (defAny as { deriveRunParameters?: unknown })
+      .deriveRunParameters;
+    if (typeof viaProp === 'function') {
+      return viaProp as (typeof import('../derive'))['deriveRunParameters'];
     }
-  } catch {
-    /* ignore */
-  }
-  // 7) scan top-level module for any callable (extreme edge mock)
-  try {
-    const entries = Object.values((mod as Record<string, unknown>) ?? {});
-    for (const v of entries) {
+    for (const v of Object.values(defAny as Record<string, unknown>)) {
       if (typeof v === 'function') {
-        return v as unknown as (typeof import('../derive'))['deriveRunParameters'];
+        return v as (typeof import('../derive'))['deriveRunParameters'];
       }
     }
-  } catch {
-    /* ignore */
   }
+
+  // 4) module-as-function (extreme edge)
+  if (typeof (mod as unknown) === 'function') {
+    return mod as unknown as (typeof import('../derive'))['deriveRunParameters'];
+  }
+
+  // 5) shallow scan of top-level module for any callable
+  for (const v of Object.values(mod as Record<string, unknown>)) {
+    if (typeof v === 'function') {
+      return v as unknown as (typeof import('../derive'))['deriveRunParameters'];
+    }
+  }
+
   throw new Error('deriveRunParameters not found');
 };
 

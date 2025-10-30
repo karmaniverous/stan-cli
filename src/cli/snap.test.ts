@@ -148,7 +148,8 @@ describe('snap CLI (stash, history, undo/redo/info)', () => {
       }
     }
 
-    let state = JSON.parse(await read(statePath)) as {
+    const initialParsed: unknown = JSON.parse(await read(statePath));
+    let state = initialParsed as {
       entries: { ts: string; snapshot: string }[];
       index: number;
       maxUndos: number;
@@ -160,13 +161,27 @@ describe('snap CLI (stash, history, undo/redo/info)', () => {
     await cli.parseAsync(['node', 'stan', 'snap', 'set', '0'], {
       from: 'user',
     });
-    state = JSON.parse(await read(statePath));
+    {
+      const parsed: unknown = JSON.parse(await read(statePath));
+      state = parsed as {
+        entries: { ts: string; snapshot: string }[];
+        index: number;
+        maxUndos: number;
+      };
+    }
     expect(state.index).toBe(0);
 
     // New snap at this point should drop redos and push new one; still trims to maxUndos=2
     await cli.parseAsync(['node', 'stan', 'snap'], { from: 'user' });
     await waitFor(() => existsSync(statePath), 5000);
-    state = JSON.parse(await read(statePath));
+    {
+      const parsed: unknown = JSON.parse(await read(statePath));
+      state = parsed as {
+        entries: { ts: string; snapshot: string }[];
+        index: number;
+        maxUndos: number;
+      };
+    }
     expect(state.entries.length).toBe(2);
     expect(state.index).toBe(1);
 
@@ -174,7 +189,14 @@ describe('snap CLI (stash, history, undo/redo/info)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await cli.parseAsync(['node', 'stan', 'snap', 'redo'], { from: 'user' });
     logSpy.mockRestore();
-    state = JSON.parse(await read(statePath));
+    {
+      const parsed: unknown = JSON.parse(await read(statePath));
+      state = parsed as {
+        entries: { ts: string; snapshot: string }[];
+        index: number;
+        maxUndos: number;
+      };
+    }
     expect(state.index).toBe(1);
 
     // Info should print a stack summary without throwing

@@ -116,9 +116,7 @@ const parseCliNode = (
     throw new Error(`stan-cli: invalid config in ${rel}\n${formatZodError(e)}`);
   }
   // Best-effort reserved key guard in normal path
-  safeEnsureNoReserved(
-    (parsed as { scripts?: Record<string, unknown> }).scripts ?? {},
-  );
+  safeEnsureNoReserved(parsed.scripts as unknown as Record<string, unknown>);
   return {
     scripts: parsed.scripts as ScriptMap,
     cliDefaults: parsed.cliDefaults,
