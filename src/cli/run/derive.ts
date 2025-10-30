@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { findConfigPathSync } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
@@ -77,7 +79,7 @@ const readRunDefaultsFromConfig = (dir?: string): RunDefaultsShape => {
   try {
     const p = findConfigPathSync(dir ?? process.cwd());
     if (!p) return BASELINE;
-    const raw = require('node:fs').readFileSync(p, 'utf8') as string;
+    const raw = readFileSync(p, 'utf8');
     const rootUnknown: unknown = parseText(p, raw);
     const root =
       rootUnknown && typeof rootUnknown === 'object'
@@ -92,7 +94,7 @@ const readRunDefaultsFromConfig = (dir?: string): RunDefaultsShape => {
         ? (cliNs['cliDefaults'] as Record<string, unknown>)
         : (root['cliDefaults'] as Record<string, unknown> | undefined)) ?? {};
     const run =
-      def && typeof def['run'] === 'object'
+      typeof def['run'] === 'object'
         ? (def['run'] as Record<string, unknown>)
         : {};
     const toBool = (v: unknown): boolean | undefined => {

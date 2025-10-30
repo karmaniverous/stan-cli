@@ -130,4 +130,8 @@
 
 - Run defaults (SSR robustness) + safety shim hardening
   - src/cli/run/derive.ts: resolve run defaults at call‑time (named helper when present; otherwise parse stan.config.* synchronously). Fixes “runDefaults is not a function” under jest/vitest mocks and restores archive=false behavior from config in runner.defaults test.
-  - src/cli/patch/safety.ts: narrowed unknown argv elements to eliminate no‑unsafe‑assignment without changing behavior.
+  - src/cli/patch/safety.ts: narrowed unknown argv elements to eliminate no‑unsafe‑assignment without changing behavior.
+
+- Live UI — settle before final flush; derive.ts lint cleanup
+  - src/runner/run/session/run-session.ts: await a single event-loop tick before flushNow() so fast archive phases always present “[OK]” for both full and diff rows in the last frame (stabilizes live.order.flush).
+  - src/cli/run/derive.ts: replace CommonJS require with readFileSync from node:fs and simplify a truthy guard flagged by lint. Behavior unchanged.

@@ -356,6 +356,13 @@ export const runSessionOnce = async (args: {
 
   // Ensure the final OK states for archive rows are visible immediately
   // before returning (stabilizes live.order.flush under fast runs).
+  // Settling once ensures any pending UI updates scheduled by progress callbacks
+  // are applied before we force the immediate flush below.
+  try {
+    await yieldToEventLoop();
+  } catch {
+    /* ignore */
+  }
   try {
     (ui as unknown as { flushNow?: () => void }).flushNow?.();
   } catch {
