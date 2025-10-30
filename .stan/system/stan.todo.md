@@ -88,3 +88,7 @@
   - src/runner/run/session/run-session.ts: replaced optional chaining on UI hooks (prepareForNewSession/flushNow) and stdin.pause with typeof guards.
 - Stability — SSR fallbacks for archive stage resolvers (no behavior change)
   - src/runner/run/session/archive-stage/imports.ts: accept default-as-function, module-as-function, and shallow default scans for archivePhase/stageImports.
+
+- Facet overlay — enable live‑ui facet to pursue live UI test failures
+  - Turned on `live-ui` to include anchored writer, live renderer, and UI modules in archives for immediate triage of failing live tests.
+  - Kept other facets disabled (except run‑session, run‑archive, snap) to minimize archive size; will adjust enablement in subsequent turns as test/lint work advances.
