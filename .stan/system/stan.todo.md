@@ -127,3 +127,7 @@
   - src/runner/init/docs.ts: removed unnecessary optional chaining on a non‑nullish JSON object.
   - src/cli/snap/index.ts: removed an unused internal helper to resolve the unused‑symbol lint.
   - Next up (tracked): address remaining no‑unnecessary‑condition/optional‑chaining cases, require‑await in flagged tests, and unused locals per lint report.
+
+- Run defaults (SSR robustness) + safety shim hardening
+  - src/cli/run/derive.ts: resolve run defaults at call‑time (named helper when present; otherwise parse stan.config.* synchronously). Fixes “runDefaults is not a function” under jest/vitest mocks and restores archive=false behavior from config in runner.defaults test.
+  - src/cli/patch/safety.ts: narrowed unknown argv elements to eliminate no‑unsafe‑assignment without changing behavior.

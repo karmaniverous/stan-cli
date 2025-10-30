@@ -17,9 +17,12 @@ const normalizeArgv = (
       ? (argv as readonly string[])
       : undefined;
   }
-  const first = argv[0];
-  const second = argv[1];
-  if (typeof first !== 'string' || typeof second !== 'string') return undefined;
+  // Narrow element types explicitly to avoid unsafe any.
+  const firstIsString = typeof argv[0] === 'string';
+  const secondIsString = typeof argv[1] === 'string';
+  if (!firstIsString || !secondIsString) return undefined;
+  const first = argv[0] as string;
+  const second = argv[1] as string;
   if (first === 'node' && second === 'stan') {
     const rest = argv
       .slice(2)
