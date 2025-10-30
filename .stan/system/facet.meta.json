@@ -55,10 +55,7 @@
   },
   "prompt": {
     "exclude": ["src/runner/prompt/**"],
-    "include": [
-      "src/runner/prompt/index.ts",
-      "src/runner/run/prompt.ts"
-    ]
+    "include": ["src/runner/prompt/index.ts"]
   },
   "snap": {
     "exclude": ["src/runner/snap/**"],
@@ -66,15 +63,7 @@
   },
   "tests": {
     "exclude": ["**/*.test.ts", "src/test/**", "src/test-support/**"],
-    "include": [
-      "README.md",
-      "src/test/setup.ts",
-      "src/test-support/run.ts",
-      "src/cli/init.test.ts",
-      "src/cli/root.env.defaults.test.ts",
-      "src/cli/runner.live.defaults.test.ts",
-      "src/runner/run/warn.logger.test.ts"
-    ]
+    "include": ["src/test/setup.ts"]
   },
   "vscode": {
     "exclude": [".vscode/**"],
