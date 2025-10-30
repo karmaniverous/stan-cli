@@ -73,3 +73,6 @@
 - Tests — fixes for derive resolver and naked -f overlay
   - src/cli/run/derive/resolve.test.ts: mock "../../run-args" (exact specifier used by dri.ts) via asEsmModule; remove invalid "void" casts; assert callability.
   - src/cli/runner.overlay.naked-f.test.ts: expect plan line "overlay: off" when global overlay is disabled; engineExcludes still empty under naked -f.
+
+- Defaults — plan-only when scripts=false by default
+  - src/cli/run/derive/index.ts: when cliDefaults.run.scripts=false and no CLI archive flag is provided, default archive to false to preserve v2 semantics.

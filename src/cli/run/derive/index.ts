@@ -77,6 +77,18 @@ export function deriveRunParameters(args: {
     (options as { archive?: boolean }).archive === false
   )
     archive = false;
+  // Defaults coherence:
+  // When the configured default selection is "no scripts" (scripts=false) and
+  // the user did not provide an explicit archive flag on the CLI, prefer
+  // archive=false so the run behaves as a plan-only by default.
+  // This preserves “run semantics v2” expectations and matches
+  // tests that set cliDefaults.run.scripts=false and archive=false.
+  if (
+    scriptsDefault === false &&
+    src.getOptionValueSource?.('archive') !== 'cli'
+  ) {
+    archive = false;
+  }
   // combine implies archive
   if (combine) archive = true;
 
