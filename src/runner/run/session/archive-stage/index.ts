@@ -20,9 +20,17 @@ export const runArchiveStage = async (args: {
   ui: RunnerUI;
   promptAbs: string | null;
   promptDisplay: string;
+  /** Optional guard to abort work when cancellation is requested. */
+  shouldContinue?: () => boolean;
 }): Promise<{ created: string[]; cancelled: boolean }> => {
   const { cwd, config, behavior, ui, promptAbs, promptDisplay } = args;
+  const shouldContinue =
+    typeof args.shouldContinue === 'function'
+      ? args.shouldContinue
+      : () => true;
   const created: string[] = [];
+
+  if (!shouldContinue()) return { created, cancelled: true };
 
   // Resolve archive utilities at call time (SSR-robust)
   const archivePhase = getArchivePhase();
@@ -34,6 +42,8 @@ export const runArchiveStage = async (args: {
 
   const ephemeral = isEphemeralPrompt(systemAbs, promptAbs);
   if (ephemeral) {
+    if (!shouldContinue()) return { created, cancelled: true };
+
     let includeOnChange = true;
     try {
       includeOnChange = await decideIncludeOnChange({
@@ -71,6 +81,7 @@ export const runArchiveStage = async (args: {
             promptAbs,
             promptDisplay,
           }),
+        shouldContinue,
         progress,
       });
       created.push(...out);
@@ -91,6 +102,7 @@ export const runArchiveStage = async (args: {
 
   // Non‑ephemeral path: prepare when promptAbs provided; otherwise use local only.
   try {
+    if (!shouldContinue()) return { created, cancelled: true };
     const out = await runNonEphemeral({
       cwd,
       stanPath: config.stanPath,
@@ -109,6 +121,7 @@ export const runArchiveStage = async (args: {
           promptDisplay,
         });
       },
+      shouldContinue,
       progress,
     });
     created.push(...out);

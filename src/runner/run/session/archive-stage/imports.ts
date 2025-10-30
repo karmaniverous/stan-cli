@@ -6,7 +6,7 @@ type ArchiveModule = typeof import('@/runner/run/archive');
 export const getArchivePhase = (): ArchiveModule['archivePhase'] => {
   const mod = archiveMod as unknown as {
     archivePhase?: unknown;
-    default?: { archivePhase?: unknown } | ((...a: unknown[]) => unknown);
+    default?: unknown;
   };
 
   // 1) Named export
@@ -15,27 +15,20 @@ export const getArchivePhase = (): ArchiveModule['archivePhase'] => {
     return named as ArchiveModule['archivePhase'];
   }
 
-  // 2) default.archivePhase (default object with property)
-  const viaDefaultObj =
-    typeof mod.default === 'object' && mod.default !== null
-      ? (mod.default as { archivePhase?: unknown }).archivePhase
-      : undefined;
-  if (typeof viaDefaultObj === 'function') {
-    return viaDefaultObj as ArchiveModule['archivePhase'];
+  const defAny = (mod as { default?: unknown }).default;
+
+  // 2) default as function (rare shape)
+  if (typeof defAny === 'function') {
+    return defAny as unknown as ArchiveModule['archivePhase'];
   }
 
-  // 3) default as function (rare shape)
-  const viaDefaultFn =
-    typeof mod.default === 'function'
-      ? (mod.default as unknown as ArchiveModule['archivePhase'])
-      : undefined;
-  if (typeof viaDefaultFn === 'function') {
-    return viaDefaultFn;
-  }
-
-  // 4) Shallow scan of values on default object (edge mocks)
-  if (typeof mod.default === 'object' && mod.default !== null) {
-    for (const v of Object.values(mod.default as Record<string, unknown>)) {
+  // 3) default.archivePhase (default object with property)
+  if (defAny && typeof defAny === 'object') {
+    const viaProp = (defAny as { archivePhase?: unknown }).archivePhase;
+    if (typeof viaProp === 'function')
+      return viaProp as ArchiveModule['archivePhase'];
+    // 4) Shallow scan of values on default object (edge mocks)
+    for (const v of Object.values(defAny as Record<string, unknown>)) {
       if (typeof v === 'function') {
         return v as ArchiveModule['archivePhase'];
       }
@@ -54,7 +47,7 @@ export const getArchivePhase = (): ArchiveModule['archivePhase'] => {
 export const getStageImports = (): ArchiveModule['stageImports'] => {
   const mod = archiveMod as unknown as {
     stageImports?: unknown;
-    default?: { stageImports?: unknown } | ((...a: unknown[]) => unknown);
+    default?: unknown;
   };
 
   // 1) Named export
@@ -63,27 +56,19 @@ export const getStageImports = (): ArchiveModule['stageImports'] => {
     return named as ArchiveModule['stageImports'];
   }
 
-  // 2) default.stageImports (default object with property)
-  const viaDefaultObj =
-    typeof mod.default === 'object' && mod.default !== null
-      ? (mod.default as { stageImports?: unknown }).stageImports
-      : undefined;
-  if (typeof viaDefaultObj === 'function') {
-    return viaDefaultObj as ArchiveModule['stageImports'];
+  const defAny = (mod as { default?: unknown }).default;
+
+  // 2) default as function (rare shape)
+  if (typeof defAny === 'function') {
+    return defAny as unknown as ArchiveModule['stageImports'];
   }
 
-  // 3) default as function (rare shape)
-  const viaDefaultFn =
-    typeof mod.default === 'function'
-      ? (mod.default as unknown as ArchiveModule['stageImports'])
-      : undefined;
-  if (typeof viaDefaultFn === 'function') {
-    return viaDefaultFn;
-  }
-
-  // 4) Shallow scan of values on default object (edge mocks)
-  if (typeof mod.default === 'object' && mod.default !== null) {
-    for (const v of Object.values(mod.default as Record<string, unknown>)) {
+  // 3) default.stageImports (default object with property) + shallow scan
+  if (defAny && typeof defAny === 'object') {
+    const viaProp = (defAny as { stageImports?: unknown }).stageImports;
+    if (typeof viaProp === 'function')
+      return viaProp as ArchiveModule['stageImports'];
+    for (const v of Object.values(defAny as Record<string, unknown>)) {
       if (typeof v === 'function') {
         return v as ArchiveModule['stageImports'];
       }

@@ -15,6 +15,11 @@
 - Cancellation matrix (guard race regressions)
   - Ensure archives are never created on cancel across live/concurrent and live/sequential; keep late‑cancel guards and settle timing stable.
 
+  - Strengthen archive-stage cancel gates:
+    - Thread a shouldContinue() guard through runArchiveStage (non‑ephemeral & ephemeral) and check before/among phase steps to abort early.
+    - Keep session post-archive cleanup (best‑effort) as a backstop.
+    - Add focused assertions if new race surfaces.
+
 - Overlay excludes mapping (facet composition)
   - Recheck facet overlay excludes/anchors propagation into RunnerConfig after recent changes; fix any propagation gaps.
 
@@ -88,6 +93,13 @@
   - src/runner/run/session/run-session.ts: replaced optional chaining on UI hooks (prepareForNewSession/flushNow) and stdin.pause with typeof guards.
 - Stability — SSR fallbacks for archive stage resolvers (no behavior change)
   - src/runner/run/session/archive-stage/imports.ts: accept default-as-function, module-as-function, and shallow default scans for archivePhase/stageImports.
+
+- Cancellation robustness — early abort in archive stage
+  - src/runner/run/session/archive-stage/index.ts: accept optional shouldContinue and abort when false.
+  - src/runner/run/session/archive-stage/run-normal.ts: check shouldContinue between DIFF/FULL phases.
+  - src/runner/run/session/archive-stage/run-ephemeral.ts: check shouldContinue around staging/prep and each phase; return early when cancelled.
+  - src/runner/run/session/run-session.ts: pass shouldContinue to archive stage (linked to CancelController).
+  - Improves keypress + archive cases in cancel matrix tests.
 
 - Facet overlay — enable live‑ui facet to pursue live UI test failures
   - Turned on `live-ui` to include anchored writer, live renderer, and UI modules in archives for immediate triage of failing live tests.

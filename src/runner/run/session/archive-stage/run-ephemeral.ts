@@ -62,6 +62,7 @@ export const runEphemeral = async (args: {
     promptAbs: string;
     promptDisplay: string;
   }) => Promise<() => Promise<void>>;
+  shouldContinue?: () => boolean;
   progress: {
     start: (k: 'full' | 'diff') => void;
     done: (k: 'full' | 'diff', p: string, s: number, e: number) => void;
@@ -79,15 +80,24 @@ export const runEphemeral = async (args: {
     archivePhase,
     stageImports,
     preparePrompt,
+    shouldContinue,
     progress,
   } = args;
   const created: string[] = [];
 
+  if (typeof shouldContinue === 'function' && !shouldContinue()) return created;
+
   // Stage imports once for both passes; skip stage in individual calls.
-  await stageImports(cwd, config.stanPath, config.imports);
+  if (typeof shouldContinue !== 'function' || shouldContinue()) {
+    await stageImports(cwd, config.stanPath, config.imports);
+  } else {
+    return created;
+  }
 
   if (includeOnChange) {
     // Inject BEFORE DIFF so the prompt appears exactly once in the diff
+    if (typeof shouldContinue === 'function' && !shouldContinue())
+      return created;
     const restore = await preparePrompt({
       cwd,
       stanPath: config.stanPath,
@@ -95,11 +105,15 @@ export const runEphemeral = async (args: {
       promptDisplay,
     });
     try {
+      if (typeof shouldContinue === 'function' && !shouldContinue())
+        return created;
       const d = await archivePhase(
         { cwd, config: baseDiff, includeOutputs: Boolean(behavior.combine) },
         { silent: true, which: 'diff', stage: false, cleanup: false, progress },
       );
       if (d.diffPath) created.push(d.diffPath);
+      if (typeof shouldContinue === 'function' && !shouldContinue())
+        return created;
       const f = await archivePhase(
         { cwd, config: baseFull, includeOutputs: Boolean(behavior.combine) },
         { silent: true, which: 'full', stage: false, cleanup: true, progress },
@@ -110,11 +124,15 @@ export const runEphemeral = async (args: {
     }
   } else {
     // Quiet diff first; inject for FULL only
+    if (typeof shouldContinue === 'function' && !shouldContinue())
+      return created;
     const d = await archivePhase(
       { cwd, config: baseDiff, includeOutputs: Boolean(behavior.combine) },
       { silent: true, which: 'diff', stage: false, cleanup: false, progress },
     );
     if (d.diffPath) created.push(d.diffPath);
+    if (typeof shouldContinue === 'function' && !shouldContinue())
+      return created;
     const restore = await preparePrompt({
       cwd,
       stanPath: config.stanPath,
@@ -122,6 +140,8 @@ export const runEphemeral = async (args: {
       promptDisplay,
     });
     try {
+      if (typeof shouldContinue === 'function' && !shouldContinue())
+        return created;
       const f = await archivePhase(
         { cwd, config: baseFull, includeOutputs: Boolean(behavior.combine) },
         { silent: true, which: 'full', stage: false, cleanup: true, progress },

@@ -341,6 +341,7 @@ export const runSessionOnce = async (args: {
       ui,
       promptAbs: resolvedPromptAbs,
       promptDisplay: resolvedPromptDisplay,
+      shouldContinue: () => !cancelCtl.isCancelled(),
     });
     if (a.cancelled) {
       detachSignals();
