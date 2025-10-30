@@ -93,6 +93,54 @@ export const resolveEngineConfigLazy = async (
   }
 };
 
+// Typed resolver for overlay builder (named-or-default; SSR-robust)
+export type BuildOverlayInputsFn =
+  (typeof import('./overlay'))['buildOverlayInputs'];
+
+/** Resolve the overlay inputs builder at action-time (SSR/mocks-robust). */
+export const loadBuildOverlayInputs =
+  async (): Promise<BuildOverlayInputsFn> => {
+    const mod = (await import('./overlay')) as unknown as {
+      buildOverlayInputs?: unknown;
+      default?:
+        | { buildOverlayInputs?: unknown }
+        | ((...a: unknown[]) => unknown);
+    };
+    try {
+      return resolveNamedOrDefaultFunction<BuildOverlayInputsFn>(
+        mod as unknown,
+        (m) => (m as { buildOverlayInputs?: unknown }).buildOverlayInputs,
+        (m) =>
+          (m as { default?: { buildOverlayInputs?: unknown } }).default
+            ?.buildOverlayInputs,
+        'buildOverlayInputs',
+      );
+    } catch (e) {
+      // Fallbacks: default-as-function, shallow scans (SSR/mocks)
+      try {
+        const defAny = (mod as { default?: unknown }).default;
+        if (typeof defAny === 'function')
+          return defAny as unknown as BuildOverlayInputsFn;
+        if (defAny && typeof defAny === 'object') {
+          for (const v of Object.values(defAny as Record<string, unknown>)) {
+            if (typeof v === 'function')
+              return v as unknown as BuildOverlayInputsFn;
+          }
+        }
+      } catch {
+        /* ignore; continue */
+      }
+      try {
+        for (const v of Object.values(mod as Record<string, unknown>)) {
+          if (typeof v === 'function') return v as BuildOverlayInputsFn;
+        }
+      } catch {
+        /* ignore and rethrow original */
+      }
+      throw e instanceof Error ? e : new Error(String(e));
+    }
+  };
+
 // SSR‑robust loader for deriveRunParameters (named-or-default; last-chance default=function)
 export const loadDeriveRunParameters = async (): Promise<
   typeof import('../derive').deriveRunParameters

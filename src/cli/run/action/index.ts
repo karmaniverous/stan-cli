@@ -6,15 +6,11 @@ import {
   resolveStanPathSync,
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
-import { CommanderError } from 'commander';
 
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
-import { confirmLoopReversal } from '@/runner/loop/reversal';
-import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
-import type { FacetOverlayOutput } from '@/runner/overlay/facets';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
@@ -22,53 +18,24 @@ import { updateDocsMetaOverlay } from '@/runner/system/docs-meta';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
-import { loadCliConfigSyncLazy, loadDeriveRunParameters } from './loaders';
-import { getOptionSource, toStringArray } from './util';
+import { assertNoScriptsConflict } from './conflict';
+import {
+  loadCliConfigSyncLazy,
+  loadDeriveRunParameters,
+  resolveEngineConfigLazy,
+} from './loaders';
+import { runLoopHeaderAndGuard } from './loop';
+import { resolveOverlayForRun } from './overlay-flow';
+import { makeRunnerConfig } from './runner-config';
+import { resolveScriptsForRun } from './scripts';
 
 export const registerRunAction = (
   cmd: Command,
   getFlagPresence: () => FlagPresence,
 ): void => {
   cmd.action(async (options: Record<string, unknown>) => {
-    // Resolve engine config lazily with SSR‑robust named‑or‑default selection.
-    const getResolveEngineConfig = async (): Promise<
-      (cwd: string) => Promise<ContextConfig>
-    > => {
-      const mod = (await import('./loaders')) as unknown;
-      try {
-        return resolveNamedOrDefaultFunction<
-          (c: string) => Promise<ContextConfig>
-        >(
-          mod,
-          (m) =>
-            (m as { resolveEngineConfigLazy?: unknown })
-              .resolveEngineConfigLazy as
-              | ((c: string) => Promise<ContextConfig>)
-              | undefined,
-          (m) =>
-            (m as { default?: { resolveEngineConfigLazy?: unknown } }).default
-              ?.resolveEngineConfigLazy as
-              | ((c: string) => Promise<ContextConfig>)
-              | undefined,
-          'resolveEngineConfigLazy',
-        );
-      } catch (e) {
-        const def = (mod as { default?: unknown }).default;
-        if (typeof def === 'function')
-          return def as unknown as (c: string) => Promise<ContextConfig>;
-        throw e instanceof Error ? e : new Error(String(e));
-      }
-    };
-    const { sawNoScriptsFlag, sawScriptsFlag, sawExceptFlag } =
-      getFlagPresence();
-    // Authoritative conflict handling: -S cannot be combined with -s/-x
-    if (sawNoScriptsFlag && (sawScriptsFlag || sawExceptFlag)) {
-      throw new CommanderError(
-        1,
-        'commander.conflictingOption',
-        "error: option '-S, --no-scripts' cannot be used with option '-s, --scripts' or '-x, --except-scripts'",
-      );
-    }
+    // Hard guard: -S vs -s/-x
+    assertNoScriptsConflict(getFlagPresence());
 
     const cwdInitial = process.cwd();
     const cfgPath = findConfigPathSync(cwdInitial);
@@ -77,19 +44,19 @@ export const registerRunAction = (
     // Early legacy-engine notice remains in options preAction hook; here we resolve
     // effective engine context (namespaced or legacy) for the runner.
     await peekAndMaybeDebugLegacy(DBG_SCOPE_RUN_ENGINE_LEGACY, runCwd);
-    let config: ContextConfig;
-    try {
-      const resolveEngineConfig = await getResolveEngineConfig();
-      config = await resolveEngineConfig(runCwd);
-    } catch {
-      // SSR/mock fallback: derive a minimal ContextConfig for plan/env paths.
+    // Engine config (SSR/mocks-robust)
+    const config: ContextConfig = await (async () => {
       try {
-        const sp = resolveStanPathSync(runCwd);
-        config = { stanPath: sp } as ContextConfig;
+        return await resolveEngineConfigLazy(runCwd);
       } catch {
-        config = { stanPath: '.stan' } as ContextConfig;
+        try {
+          const sp = resolveStanPathSync(runCwd);
+          return { stanPath: sp } as ContextConfig;
+        } catch {
+          return { stanPath: '.stan' } as ContextConfig;
+        }
       }
-    }
+    })();
 
     // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
     const cliCfg = await loadCliConfigSyncLazy(runCwd);
@@ -97,135 +64,34 @@ export const registerRunAction = (
     // Derivation function (SSR-safe)
     const deriveRunParameters = await loadDeriveRunParameters();
 
-    // Safe wrapper for Commander’s getOptionValueSource (avoid unbound method usage)
-    const getSrc = (name: string): string | undefined =>
-      getOptionSource(cmd, name);
-
-    // Loop header + reversal guard
-    try {
-      const st = await readLoopState(runCwd, config.stanPath);
-      printHeader('run', st?.last ?? null);
-      if (st?.last && isBackward(st.last, 'run')) {
-        const proceed = await confirmLoopReversal();
-        if (!proceed) {
-          console.log('');
-          return;
-        }
-      }
-      // Update state at command start (so it reflects the action initiated)
-      try {
-        const ts = new Date().toISOString();
-        await writeLoopState(runCwd, config.stanPath, 'run', ts);
-      } catch {
-        // best-effort
-      }
-    } catch {
-      // ignore guard failures
+    // Loop guard (header + reversal)
+    {
+      const proceed = await runLoopHeaderAndGuard(runCwd, config.stanPath);
+      if (!proceed) return;
     }
 
-    // Derive run parameters
-    // 1) Scripts: prefer CLI loader; fall back to direct config parse (namespaced or legacy root).
-    let scriptsMap = cliCfg.scripts ?? {};
-    if (!scriptsMap || Object.keys(scriptsMap).length === 0) {
-      try {
-        const { readCliScriptsFallback } = await import('../config-fallback');
-        scriptsMap = readCliScriptsFallback(runCwd);
-      } catch {
-        scriptsMap = {};
-      }
-    }
-    // 2) Default selection: prefer CLI loader; fall back to direct config parse (namespaced or legacy root).
-    let scriptsDefaultCfg: boolean | string[] | undefined = (
-      (cliCfg.cliDefaults as
-        | { run?: { scripts?: boolean | string[] } }
-        | undefined) ?? {}
-    )?.run?.scripts;
-    if (typeof scriptsDefaultCfg === 'undefined') {
-      try {
-        const { readRunScriptsDefaultFallback } = await import(
-          '../config-fallback'
-        );
-        scriptsDefaultCfg = readRunScriptsDefaultFallback(runCwd);
-      } catch {
-        /* ignore */
-      }
-    }
+    // Scripts map + default selection (namespaced first; legacy fallback)
+    const { scriptsMap, scriptsDefault } = await resolveScriptsForRun({
+      cwd: runCwd,
+      cliCfg,
+    });
 
     const derived = deriveRunParameters({
       options,
       cmd,
       scripts: scriptsMap,
-      scriptsDefault: scriptsDefaultCfg,
+      scriptsDefault,
       dir: runCwd,
     });
 
-    // Facet overlay — determine defaults and per-run overrides (renamed flags)
-    const eff = getRunDefaults(runCwd);
-    const facetsOpt = (options as { facets?: unknown }).facets;
-    const noFacetsOpt = (options as { noFacets?: unknown }).noFacets;
-
-    const activateNames = toStringArray(facetsOpt);
-    const deactivateNames = toStringArray(noFacetsOpt);
-
-    const facetsProvided = getSrc('facets') === 'cli';
-    const noFacetsProvided = getSrc('noFacets') === 'cli';
-    const nakedActivateAll = facetsProvided && activateNames.length === 0;
-
-    // Determine overlay enablement with new semantics
-    let overlayEnabled = eff.facets;
-    if (facetsProvided) overlayEnabled = true;
-    if (noFacetsProvided)
-      overlayEnabled = deactivateNames.length === 0 ? false : true;
-
-    // SSR‑robust resolver for overlay builder (named or default; scan fallbacks).
-    const loadBuildOverlayInputs = async (): Promise<
-      (typeof import('./overlay'))['buildOverlayInputs']
-    > => {
-      const mod = (await import('./overlay')) as unknown as {
-        buildOverlayInputs?: unknown;
-        default?:
-          | { buildOverlayInputs?: unknown }
-          | ((...a: unknown[]) => unknown);
-      };
-      try {
-        return resolveNamedOrDefaultFunction<
-          (typeof import('./overlay'))['buildOverlayInputs']
-        >(
-          mod as unknown,
-          (m) => (m as { buildOverlayInputs?: unknown }).buildOverlayInputs,
-          (m) =>
-            (m as { default?: { buildOverlayInputs?: unknown } }).default
-              ?.buildOverlayInputs,
-          'buildOverlayInputs',
-        );
-      } catch (e) {
-        // Extra fallbacks: default-as-function, shallow scans (SSR/mocks).
-        const defAny = (mod as { default?: unknown }).default;
-        if (typeof defAny === 'function')
-          return defAny as unknown as (typeof import('./overlay'))['buildOverlayInputs'];
-        if (defAny && typeof defAny === 'object') {
-          for (const v of Object.values(defAny as Record<string, unknown>)) {
-            if (typeof v === 'function')
-              return v as (typeof import('./overlay'))['buildOverlayInputs'];
-          }
-        }
-        for (const v of Object.values(mod as Record<string, unknown>)) {
-          if (typeof v === 'function')
-            return v as (typeof import('./overlay'))['buildOverlayInputs'];
-        }
-        throw e instanceof Error ? e : new Error(String(e));
-      }
-    };
-    const buildOverlay =
-      (await loadBuildOverlayInputs()) as unknown as (typeof import('../action/overlay'))['buildOverlayInputs'];
-    const overlayInputs = await buildOverlay({
-      cwd: runCwd,
-      stanPath: config.stanPath,
-      enabled: overlayEnabled,
-      activateNames,
-      deactivateNames,
-      nakedActivateAll,
-    });
+    // Overlay mapping (defaults + per-run overrides; SSR-safe)
+    const { overlayInputs, overlayEnabled, activateNames, deactivateNames } =
+      await resolveOverlayForRun({
+        cwd: runCwd,
+        stanPath: config.stanPath,
+        cmd,
+        options,
+      });
 
     // Defensive: ensure live default honors config when CLI flag not provided.
     try {
@@ -233,23 +99,20 @@ export const registerRunAction = (
         Object.prototype.hasOwnProperty.call(options, 'live') &&
         typeof (options as { live?: unknown }).live === 'boolean';
       if (!liveProvided) {
-        derived.behavior.live = eff.live;
+        derived.behavior.live = getRunDefaults(runCwd).live;
       }
     } catch {
       /* best-effort */
     }
 
-    const runnerConfig: RunnerConfig = {
-      stanPath: config.stanPath,
-      scripts: (scriptsMap ?? {}) as Record<string, string>,
-      includes: config.includes ?? [],
-      excludes: [...(config.excludes ?? []), ...overlayInputs.engineExcludes],
-      imports: config.imports,
-      ...(overlayInputs.overlay?.anchorsOverlay?.length
-        ? { anchors: overlayInputs.overlay.anchorsOverlay }
-        : {}),
+    // Compose runner config from parts
+    const runnerConfig: RunnerConfig = makeRunnerConfig({
+      config,
+      scriptsMap: scriptsMap,
+      engineExcludes: overlayInputs.engineExcludes,
+      anchors: overlayInputs.overlay?.anchorsOverlay,
       overlayPlan: overlayInputs.overlayPlan,
-    };
+    });
 
     const planBody = renderRunPlan(runCwd, {
       selection: derived.selection,
@@ -278,7 +141,7 @@ export const registerRunAction = (
     // Persist overlay metadata (best-effort)
     try {
       await updateDocsMetaOverlay(runCwd, config.stanPath, {
-        enabled: overlayInputs.overlay?.enabled ?? false,
+        enabled: overlayEnabled,
         activated: activateNames,
         deactivated: deactivateNames,
         effective: overlayInputs.overlay?.effective,

@@ -18,7 +18,6 @@ import {
   resolveApplyCliSafety,
   resolveRegisterInit,
   resolveRegisterPatch,
-  resolveRootDefaults,
   resolveTagDefault,
 } from './root/resolvers';
 import { attachSubcommands } from './root/subcommands';
@@ -30,7 +29,6 @@ export const makeCli = (): Command => {
 
   // Resolve helpers (SSR‑robust)
   const applyCliSafety = resolveApplyCliSafety();
-  const rootDefaults = resolveRootDefaults();
   const tagDefault = resolveTagDefault();
   const registerInitResolved = resolveRegisterInit();
   const registerPatchResolved = resolveRegisterPatch();
@@ -42,7 +40,6 @@ export const makeCli = (): Command => {
     yesDefault: boolean;
   } => {
     try {
-      if (rootDefaults) return rootDefaults(process.cwd());
       const viaConfig = readRootDefaultsFromConfig(process.cwd());
       if (viaConfig) return viaConfig;
     } catch {
