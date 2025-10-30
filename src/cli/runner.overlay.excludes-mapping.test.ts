@@ -71,7 +71,7 @@ describe('overlay excludes mapping (subtree roots expanded; leaf-globs propagate
     await writeFile(path.join(dir, 'src', 'ANCHOR.md'), 'x', 'utf8');
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     try {
       process.chdir(tmpdir());
     } catch {
