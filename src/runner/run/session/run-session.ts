@@ -356,10 +356,25 @@ export const runSessionOnce = async (args: {
     // absorb a just-arrived keypress cancellation on slower filesystems.
     try {
       await new Promise((r) =>
-        setTimeout(r, process.platform === 'win32' ? 140 : 30),
+        setTimeout(r, process.platform === 'win32' ? 220 : 30),
       );
     } catch {
       /* ignore */
+    }
+    // Re-check once more immediately before scheduling the archive stage.
+    if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+      await removeArchivesIfAny().catch(() => void 0);
+      detachSignals();
+      try {
+        const pause = (process.stdin as unknown as { pause?: () => void })
+          .pause;
+        if (typeof pause === 'function') {
+          pause();
+        }
+      } catch {
+        /* ignore */
+      }
+      return { created, cancelled: true, restartRequested: false };
     }
     const runArchive: RunArchiveStageFn = getRunArchiveStage();
     const a: { created: string[]; cancelled: boolean } = await runArchive({

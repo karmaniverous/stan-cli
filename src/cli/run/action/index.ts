@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
+// eslint-disable-next-line import/no-duplicates
 import {
   findConfigPathSync,
   resolveStanPathSync,
@@ -14,6 +15,7 @@ import { printHeader } from '@/cli/header';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
+// eslint-disable-next-line import/no-duplicates
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
@@ -22,7 +24,6 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
 import { loadCliConfigSyncLazy, loadDeriveRunParameters } from './loaders';
-import { buildOverlayInputs } from './overlay';
 import { getOptionSource, toStringArray } from './util';
 
 export const registerRunAction = (
@@ -177,7 +178,47 @@ export const registerRunAction = (
     if (noFacetsProvided)
       overlayEnabled = deactivateNames.length === 0 ? false : true;
 
-    const overlayInputs = await buildOverlayInputs({
+    // SSR‑robust resolver for overlay builder (named or default; scan fallbacks).
+    const loadBuildOverlayInputs = async (): Promise<
+      (typeof import('./overlay'))['buildOverlayInputs']
+    > => {
+      const mod = (await import('./overlay')) as unknown as {
+        buildOverlayInputs?: unknown;
+        default?:
+          | { buildOverlayInputs?: unknown }
+          | ((...a: unknown[]) => unknown);
+      };
+      try {
+        return resolveNamedOrDefaultFunction<
+          (typeof import('./overlay'))['buildOverlayInputs']
+        >(
+          mod as unknown,
+          (m) => (m as { buildOverlayInputs?: unknown }).buildOverlayInputs,
+          (m) =>
+            (m as { default?: { buildOverlayInputs?: unknown } }).default
+              ?.buildOverlayInputs,
+          'buildOverlayInputs',
+        );
+      } catch (e) {
+        // Extra fallbacks: default-as-function, shallow scans (SSR/mocks).
+        const defAny = (mod as { default?: unknown }).default;
+        if (typeof defAny === 'function')
+          return defAny as unknown as (typeof import('./overlay'))['buildOverlayInputs'];
+        if (defAny && typeof defAny === 'object') {
+          for (const v of Object.values(defAny as Record<string, unknown>)) {
+            if (typeof v === 'function')
+              return v as (typeof import('./overlay'))['buildOverlayInputs'];
+          }
+        }
+        for (const v of Object.values(mod as Record<string, unknown>)) {
+          if (typeof v === 'function')
+            return v as (typeof import('./overlay'))['buildOverlayInputs'];
+        }
+        throw e instanceof Error ? e : new Error(String(e));
+      }
+    };
+    const buildOverlay = await loadBuildOverlayInputs();
+    const overlayInputs = await buildOverlay({
       cwd: runCwd,
       stanPath: config.stanPath,
       enabled: overlayEnabled,

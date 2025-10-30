@@ -12,6 +12,10 @@
   - Restore root.env.defaults and runner semantics: scripts true/false/array; -p prints plan only; -S -A prints “nothing to do”; archive=false honored.
   - Add focused tests where gaps are found.
 
+- Cancel matrix hardening — follow‑through
+  - Re‑run keypress + archive cases (live concurrent & sequential) on Windows; confirm archives are absent at return.
+  - If any residuals remain, consider increasing the outer cancel cleanup retries/delays in runSelected (Windows only).
+
 - Cancellation matrix (guard race regressions)
   - Ensure archives are never created on cancel across live/concurrent and live/sequential; keep late‑cancel guards and settle timing stable.
 
@@ -169,4 +173,14 @@ Amendment:
   - src/runner/run/service.ts: on cancel, attempt two-pass deletion of archive.tar and archive.diff.tar with a short settle and re-check (longer on Windows) before returning. Reduces residual artifacts when tar creation and cancel race.
 
 - UI parity visibility — stabilize immediate assertions
-  - src/runner/run/session/run-session.ts: increased post-archive settle on Windows (30ms → 120ms) so existence checks right after runSelected resolve reliably in live/non-live parity tests.
+  - src/runner/run/session/run-session.ts: increased post-archive settle on Windows (30ms → 120ms) so existence checks right after runSelected resolve reliably in live/non-live parity tests.
+
+- CLI run overlay loader — SSR‑robust resolution
+  - src/cli/run/action/index.ts: resolve buildOverlayInputs lazily with a named‑or‑default loader and conservative fallbacks (default‑as‑function, shallow scans).
+  - Fixes TypeError in legacy engine extraction test under Vitest SSR: “buildOverlayInputs is not a function”.
+
+- Cancel pre‑archive hardening (Windows)
+  - src/runner/run/session/run-session.ts:
+    - Bumped the pre‑archive settle from 140ms to 220ms on win32.
+    - Added an immediate late guard right before scheduling the archive stage to absorb just‑arrived keypress cancellations.
+  - Intent: eliminate residual archives in “keypress + archive” cases (live concurrent / live sequential) by avoiding phase entry after cancel.
