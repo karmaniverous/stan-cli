@@ -164,16 +164,7 @@ export const runSelected = async (
   // Create a single UI instance for the entire run; reuse across restarts.
   const { LiveUICtor, LoggerUICtor } = resolveUI();
   const ui: RunnerUI =
-    // Small helper to allow final FS changes (like archive deletions on cancel)
-    // to settle before we return control to callers/tests. Especially useful
-    // on Windows where immediate rm() after tar completion or cancellation can
-    // race observation in tight assertions.
-    //
-    // Keep this very short to avoid impacting normal latency.
-    ((await (async () => {
-      return;
-    })()) as unknown as RunnerUI | liveEnabled) &&
-    typeof LiveUICtor === 'function'
+    liveEnabled && typeof LiveUICtor === 'function'
       ? new LiveUICtor({ boring: process.env.STAN_BORING === '1' })
       : typeof LoggerUICtor === 'function'
         ? new LoggerUICtor()

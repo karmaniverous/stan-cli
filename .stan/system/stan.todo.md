@@ -58,6 +58,11 @@ Amendment:
 
 - These changes are presentation‑only (render timing) and return‑path settling; the archive stage gates added previously remain intact.
 
+### Rollback: immediate live render; keep cancel settle
+
+- Reverted the “immediate first frame” change in live renderer (src/runner/run/live/renderer.ts) that caused multiple UI regressions (alignment, order/flush, parity).
+- Fixed an accidental async/union injection in src/runner/run/service.ts UI selection; retained the small settle before returning on both cancel and normal completion to stabilize cancel matrix (keypress + archive) without impacting UI timing.
+
 ## Completed (append-only, most recent items last)
 
 - Overlay excludes mapping — honor explicit facet overrides

@@ -73,15 +73,6 @@ export class ProgressRenderer {
     if (this.timer) return;
     if (!this.writer) this.writer = createAnchoredWriter();
     this.writer.start();
-    // Emit an immediate first frame so short runs (that may finalize before the
-    // first interval tick) still print the header, summary, and hint line.
-    // This stabilizes alignment tests that assert the presence of
-    // "Press q to cancel" even for very fast script/archive cycles.
-    try {
-      this.render();
-    } catch {
-      /* best-effort */
-    }
 
     this.timer = setInterval(() => {
       this.render();
