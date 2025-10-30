@@ -39,6 +39,10 @@
 
 ## Completed (append-only, most recent items last)
 
+- Lint nibble — remove redundant nullish coalescing in derive loader
+  - src/cli/run/action/loaders.ts: dropped “?? undefined” flagged by
+    @typescript-eslint/no-unnecessary-condition (no behavior change).
+
 - UI parity — stabilize immediate archive visibility after run
   - src/runner/run/session/run-session.ts: add a brief post‑archive settle
     (timeout + yieldToEventLoop) after archivePhase completes, before final

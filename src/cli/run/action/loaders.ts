@@ -111,9 +111,9 @@ export const loadDeriveRunParameters = async (): Promise<
     .deriveRunParameters;
   if (typeof viaNamed === 'function')
     return viaNamed as (typeof import('../derive'))['deriveRunParameters'];
-  const viaDefaultObj =
-    (mod as { default?: Partial<typeof import('../derive')> }).default
-      ?.deriveRunParameters ?? undefined;
+  const viaDefaultObj = (
+    mod as { default?: Partial<typeof import('../derive')> }
+  ).default?.deriveRunParameters;
   if (typeof viaDefaultObj === 'function') return viaDefaultObj;
   const viaDefaultFn =
     typeof (mod as { default?: unknown }).default === 'function'
