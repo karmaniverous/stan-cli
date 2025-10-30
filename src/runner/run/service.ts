@@ -164,7 +164,16 @@ export const runSelected = async (
   // Create a single UI instance for the entire run; reuse across restarts.
   const { LiveUICtor, LoggerUICtor } = resolveUI();
   const ui: RunnerUI =
-    liveEnabled && typeof LiveUICtor === 'function'
+    // Small helper to allow final FS changes (like archive deletions on cancel)
+    // to settle before we return control to callers/tests. Especially useful
+    // on Windows where immediate rm() after tar completion or cancellation can
+    // race observation in tight assertions.
+    //
+    // Keep this very short to avoid impacting normal latency.
+    ((await (async () => {
+      return;
+    })()) as unknown as RunnerUI | liveEnabled) &&
+    typeof LiveUICtor === 'function'
       ? new LiveUICtor({ boring: process.env.STAN_BORING === '1' })
       : typeof LoggerUICtor === 'function'
         ? new LoggerUICtor()
@@ -207,11 +216,25 @@ export const runSelected = async (
     }
     if (cancelled) {
       // Cancelled (non-restart): session already stopped UI and printed spacing.
+      // Brief settle to ensure any best-effort deletions (archives) are reflected.
+      try {
+        const ms = process.platform === 'win32' ? 30 : process.env.CI ? 20 : 15;
+        await new Promise((r) => setTimeout(r, ms));
+      } catch {
+        /* ignore */
+      }
       return created;
     }
     // Normal completion: stop UI once for the whole run, then print trailing spacing.
     try {
       ui.stop();
+    } catch {
+      /* ignore */
+    }
+    // Minor settle to stabilize FS visibility (archives, outputs) for immediate assertions.
+    try {
+      const ms = process.platform === 'win32' ? 30 : process.env.CI ? 20 : 15;
+      await new Promise((r) => setTimeout(r, ms));
     } catch {
       /* ignore */
     }

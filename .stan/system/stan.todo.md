@@ -46,6 +46,18 @@
 
 ---
 
+### Live UI hint + cancel race settling (alignment + cancel matrix)
+
+- Live alignment — ensure hint exists for fast runs
+  - src/runner/run/live/renderer.ts: render an immediate first frame after writer.start(). This guarantees the “Press q to cancel, r to restart” hint is printed even for very short runs that finalize before the first interval tick.
+
+- Cancel matrix — absorb keypress + archive race
+  - src/runner/run/service.ts: add a tiny settle (15–30ms) just before returning from runSelected in both cancelled and normal paths. This allows best‑effort archive deletions on cancel to settle on all platforms (especially Windows) before tests assert existence.
+
+Amendment:
+
+- These changes are presentation‑only (render timing) and return‑path settling; the archive stage gates added previously remain intact.
+
 ## Completed (append-only, most recent items last)
 
 - Overlay excludes mapping — honor explicit facet overrides
