@@ -25,6 +25,12 @@ This convention keeps module boundaries clear, avoids duplicate barrels (file an
 
 When tests run under Vitest SSR and worker forks, import‑time evaluation order and export shape can differ from Node runtime. Use this playbook to keep tests deterministic without changing runtime behavior:
 
+- Export shape discipline (no doubled default+named)
+  - Do not “double up” module exports (export the same function both as a named export and as a default export) to work around SSR differences.
+  - Keep a single canonical export shape for each API (prefer named export for libraries).
+  - Tests and adapters MUST tolerate shape differences by resolving at call time using a “named‑or‑default” resolver (prefer named export; fall back to `default.<name>` or a default function), rather than altering the module’s public surface.
+  - Validation: PRs that introduce duplicated default+named exports for the same callable will be rejected; fix the loader instead.
+
 - Evaluation‑time hazards and cures
   - Hoist fragile exports: prefer exported function declarations over `export const fn = (...) => ...` for helpers that other modules resolve dynamically (prevents “X is not a function” under SSR).
   - Resolve at call‑time, not at module‑eval time:
