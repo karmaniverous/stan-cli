@@ -54,7 +54,10 @@ const getPatchOpenCommand = (cwd: string): string | undefined => {
     const p = findConfigPathSync(cwd);
     if (!p) return DEFAULT_OPEN_COMMAND;
     const cli = loadCliConfigSync(cwd);
-    return cli.patchOpenCommand ?? DEFAULT_OPEN_COMMAND;
+    return typeof cli.patchOpenCommand === 'string' &&
+      cli.patchOpenCommand.length > 0
+      ? cli.patchOpenCommand
+      : DEFAULT_OPEN_COMMAND;
   } catch {
     return DEFAULT_OPEN_COMMAND;
   }

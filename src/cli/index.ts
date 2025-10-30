@@ -31,7 +31,7 @@ try {
     (m) => (m as { default?: Partial<InitModule> }).default?.registerInit,
     'registerInit',
   );
-} catch (e) {
+} catch {
   // Extra SSR/mocks fallback: accept default export when it is a callable function
   try {
     const def = (initMod as unknown as { default?: unknown }).default;
@@ -209,7 +209,9 @@ export const makeCli = (): Command => {
     '-D, --no-debug',
     'disable verbose debug logging',
   );
-  tagDefaultResolved?.(debugDefault ? optDebug : optNoDebug, true);
+  if (tagDefaultResolved) {
+    tagDefaultResolved(debugDefault ? optDebug : optNoDebug, true);
+  }
   cli.addOption(optDebug).addOption(optNoDebug);
 
   const optBoring = new Option(
@@ -220,7 +222,9 @@ export const makeCli = (): Command => {
     '-B, --no-boring',
     'do not disable color/styling',
   );
-  tagDefaultResolved?.(boringDefault ? optBoring : optNoBoring, true);
+  if (tagDefaultResolved) {
+    tagDefaultResolved(boringDefault ? optBoring : optNoBoring, true);
+  }
   cli.addOption(optBoring).addOption(optNoBoring);
 
   cli.option('-v, --version', 'print version and baseline-docs status');
@@ -229,7 +233,9 @@ export const makeCli = (): Command => {
   cli.addHelpText('after', () => renderAvailableScriptsHelp(process.cwd())); // Ensure tests never call process.exit() and argv normalization is consistent
   try {
     // Best-effort SSR-safe application of exit override/argv normalization
-    applyCliSafetyResolved?.(cli);
+    if (applyCliSafetyResolved) {
+      applyCliSafetyResolved(cli);
+    }
   } catch {
     /* best‑effort */
   }
@@ -304,13 +310,18 @@ export const makeCli = (): Command => {
   registerRun(cli);
   // Prefer resolved function; fall back to named import; otherwise skip (tests that don't need init).
   try {
-    (registerInitResolved ?? registerInitNamed)?.(cli);
+    const fn = registerInitResolved ?? registerInitNamed;
+    if (fn) {
+      fn(cli);
+    }
   } catch {
     /* best‑effort */
   }
   registerSnap(cli);
   try {
-    registerPatchResolved?.(cli);
+    if (registerPatchResolved) {
+      registerPatchResolved(cli);
+    }
   } catch {
     /* best-effort */
   }

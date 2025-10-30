@@ -257,7 +257,9 @@ export const registerRunOptions = (
     'deactivate facets for this run (naked form disables overlay)',
   );
   // Tag default overlay state from cliDefaults.run.facets
-  tagDefaultResolved?.(eff.facets ? optFacets : optNoFacets, true);
+  if (tagDefaultResolved) {
+    tagDefaultResolved(eff.facets ? optFacets : optNoFacets, true);
+  }
 
   cmd.addOption(optFacets).addOption(optNoFacets);
 

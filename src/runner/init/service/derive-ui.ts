@@ -48,10 +48,10 @@ export const deriveUiSeeds = async (
   const uiStanPath = resolveEffectiveStanPath(base, defaultStanPath);
   const uiSel = resolveIncludesExcludes(base);
   const uiScripts =
-    (isObj(base['stan-cli']) && isObj(base['stan-cli'].scripts)
+    isObj(base['stan-cli']) && isObj(base['stan-cli'].scripts)
       ? ((base['stan-cli'] as { scripts?: Record<string, string> }).scripts ??
         {})
-      : (cliCfg?.scripts as Record<string, string>)) ?? {};
+      : (cliCfg?.scripts as Record<string, string>) || {};
   return {
     stanPath: uiStanPath,
     includes: uiSel.includes,

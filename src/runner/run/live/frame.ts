@@ -44,7 +44,8 @@ export const composeFrameBody = (args: {
         state: st,
         // outputPath stored on state is already repo-relative in LiveUI; relOut is idempotent.
         cwd: process.cwd(),
-        now: Date.now,
+        // keep explicit reference; avoid optional chaining warnings
+        now: () => Date.now(),
       });
       rows.push([
         row.type,

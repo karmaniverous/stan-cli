@@ -114,9 +114,10 @@ export async function promptForConfig(
     typeof answers.stanPath === 'string' && answers.stanPath
       ? answers.stanPath.trim()
       : (defaults?.stanPath ?? '.stan');
-  const includesCsv = answers.includes ?? '';
-  const excludesCsv = answers.excludes ?? '';
-
+  const includesCsv =
+    typeof answers.includes === 'string' ? answers.includes : '';
+  const excludesCsv =
+    typeof answers.excludes === 'string' ? answers.excludes : '';
   let scripts: ScriptMap = {};
 
   if ((answers.preserveScripts ?? preserveScriptsFromDefaults) && hasDefaults) {

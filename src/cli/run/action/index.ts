@@ -14,6 +14,7 @@ import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
+import type { FacetOverlayOutput } from '@/runner/overlay/facets';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
@@ -216,7 +217,19 @@ export const registerRunAction = (
       }
     };
     const buildOverlay = await loadBuildOverlayInputs();
-    const overlayInputs = await buildOverlay({
+    const buildOverlayTyped = buildOverlay as unknown as (args: {
+      cwd: string;
+      stanPath: string;
+      enabled: boolean;
+      activateNames: string[];
+      deactivateNames: string[];
+      nakedActivateAll: boolean;
+    }) => Promise<{
+      overlay: FacetOverlayOutput | null;
+      engineExcludes: string[];
+      overlayPlan?: string[];
+    }>;
+    const overlayInputs = await buildOverlayTyped({
       cwd: runCwd,
       stanPath: config.stanPath,
       enabled: overlayEnabled,

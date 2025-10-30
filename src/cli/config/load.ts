@@ -122,7 +122,12 @@ const parseCliNode = (
   return {
     scripts: parsed.scripts as ScriptMap,
     cliDefaults: parsed.cliDefaults,
-    patchOpenCommand: parsed.patchOpenCommand ?? DEFAULT_OPEN_COMMAND,
+    // Avoid unnecessary nullish-coalescing warning by explicit type guard
+    patchOpenCommand:
+      typeof parsed.patchOpenCommand === 'string' &&
+      parsed.patchOpenCommand.length > 0
+        ? parsed.patchOpenCommand
+        : DEFAULT_OPEN_COMMAND,
     maxUndos: parsed.maxUndos,
     devMode: parsed.devMode,
   };

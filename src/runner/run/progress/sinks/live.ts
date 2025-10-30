@@ -66,7 +66,9 @@ export class LiveSink extends BaseSink {
   /** Force an immediate render of the current table state (no stop/clear). */
   flushNow(): void {
     try {
-      this.renderer?.flush();
+      if (this.renderer) {
+        this.renderer.flush();
+      }
     } catch {
       /* ignore */
     }

@@ -42,22 +42,31 @@ function applySafetyLocal(cmd: Command): void {
   };
   const origParse = holder.parse.bind(cmd);
   const origParseAsync = holder.parseAsync.bind(cmd);
+  // Safer normalization aligned with snap/safety helper: accept unknown[].
   const normalizeArgv = (
-    argv?: readonly string[],
+    argv?: readonly unknown[],
   ): readonly string[] | undefined => {
     if (!Array.isArray(argv)) return undefined;
     if (argv.length >= 2 && argv[0] === 'node' && argv[1] === 'stan') {
-      return argv.slice(2);
+      const rest = argv
+        .slice(2)
+        .filter((t): t is string => typeof t === 'string');
+      return rest as readonly string[];
     }
-    return argv;
+    return argv.every((t) => typeof t === 'string')
+      ? (argv as readonly string[])
+      : undefined;
   };
   try {
     holder.parse = (argv?: readonly string[], opts?: FromOpt) => {
-      origParse(normalizeArgv(argv), opts);
+      const norm = normalizeArgv(argv as unknown);
+      // Commander tolerates undefined argv
+      origParse(norm, opts);
       return cmd;
     };
     holder.parseAsync = async (argv?: readonly string[], opts?: FromOpt) => {
-      await origParseAsync(normalizeArgv(argv), opts);
+      const norm = normalizeArgv(argv as unknown);
+      await origParseAsync(norm, opts);
       return cmd;
     };
   } catch {
