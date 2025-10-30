@@ -119,4 +119,9 @@
 
 - Facet overlay — enable run‑exec for cancellation triage
   - Turned on `run-exec` to include execution helpers involved in keypress/SIGINT handling and process supervision while investigating cancel + archive cases.
-  - Kept `live-ui`, `run-session`, and `run-archive` enabled; `snap` remains disabled to minimize archive size.
+  - Kept `live-ui`, `run-session`, and `run-archive` enabled; `snap` remains disabled to minimize archive size.
+
+- CLI run semantics (defaults) — plan-only when selection empty and archive disabled
+  - src/cli/run/action/index.ts: early-return plan-only when derived selection is [] and archive is false (no flags), matching v2 expectations.
+  - Tests: src/cli/runner.defaults.test.ts updated to execute the “scripts=true” case (no -p) and assert selection from the recorded call; the “scripts=false + archive=false” case now exits early without invoking runSelected.
+  - This also avoids Commander/SSR exit surprises and removes reliance on plan flag for that assertion.

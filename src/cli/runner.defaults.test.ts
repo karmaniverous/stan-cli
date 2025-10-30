@@ -109,8 +109,8 @@ describe('run defaults from opts.cliDefaults.run', () => {
     applySafetyLocal(cli);
     registerRun(cli);
 
-    // Plan only to avoid side effects; selection is still derived.
-    await cli.parseAsync(['node', 'stan', 'run', '-p'], { from: 'user' });
+    // Execute so runSelected is invoked and selection is captured.
+    await cli.parseAsync(['node', 'stan', 'run'], { from: 'user' });
 
     const sel = ((recorded[0] ?? [])[2] ?? []) as string[];
     expect(Array.isArray(sel)).toBe(true);

@@ -206,6 +206,20 @@ export const registerRunAction = (
     const planOpt = (options as { plan?: unknown }).plan;
     const noPlanFlag = Boolean((options as { noPlan?: unknown }).noPlan);
 
+    // v2 semantics: when no scripts are selected by defaults and archive is disabled by defaults,
+    // behave as plan-only (nothing to do) even without explicit -S/-A flags.
+    if (
+      Array.isArray(derived.selection) &&
+      derived.selection.length === 0 &&
+      derived.behavior.archive === false
+    ) {
+      console.log(
+        'stan: nothing to do; plan only (no scripts selected, archive disabled)',
+      );
+      console.log(planBody);
+      return;
+    }
+
     // Persist overlay metadata (best-effort)
     try {
       await updateDocsMetaOverlay(runCwd, config.stanPath, {
