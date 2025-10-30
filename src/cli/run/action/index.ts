@@ -1,7 +1,10 @@
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
-import { findConfigPathSync } from '@karmaniverous/stan-core';
+import {
+  findConfigPathSync,
+  resolveStanPathSync,
+} from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
@@ -16,6 +19,7 @@ import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
 import { updateDocsMetaOverlay } from '@/runner/system/docs-meta';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
+import { printVersionInfo } from '@/runner/version';
 
 import type { FlagPresence } from '../options';
 import { loadCliConfigSyncLazy, loadDeriveRunParameters } from './loaders';
@@ -74,8 +78,19 @@ export const registerRunAction = (
     // Early legacy-engine notice remains in options preAction hook; here we resolve
     // effective engine context (namespaced or legacy) for the runner.
     await peekAndMaybeDebugLegacy(DBG_SCOPE_RUN_ENGINE_LEGACY, runCwd);
-    const resolveEngineConfig = await getResolveEngineConfig();
-    const config: ContextConfig = await resolveEngineConfig(runCwd);
+    let config: ContextConfig;
+    try {
+      const resolveEngineConfig = await getResolveEngineConfig();
+      config = await resolveEngineConfig(runCwd);
+    } catch {
+      // SSR/mock fallback: derive a minimal ContextConfig for plan/env paths.
+      try {
+        const sp = resolveStanPathSync(runCwd);
+        config = { stanPath: sp } as ContextConfig;
+      } catch {
+        config = { stanPath: '.stan' } as ContextConfig;
+      }
+    }
 
     // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
     const cliCfg = await loadCliConfigSyncLazy(runCwd);

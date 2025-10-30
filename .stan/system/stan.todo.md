@@ -142,3 +142,18 @@ Amendment:
   - src/cli/run/action/index.ts: early-return plan-only when derived selection is [] and archive is false (no flags), matching v2 expectations.
   - Tests: src/cli/runner.defaults.test.ts updated to execute the “scripts=true” case (no -p) and assert selection from the recorded call; the “scripts=false + archive=false” case now exits early without invoking runSelected.
   - This also avoids Commander/SSR exit surprises and removes reliance on plan flag for that assertion.
+
+### Facet overlay trimming — reduce archive size without blocking current fixes
+
+- Deactivated non-essential facets: ci, docs, init, patch, prompt, snap, tests, vscode.
+- Kept active for immediate test/debug work: live-ui, run-session, run-archive, run-exec, overlay.
+- Rationale: current failures center on live UI rendering/ordering, cancel matrix (keypress + archive), parity, and overlay mapping; trimming unrelated facets shrinks context while preserving needed surfaces.
+
+- Live UI — guarantee hint/header on fast runs
+  - src/runner/run/live/renderer.ts: render an immediate first frame after writer.start() to ensure the header, summary, and hint are visible even for very short sessions. Finalize remains hint‑free for the last frame.
+
+- Cancel matrix — belt‑and‑suspenders archive cleanup
+  - src/runner/run/service.ts: on outer cancellation path in runSelected, best‑effort remove archive.tar and archive.diff.tar and allow a brief settle to stabilize visibility across platforms. Complements existing session‑level guards.
+
+- Root env defaults — SSR/mock‑robust engine config fallback
+  - src/cli/run/action/index.ts: when resolveEngineConfigLazy cannot be resolved under SSR/mocks, derive a minimal ContextConfig via resolveStanPathSync (fallback ".stan") to keep `stan run -p` and env default tests from throwing.

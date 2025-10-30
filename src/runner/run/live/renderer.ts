@@ -74,6 +74,9 @@ export class ProgressRenderer {
     if (!this.writer) this.writer = createAnchoredWriter();
     this.writer.start();
 
+    // Immediate first frame so the hint/header appear even for fast runs.
+    this.render();
+
     this.timer = setInterval(() => {
       this.render();
     }, this.opts.refreshMs);

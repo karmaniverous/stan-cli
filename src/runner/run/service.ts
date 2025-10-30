@@ -1,3 +1,6 @@
+import { rm } from 'node:fs/promises';
+import path from 'node:path';
+
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
@@ -206,6 +209,25 @@ export const runSelected = async (
       continue;
     }
     if (cancelled) {
+      // Secondary guard: ensure on-disk archives are absent on cancellation
+      // even if a late race created them; best-effort only.
+      try {
+        const outAbs = path.join(cwd, config.stanPath, 'output');
+        await Promise.allSettled([
+          rm(path.join(outAbs, 'archive.tar'), { force: true }),
+          rm(path.join(outAbs, 'archive.diff.tar'), { force: true }),
+        ]);
+      } catch {
+        /* ignore */
+      }
+      // Brief settle to reflect deletions across platforms
+      try {
+        await new Promise((r) =>
+          setTimeout(r, process.platform === 'win32' ? 30 : 15),
+        );
+      } catch {
+        /* ignore */
+      }
       // Cancelled (non-restart): session already stopped UI and printed spacing.
       // Brief settle to ensure any best-effort deletions (archives) are reflected.
       try {
