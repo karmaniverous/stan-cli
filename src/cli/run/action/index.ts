@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
-// eslint-disable-next-line import/no-duplicates
 import {
   findConfigPathSync,
   resolveStanPathSync,
@@ -9,13 +8,12 @@ import {
 import type { Command } from 'commander';
 import { CommanderError } from 'commander';
 
-import { runDefaults } from '@/cli/cli-utils';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
 import { printHeader } from '@/cli/header';
+import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
-// eslint-disable-next-line import/no-duplicates
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
@@ -161,7 +159,7 @@ export const registerRunAction = (
     });
 
     // Facet overlay — determine defaults and per-run overrides (renamed flags)
-    const eff = runDefaults(runCwd);
+    const eff = getRunDefaults(runCwd);
     const facetsOpt = (options as { facets?: unknown }).facets;
     const noFacetsOpt = (options as { noFacets?: unknown }).noFacets;
 
@@ -290,7 +288,7 @@ export const registerRunAction = (
       /* best-effort */
     }
 
-    const defaultPrintPlan = runDefaults(runCwd).plan;
+    const defaultPrintPlan = getRunDefaults(runCwd).plan;
 
     const noScripts = (options as { scripts?: unknown }).scripts === false;
     if (noScripts && derived.behavior.archive === false) {

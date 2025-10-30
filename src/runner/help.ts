@@ -1,4 +1,9 @@
+import { readFileSync } from 'node:fs';
+
+import { findConfigPathSync } from '@karmaniverous/stan-core';
+
 import { loadCliConfigSync } from '@/cli/config/load';
+import { parseText } from '@/common/config/parse';
 
 /**
  * Render a help footer that lists available script keys and examples. *
@@ -12,7 +17,32 @@ import { loadCliConfigSync } from '@/cli/config/load';
 export const renderAvailableScriptsHelp = (cwd: string): string => {
   try {
     const cfg = loadCliConfigSync(cwd);
-    const keys = Object.keys(cfg.scripts);
+    let keys = Object.keys(cfg.scripts);
+    // Fallback: parse stan.config.* directly (namespaced first; legacy root) when loader yields no scripts.
+    if (!keys.length) {
+      const p = findConfigPathSync(cwd);
+      if (p) {
+        try {
+          const raw = readFileSync(p, 'utf8');
+          const rootUnknown: unknown = parseText(p, raw);
+          const root =
+            rootUnknown && typeof rootUnknown === 'object'
+              ? (rootUnknown as Record<string, unknown>)
+              : {};
+          const cliNs =
+            root['stan-cli'] && typeof root['stan-cli'] === 'object'
+              ? (root['stan-cli'] as Record<string, unknown>)
+              : null;
+          const scriptsNode =
+            (cliNs && typeof cliNs['scripts'] === 'object'
+              ? (cliNs['scripts'] as Record<string, unknown>)
+              : (root as { scripts?: Record<string, unknown> }).scripts) ?? {};
+          keys = Object.keys(scriptsNode);
+        } catch {
+          // best-effort; fall through
+        }
+      }
+    }
     if (!keys.length) return '';
     const example = keys[0] || 'lint';
     return [

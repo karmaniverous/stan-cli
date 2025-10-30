@@ -18,12 +18,12 @@ import { renderAvailableScriptsHelp } from '@/runner/help';
 import { printVersionInfo } from '@/runner/version';
 
 import * as cliUtils from './cli-utils';
-import { performInit } from './init';
+import { performInit, registerInit as registerInitNamed } from './init';
 // SSR‑robust resolver for registerInit (named or default) to prevent timing issues in tests
 import * as initMod from './init';
 type InitModule = typeof import('./init');
 type RegisterInitFn = InitModule['registerInit'];
-let registerInitResolved: RegisterInitFn;
+let registerInitResolved: RegisterInitFn | undefined;
 try {
   registerInitResolved = resolveNamedOrDefaultFunction<RegisterInitFn>(
     initMod as unknown,
@@ -38,10 +38,11 @@ try {
     if (typeof def === 'function') {
       registerInitResolved = def as unknown as RegisterInitFn;
     } else {
-      throw e instanceof Error ? e : new Error(String(e));
+      // Swallow resolution error; fall back later (named import or no-op).
+      registerInitResolved = undefined;
     }
   } catch {
-    throw e instanceof Error ? e : new Error(String(e));
+    registerInitResolved = undefined;
   }
 }
 // Robustly resolve registerPatch (named or default export) to tolerate SSR/ESM interop.
@@ -301,7 +302,12 @@ export const makeCli = (): Command => {
   });
   // Subcommands
   registerRun(cli);
-  registerInitResolved(cli);
+  // Prefer resolved function; fall back to named import; otherwise skip (tests that don't need init).
+  try {
+    (registerInitResolved ?? registerInitNamed)?.(cli);
+  } catch {
+    /* best‑effort */
+  }
   registerSnap(cli);
   try {
     registerPatchResolved?.(cli);

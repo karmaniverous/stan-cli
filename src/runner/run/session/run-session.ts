@@ -356,7 +356,7 @@ export const runSessionOnce = async (args: {
     // absorb a just-arrived keypress cancellation on slower filesystems.
     try {
       await new Promise((r) =>
-        setTimeout(r, process.platform === 'win32' ? 220 : 30),
+        setTimeout(r, process.platform === 'win32' ? 300 : 30),
       );
     } catch {
       /* ignore */
