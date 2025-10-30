@@ -4,6 +4,7 @@ import path from 'node:path';
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
+import { yieldToEventLoop } from '@/runner/run/exec/util';
 // Note: under SSR/tests, the helper above can be unavailable or reshaped; we guard for that below.
 import type { RunnerConfig } from '@/runner/run/types';
 
@@ -121,7 +122,8 @@ const resolveUI = (): {
 /**
  * High‑level runner for `stan run`.
  *
- * Responsibilities: * - Preflight docs/version (best‑effort).
+ * Responsibilities:
+ * - Preflight docs/version (best‑effort).
  * - Ensure output/diff directories.
  * - Print the run plan.
  * - Execute selected scripts (in the chosen mode).
@@ -238,8 +240,22 @@ export const runSelected = async (
       }
       return created;
     }
-    // Normal completion: stop UI once for the whole run, then print trailing spacing.
+    // Normal completion: ensure any final progress callbacks land,
+    // flush the current table state once, then persist the final frame.
     try {
+      try {
+        await yieldToEventLoop();
+      } catch {
+        /* ignore */
+      }
+      const maybeFlush = (ui as unknown as { flushNow?: () => void }).flushNow;
+      if (typeof maybeFlush === 'function') {
+        try {
+          maybeFlush();
+        } catch {
+          /* ignore */
+        }
+      }
       ui.stop();
     } catch {
       /* ignore */
