@@ -1,4 +1,7 @@
 // src/runner/run/session/run-session/cancel.ts
+import { existsSync } from 'node:fs';
+import { resolve as resolvePath } from 'node:path';
+
 import type { ProcessSupervisor } from '@/runner/run/live/supervisor';
 import type { SessionOutcome } from '@/runner/run/session/types';
 import type { RunnerUI } from '@/runner/run/ui';
@@ -20,7 +23,31 @@ export const cancelAndReturn = async (args: {
   outAbs: string;
 }): Promise<SessionOutcome> => {
   const { created, ui, supervisor, detachSignals, liveEnabled, outAbs } = args;
-  await removeArchivesIfAny(outAbs).catch(() => void 0);
+  // Belt-and-suspenders: robust archive removal with small bounded retries.
+  const tarP = resolvePath(outAbs, 'archive.tar');
+  const diffP = resolvePath(outAbs, 'archive.diff.tar');
+  const gone = (): boolean => !existsSync(tarP) && !existsSync(diffP);
+  const tryRemove = async (): Promise<void> => {
+    await removeArchivesIfAny(outAbs).catch(() => void 0);
+  };
+  // First attempt (best-effort)
+  await tryRemove();
+  if (!gone()) {
+    // Short series of small settles to absorb lingering handles (Windows skewed).
+    const maxTries = win32() ? 10 : 6;
+    for (let i = 0; i < maxTries; i += 1) {
+      await settle(win32() ? 200 : 40);
+      await tryRemove();
+      if (gone()) break;
+    }
+    // Final tiny settle for visibility before proceeding.
+    try {
+      await settle(win32() ? 120 : 25);
+    } catch {
+      /* ignore */
+    }
+  }
+
   try {
     ui.stop();
   } catch {

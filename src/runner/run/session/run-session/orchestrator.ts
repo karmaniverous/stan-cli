@@ -116,6 +116,15 @@ export const runSessionOnce = async (args: {
 
   ui.start();
 
+  // Ensure at least one immediate render occurs even for very fast runs
+  // so that a frame containing the hint is present in TTY logs before
+  // the final persisted frame replaces it.
+  try {
+    const flush = (ui as unknown as { flushNow?: () => void }).flushNow;
+    if (typeof flush === 'function') flush();
+  } catch {
+    /* best-effort */
+  }
   // Supervisor & cancellation
   const supervisor = new ProcessSupervisor({
     hangWarn: behavior.hangWarn,
@@ -257,7 +266,7 @@ export const runSessionOnce = async (args: {
     if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
       try {
         await Promise.all(
-          (a.created ?? []).map((p) =>
+          a.created.map((p) =>
             import('node:fs/promises').then(({ rm }) => rm(p, { force: true })),
           ),
         );

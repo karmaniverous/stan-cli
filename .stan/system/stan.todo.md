@@ -19,6 +19,16 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+- Run/cancel: robust archive cleanup on user cancel
+  - Added a bounded delete-and-settle loop in the session cancel return path to guarantee
+    removal of archive.tar and archive.diff.tar even when late races leave short-lived handles
+    (Windows-skewed). Mirrors the runner-level backstop with platform-aware settles.
+
+- Live UI: guaranteed first-frame flush with hint
+  - After UI start, issue a one-time immediate flush so a frame containing the hint line
+    is always printed even for very fast runs. Keeps the alignment/hint expectations stable
+    without affecting the final persisted frame.
+
 - SSR/mocks‑robust dynamic resolvers across CLI surfaces (run action/options, derive, overlay builders) to stabilize evaluation order in vitest forks/SSR without doubling default+named exports.
 - Cancel hardening at archive boundary and run-level backstops: pre-archive schedule guard, shouldContinue threading in FULL/DIFF, and best‑effort late-cancel deletions with platform-aware settles.
 - Facet overlay mapping in runner config: subtree roots expanded, leaf‑globs scoped via anchors; overlay metadata recorded to .stan/system/.docs.meta.json for downstream view awareness.
