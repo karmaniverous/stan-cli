@@ -61,4 +61,9 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Lint (overlay): explicit narrowing over facet meta
   - Replaced optional-chaining on meta[name] include/exclude with a local object guard and array checks in facets.ts.
-  - Next: clean snap/handlers and snap/safety “??/?.*” cases; then patch diagnostics/service once the patch facet is enabled.
+  - Next: clean snap/handlers and snap/safety “??/?.*” cases; then patch diagnostics/service once the patch facet is enabled.
+
+- Facets: focus next lint group (snap + patch)
+  - Enabled patch facet and kept snap facet enabled to surface remaining lint errors in those areas next thread.
+  - Disabled overlay facet (lint pass complete) to minimize archive size.
+  - Next: resolve lint in src/cli/snap/*, src/runner/snap/*, and src/runner/patch/*.
