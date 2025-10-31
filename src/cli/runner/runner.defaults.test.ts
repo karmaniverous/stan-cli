@@ -17,6 +17,9 @@ vi.mock('@/runner/run', () => ({
 
 import { registerRun } from '@/cli/runner';
 
+const toArgv = (a: unknown): readonly unknown[] =>
+  Array.isArray(a) ? (a as readonly unknown[]) : ([] as const);
+
 // Local, SSR/mocks‑robust safety adapter (avoids brittle import shapes)
 function applySafetyLocal(cmd: Command): void {
   try {
@@ -59,13 +62,13 @@ function applySafetyLocal(cmd: Command): void {
   };
   try {
     holder.parse = (argv?: readonly string[], opts?: FromOpt) => {
-      const norm = normalizeArgv(argv as unknown);
+      const norm = normalizeArgv(toArgv(argv));
       // Commander tolerates undefined argv
       origParse(norm, opts);
       return cmd;
     };
     holder.parseAsync = async (argv?: readonly string[], opts?: FromOpt) => {
-      const norm = normalizeArgv(argv as unknown);
+      const norm = normalizeArgv(toArgv(argv));
       await origParseAsync(norm, opts);
       return cmd;
     };
@@ -119,7 +122,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
     registerRun(cli);
 
     // Execute so runSelected is invoked and selection is captured.
-    await cli.parseAsync(['node', 'stan', 'run'], { from: 'user' });
+    await cli.parseAsync(toArgv(['node', 'stan', 'run']), { from: 'user' });
 
     const sel = ((recorded[0] ?? [])[2] ?? []) as string[];
     expect(Array.isArray(sel)).toBe(true);
@@ -147,7 +150,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
 
     // With scripts=false and archive=false defaults, the CLI prints a plan‑only notice
     // and should not invoke runSelected at all.
-    await cli.parseAsync(['node', 'stan', 'run'], { from: 'user' });
+    await cli.parseAsync(toArgv(['node', 'stan', 'run']), { from: 'user' });
 
     expect(recorded.length).toBe(0);
   });
@@ -170,7 +173,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
     applySafetyLocal(cli);
     registerRun(cli);
 
-    await cli.parseAsync(['node', 'stan', 'run'], { from: 'user' });
+    await cli.parseAsync(toArgv(['node', 'stan', 'run']), { from: 'user' });
 
     const sel = ((recorded[0] ?? [])[2] ?? []) as string[];
     expect(sel).toEqual(['b']);
@@ -190,7 +193,9 @@ describe('run defaults from opts.cliDefaults.run', () => {
     applySafetyLocal(cli);
     registerRun(cli);
 
-    await cli.parseAsync(['node', 'stan', 'run', '-s', 'a'], { from: 'user' });
+    await cli.parseAsync(toArgv(['node', 'stan', 'run', '-s', 'a']), {
+      from: 'user',
+    });
 
     const behavior = ((recorded[0] ?? [])[4] ?? {}) as {
       hangWarn?: number;

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { describe, expect, it, vi } from 'vitest';
 
-import { registerRun } from './runner';
+import { registerRun } from '.';
 
 describe('run help shows numeric defaults for hang thresholds', () => {
   it('prints (DEFAULT: Ns) for --hang-warn/--hang-kill/--hang-kill-grace', () => {

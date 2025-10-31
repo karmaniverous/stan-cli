@@ -22,3 +22,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - SSR/mocks‑robust dynamic resolvers across CLI surfaces (run action/options, derive, overlay builders) to stabilize evaluation order in vitest forks/SSR without doubling default+named exports.
 - Cancel hardening at archive boundary and run-level backstops: pre-archive schedule guard, shouldContinue threading in FULL/DIFF, and best‑effort late-cancel deletions with platform-aware settles.
 - Facet overlay mapping in runner config: subtree roots expanded, leaf‑globs scoped via anchors; overlay metadata recorded to .stan/system/.docs.meta.json for downstream view awareness.
+
+- Amendment: Commander argv augmentation (types-only)
+  - Simplified the augmentation to use a unified signature with `ReadonlyArray<unknown>` for `parse`/`parseAsync`, satisfying `@typescript-eslint/unified-signatures` and `no-redundant-type-constituents`. No runtime behavior change; tests pass with the existing argv normalization.

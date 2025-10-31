@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
 
-import { runSelected } from './run';
+import { runSelected } from '.';
 
 describe('runSelected archive/combine/keep behavior', () => {
   let dir: string;
