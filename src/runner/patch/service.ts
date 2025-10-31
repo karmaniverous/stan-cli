@@ -120,7 +120,7 @@ export const runPatch = async (
 
   // 2) Classify kind (File Ops vs Diff)
   const opsPlan = parseFileOpsBlock(raw);
-  const hasOps = (opsPlan.ops?.length ?? 0) > 0;
+  const hasOps = opsPlan.ops.length > 0;
   let cleaned = '';
   try {
     cleaned = detectAndCleanPatch(raw);
@@ -150,7 +150,7 @@ export const runPatch = async (
   let stanPath = '.stan';
   try {
     const cfg = await loadConfig(cwd);
-    stanPath = cfg.stanPath ?? '.stan';
+    stanPath = cfg.stanPath;
   } catch {
     stanPath = '.stan';
   }
@@ -224,7 +224,12 @@ export const runPatch = async (
       const diag = composeDiffFailureEnvelope(cleaned, {
         // Normalize shapes for the envelope composer (js: null -> undefined)
         result: out.result,
-        js: out.js ?? undefined,
+        js:
+          out.js === null
+            ? (undefined as unknown as {
+                failed?: Array<{ path?: string; reason?: string }>;
+              })
+            : out.js,
       });
       console.log(
         `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,

@@ -66,4 +66,12 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Facets: focus next lint group (snap + patch)
   - Enabled patch facet and kept snap facet enabled to surface remaining lint errors in those areas next thread.
   - Disabled overlay facet (lint pass complete) to minimize archive size.
-  - Next: resolve lint in src/cli/snap/*, src/runner/snap/*, and src/runner/patch/*.
+  - Next: resolve lint in src/cli/snap/*, src/runner/snap/*, and src/runner/patch/*.
+
+- Lint (snap + patch facets): remove unnecessary coalescing/optional chaining
+  - src/cli/snap/handlers.ts: replaced “?? {}” fallbacks with guarded Object.values().
+  - src/cli/snap/safety.ts: removed optional call on guaranteed resolver.
+  - src/runner/patch/diagnostics.ts: dropped unnecessary optional-chains on a non-nullish param; kept safe chaining for optional subfields.
+  - src/runner/patch/service.ts: removed “ops?.length ?? 0”, “cfg.stanPath ?? '.stan'”; normalized js=null to undefined for diagnostics.
+  - src/runner/snap/capture.ts: removed redundant “??” on required SnapState field.
+  - src/runner/snap/snap-run.ts: simplified condition flagged as always-falsy.

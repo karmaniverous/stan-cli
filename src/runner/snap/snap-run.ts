@@ -41,15 +41,12 @@ const resolveCaptureSnapshotAndArchives = async (): Promise<CaptureFn> => {
 
   // 3) default as function
   try {
-    const viaDefaultFn =
-      typeof (modUnknown as { default?: unknown }).default === 'function'
-        ? ((
-            modUnknown as {
-              default: (...a: unknown[]) => Promise<unknown>;
-            }
-          ).default as unknown as CaptureFn)
-        : undefined;
-    if (typeof viaDefaultFn === 'function') return viaDefaultFn;
+    const dAny = (modUnknown as { default?: unknown }).default;
+    if (typeof dAny === 'function') {
+      return dAny as unknown as {
+        (...a: unknown[]): Promise<unknown>;
+      } as unknown as CaptureFn;
+    }
   } catch {
     /* ignore */
   }

@@ -99,7 +99,7 @@ export const captureSnapshotAndArchives = async ({
   st.index = st.entries.length - 1;
 
   // Trim oldest beyond retention; remove dropped files best-effort
-  const maxKeep = st.maxUndos ?? maxUndos;
+  const maxKeep = st.maxUndos;
   while (st.entries.length > maxKeep) {
     const drop = st.entries.shift();
     if (drop) {

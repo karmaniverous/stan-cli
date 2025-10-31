@@ -19,7 +19,7 @@ export function applyCliSafetyTo(cmd: Command): void {
         (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
       'applyCliSafety',
     );
-    fn?.(cmd);
+    fn(cmd);
     applied = true;
   } catch {
     /* best-effort */
