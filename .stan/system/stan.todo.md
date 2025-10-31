@@ -37,3 +37,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
   - Amendment: fix TS/lint after decomposition (run-session steps)
     - Typed supervisor in archive step and corrected Promise.all catch placement; removes TS2739/TS2339 and unsafe-call lint without changing behavior.
+
+- Amendment: wire supervisor in deps for archive step and switch to static rm import to satisfy TS/lint post-decomposition without changing behavior.

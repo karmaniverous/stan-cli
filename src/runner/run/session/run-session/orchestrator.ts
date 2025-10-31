@@ -186,7 +186,7 @@ export const runSessionOnce = async (args: {
     const { short, added } = await runArchiveIfEnabled({
       enabled: true,
       cancelCtl,
-      deps: { created, ui, detachSignals, outAbs },
+      deps,
       cwd,
       config,
       behavior,

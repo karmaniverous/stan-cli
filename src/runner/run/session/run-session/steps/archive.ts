@@ -1,4 +1,6 @@
 // src/runner/run/session/run-session/steps/archive.ts
+import { rm } from 'node:fs/promises';
+
 import type { ProcessSupervisor } from '@/runner/run/live/supervisor';
 import { getRunArchiveStage } from '@/runner/run/session/archive-stage-resolver';
 import { removeArchivesIfAny } from '@/runner/run/session/run-session/cleanup';
@@ -77,11 +79,9 @@ export async function runArchiveIfEnabled(args: {
     };
   }
   if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
-    await Promise.all(
-      a.created.map((p) =>
-        import('node:fs/promises').then(({ rm }) => rm(p, { force: true })),
-      ),
-    ).catch(() => void 0);
+    await Promise.all(a.created.map((p) => rm(p, { force: true }))).catch(
+      () => void 0,
+    );
 
     await removeArchivesIfAny(deps.outAbs).catch(() => void 0);
     try {
