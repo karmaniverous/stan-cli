@@ -54,3 +54,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Cleaned the remaining rule in run‑ui by removing an unnecessary optional chain on RunnerControl.detach().
   - Enabled overlay and snap facets to expose their lint surfaces next turn while keeping the archive scope small (patch/init/tests remain disabled).
   - Next: sweep lint in overlay (facets.ts) and snap (handlers/safety) once included in the archive.
+
+- Lint (init service): remove unnecessary coalescing/casts
+  - Derive UI seeds and force path: replaced casts that masked undefined and triggered @typescript-eslint/no-unnecessary-condition with explicit typeof guards.
+  - Next: address overlay/facets optional-chaining and snap handler coalescing in the following pass.

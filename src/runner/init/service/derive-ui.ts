@@ -47,11 +47,18 @@ export const deriveUiSeeds = async (
   }
   const uiStanPath = resolveEffectiveStanPath(base, defaultStanPath);
   const uiSel = resolveIncludesExcludes(base);
-  const uiScripts =
-    isObj(base['stan-cli']) && isObj(base['stan-cli'].scripts)
-      ? ((base['stan-cli'] as { scripts?: Record<string, string> }).scripts ??
-        {})
-      : (cliCfg?.scripts as Record<string, string>) || {};
+  // Scripts: prefer namespaced config; fall back to CLI config; avoid casts that
+  // force truthiness and trigger “unnecessary condition” on coalescing.
+  const uiScripts = (() => {
+    const cliNs = isObj(base['stan-cli']) ? base['stan-cli'] : null;
+    if (cliNs && isObj((cliNs as { scripts?: unknown }).scripts)) {
+      return (cliNs as { scripts?: Record<string, string> }).scripts ?? {};
+    }
+    if (cliCfg && typeof cliCfg.scripts === 'object') {
+      return cliCfg.scripts as Record<string, string>;
+    }
+    return {} as Record<string, string>;
+  })();
   return {
     stanPath: uiStanPath,
     includes: uiSel.includes,

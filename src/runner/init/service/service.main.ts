@@ -106,7 +106,11 @@ export const performInitService = async ({
         excludes: [],
         includes: [],
         patchOpenCommand: 'code -g {file}',
-        scripts: (cliCfg?.scripts as Record<string, string>) ?? {},
+        // Narrow safely instead of relying on a cast + “?? {}” (lints as unnecessary).
+        scripts:
+          cliCfg && typeof cliCfg.scripts === 'object'
+            ? (cliCfg.scripts as Record<string, string>)
+            : ({} as Record<string, string>),
         stanPath: defaultStanPath,
       };
     } else if (!namespaced) {
