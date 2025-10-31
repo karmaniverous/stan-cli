@@ -109,10 +109,13 @@ export const loadBuildOverlayInputs =
     try {
       return resolveNamedOrDefaultFunction<BuildOverlayInputsFn>(
         mod as unknown,
-        (m) => (m as { buildOverlayInputs?: unknown }).buildOverlayInputs,
+        (m) =>
+          (m as { buildOverlayInputs?: unknown }).buildOverlayInputs as
+            | BuildOverlayInputsFn
+            | undefined,
         (m) =>
           (m as { default?: { buildOverlayInputs?: unknown } }).default
-            ?.buildOverlayInputs,
+            ?.buildOverlayInputs as BuildOverlayInputsFn | undefined,
         'buildOverlayInputs',
       );
     } catch (e) {

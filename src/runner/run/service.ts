@@ -227,7 +227,7 @@ export const runSelected = async (
           rm(diffP, { force: true }),
         ]);
       };
-      const maxTries = 6;
+      const maxTries = 8;
       for (let i = 0; i < maxTries; i += 1) {
         try {
           await attemptDelete();
@@ -237,12 +237,12 @@ export const runSelected = async (
         if (isGone()) break;
         // Platform-aware small settle between attempts.
         const win = process.platform === 'win32';
-        await settle(win ? 160 : 40);
+        await settle(win ? 200 : 40);
       }
       // Brief settle to reflect deletions across platforms
       try {
         await new Promise((r) =>
-          setTimeout(r, process.platform === 'win32' ? 80 : 25),
+          setTimeout(r, process.platform === 'win32' ? 100 : 25),
         );
       } catch {
         /* ignore */
