@@ -139,7 +139,7 @@ export class LiveUI implements RunnerUI {
   prepareForNewSession(): void {
     try {
       // Drop any prior model state so the next session displays only fresh rows.
-      (this.model as unknown as { clearAll?: () => void })?.clearAll?.();
+      this.model.clearAll();
     } catch {
       /* ignore */
     }
@@ -186,7 +186,10 @@ export class LiveUI implements RunnerUI {
       /* ignore */
     }
     try {
-      this.control?.detach();
+      const ctl = this.control;
+      if (ctl) {
+        ctl.detach();
+      }
     } catch {
       /* ignore */
     }

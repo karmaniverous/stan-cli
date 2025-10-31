@@ -48,4 +48,9 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Introduced src/cli/config/raw.ts (readRawConfigSync, helpers) and refactored help footer, run/config-fallback, run-defaults, and root defaults to use it instead of bespoke read+parse code.
 
 - Consistency: SSR “named-or-default” resolution
-  - Removed local tryResolveNamedOrDefault shims and used the shared resolveNamedOrDefaultFunction in src/runner/run/service.ts and src/cli/runner/index.ts (kept callable-default last-chance fallback where already present).
+  - Removed local tryResolveNamedOrDefault shims and used the shared resolveNamedOrDefaultFunction in src/runner/run/service.ts and src/cli/runner/index.ts (kept callable-default last-chance fallback where already present).
+
+- Lint (enabled facets) + facet ramp-up
+  - Cleaned the remaining rule in run‑ui by removing an unnecessary optional chain on RunnerControl.detach().
+  - Enabled overlay and snap facets to expose their lint surfaces next turn while keeping the archive scope small (patch/init/tests remain disabled).
+  - Next: sweep lint in overlay (facets.ts) and snap (handlers/safety) once included in the archive.
