@@ -77,7 +77,7 @@ export function registerInit(cli: Commander): Command {
   {
     let applied = false;
     try {
-      const applyCliSafetyResolved: ApplyCliSafetyFn | undefined =
+      const applyCliSafetyResolved: ApplyCliSafetyFn =
         resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
           cliUtils as unknown,
           (m) => (m as CliUtilsModule).applyCliSafety,
@@ -86,12 +86,10 @@ export function registerInit(cli: Commander): Command {
               ?.applyCliSafety,
           'applyCliSafety',
         );
-      if (applyCliSafetyResolved) {
-        applyCliSafetyResolved(cli);
-        applied = true;
-      }
+      applyCliSafetyResolved(cli);
+      applied = true;
     } catch {
-      /* best-effort */
+      /* best‑effort */
     }
     if (!applied) {
       try {
@@ -107,7 +105,7 @@ export function registerInit(cli: Commander): Command {
           }
         ).patchParseMethods?.(cli);
       } catch {
-        /* best-effort */
+        /* best‑effort */
       }
     }
   }
@@ -125,7 +123,7 @@ export function registerInit(cli: Commander): Command {
       }
     ).installExitOverride?.(cli);
   } catch {
-    /* best-effort */
+    /* best‑effort */
   }
 
   const sub = cli
@@ -137,7 +135,7 @@ export function registerInit(cli: Commander): Command {
   {
     let applied = false;
     try {
-      const applyCliSafetySub: ApplyCliSafetyFn | undefined =
+      const applyCliSafetySub: ApplyCliSafetyFn =
         resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
           cliUtils as unknown,
           (m) => (m as CliUtilsModule).applyCliSafety,
@@ -146,12 +144,10 @@ export function registerInit(cli: Commander): Command {
               ?.applyCliSafety,
           'applyCliSafety',
         );
-      if (applyCliSafetySub) {
-        applyCliSafetySub(sub);
-        applied = true;
-      }
+      applyCliSafetySub(sub);
+      applied = true;
     } catch {
-      /* best-effort */
+      /* best‑effort */
     }
     if (!applied) {
       try {
@@ -167,7 +163,7 @@ export function registerInit(cli: Commander): Command {
           }
         ).patchParseMethods?.(sub);
       } catch {
-        /* best-effort */
+        /* best‑effort */
       }
     }
   }
@@ -185,7 +181,7 @@ export function registerInit(cli: Commander): Command {
       }
     ).installExitOverride?.(sub);
   } catch {
-    /* best-effort */
+    /* best‑effort */
   }
 
   sub
