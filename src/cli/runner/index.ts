@@ -11,44 +11,10 @@ import * as runOptionsMod from '../run/options';
 
 type ActionModule = typeof import('../run/action');
 type RegisterRunActionFn = ActionModule['registerRunAction'];
-// SSR/test-robust wrapper: prefer the helper when callable; otherwise manually pick named/default.
-const tryResolveNamedOrDefault = <F>(
-  mod: unknown,
-  pickNamed: (m: unknown) => F | undefined,
-  pickDefault: (m: unknown) => F | undefined,
-  label?: string,
-): F => {
-  try {
-    if (typeof resolveNamedOrDefaultFunction === 'function') {
-      return resolveNamedOrDefaultFunction<F>(
-        mod,
-        pickNamed,
-        pickDefault,
-        label,
-      );
-    }
-  } catch {
-    /* ignore helper failures */
-  }
-  try {
-    const named = pickNamed(mod);
-    if (typeof named === 'function') return named as F;
-  } catch {
-    /* ignore */
-  }
-  try {
-    const viaDefault = pickDefault(mod);
-    if (typeof viaDefault === 'function') return viaDefault as F;
-  } catch {
-    /* ignore */
-  }
-  const what = label && label.trim().length ? label.trim() : 'export';
-  throw new Error(`${what} not found`);
-};
 
 const getRegisterRunAction = (): RegisterRunActionFn => {
   try {
-    return tryResolveNamedOrDefault<RegisterRunActionFn>(
+    return resolveNamedOrDefaultFunction<RegisterRunActionFn>(
       runActionMod as unknown,
       (m) => (m as ActionModule).registerRunAction,
       (m) =>
@@ -60,30 +26,27 @@ const getRegisterRunAction = (): RegisterRunActionFn => {
     // 1) default as function
     try {
       const defAny = (runActionMod as unknown as { default?: unknown }).default;
-      if (typeof defAny === 'function')
-        return defAny as unknown as RegisterRunActionFn;
+      if (typeof defAny === 'function') return defAny as RegisterRunActionFn;
       // 2) nested default.default
       const nested =
         defAny && typeof defAny === 'object'
           ? (defAny as { default?: unknown }).default
           : undefined;
-      if (typeof nested === 'function')
-        return nested as unknown as RegisterRunActionFn;
+      if (typeof nested === 'function') return nested as RegisterRunActionFn;
       // 3) module-as-function
-      if (typeof (runActionMod as unknown) === 'function')
-        return runActionMod as unknown as RegisterRunActionFn;
+      if (typeof runActionMod === 'function')
+        return runActionMod as RegisterRunActionFn;
       // 4) scan default object for any callable
       if (defAny && typeof defAny === 'object') {
         for (const v of Object.values(defAny as Record<string, unknown>)) {
-          if (typeof v === 'function')
-            return v as unknown as RegisterRunActionFn;
+          if (typeof v === 'function') return v as RegisterRunActionFn;
         }
       }
       // 5) scan top-level module object for any callable (rare SSR mock shape)
       for (const v of Object.values(
-        (runActionMod as unknown as Record<string, unknown>) ?? {},
+        runActionMod as unknown as Record<string, unknown>,
       )) {
-        if (typeof v === 'function') return v as unknown as RegisterRunActionFn;
+        if (typeof v === 'function') return v as RegisterRunActionFn;
       }
     } catch {
       /* ignore and rethrow original */
@@ -94,7 +57,7 @@ const getRegisterRunAction = (): RegisterRunActionFn => {
 type OptionsModule = typeof import('../run/options');
 type RegisterRunOptionsFn = OptionsModule['registerRunOptions'];
 const getRegisterRunOptions = (): RegisterRunOptionsFn => {
-  return tryResolveNamedOrDefault<RegisterRunOptionsFn>(
+  return resolveNamedOrDefaultFunction<RegisterRunOptionsFn>(
     runOptionsMod as unknown,
     (m) => (m as OptionsModule).registerRunOptions,
     (m) =>

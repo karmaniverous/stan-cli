@@ -1,4 +1,3 @@
-// src/runner/run/session/archive-stage/index.ts
 import path from 'node:path';
 
 import type { RunnerConfig } from '@/runner/run/types';
@@ -10,8 +9,7 @@ import { getArchivePhase, getStageImports } from './imports';
 import { buildArchiveProgress } from './progress';
 import { decideIncludeOnChange, isEphemeralPrompt } from './prompt-ephemeral';
 import { preparePromptOrThrow } from './prompt-prepare';
-import { runEphemeral } from './run-ephemeral';
-import { runNonEphemeral } from './run-normal';
+import { runArchiveUnified } from './run-archive';
 
 export const runArchiveStage = async (args: {
   cwd: string;
@@ -56,25 +54,37 @@ export const runArchiveStage = async (args: {
     }
 
     try {
-      const out = await runEphemeral({
+      const out = await runArchiveUnified({
         cwd,
-        config,
+        stanPath: config.stanPath,
         behavior,
-        ui,
         promptAbs: promptAbs as string,
         promptDisplay,
-        includeOnChange,
         baseFull,
         baseDiff,
         archivePhase,
-        stageImports: async (c, sp, m) => {
+        stageImports: async (
+          c: string,
+          sp: string,
+          m?: Record<string, string[]> | null,
+        ): Promise<void> => {
           try {
             await stageImports(c, sp, m);
           } catch {
             /* best-effort */
           }
         },
-        preparePrompt: ({ cwd, stanPath, promptAbs, promptDisplay }) =>
+        preparePrompt: ({
+          cwd,
+          stanPath,
+          promptAbs,
+          promptDisplay,
+        }: {
+          cwd: string;
+          stanPath: string;
+          promptAbs: string;
+          promptDisplay: string;
+        }) =>
           preparePromptOrThrow({
             cwd,
             stanPath,
@@ -83,6 +93,9 @@ export const runArchiveStage = async (args: {
           }),
         shouldContinue,
         progress,
+        ephemeral: true,
+        includeOnChange,
+        importsMap: config.imports,
       });
       created.push(...out);
       return { created, cancelled: false };
@@ -103,7 +116,7 @@ export const runArchiveStage = async (args: {
   // Non‑ephemeral path: prepare when promptAbs provided; otherwise use local only.
   try {
     if (!shouldContinue()) return { created, cancelled: true };
-    const out = await runNonEphemeral({
+    const out = await runArchiveUnified({
       cwd,
       stanPath: config.stanPath,
       behavior,
@@ -112,7 +125,17 @@ export const runArchiveStage = async (args: {
       baseFull,
       baseDiff,
       archivePhase,
-      prepareIfNeeded: async ({ cwd, stanPath, promptAbs, promptDisplay }) => {
+      prepareIfNeeded: async ({
+        cwd,
+        stanPath,
+        promptAbs,
+        promptDisplay,
+      }: {
+        cwd: string;
+        stanPath: string;
+        promptAbs: string | null;
+        promptDisplay: string;
+      }) => {
         if (!promptAbs) return null;
         return preparePromptOrThrow({
           cwd,
@@ -123,6 +146,7 @@ export const runArchiveStage = async (args: {
       },
       shouldContinue,
       progress,
+      ephemeral: false,
     });
     created.push(...out);
     return { created, cancelled: false };

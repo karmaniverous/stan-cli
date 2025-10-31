@@ -1,9 +1,5 @@
 // src/cli/root/defaults.ts
-import { readFileSync } from 'node:fs';
-
-import { findConfigPathSync } from '@karmaniverous/stan-core';
-
-import { parseText } from '@/common/config/parse';
+import { pickCliNode, readRawConfigSync } from '@/cli/config/raw';
 
 /** Read root debug/boring/yes defaults synchronously with a permissive legacy fallback. */
 export const readRootDefaultsFromConfig = (
@@ -14,18 +10,8 @@ export const readRootDefaultsFromConfig = (
   yesDefault: boolean;
 } | null => {
   try {
-    const p = findConfigPathSync(dir);
-    if (!p) return null;
-    const raw = readFileSync(p, 'utf8');
-    const rootUnknown: unknown = parseText(p, raw);
-    const root =
-      rootUnknown && typeof rootUnknown === 'object'
-        ? (rootUnknown as Record<string, unknown>)
-        : {};
-    const cliNs =
-      root['stan-cli'] && typeof root['stan-cli'] === 'object'
-        ? (root['stan-cli'] as Record<string, unknown>)
-        : null;
+    const root = readRawConfigSync(dir);
+    const cliNs = pickCliNode(root);
 
     const toBool = (v: unknown): boolean => {
       if (typeof v === 'boolean') return v;

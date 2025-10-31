@@ -39,3 +39,13 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
     - Typed supervisor in archive step and corrected Promise.all catch placement; removes TS2739/TS2339 and unsafe-call lint without changing behavior.
 
 - Amendment: wire supervisor in deps for archive step and switch to static rm import to satisfy TS/lint post-decomposition without changing behavior.
+
+- DRY: unify duplicate archive-stage flows
+  - Replaced run-ephemeral.ts and run-normal.ts with a single unified helper (run-archive.ts) that handles ephemeral and non-ephemeral paths (include-on-change, prepare/restore, imports staging) with one implementation.
+  - Updated archive-stage/index.ts to dispatch into the unified helper; deleted the duplicated modules.
+
+- DRY: shared raw config reader for sync fallbacks
+  - Introduced src/cli/config/raw.ts (readRawConfigSync, helpers) and refactored help footer, run/config-fallback, run-defaults, and root defaults to use it instead of bespoke read+parse code.
+
+- Consistency: SSR “named-or-default” resolution
+  - Removed local tryResolveNamedOrDefault shims and used the shared resolveNamedOrDefaultFunction in src/runner/run/service.ts and src/cli/runner/index.ts (kept callable-default last-chance fallback where already present).

@@ -6,7 +6,6 @@ import { ensureOutputDir } from '@karmaniverous/stan-core';
 
 import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { yieldToEventLoop } from '@/runner/run/exec/util';
-// Note: under SSR/tests, the helper above can be unavailable or reshaped; we guard for that below.
 import type { RunnerConfig } from '@/runner/run/types';
 
 import * as planMod from './plan';
@@ -19,44 +18,9 @@ import * as uiMod from './ui';
 type PlanModule = typeof import('./plan');
 type RenderRunPlanFn = PlanModule['renderRunPlan'];
 
-// SSR/test-robust wrapper: prefer the helper when callable; otherwise manually pick named/default.
-const tryResolveNamedOrDefault = <F>(
-  mod: unknown,
-  pickNamed: (m: unknown) => F | undefined,
-  pickDefault: (m: unknown) => F | undefined,
-  label?: string,
-): F => {
-  try {
-    if (typeof resolveNamedOrDefaultFunction === 'function') {
-      return resolveNamedOrDefaultFunction<F>(
-        mod,
-        pickNamed,
-        pickDefault,
-        label,
-      );
-    }
-  } catch {
-    // ignore helper failures and attempt manual resolution
-  }
-  try {
-    const named = pickNamed(mod);
-    if (typeof named === 'function') return named as F;
-  } catch {
-    /* ignore */
-  }
-  try {
-    const viaDefault = pickDefault(mod);
-    if (typeof viaDefault === 'function') return viaDefault as F;
-  } catch {
-    /* ignore */
-  }
-  const what = label && label.trim().length ? label.trim() : 'export';
-  throw new Error(`resolveNamedOrDefaultFunction: ${what} not found`);
-};
-
 const getRenderRunPlan = (): RenderRunPlanFn => {
   try {
-    return tryResolveNamedOrDefault<RenderRunPlanFn>(
+    return resolveNamedOrDefaultFunction<RenderRunPlanFn>(
       planMod as unknown,
       (m) => (m as PlanModule).renderRunPlan,
       (m) => (m as { default?: Partial<PlanModule> }).default?.renderRunPlan,
@@ -77,7 +41,7 @@ type SessionModule = typeof import('./session');
 type RunSessionOnceFn = SessionModule['runSessionOnce'];
 const getRunSessionOnce = (): RunSessionOnceFn => {
   try {
-    return tryResolveNamedOrDefault<RunSessionOnceFn>(
+    return resolveNamedOrDefaultFunction<RunSessionOnceFn>(
       sessionMod as unknown,
       (m) => (m as SessionModule).runSessionOnce,
       (m) =>
@@ -161,7 +125,7 @@ export const runSelected = async (
 
   // Live enablement respects CLI/config and TTY
   const stdoutLike = process.stdout as unknown as { isTTY?: boolean };
-  const isTTY = Boolean(stdoutLike?.isTTY);
+  const isTTY = Boolean(stdoutLike.isTTY);
   const liveEnabled = (behavior.live ?? true) && isTTY;
 
   // Resolve final selection list
