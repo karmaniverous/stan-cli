@@ -110,7 +110,7 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
       };
       if (typeof gitMod.runGit === 'function') {
         const res = await gitMod.runGit(cwd, ['stash', '-u']);
-        if (!res || res.code !== 0) {
+        if (res.code !== 0) {
           return; // abort: stash failed
         }
       }
@@ -204,9 +204,7 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
   // Final stanPath guard: if context failed to provide a non-empty path,
   // fall back to resolveStanPathSync(cwd) to avoid undefined joins.
   const stanPathEffective =
-    typeof ctx.stanPath === 'string' && ctx.stanPath.trim().length > 0
-      ? ctx.stanPath
-      : resolveStanPathSync(cwd);
+    ctx.stanPath.trim().length > 0 ? ctx.stanPath : resolveStanPathSync(cwd);
   await capture({
     cwd: ctx.cwd,
     stanPath: stanPathEffective,

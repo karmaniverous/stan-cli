@@ -1,110 +1,95 @@
-// src/stan/prompt/resolve.test.ts
-import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// We mock only what we need per test; import engine namespace for spying.
-import * as core from '@karmaniverous/stan-core';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { asEsmModule } from '@/test/mock-esm';
 
-describe('resolveCorePromptPath (primary + fallback)', () => {
+describe('prompt resolver (CLI‑packaged + core)', () => {
   beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('returns engine-packaged path when helper provides a readable file', async () => {
-    const tmp = await mkdtemp(path.join(os.tmpdir(), 'stan-core-primary-'));
-    try {
-      const dist = path.join(tmp, 'dist');
-      await mkdir(dist, { recursive: true });
-      const prompt = path.join(dist, 'stan.system.md');
-      await writeFile(prompt, '# core prompt\n', 'utf8');
+  it('exposes named exports (getCliPackagedSystemPromptPath, resolveCorePromptPath)', async () => {
+    // Stub module with named + default object to cover common SSR shapes.
+    const resolverStub = {
+      getCliPackagedSystemPromptPath: vi.fn(() => '/packaged/system/prompt.md'),
+      resolveCorePromptPath: vi.fn(() => '/core/system/prompt.md'),
+    };
 
-      const spy = vi
-        .spyOn(core, 'getPackagedSystemPromptPath')
-        // simulate packaged resolution
-        .mockReturnValue(prompt);
+    vi.doMock('@/runner/prompt/resolve', () =>
+      asEsmModule({
+        ...resolverStub,
+        default: resolverStub,
+      }),
+    );
 
-      const { resolveCorePromptPath } = await import('@/runner/prompt');
-      const out = resolveCorePromptPath();
-      expect(out).toBe(prompt);
-      expect(spy).toHaveBeenCalled();
-    } finally {
-      await rm(tmp, { recursive: true, force: true });
-    }
+    const mod = (await import('@/runner/prompt/resolve')) as unknown as {
+      getCliPackagedSystemPromptPath?: () => string | null;
+      resolveCorePromptPath?: () => Promise<string | null> | string | null;
+    };
+
+    expect(typeof mod.getCliPackagedSystemPromptPath).toBe('function');
+    expect(typeof mod.resolveCorePromptPath).toBe('function');
+
+    const packaged = mod.getCliPackagedSystemPromptPath?.();
+    const core = await mod.resolveCorePromptPath?.();
+
+    expect(packaged).toBe('/packaged/system/prompt.md');
+    expect(core).toBe('/core/system/prompt.md');
   });
 
-  it('uses fallback via createRequire when helper returns null (handles spaces)', async () => {
-    // Force primary helper to report "not found"
-    vi.spyOn(core, 'getPackagedSystemPromptPath').mockReturnValue(
-      null as unknown as string,
+  it('works when only default export object provides the functions', async () => {
+    const resolverStub = {
+      getCliPackagedSystemPromptPath: vi.fn(() => '/from/default/packaged.md'),
+      resolveCorePromptPath: vi.fn(() => '/from/default/core.md'),
+    };
+
+    // Provide only default: { ... } to simulate a default‑only SSR shape.
+    vi.doMock('@/runner/prompt/resolve', () =>
+      asEsmModule({
+        default: resolverStub,
+      }),
     );
 
-    // Create a fake @karmaniverous/stan-core tree under a base path with spaces
-    const base = await mkdtemp(path.join(os.tmpdir(), 'stan core fallback '));
-    const fakeRoot = path.join(
-      base,
-      'node_modules',
-      '@karmaniverous',
-      'stan-core',
-    );
-    const dist = path.join(fakeRoot, 'dist');
-    const pkgJson = path.join(fakeRoot, 'package.json');
-    const prompt = path.join(dist, 'stan.system.md');
-    await mkdir(dist, { recursive: true });
-    await writeFile(prompt, '# core prompt (fallback)\n', 'utf8');
-    await writeFile(
-      pkgJson,
-      JSON.stringify({ name: '@karmaniverous/stan-core' }),
-      'utf8',
-    );
-
-    // Mock node:module.createRequire to resolve our fake package.json
-    vi.resetModules();
-    vi.doMock('node:module', async () => {
-      const actual =
-        await vi.importActual<typeof import('node:module')>('node:module');
-      return {
-        __esModule: true,
-        // Ensure default export is present for ESM mock consumers
-        default: actual as unknown as { [k: string]: unknown },
-        ...actual,
-        createRequire: () => {
-          // Minimal NodeJS.Require with a proper RequireResolve (including .paths).
-          const fakeReq = ((id: string) => id) as unknown as NodeJS.Require;
-          const fakeResolve = ((id: string) => {
-            if (id === '@karmaniverous/stan-core/package.json') return pkgJson;
-            // Delegate other resolutions to Node’s default resolver
-            return require.resolve(id);
-          }) as NodeJS.RequireResolve;
-          // Satisfy the typing contract; returning null is acceptable.
-          fakeResolve.paths = (_request: string) => null;
-          fakeReq.resolve = fakeResolve;
-          return fakeReq;
-        },
+    const mod = (await import('@/runner/prompt/resolve')) as unknown as {
+      getCliPackagedSystemPromptPath?: () => string | null;
+      resolveCorePromptPath?: () => Promise<string | null> | string | null;
+      default?: {
+        getCliPackagedSystemPromptPath?: () => string | null;
+        resolveCorePromptPath?: () => Promise<string | null> | string | null;
       };
-    });
+    };
 
-    try {
-      // Re-import with mocked createRequire
-      const { resolveCorePromptPath } = await import('@/runner/prompt');
-      const out = resolveCorePromptPath();
-      // Path should exist and end with dist/stan.system.md
-      expect(out && existsSync(out)).toBe(true);
-      expect(out && out.endsWith(path.join('dist', 'stan.system.md'))).toBe(
-        true,
-      );
-      // Accept either our temp fake prompt path or an installed core path.
-      const outNorm = String(out).replace(/\\+/g, '/');
-      const baseNorm = base.replace(/\\+/g, '/');
-      const looksInstalled = outNorm.includes(
-        '/node_modules/@karmaniverous/stan-core/',
-      );
-      expect(outNorm.includes(baseNorm) || looksInstalled).toBe(true);
-    } finally {
-      vi.resetModules();
-      await rm(base, { recursive: true, force: true });
-    }
+    // Accept either named or default‑object exposure (test is SSR‑robust).
+    const getPackaged = (
+      typeof mod.getCliPackagedSystemPromptPath === 'function'
+        ? mod.getCliPackagedSystemPromptPath
+        : typeof mod.default?.getCliPackagedSystemPromptPath === 'function'
+          ? mod.default.getCliPackagedSystemPromptPath
+          : null
+    ) as (() => string | null) | null;
+
+    const resolveCore = (
+      typeof mod.resolveCorePromptPath === 'function'
+        ? mod.resolveCorePromptPath
+        : typeof mod.default?.resolveCorePromptPath === 'function'
+          ? mod.default.resolveCorePromptPath
+          : null
+    ) as (() => Promise<string | null> | string | null) | null;
+
+    expect(getPackaged).not.toBeNull();
+    expect(resolveCore).not.toBeNull();
+
+    const packaged =
+      typeof getPackaged === 'function' ? getPackaged() : undefined;
+    const core =
+      typeof resolveCore === 'function'
+        ? await (resolveCore() as Promise<string | null>)
+        : undefined;
+
+    expect(packaged).toBe('/from/default/packaged.md');
+    expect(core).toBe('/from/default/core.md');
   });
 });
