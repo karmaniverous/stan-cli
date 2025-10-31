@@ -2,32 +2,23 @@
 import { resolve as resolvePath } from 'node:path';
 
 import { liveTrace, ProcessSupervisor } from '@/runner/run/live';
-import { getRunArchiveStage } from '@/runner/run/session/archive-stage-resolver';
 import { CancelController } from '@/runner/run/session/cancel-controller';
 import { beginEpoch, isActiveEpoch } from '@/runner/run/session/epoch';
 import { ensureOrderFile } from '@/runner/run/session/order-file';
-import {
-  printPlanWithPrompt,
-  resolvePromptOrThrow,
-} from '@/runner/run/session/prompt-plan';
 import { runScriptsPhase } from '@/runner/run/session/scripts-phase';
 import { attachSessionSignals } from '@/runner/run/session/signals';
 import type { SessionOutcome } from '@/runner/run/session/types';
-import { queueUiRows } from '@/runner/run/session/ui-queue';
 import type { RunnerConfig } from '@/runner/run/types';
 import type { ExecutionMode, RunBehavior } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
 
-import { restartAndReturn } from './cancel';
-import { removeArchivesIfAny } from './cleanup';
 import { flushUiOnce, postArchiveSettle } from './finalize';
-import {
-  type CancelDeps,
-  checkCancelNow,
-  preArchiveScheduleGuard,
-  settleAndCheckCancel,
-  yieldAndCheckCancel,
-} from './guards';
+import { runArchiveIfEnabled } from './steps/archive';
+import { runAllCancelGuards } from './steps/cancel-check';
+import { resolvePromptAndMaybePrintPlan } from './steps/prompt';
+import { queueRowsAndMark } from './steps/queue';
+// Decomposed step helpers
+import { prepareUiForNewSession, startUiAndEnsureFirstFrame } from './steps/ui';
 
 const shouldWriteOrder =
   process.env.NODE_ENV === 'test' || process.env.STAN_WRITE_ORDER === '1';
@@ -70,61 +61,22 @@ export const runSessionOnce = async (args: {
     Boolean(behavior.keep),
   );
 
-  // Resolve prompt up-front; early failure cancels this attempt.
-  let resolvedPromptDisplay = '';
-  let resolvedPromptAbs: string | null = null;
-  try {
-    const rp = resolvePromptOrThrow(cwd, config.stanPath, promptChoice);
-    resolvedPromptDisplay = rp.display;
-    resolvedPromptAbs = rp.abs;
-    // Minimal debug line when enabled
-    try {
-      if (process.env.STAN_DEBUG === '1') {
-        const srcKind =
-          (rp as unknown as { kind?: 'local' | 'core' | 'path' }).kind ||
-          'path';
-        const p = (resolvedPromptAbs || '').replace(/\\/g, '/');
-        console.error(`stan: debug: prompt: ${srcKind} ${p}`);
-      }
-    } catch {
-      /* ignore */
-    }
-  } catch (e) {
-    // Proceed without an injected prompt: archiving will continue in non-ephemeral mode.
-    const msg =
-      e instanceof Error ? e.message : typeof e === 'string' ? e : String(e);
-    console.error(
-      `stan: warn: proceeding without resolved system prompt (${msg})`,
-    );
-    console.log('');
-    resolvedPromptDisplay = 'auto (unresolved)';
-    resolvedPromptAbs = null;
-  }
-
-  // Print plan once per outer loop (delegated by caller)
-  if (printPlan && planBody) {
-    printPlanWithPrompt(cwd, {
-      selection,
+  // Resolve prompt & maybe print plan; then start UI and ensure a first frame
+  const { display: resolvedPromptDisplay, abs: resolvedPromptAbs } =
+    resolvePromptAndMaybePrintPlan({
+      cwd,
       config,
+      selection,
       mode,
       behavior,
-      planBody,
       ui,
-      promptDisplay: resolvedPromptDisplay,
+      planBody,
+      printPlan,
+      promptChoice,
     });
-  }
 
-  ui.start();
+  startUiAndEnsureFirstFrame(ui);
 
-  // Ensure at least one immediate render occurs even for very fast runs
-  // so that a frame containing the hint is present in TTY logs before
-  // the final persisted frame replaces it.
-  try {
-    const flush = (ui as unknown as { flushNow?: () => void }).flushNow;
-    if (typeof flush === 'function') flush();
-  } catch {
-    /* best-effort */
-  }
   // Supervisor & cancellation
   const supervisor = new ProcessSupervisor({
     hangWarn: behavior.hangWarn,
@@ -182,22 +134,15 @@ export const runSessionOnce = async (args: {
     }
   });
 
-  // Prepare UI: clear any previous rows and queue fresh ones
-  try {
-    const prep = (ui as unknown as { prepareForNewSession?: () => void })
-      .prepareForNewSession;
-    if (typeof prep === 'function') prep();
-  } catch {
-    /* ignore */
-  }
-  const toRun = queueUiRows(ui, selection, config, Boolean(behavior.archive));
-  cancelCtl.markQueued(toRun);
-  try {
-    const flush = (ui as unknown as { flushNow?: () => void }).flushNow;
-    if (typeof flush === 'function') flush();
-  } catch {
-    /* ignore */
-  }
+  // Prepare UI and queue fresh rows
+  prepareUiForNewSession(ui);
+  const toRun = queueRowsAndMark({
+    ui,
+    selection,
+    config,
+    includeArchives: Boolean(behavior.archive),
+    cancelCtl,
+  });
 
   const created: string[] = [];
 
@@ -224,8 +169,8 @@ export const runSessionOnce = async (args: {
     created.push(...artifacts);
   }
 
-  // Cancellation guards (centralized)
-  const deps: CancelDeps = {
+  // Centralized cancellation guards
+  const deps = {
     created,
     ui,
     supervisor,
@@ -233,55 +178,25 @@ export const runSessionOnce = async (args: {
     liveEnabled,
     outAbs,
   };
-  const now = await checkCancelNow(cancelCtl, deps);
-  if (now) return now;
-
-  const afterYield = await yieldAndCheckCancel(cancelCtl, deps);
-  if (afterYield) return afterYield;
-
-  const afterSettle = await settleAndCheckCancel(cancelCtl, deps);
-  if (afterSettle) return afterSettle;
+  const early = await runAllCancelGuards(cancelCtl, deps);
+  if (early) return early;
 
   // ARCHIVE PHASE
   if (behavior.archive) {
-    // Guard immediately before scheduling
-    const guard = await preArchiveScheduleGuard(cancelCtl, deps);
-    if (guard) return guard;
-
-    const runArchive = getRunArchiveStage();
-    const a = await runArchive({
+    const { short, added } = await runArchiveIfEnabled({
+      enabled: true,
+      cancelCtl,
+      deps: { created, ui, detachSignals, outAbs },
       cwd,
       config,
       behavior,
       ui,
       promptAbs: resolvedPromptAbs,
       promptDisplay: resolvedPromptDisplay,
-      shouldContinue: () => !cancelCtl.isCancelled(),
+      supervisor,
     });
-    if (a.cancelled) {
-      return restartAndReturn({ created, detachSignals });
-    }
-
-    // Late-cancel guard after archive completed: clean up created artifacts best-effort.
-    if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
-      try {
-        await Promise.all(
-          a.created.map((p) =>
-            import('node:fs/promises').then(({ rm }) => rm(p, { force: true })),
-          ),
-        );
-      } catch {
-        /* ignore */
-      }
-      await removeArchivesIfAny(outAbs).catch(() => void 0);
-      try {
-        detachSignals();
-      } catch {
-        /* ignore */
-      }
-      return { created, cancelled: true, restartRequested: false };
-    }
-    created.push(...a.created);
+    if (short) return short;
+    if (added?.length) created.push(...added);
   }
 
   // Finalization: settle & flush for immediate visibility/parity

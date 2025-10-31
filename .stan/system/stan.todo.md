@@ -20,14 +20,10 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 ## Completed (context essentials only)
 
 - Run/cancel: robust archive cleanup on user cancel
-  - Added a bounded delete-and-settle loop in the session cancel return path to guarantee
-    removal of archive.tar and archive.diff.tar even when late races leave short-lived handles
-    (Windows-skewed). Mirrors the runner-level backstop with platform-aware settles.
+  - Added a bounded delete-and-settle loop in the session cancel return path to guarantee removal of archive.tar and archive.diff.tar even when late races leave short-lived handles (Windows-skewed). Mirrors the runner-level backstop with platform-aware settles.
 
 - Live UI: guaranteed first-frame flush with hint
-  - After UI start, issue a one-time immediate flush so a frame containing the hint line
-    is always printed even for very fast runs. Keeps the alignment/hint expectations stable
-    without affecting the final persisted frame.
+  - After UI start, issue a one-time immediate flush so a frame containing the hint line is always printed even for very fast runs. Keeps the alignment/hint expectations stable without affecting the final persisted frame.
 
 - SSR/mocks‑robust dynamic resolvers across CLI surfaces (run action/options, derive, overlay builders) to stabilize evaluation order in vitest forks/SSR without doubling default+named exports.
 - Cancel hardening at archive boundary and run-level backstops: pre-archive schedule guard, shouldContinue threading in FULL/DIFF, and best‑effort late-cancel deletions with platform-aware settles.
@@ -35,3 +31,9 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Amendment: Commander argv augmentation (types-only)
   - Simplified the augmentation to use a unified signature with `ReadonlyArray<unknown>` for `parse`/`parseAsync`, satisfying `@typescript-eslint/unified-signatures` and `no-redundant-type-constituents`. No runtime behavior change; tests pass with the existing argv normalization.
+
+- Decompose run-session orchestrator into small helpers
+  - Split prompt resolution/plan printing, UI start/prepare/flush, row queueing, cancel guard wrapper, and archive stage wrapper into dedicated modules under run-session/steps/. Public API unchanged; behavior preserved.
+
+  - Amendment: fix TS/lint after decomposition (run-session steps)
+    - Typed supervisor in archive step and corrected Promise.all catch placement; removes TS2739/TS2339 and unsafe-call lint without changing behavior.
