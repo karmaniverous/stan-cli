@@ -57,4 +57,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Lint (init service): remove unnecessary coalescing/casts
   - Derive UI seeds and force path: replaced casts that masked undefined and triggered @typescript-eslint/no-unnecessary-condition with explicit typeof guards.
-  - Next: address overlay/facets optional-chaining and snap handler coalescing in the following pass.
+  - Next: address overlay/facets optional-chaining and snap handler coalescing in the following pass.
+
+- Lint (overlay): explicit narrowing over facet meta
+  - Replaced optional-chaining on meta[name] include/exclude with a local object guard and array checks in facets.ts.
+  - Next: clean snap/handlers and snap/safety “??/?.*” cases; then patch diagnostics/service once the patch facet is enabled.

@@ -118,6 +118,14 @@ export const computeFacetOverlay = async (
   const state = await readFacetState(cwd, stanPath);
   const facetNames = Object.keys(meta);
 
+  // Narrow a facet definition object safely (avoid optional-chaining on meta[name]).
+  const defOf = (name: string): { exclude?: string[]; include?: string[] } => {
+    const raw = (meta as Record<string, unknown>)[name];
+    return raw && typeof raw === 'object'
+      ? (raw as { exclude?: string[]; include?: string[] })
+      : {};
+  };
+
   // Base effective map from state (missing facets => active by default).
   const effective: Record<string, boolean> = {};
   for (const name of facetNames) {
@@ -149,7 +157,7 @@ export const computeFacetOverlay = async (
   const activeRoots = new Set<string>();
   for (const name of facetNames) {
     const isActive = effective[name];
-    const exRoots = collectSubtreeRoots(meta[name]?.exclude);
+    const exRoots = collectSubtreeRoots(meta[name].exclude);
     if (isActive) for (const r of exRoots) activeRoots.add(posix(r));
   }
   // Collect leaf-glob tails from inactive facets (for scoped anchors under active roots).
@@ -157,7 +165,8 @@ export const computeFacetOverlay = async (
 
   // Always include all anchors (keep docs breadcrumbs visible even when overlay off)
   for (const name of facetNames) {
-    const inc = (meta[name]?.include ?? []).map(posix);
+    const def = defOf(name);
+    const inc = Array.isArray(def.include) ? def.include.map(posix) : [];
     anchorsKeptCounts[name] = 0;
     for (const a of inc) {
       anchorsOverlaySet.add(a);
@@ -179,7 +188,8 @@ export const computeFacetOverlay = async (
   if (!input.enabled) {
     // Count anchors that exist physically for metadata
     for (const name of facetNames) {
-      const inc = (meta[name]?.include ?? []).map(posix);
+      const def = defOf(name);
+      const inc = Array.isArray(def.include) ? def.include.map(posix) : [];
       anchorsKeptCounts[name] = inc.filter((a) =>
         existsSync(toAbs(cwd, a)),
       ).length;
@@ -198,13 +208,14 @@ export const computeFacetOverlay = async (
   // Ramp-up safety + excludes aggregation
   for (const name of facetNames) {
     const isActive = effective[name];
-    const excludes = (meta[name]?.exclude ?? []).map(posix);
+    const def = defOf(name);
+    const excludes = Array.isArray(def.exclude) ? def.exclude.map(posix) : [];
     const exRoots = excludes
       .filter(isSubtreePattern)
       .map(stripGlobTail)
       .filter(Boolean);
     const leafGlobs = excludes.filter((p) => !isSubtreePattern(p));
-    const inc = (meta[name]?.include ?? []).map(posix);
+    const inc = Array.isArray(def.include) ? def.include.map(posix) : [];
 
     // Count anchors present on disk (for metadata)
     anchorsKeptCounts[name] = inc.filter((a) =>
