@@ -47,13 +47,7 @@ export const composeFrameBody = (args: {
         // keep explicit reference; avoid optional chaining warnings
         now: () => Date.now(),
       });
-      rows.push([
-        row.type,
-        row.item,
-        mapped.label,
-        mapped.time,
-        mapped.output ?? '',
-      ]);
+      rows.push([row.type, row.item, mapped.label, mapped.time, mapped.output]);
     }
   }
 

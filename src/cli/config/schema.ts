@@ -131,7 +131,7 @@ export const ensureNoReservedScriptKeys = (
   scripts: Record<string, unknown>,
 ): void => {
   const bad = ['archive', 'init'].filter((k) =>
-    Object.prototype.hasOwnProperty.call(scripts ?? {}, k),
+    Object.prototype.hasOwnProperty.call(scripts, k),
   );
   if (bad.length > 0)
     throw new Error(`scripts: keys "archive" and "init" not allowed`);

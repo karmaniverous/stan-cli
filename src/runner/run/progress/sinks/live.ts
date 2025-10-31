@@ -51,11 +51,11 @@ export class LiveSink extends BaseSink {
     this.stopped = true;
 
     try {
-      const r = this.renderer as unknown as { finalize?: () => void };
+      const r = this.renderer;
       // Always finalize full; renderer will suppress hint for the final frame.
-      if (typeof r?.finalize === 'function') {
+      if (r && typeof r.finalize === 'function') {
         this.dbg('stop() finalize(full)');
-        r.finalize?.();
+        r.finalize();
       }
     } catch {
       /* ignore */
@@ -78,7 +78,10 @@ export class LiveSink extends BaseSink {
   resetForRestart(): void {
     try {
       this.dbg('resetForRestart()');
-      (this.renderer as unknown as { resetRows?: () => void })?.resetRows?.();
+      const r = this.renderer;
+      if (r && typeof r.resetRows === 'function') {
+        r.resetRows();
+      }
     } catch {
       /* ignore */
     }
@@ -86,9 +89,10 @@ export class LiveSink extends BaseSink {
   /** Reset elapsed-time epoch for summary timer on restart. */
   resetElapsed(): void {
     try {
-      (
-        this.renderer as unknown as { resetElapsed?: () => void }
-      )?.resetElapsed?.();
+      const r = this.renderer;
+      if (r && typeof r.resetElapsed === 'function') {
+        r.resetElapsed();
+      }
     } catch {
       /* ignore */
     }
@@ -96,9 +100,14 @@ export class LiveSink extends BaseSink {
 
   cancelPending(): void {
     this.dbg('cancelPending()');
-    (
-      this.renderer as unknown as { cancelPending?: () => void }
-    )?.cancelPending?.();
+    try {
+      const r = this.renderer;
+      if (r && typeof r.cancelPending === 'function') {
+        r.cancelPending();
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   protected onUpdate(_key: string, meta: RowMeta, state: ScriptState): void {
@@ -108,6 +117,8 @@ export class LiveSink extends BaseSink {
       item: meta.item,
       kind: state.kind,
     });
-    this.renderer?.update(`${meta.type}:${meta.item}`, state, meta);
+    if (this.renderer) {
+      this.renderer.update(`${meta.type}:${meta.item}`, state, meta);
+    }
   }
 }

@@ -182,7 +182,7 @@ export const registerRunOptions = (
           (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
         'applyCliSafety',
       );
-    applyCliSafetyResolved?.(cmd);
+    applyCliSafetyResolved(cmd);
   } catch {
     /* best‑effort */
   }
