@@ -81,7 +81,7 @@ export const buildOverlayInputs = async (args: {
         const t = p.trim();
         return t.endsWith('/**') || t.endsWith('/*');
       };
-      for (const [name, def] of Object.entries(meta ?? {})) {
+      for (const [name, def] of Object.entries(meta)) {
         if (!def || !Array.isArray(def.exclude)) continue;
         if (!overlay.effective[name]) {
           for (const patt of def.exclude) {

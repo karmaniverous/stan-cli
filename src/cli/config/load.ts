@@ -96,17 +96,28 @@ const parseCliNode = (
       parsed = cliConfigSchema.parse(node);
     } else {
       // Minimal, safe fallback (tests/SSR only): accept scripts and common fields without strict checks.
-      const fallbackScripts = ((node as { scripts?: Record<string, unknown> })
-        .scripts ?? {}) as ScriptMap;
+      // Explicitly narrow "scripts" to avoid redundant nullish-coalescing.
+      const scriptsUnknown = (node as { scripts?: unknown }).scripts;
+      const fallbackScripts = (
+        scriptsUnknown && typeof scriptsUnknown === 'object'
+          ? (scriptsUnknown as Record<string, unknown>)
+          : {}
+      ) as ScriptMap;
       // Best-effort reserved key guard in fallback
-      safeEnsureNoReserved(fallbackScripts ?? {});
+      safeEnsureNoReserved(
+        fallbackScripts as unknown as Record<string, unknown>,
+      );
+      const patchOCUnknown = (node as { patchOpenCommand?: unknown })
+        .patchOpenCommand;
+      const patchOpenCommand =
+        typeof patchOCUnknown === 'string' && patchOCUnknown.length > 0
+          ? patchOCUnknown
+          : DEFAULT_OPEN_COMMAND;
       return {
         scripts: fallbackScripts,
         cliDefaults: (node as { cliDefaults?: CliConfig['cliDefaults'] })
           .cliDefaults,
-        patchOpenCommand:
-          (node as { patchOpenCommand?: string }).patchOpenCommand ??
-          DEFAULT_OPEN_COMMAND,
+        patchOpenCommand,
         maxUndos: (node as { maxUndos?: number }).maxUndos,
         devMode: (node as { devMode?: boolean }).devMode,
       };

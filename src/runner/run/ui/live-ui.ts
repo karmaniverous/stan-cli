@@ -110,8 +110,14 @@ export class LiveUI implements RunnerUI {
         } catch {
           /* ignore */
         }
-        this.control?.detach();
-        this.control = null;
+        try {
+          const ctl = this.control;
+          if (ctl) ctl.detach();
+        } catch {
+          /* ignore */
+        } finally {
+          this.control = null;
+        }
       } else {
         liveTrace.ui.stop();
         // Persist final table; renderer will hide the hint on finalize.
@@ -121,11 +127,13 @@ export class LiveUI implements RunnerUI {
       /* ignore */
     }
     try {
-      this.control?.detach();
+      const ctl = this.control;
+      if (ctl) ctl.detach();
     } catch {
       /* ignore */
+    } finally {
+      this.control = null;
     }
-    this.control = null;
   }
   /** Called just before queueing rows for a new session to remove cancelled carryover. */
   prepareForNewSession(): void {
