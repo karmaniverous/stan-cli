@@ -152,4 +152,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Run action robustness: guarded CLI config load
   - Wrapped loadCliConfigSync with a raw-config fallback (namespaced first, legacy root) in src/cli/run/action/index.ts.
-  - Outcome: extra resilience for SSR/mock edge shapes without reintroducing dynamic import shims; no behavior change in normal runtime.
+  - Outcome: extra resilience for SSR/mock edge shapes without reintroducing dynamic import shims; no behavior change in normal runtime.
+
+- Lint cleanup (cli-utils): escaped “>” in TSDoc normalizeArgv example and removed an unnecessary optional chain in patchDefaultFile legacy fallback; lint task green.
