@@ -22,10 +22,10 @@ export type CancelCtl = {
 };
 
 /** Immediate check for cancel/restart. Returns a SessionOutcome or null to continue. */
-export const checkCancelNow = async (
+export async function checkCancelNow(
   cancelCtl: CancelCtl,
   deps: CancelDeps,
-): Promise<SessionOutcome | null> => {
+): Promise<SessionOutcome | null> {
   if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
     return await cancelAndReturn(deps);
   }
@@ -36,26 +36,26 @@ export const checkCancelNow = async (
     });
   }
   return null;
-};
+}
 
 /** Yield once then check cancellation. */
-export const yieldAndCheckCancel = async (
+export async function yieldAndCheckCancel(
   cancelCtl: CancelCtl,
   deps: CancelDeps,
-): Promise<SessionOutcome | null> => {
+): Promise<SessionOutcome | null> {
   try {
     await yieldToEventLoop();
   } catch {
     /* ignore */
   }
   return checkCancelNow(cancelCtl, deps);
-};
+}
 
 /** Short settle + yield and re-check (secondary late-cancel guard). */
-export const settleAndCheckCancel = async (
+export async function settleAndCheckCancel(
   cancelCtl: CancelCtl,
   deps: CancelDeps,
-): Promise<SessionOutcome | null> => {
+): Promise<SessionOutcome | null> {
   try {
     await settle(win32() ? 25 : process.env.CI ? 20 : 10);
     await yieldToEventLoop();
@@ -63,13 +63,13 @@ export const settleAndCheckCancel = async (
     /* ignore */
   }
   return checkCancelNow(cancelCtl, deps);
-};
+}
 
 /** Guard right before scheduling the archive stage (absorbs just‑arrived keypress on slower FS). */
-export const preArchiveScheduleGuard = async (
+export async function preArchiveScheduleGuard(
   cancelCtl: CancelCtl,
   deps: CancelDeps,
-): Promise<SessionOutcome | null> => {
+): Promise<SessionOutcome | null> {
   try {
     await yieldToEventLoop();
   } catch {
@@ -83,4 +83,4 @@ export const preArchiveScheduleGuard = async (
     /* ignore */
   }
   return checkCancelNow(cancelCtl, deps);
-};
+}

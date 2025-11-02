@@ -102,3 +102,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - vitest.config.ts: preferred pool 'threads' and removed cross‑package tar mock scaffolding (server.deps.inline, mock‑tar setup); kept test setup for process/cwd safety.
   - Docs: added import/export policy — “static named imports only; no dynamic import resolvers; no default‑export shims.”
   - Production hardening preserved: cancel/archive cleanup loops, PATH augmentation, live UI thresholds, prompt materialization, overlay selection behavior unchanged.
+
+- Fix test flake: hoist guard exports to functions to avoid SSR “is not a function” under Vitest
+  - Converted checkCancelNow, yieldAndCheckCancel, settleAndCheckCancel, and preArchiveScheduleGuard in src/runner/run/session/run-session/guards.ts from const‑arrow exports to function declarations (hoisted). No behavior change; resolves the failure in run plan header test.
