@@ -213,6 +213,3 @@ export function registerPatch(cli: Commander): Command {
 
   return cli;
 }
-
-// Provide a default export as the callable function (SSR/mocks friendly).
-export default registerPatch;

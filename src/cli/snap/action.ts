@@ -1,4 +1,3 @@
-// src/cli/snap/action.ts
 import {
   findConfigPathSync,
   resolveStanPathSync,
@@ -10,8 +9,7 @@ import { printHeader } from '@/cli/header';
 import { parseText } from '@/common/config/parse';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
-
-import { loadSnapHandler } from './handlers';
+import { handleSnap } from '@/runner/snap';
 
 /** Guard: print header, check for loop reversal, update state. */
 const runLoopHeaderAndGuard = async (
@@ -35,7 +33,7 @@ const runLoopHeaderAndGuard = async (
   return true;
 };
 
-/** Resolve stash default (flags \> cliDefaults \> legacy parse fallback). */
+/** Resolve stash default (flags > cliDefaults > legacy parse fallback). */
 const resolveStashDefault = async (
   sub: Command,
   opts: { stash?: boolean } | undefined,
@@ -107,12 +105,11 @@ export function registerSnapAction(sub: Command): void {
 
     // Flags > cliDefaults > legacy parse fallback
     const stashFinal = await resolveStashDefault(sub, opts);
-    const run = await loadSnapHandler('handleSnap');
 
     if (stashFinal === true) {
       console.log('stan: stash saved changes');
     }
-    await run({ stash: stashFinal === true });
+    await handleSnap({ stash: stashFinal === true });
     if (stashFinal === true) {
       console.log('stan: stash pop restored changes');
     }

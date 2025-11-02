@@ -14,8 +14,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    // Prefer threads unless a suite overrides.
-    pool: 'threads',
+    // Use forks to allow process.chdir in suites that rely on it.
+    pool: 'forks',
     exclude: ['node_modules/**', 'dist/**', '.rollup.cache/**'],
     coverage: {
       provider: 'v8',

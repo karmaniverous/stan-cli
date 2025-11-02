@@ -4,7 +4,13 @@
 import type { Command } from 'commander';
 import { Command as Commander } from 'commander';
 
-import { handleInfo, handleRedo, handleSet, handleUndo } from '@/runner/snap/history';
+import {
+  handleInfo,
+  handleRedo,
+  handleSet,
+  handleUndo,
+} from '@/runner/snap/history';
+
 import { registerSnapAction } from './action';
 import { attachSnapOptions } from './options';
 import { applyCliSafetyTo } from './safety';
@@ -66,6 +72,3 @@ export function registerSnap(cli: Commander): Command {
 
   return cli;
 }
-
-// Provide a default export to satisfy SSR/default-shaped consumers.
-export default registerSnap;

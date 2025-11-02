@@ -22,7 +22,7 @@ export const makeCli = (): Command => {
   const cli = new Command();
 
   // Safety (idempotent)
-  applyCliSafety?.(cli);
+  applyCliSafety(cli);
 
   // Effective defaults from config (or baseline fallback)
   const safeRootDefaults = (): {
@@ -52,7 +52,7 @@ export const makeCli = (): Command => {
     '-D, --no-debug',
     'disable verbose debug logging',
   );
-  tagDefault?.(debugDefault ? optDebug : optNoDebug, true);
+  tagDefault(debugDefault ? optDebug : optNoDebug, true);
   cli.addOption(optDebug).addOption(optNoDebug);
 
   const optBoring = new Option(
@@ -63,7 +63,7 @@ export const makeCli = (): Command => {
     '-B, --no-boring',
     'do not disable color/styling',
   );
-  tagDefault?.(boringDefault ? optBoring : optNoBoring, true);
+  tagDefault(boringDefault ? optBoring : optNoBoring, true);
   cli.addOption(optBoring).addOption(optNoBoring);
 
   cli.option('-v, --version', 'print version and baseline-docs status');
