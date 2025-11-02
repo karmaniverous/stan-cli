@@ -135,4 +135,11 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Added getOptionSource and snapDefaults to cli-utils; snap action/options now reuse centralized helpers; patch help suffix now uses cli-utils.patchDefaultFile.
   - Snap action now reuses the run loop header guard (removed duplicate inline guard).
   - Overlay flow now imports centralized getOptionSource.
-  - No runtime behavior changes; cleans duplication and simplifies test maintenance.
+  - No runtime behavior changes; cleans duplication and simplifies test maintenance.
+
+- Patch registrar: fix default‑file resolution and missing imports
+  - Removed ad‑hoc references to findConfigPathSync/loadCliConfigSync in src/cli/patch/register.ts that caused typecheck/build/docs failures.
+  - Action now uses centralized cli‑utils.patchDefaultFile (honors --no-file) and no longer references missing symbols.
+  - Help “(DEFAULT: …)” suffix remains computed at registration time via patchDefaultFile; displays correctly in tests.
+  - Added resilient fallback in cli-utils.patchDefaultFile: when the strict loader is unavailable or returns no value, parse stan.config.\* directly (namespaced first; legacy root).
+  - Outcome: fixes three failing tests (patch help default and both patch subcommand cases) and clears TypeScript/rollup/typedoc errors.

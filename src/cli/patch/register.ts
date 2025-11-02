@@ -36,7 +36,7 @@ export function registerPatch(cli: Commander): Command {
     )
     .argument('[input]', 'Patch data (unified diff)');
 
-  // Compute DEFAULT suffix for -f from config up-front, then construct the option
+  // Compute DEFAULT suffix for -f from config at registration time.
   let defaultSuffix = '';
   try {
     const df = patchDefaultFile(process.cwd());
@@ -95,16 +95,10 @@ export function registerPatch(cli: Commander): Command {
       // Resolve raw input: argument > -f file > default file (when allowed) > clipboard (service path)
       let raw = '';
       let source = 'clipboard';
-      const cfgPath = findConfigPathSync(cwd);
       let defaultFile: string | undefined;
       try {
-        if (cfgPath) {
-          const cfg = loadCliConfigSync(cwd);
-          const df = cfg.cliDefaults?.patch?.file;
-          if (typeof df === 'string' && df.trim().length && !opts?.noFile) {
-            defaultFile = df.trim();
-          }
-        }
+        const df = patchDefaultFile(cwd);
+        if (df && !opts?.noFile) defaultFile = df;
       } catch {
         /* ignore */
       }
