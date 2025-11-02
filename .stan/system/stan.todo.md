@@ -143,3 +143,13 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Help “(DEFAULT: …)” suffix remains computed at registration time via patchDefaultFile; displays correctly in tests.
   - Added resilient fallback in cli-utils.patchDefaultFile: when the strict loader is unavailable or returns no value, parse stan.config.\* directly (namespaced first; legacy root).
   - Outcome: fixes three failing tests (patch help default and both patch subcommand cases) and clears TypeScript/rollup/typedoc errors.
+
+- DRY utilities: unify string helpers and remove duplicate util module
+  - Added toStringArray and dedupePreserve to src/cli/cli-utils.ts for shared use.
+  - Refactored src/cli/run-args.ts and src/cli/run/action/overlay-flow.ts to use the shared helpers.
+  - Removed src/cli/run/action/util.ts (now redundant); updated imports accordingly.
+  - Outcome: reduced duplication across selection parsing paths and simplified future maintenance.
+
+- Run action robustness: guarded CLI config load
+  - Wrapped loadCliConfigSync with a raw-config fallback (namespaced first, legacy root) in src/cli/run/action/index.ts.
+  - Outcome: extra resilience for SSR/mock edge shapes without reintroducing dynamic import shims; no behavior change in normal runtime.

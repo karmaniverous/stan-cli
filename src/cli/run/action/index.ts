@@ -9,6 +9,7 @@ import type { Command } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
+import { pickCliNode, readRawConfigSync } from '@/cli/config/raw';
 import { deriveRunParameters } from '@/cli/run/derive';
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
@@ -59,7 +60,24 @@ export const registerRunAction = (
     })();
 
     // CLI defaults and scripts for runner config/derivation
-    const cliCfg = loadCliConfigSync(runCwd);
+    const cliCfg: {
+      scripts?: Record<string, unknown>;
+      cliDefaults?: Record<string, unknown>;
+    } = (() => {
+      try {
+        return loadCliConfigSync(runCwd);
+      } catch {
+        try {
+          const root = readRawConfigSync(runCwd);
+          return (pickCliNode(root) ?? root) as {
+            scripts?: Record<string, unknown>;
+            cliDefaults?: Record<string, unknown>;
+          };
+        } catch {
+          return {};
+        }
+      }
+    })();
 
     // Loop guard (header + reversal)
     {

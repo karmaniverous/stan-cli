@@ -6,6 +6,7 @@ import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import type { Command, Option } from 'commander';
 
 import { loadCliConfigSync } from '@/cli/config/load';
+import { pickCliNode, readRawConfigSync } from '@/cli/config/raw';
 
 import { RUN_BASE_DEFAULTS } from './run/defaults';
 
@@ -35,7 +36,7 @@ export const getOptionSource = (
   }
 };
 
-/** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */
+/** Normalize argv from unit tests like ["node","stan", ...] -> [...] */
 export const normalizeArgv = (
   argv?: readonly string[],
 ): readonly string[] | undefined => {
@@ -113,7 +114,7 @@ export function applyCliSafety(cmd: Command): void {
   }
 }
 
-/** Tag an Option description with (DEFAULT) when active. */
+/** Tag an Option description with (default) when active. */
 export function tagDefault(opt: Option, on: boolean): void {
   if (on && !opt.description.includes('(default)')) {
     opt.description = `${opt.description} (default)`;
@@ -261,11 +262,55 @@ export const snapDefaults = (
 };
 /** Default patch file path from config (cliDefaults.patch.file), if set. */
 export const patchDefaultFile = (dir = cwdSafe()): string | undefined => {
-  let p: unknown;
+  const coerce = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined;
+
+  // Primary: strict loader (namespaced)
   try {
-    p = loadCliConfigSync(dir).cliDefaults?.patch?.file;
+    const fromLoader = loadCliConfigSync(dir).cliDefaults?.patch?.file;
+    const v = coerce(fromLoader);
+    if (v) return v;
   } catch {
-    p = undefined;
+    /* fall through to raw parse */
   }
-  return typeof p === 'string' && p.trim().length ? p.trim() : undefined;
+
+  // Fallback: parse stan.config.* directly (namespaced first; legacy root)
+  try {
+    const root = readRawConfigSync(dir);
+    const cli = pickCliNode(root);
+    // Namespaced
+    const ns = (
+      (cli as { cliDefaults?: { patch?: { file?: unknown } } } | null)
+        ?.cliDefaults?.patch ?? {}
+    ).file;
+    const vNs = coerce(ns);
+    if (vNs) return vNs;
+    // Legacy root
+    const legacy = (root as { cliDefaults?: { patch?: { file?: unknown } } })
+      ?.cliDefaults?.patch?.file;
+    return coerce(legacy);
+  } catch {
+    return undefined;
+  }
+};
+
+/** Coerce nested unknown to a string list (preserving order; dropping non-strings). */
+export const toStringArray = (v: unknown): string[] =>
+  Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === 'string')
+    : typeof v === 'string'
+      ? [v]
+      : [];
+
+/** Preserve-order stable dedupe for string arrays. */
+export const dedupePreserve = (list: string[]): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const k of list) {
+    if (!seen.has(k)) {
+      seen.add(k);
+      out.push(k);
+    }
+  }
+  return out;
 };
