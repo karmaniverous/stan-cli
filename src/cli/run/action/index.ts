@@ -21,6 +21,7 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 import type { FlagPresence } from '../options';
 import { assertNoScriptsConflict } from './conflict';
 import { runLoopHeaderAndGuard } from './loop';
+import type { ResolvedOverlayForRun } from './overlay-flow';
 import { resolveOverlayForRun } from './overlay-flow';
 import { makeRunnerConfig } from './runner-config';
 import { resolveScriptsForRun } from './scripts';
@@ -81,13 +82,14 @@ export const registerRunAction = (
     });
 
     // Overlay mapping (defaults + per-run overrides; SSR-safe)
+    const resolvedOverlay: ResolvedOverlayForRun = await resolveOverlayForRun({
+      cwd: runCwd,
+      stanPath: config.stanPath,
+      cmd,
+      options,
+    });
     const { overlayInputs, overlayEnabled, activateNames, deactivateNames } =
-      await resolveOverlayForRun({
-        cwd: runCwd,
-        stanPath: config.stanPath,
-        cmd,
-        options,
-      });
+      resolvedOverlay;
 
     // Defensive: ensure live default honors config when CLI flag not provided.
     try {

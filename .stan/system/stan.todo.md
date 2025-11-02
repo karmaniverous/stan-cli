@@ -111,3 +111,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Fix test flake: hoist guard exports to functions to avoid SSR “is not a function” under Vitest
   - Converted checkCancelNow, yieldAndCheckCancel, settleAndCheckCancel, and preArchiveScheduleGuard in src/runner/run/session/run-session/guards.ts from const‑arrow exports to function declarations (hoisted). No behavior change; resolves the failure in run plan header test.
+
+- Fix overlay flow: remove missing loader shim; static import + strong typing
+  - Replaced the dynamic loader import in src/cli/run/action/overlay-flow.ts with a static named import of buildOverlayInputs from ./overlay.
+  - Introduced a concrete ResolvedOverlayForRun return type and used it in the run action to eliminate unsafe‑any destructuring and member access.
+  - Result: fixes TS2307 (“Cannot find module './loaders'”) across typecheck/build/docs/tests; resolves eslint no‑unsafe‑\* violations in overlay‑flow and run action; knip “unused/Unresolved imports” clears (overlay.ts now referenced).

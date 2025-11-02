@@ -2,20 +2,27 @@ import type { Command } from 'commander';
 
 import { getOptionSource, toStringArray } from '@/cli/run/action/util';
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
+import type { FacetOverlayOutput } from '@/runner/overlay/facets';
 
-import { type BuildOverlayInputsFn, loadBuildOverlayInputs } from './loaders';
+import { buildOverlayInputs } from './overlay';
+
+export type ResolvedOverlayForRun = {
+  overlayInputs: {
+    overlay: FacetOverlayOutput | null;
+    engineExcludes: string[];
+    overlayPlan?: string[];
+  };
+  overlayEnabled: boolean;
+  activateNames: string[];
+  deactivateNames: string[];
+};
 
 export const resolveOverlayForRun = async (args: {
   cwd: string;
   stanPath: string;
   cmd: Command;
   options: Record<string, unknown>;
-}): Promise<{
-  overlayInputs: Awaited<ReturnType<BuildOverlayInputsFn>>;
-  overlayEnabled: boolean;
-  activateNames: string[];
-  deactivateNames: string[];
-}> => {
+}): Promise<ResolvedOverlayForRun> => {
   const { cwd, stanPath, cmd, options } = args;
   const eff = getRunDefaults(cwd);
 
@@ -37,9 +44,6 @@ export const resolveOverlayForRun = async (args: {
   if (facetsProvided) overlayEnabled = true;
   if (noFacetsProvided)
     overlayEnabled = deactivateNames.length === 0 ? false : true;
-
-  // Resolve builder at action-time (SSR-robust)
-  const buildOverlayInputs = await loadBuildOverlayInputs();
 
   const overlayInputs = await buildOverlayInputs({
     cwd,
