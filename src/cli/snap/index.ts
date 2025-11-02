@@ -11,9 +11,9 @@ import {
   handleUndo,
 } from '@/runner/snap/history';
 
+import { applyCliSafety } from '../cli-utils';
 import { registerSnapAction } from './action';
 import { attachSnapOptions } from './options';
-import { applyCliSafetyTo } from './safety';
 
 /**
  * Register the `snap` subcommand on the provided root CLI.
@@ -23,7 +23,7 @@ import { applyCliSafetyTo } from './safety';
  */
 export function registerSnap(cli: Commander): Command {
   // Root safety (idempotent)
-  applyCliSafetyTo(cli);
+  applyCliSafety(cli);
 
   const sub = cli
     .command('snap')
@@ -32,7 +32,7 @@ export function registerSnap(cli: Commander): Command {
     );
 
   // Sub safety (idempotent)
-  applyCliSafetyTo(sub as unknown as Command);
+  applyCliSafety(sub as unknown as Command);
 
   // History helpers (lazy-resolved)
   sub

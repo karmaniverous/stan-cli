@@ -129,3 +129,10 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - src/cli/run-args.ts: removed default export object; keep named deriveRunInvocation only.
   - src/cli/apply.ts: removed default export object; keep named exports.
 - Plan maintenance: ingested handoff, pruned stale Next up items after confirming CI green, and aligned Next up with audit/CI/snapshot tasks for the next turn.
+
+- DRY: Commander safety and defaults; snap/patch help defaults; loop guard reuse
+  - Replaced local safety wrappers in patch and snap with cli-utils.applyCliSafety; removed src/cli/patch/safety.ts and src/cli/snap/safety.ts.
+  - Added getOptionSource and snapDefaults to cli-utils; snap action/options now reuse centralized helpers; patch help suffix now uses cli-utils.patchDefaultFile.
+  - Snap action now reuses the run loop header guard (removed duplicate inline guard).
+  - Overlay flow now imports centralized getOptionSource.
+  - No runtime behavior changes; cleans duplication and simplifies test maintenance.

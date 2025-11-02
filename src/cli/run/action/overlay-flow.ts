@@ -1,6 +1,7 @@
 import type { Command } from 'commander';
 
-import { getOptionSource, toStringArray } from '@/cli/run/action/util';
+import { getOptionSource } from '@/cli/cli-utils';
+import { toStringArray } from '@/cli/run/action/util';
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import type { FacetOverlayOutput } from '@/runner/overlay/facets';
 

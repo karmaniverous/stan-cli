@@ -4,54 +4,36 @@ import {
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
+import { getOptionSource, snapDefaults } from '@/cli/cli-utils';
 import { loadCliConfigSync } from '@/cli/config/load';
-import { printHeader } from '@/cli/header';
+import { runLoopHeaderAndGuard } from '@/cli/run/action/loop';
 import { parseText } from '@/common/config/parse';
-import { confirmLoopReversal } from '@/runner/loop/reversal';
-import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { handleSnap } from '@/runner/snap';
 
 /** Guard: print header, check for loop reversal, update state. */
-const runLoopHeaderAndGuard = async (
-  cwd: string,
-  stanPath: string,
-): Promise<boolean> => {
-  try {
-    const st = await readLoopState(cwd, stanPath);
-    printHeader('snap', st?.last ?? null);
-    if (st?.last && isBackward(st.last, 'snap')) {
-      const proceed = await confirmLoopReversal();
-      if (!proceed) {
-        console.log('');
-        return false;
-      }
-    }
-    await writeLoopState(cwd, stanPath, 'snap', new Date().toISOString());
-  } catch {
-    /* ignore guard failures */
-  }
-  return true;
-};
+// moved to src/cli/run/action/loop.ts; reused here
 
 /** Resolve stash default (flags \> cliDefaults \> legacy parse fallback). */
 const resolveStashDefault = async (
   sub: Command,
   opts: { stash?: boolean } | undefined,
 ): Promise<boolean | undefined> => {
-  try {
-    const holder = sub as unknown as {
-      getOptionValueSource?: (name: string) => string | undefined;
-    };
-    const fromCli = holder.getOptionValueSource?.('stash') === 'cli';
-    if (fromCli) return opts?.stash === true;
-  } catch {
-    /* ignore */
+  // CLI flag wins
+  if (getOptionSource(sub, 'stash') === 'cli') {
+    return opts?.stash === true;
   }
   // Namespaced loader (accepts transitional legacy via env guard internally)
   try {
     const cfg = loadCliConfigSync(process.cwd());
     if (typeof cfg.cliDefaults?.snap?.stash === 'boolean')
       return cfg.cliDefaults.snap.stash;
+  } catch {
+    /* ignore */
+  }
+  // Centralized helper (best-effort)
+  try {
+    const eff = snapDefaults(process.cwd());
+    if (typeof eff?.stash === 'boolean') return eff.stash;
   } catch {
     /* ignore */
   }

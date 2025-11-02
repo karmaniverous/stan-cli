@@ -1,7 +1,6 @@
 /** Shared Commander helpers for STAN CLI.
  * DRY the repeated exitOverride + parse normalization across subcommands.
  */
-
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import { findConfigPathSync, loadConfigSync } from '@karmaniverous/stan-core';
 import type { Command, Option } from 'commander';
@@ -19,6 +18,23 @@ const cwdSafe = (): string => {
 };
 const isStringArray = (v: unknown): v is readonly string[] =>
   Array.isArray(v) && v.every((t) => typeof t === 'string');
+
+/** Safe wrapper for Commander’s getOptionValueSource (avoid unbound method usage). */
+export const getOptionSource = (
+  cmd: Command,
+  name: string,
+): string | undefined => {
+  try {
+    const holder = cmd as unknown as {
+      getOptionValueSource?: (n: string) => string | undefined;
+    };
+    const fn = holder.getOptionValueSource;
+    return typeof fn === 'function' ? fn.call(cmd, name) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 /** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */
 export const normalizeArgv = (
   argv?: readonly string[],
@@ -228,6 +244,21 @@ export const runDefaults = (
   };
 };
 
+/** Snap-phase defaults (only keys used by CLI: stash). */
+export const snapDefaults = (
+  dir = cwdSafe(),
+): { stash?: boolean } | undefined => {
+  try {
+    const cfg = loadCliConfigSync(dir).cliDefaults;
+    if (cfg && typeof cfg.snap === 'object') {
+      const s = (cfg.snap as { stash?: unknown }).stash;
+      if (typeof s === 'boolean') return { stash: s };
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+};
 /** Default patch file path from config (cliDefaults.patch.file), if set. */
 export const patchDefaultFile = (dir = cwdSafe()): string | undefined => {
   let p: unknown;

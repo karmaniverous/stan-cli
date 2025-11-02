@@ -8,28 +8,26 @@
  */
 import {
   detectAndCleanPatch,
-  findConfigPathSync,
   resolveStanPathSync,
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 import { Command as Commander, Option } from 'commander';
 
-import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runPatch } from '@/runner/patch/service';
 import { statusOk } from '@/runner/patch/status';
 
+import { applyCliSafety, patchDefaultFile } from '../cli-utils';
 import { applyUnifiedDiffLocally } from './apply-local';
 import { looksLikeUnifiedDiff } from './detect';
 import { readRawFromArgOrFile } from './input';
-import { applySafetyLocal } from './safety';
 
 /** Register the `patch` subcommand on the provided root CLI. */
 export function registerPatch(cli: Commander): Command {
   // Root safety (idempotent)
-  applySafetyLocal(cli);
+  applyCliSafety(cli);
 
   const sub = cli
     .command('patch')
@@ -41,14 +39,8 @@ export function registerPatch(cli: Commander): Command {
   // Compute DEFAULT suffix for -f from config up-front, then construct the option
   let defaultSuffix = '';
   try {
-    const cfgPath = findConfigPathSync(process.cwd());
-    if (cfgPath) {
-      const cfg = loadCliConfigSync(process.cwd());
-      const df = cfg.cliDefaults?.patch?.file;
-      if (typeof df === 'string' && df.trim().length > 0) {
-        defaultSuffix = ` (DEFAULT: ${df.trim()})`;
-      }
-    }
+    const df = patchDefaultFile(process.cwd());
+    if (df) defaultSuffix = ` (DEFAULT: ${df})`;
   } catch {
     /* best-effort */
   }
@@ -68,7 +60,7 @@ export function registerPatch(cli: Commander): Command {
     .option('-c, --check', 'Validate patch without applying any changes');
 
   // Sub safety
-  applySafetyLocal(sub);
+  applyCliSafety(sub);
 
   sub.action(
     async (
