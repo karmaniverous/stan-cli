@@ -154,4 +154,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Wrapped loadCliConfigSync with a raw-config fallback (namespaced first, legacy root) in src/cli/run/action/index.ts.
   - Outcome: extra resilience for SSR/mock edge shapes without reintroducing dynamic import shims; no behavior change in normal runtime.
 
-- Lint cleanup (cli-utils): escaped “>” in TSDoc normalizeArgv example and removed an unnecessary optional chain in patchDefaultFile legacy fallback; lint task green.
+- Lint cleanup (cli-utils): escaped “>” in TSDoc normalizeArgv example and removed an unnecessary optional chain in patchDefaultFile legacy fallback; lint task green.
+
+- Fix export regression (cli-utils): restored getOptionSource export used by snap/action and run/action overlay flow; resolves TS2305, unsafe call/return lint errors, and snap stash test runtime “not a function” failure.

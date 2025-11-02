@@ -20,6 +20,21 @@ const cwdSafe = (): string => {
 const isStringArray = (v: unknown): v is readonly string[] =>
   Array.isArray(v) && v.every((t) => typeof t === 'string');
 
+/** Safe wrapper for Commander’s getOptionValueSource (avoid unbound method usage). */
+export const getOptionSource = (
+  cmd: Command,
+  name: string,
+): string | undefined => {
+  try {
+    const holder = cmd as unknown as {
+      getOptionValueSource?: (n: string) => string | undefined;
+    };
+    const fn = holder.getOptionValueSource;
+    return typeof fn === 'function' ? fn.call(cmd, name) : undefined;
+  } catch {
+    return undefined;
+  }
+};
 /** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */
 export const normalizeArgv = (
   argv?: readonly string[],
