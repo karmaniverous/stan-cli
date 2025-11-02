@@ -18,6 +18,7 @@ import { loadCliConfigSync } from '@/cli/config/load';
 import { printHeader } from '@/cli/header';
 import { confirmLoopReversal } from '@/runner/loop/reversal';
 import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
+import { runPatch } from '@/runner/patch/service';
 import { statusOk } from '@/runner/patch/status';
 
 import { applyUnifiedDiffLocally } from './apply-local';
@@ -158,51 +159,7 @@ export function registerPatch(cli: Commander): Command {
       }
 
       // Delegate to the service (robust classification: File Ops, clipboard, diagnostics)
-      let runPatchResolved:
-        | ((
-            cwd: string,
-            inputMaybe: string | undefined,
-            o: {
-              file?: string;
-              defaultFile?: string;
-              noFile?: boolean;
-              check?: boolean;
-            },
-          ) => Promise<void>)
-        | undefined;
-      try {
-        const patchServiceMod = (await import('@/runner/patch/service')) as {
-          runPatch?: (
-            cwd: string,
-            inputMaybe: string | undefined,
-            o: {
-              file?: string;
-              defaultFile?: string;
-              noFile?: boolean;
-              check?: boolean;
-            },
-          ) => Promise<void>;
-          default?: {
-            runPatch?: (
-              cwd: string,
-              inputMaybe: string | undefined,
-              o: {
-                file?: string;
-                defaultFile?: string;
-                noFile?: boolean;
-                check?: boolean;
-              },
-            ) => Promise<void>;
-          };
-        };
-        runPatchResolved =
-          patchServiceMod.runPatch ?? patchServiceMod.default?.runPatch;
-      } catch {
-        runPatchResolved = undefined;
-      }
-      if (!runPatchResolved) return; // silent best‑effort when unavailable
-
-      await runPatchResolved(cwd, raw || inputMaybe, {
+      await runPatch(cwd, raw || inputMaybe, {
         file: typeof opts?.file === 'string' ? opts.file : undefined,
         check: Boolean(opts?.check),
         defaultFile,

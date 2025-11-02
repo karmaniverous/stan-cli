@@ -1,22 +1,18 @@
 import { Command, Option } from 'commander';
 
 import { peekAndMaybeDebugLegacySync } from '@/cli/config/peek';
-import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
-import * as cliUtils from '../cli-utils';
+import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
 import { RUN_BASE_DEFAULTS } from './defaults';
-type CliUtilsModule = typeof import('../cli-utils');
-type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
-type RunDefaultsFn = CliUtilsModule['runDefaults'];
-type TagDefaultFn = CliUtilsModule['tagDefault'];
 
 export type FlagPresence = {
   sawNoScriptsFlag: boolean;
   sawScriptsFlag: boolean;
   sawExceptFlag: boolean;
 };
+
 /**
  * Register the `run` subcommand options and default tagging.
  * Returns the configured subcommand and a getter for raw flag presence.
@@ -172,17 +168,9 @@ export const registerRunOptions = (
     sawExceptFlag = true;
   });
 
-  // Apply Commander safety adapters (SSR-robust)
+  // Apply Commander safety adapters (idempotent)
   try {
-    const applyCliSafetyResolved: ApplyCliSafetyFn =
-      resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-        cliUtils as unknown,
-        (m) => (m as CliUtilsModule).applyCliSafety,
-        (m) =>
-          (m as { default?: Partial<CliUtilsModule> }).default?.applyCliSafety,
-        'applyCliSafety',
-      );
-    applyCliSafetyResolved(cmd);
+    applyCliSafety(cmd);
   } catch {
     /* best‑effort */
   }
@@ -193,7 +181,7 @@ export const registerRunOptions = (
     peekAndMaybeDebugLegacySync(DBG_SCOPE_RUN_ENGINE_LEGACY, process.cwd());
   });
 
-  // Effective defaults from config (cliDefaults.run) over baseline; SSR-safe fallback.
+  // Effective defaults from config (cliDefaults.run) over baseline.
   let eff: {
     archive: boolean;
     combine: boolean;
@@ -208,34 +196,21 @@ export const registerRunOptions = (
     facets: boolean;
   } = { ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false };
   try {
-    const runDefaultsResolved = resolveNamedOrDefaultFunction<RunDefaultsFn>(
-      cliUtils as unknown,
-      (m) => (m as CliUtilsModule).runDefaults,
-      (m) => (m as { default?: Partial<CliUtilsModule> }).default?.runDefaults,
-      'runDefaults',
-    );
-    eff = runDefaultsResolved(process.cwd());
+    eff = runDefaults(process.cwd());
   } catch {
     // keep baseline fallback
   }
-  let tagDefaultResolved: TagDefaultFn | undefined;
-  try {
-    tagDefaultResolved = resolveNamedOrDefaultFunction<TagDefaultFn>(
-      cliUtils as unknown,
-      (m) => (m as CliUtilsModule).tagDefault,
-      (m) => (m as { default?: Partial<CliUtilsModule> }).default?.tagDefault,
-      'tagDefault',
-    );
-  } catch {
-    tagDefaultResolved = undefined;
-  }
 
   // Tag defaulted boolean choices with (default)
-  tagDefaultResolved?.(eff.archive ? optArchive : optNoArchive, true);
-  tagDefaultResolved?.(eff.combine ? optCombine : optNoCombine, true);
-  tagDefaultResolved?.(eff.keep ? optKeep : optNoKeep, true);
-  tagDefaultResolved?.(eff.sequential ? optSequential : optNoSequential, true);
-  tagDefaultResolved?.(eff.live ? optLive : optNoLive, true);
+  try {
+    tagDefault(eff.archive ? optArchive : optNoArchive, true);
+    tagDefault(eff.combine ? optCombine : optNoCombine, true);
+    tagDefault(eff.keep ? optKeep : optNoKeep, true);
+    tagDefault(eff.sequential ? optSequential : optNoSequential, true);
+    tagDefault(eff.live ? optLive : optNoLive, true);
+  } catch {
+    /* best‑effort */
+  }
 
   // Show configured default for prompt (Commander will render "(default: value)")
   optPrompt.default(eff.prompt);
@@ -257,8 +232,10 @@ export const registerRunOptions = (
     'deactivate facets for this run (naked form disables overlay)',
   );
   // Tag default overlay state from cliDefaults.run.facets
-  if (typeof tagDefaultResolved === 'function') {
-    tagDefaultResolved(eff.facets ? optFacets : optNoFacets, true);
+  try {
+    tagDefault(eff.facets ? optFacets : optNoFacets, true);
+  } catch {
+    /* best‑effort */
   }
 
   cmd.addOption(optFacets).addOption(optNoFacets);

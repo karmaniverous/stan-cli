@@ -121,3 +121,12 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Updated src/cli/patch.help.defaults.test.ts to write a namespaced config (stan-core/stan-cli), eliminating the legacy root cliDefaults fallback path from the test.
   - Removed default-export shims used only for SSR/tests: • src/cli/run/action/index.ts (defaultRegisterRunAction) • src/cli/run/derive/index.ts (deriveRunParametersDefault)
   - Outcome: single canonical named exports, static imports only; help default suffix still printed via canonical loader; all tasks remain green.
+
+- CLI fall‑through cleanup: static imports only; remove test‑only shims
+  - Replaced dynamic “named‑or‑default” resolvers in the run options registrar with static named imports:
+    - src/cli/run/options.ts now imports applyCliSafety, runDefaults, and tagDefault directly from cli‑utils.
+  - Removed the unused dynamic root resolver shim:
+    - Deleted src/cli/root/resolvers.ts and updated subcommand wiring to use local minimal types.
+  - Replaced dynamic loader in patch registrar with a static import:
+    - src/cli/patch/register.ts now imports runPatch directly from '@/runner/patch/service'.
+  - Outcome: eliminates fall‑throughs and shims that existed only for SSR/tests; aligns with the policy “static named imports only; no dynamic import resolvers; no default‑export shims.” Runtime behavior unchanged. Tests, lint, typecheck, build, docs, and knip remain green.

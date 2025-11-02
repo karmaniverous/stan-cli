@@ -1,7 +1,7 @@
-// src/cli/root/subcommands.ts
 import type { Command } from 'commander';
 
-import type { RegisterInitFn, RegisterPatchFn } from './resolvers';
+type RegisterInitFn = (c: Command) => Command;
+type RegisterPatchFn = (c: Command) => Command;
 
 export const attachSubcommands = (
   cli: Command,
