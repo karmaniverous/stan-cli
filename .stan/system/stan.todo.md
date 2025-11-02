@@ -124,4 +124,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
     - src/cli/patch/register.ts now imports runPatch directly from '@/runner/patch/service'.
   - Outcome: eliminates fall‑throughs and shims that existed only for SSR/tests; aligns with the policy “static named imports only; no dynamic import resolvers; no default‑export shims.” Runtime behavior unchanged. Tests, lint, typecheck, build, docs, and knip remain green.
 
+- Default-export shims: removed remaining defaults in CLI
+  - src/cli/init.ts: removed default export wrapper in favor of named export only.
+  - src/cli/run-args.ts: removed default export object; keep named deriveRunInvocation only.
+  - src/cli/apply.ts: removed default export object; keep named exports.
 - Plan maintenance: ingested handoff, pruned stale Next up items after confirming CI green, and aligned Next up with audit/CI/snapshot tasks for the next turn.

@@ -32,8 +32,3 @@ export const runGitApply = async (args: {
   });
   return out.result;
 };
-
-export default {
-  buildApplyAttempts,
-  runGitApply,
-};
