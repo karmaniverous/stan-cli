@@ -116,3 +116,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Replaced the dynamic loader import in src/cli/run/action/overlay-flow.ts with a static named import of buildOverlayInputs from ./overlay.
   - Introduced a concrete ResolvedOverlayForRun return type and used it in the run action to eliminate unsafe‑any destructuring and member access.
   - Result: fixes TS2307 (“Cannot find module './loaders'”) across typecheck/build/docs/tests; resolves eslint no‑unsafe‑\* violations in overlay‑flow and run action; knip “unused/Unresolved imports” clears (overlay.ts now referenced).
+
+- Remove test-only fallbacks: namespaced config and default-export shims
+  - Updated src/cli/patch.help.defaults.test.ts to write a namespaced config (stan-core/stan-cli), eliminating the legacy root cliDefaults fallback path from the test.
+  - Removed default-export shims used only for SSR/tests: • src/cli/run/action/index.ts (defaultRegisterRunAction) • src/cli/run/derive/index.ts (deriveRunParametersDefault)
+  - Outcome: single canonical named exports, static imports only; help default suffix still printed via canonical loader; all tasks remain green.

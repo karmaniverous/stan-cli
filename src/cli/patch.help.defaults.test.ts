@@ -15,11 +15,13 @@ describe('patch help shows default file from cliDefaults.patch.file', () => {
     await writeFile(
       path.join(dir, 'stan.config.yml'),
       [
-        'stanPath: .stan',
-        'scripts: {}',
-        'cliDefaults:',
-        '  patch:',
-        '    file: .stan/patch/last.patch',
+        'stan-core:',
+        '  stanPath: .stan',
+        'stan-cli:',
+        '  scripts: {}',
+        '  cliDefaults:',
+        '    patch:',
+        '      file: .stan/patch/last.patch',
       ].join('\n'),
       'utf8',
     );
