@@ -3,13 +3,11 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-// Spy on engine helper; we'll feed a valid packaged path
-import * as core from '@karmaniverous/stan-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunnerConfig } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
-import { resolvePromptOrThrow } from '@/runner/run/session';
+import { asEsmModule } from '@/test/mock-esm';
 
 describe('plan header prompt line (core fallback when no local)', () => {
   beforeEach(() => {
@@ -23,7 +21,26 @@ describe('plan header prompt line (core fallback when no local)', () => {
       const dist = await mkdtemp(path.join(os.tmpdir(), 'stan-core-dist-'));
       const prompt = path.join(dist, 'stan.system.md');
       await writeFile(prompt, '# core prompt\n', 'utf8');
-      vi.spyOn(core, 'getPackagedSystemPromptPath').mockReturnValue(prompt);
+
+      // ESM-friendly mock: install before importing the SUT that uses core
+      vi.resetModules();
+      vi.doMock('@karmaniverous/stan-core', () =>
+        asEsmModule({
+          CORE_VERSION: 'test',
+          getPackagedSystemPromptPath: () => prompt,
+        }),
+      );
+
+      // Import after mocks so the resolver sees our mocked core
+      const { resolvePromptOrThrow } = (await import(
+        '@/runner/run/session'
+      )) as {
+        resolvePromptOrThrow: (
+          cwd: string,
+          stanPath: string,
+          promptChoice?: string,
+        ) => { display: string; abs: string; kind: 'local' | 'core' | 'path' };
+      };
 
       const stanPath = 'stan';
       const rp = resolvePromptOrThrow(repo, stanPath, 'auto');

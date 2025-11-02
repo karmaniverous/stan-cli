@@ -19,6 +19,24 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+- CLI derive: replace dynamic resolver with static named import
+  - Removed src/cli/run/derive/dri.ts and updated derive/index.ts to import deriveRunInvocation directly.
+  - Fixes “deriveRunInvocation not found” in live defaults tests and aligns the CLI with the “static named imports only” policy.
+
+- Runner service: static named imports for plan/session
+  - Switched src/runner/run/service.ts to import renderRunPlan and runSessionOnce directly.
+  - Eliminates Rollup “Missing exports (default)” warnings and simplifies bundling.
+
+- Tests: ESM‑safe mocking for core prompt path
+  - Refactored src/runner/run/prompt.resolve.plan.test.ts to use vi.doMock with an ESM‑shaped factory (asEsmModule) instead of vi.spyOn against a module namespace.
+  - Resolves the ESM spying limitation and keeps the test deterministic.
+
+- Dead code cleanup (knip)
+  - Removed unused files flagged by knip: src/test-support/run.ts, src/test/mock-tar.ts, src/cli/root/action.ts.
+
+- Lint: TSDoc ‘>’ escape
+  - Escaped ‘>’ in src/cli/snap/action.ts TSDoc to silence warnings.
+
 - Run/cancel: robust archive cleanup on user cancel
   - Added a bounded delete-and-settle loop in the session cancel return path to guarantee removal of archive.tar and archive.diff.tar even when late races leave short-lived handles (Windows-skewed). Mirrors the runner-level backstop with platform-aware settles.
 

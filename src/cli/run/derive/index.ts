@@ -3,8 +3,8 @@ import type { Command } from 'commander';
 
 import type { ExecutionMode, RunBehavior } from '@/runner/run';
 
+import { deriveRunInvocation } from '../../run-args';
 import { RUN_BASE_DEFAULTS } from '../defaults';
-import { resolveDRI } from './dri';
 import { getRunDefaults } from './run-defaults';
 import type { DerivedRun } from './types';
 
@@ -124,9 +124,7 @@ export function deriveRunParameters(args: {
     live = false;
   }
 
-  // Resolve deriveRunInvocation lazily at call‑time (SSR‑robust).
-  const DRI = resolveDRI();
-  const derivedBase = DRI({
+  const derivedBase = deriveRunInvocation({
     scriptsProvided,
     scriptsOpt,
     exceptProvided,

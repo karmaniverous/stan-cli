@@ -4,59 +4,16 @@ import path from 'node:path';
 
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
-import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
 import { yieldToEventLoop } from '@/runner/run/exec/util';
 import type { RunnerConfig } from '@/runner/run/types';
 
-import * as planMod from './plan';
-import * as sessionMod from './session';
+import { renderRunPlan } from './plan';
+import { runSessionOnce } from './session';
 import type { ExecutionMode, RunBehavior } from './types';
 import type { RunnerUI } from './ui';
 import * as uiMod from './ui';
 
-// SSR‑robust resolver for renderRunPlan (named or default)
-type PlanModule = typeof import('./plan');
-type RenderRunPlanFn = PlanModule['renderRunPlan'];
-
-const getRenderRunPlan = (): RenderRunPlanFn => {
-  try {
-    return resolveNamedOrDefaultFunction<RenderRunPlanFn>(
-      planMod as unknown,
-      (m) => (m as PlanModule).renderRunPlan,
-      (m) => (m as { default?: Partial<PlanModule> }).default?.renderRunPlan,
-      'renderRunPlan',
-    );
-  } catch (e) {
-    // Extra fallback: accept default export when it is a callable function
-    const def = (planMod as unknown as { default?: unknown }).default;
-    if (typeof def === 'function') {
-      return def as RenderRunPlanFn;
-    }
-    throw e instanceof Error ? e : new Error(String(e));
-  }
-};
-
-// SSR‑robust resolver for runSessionOnce (named or default)
-type SessionModule = typeof import('./session');
-type RunSessionOnceFn = SessionModule['runSessionOnce'];
-const getRunSessionOnce = (): RunSessionOnceFn => {
-  try {
-    return resolveNamedOrDefaultFunction<RunSessionOnceFn>(
-      sessionMod as unknown,
-      (m) => (m as SessionModule).runSessionOnce,
-      (m) =>
-        (m as { default?: Partial<SessionModule> }).default?.runSessionOnce,
-      'runSessionOnce',
-    );
-  } catch (e) {
-    // Extra fallback: accept default export when it is a callable function
-    const def = (sessionMod as unknown as { default?: unknown }).default;
-    if (typeof def === 'function') {
-      return def as RunSessionOnceFn;
-    }
-    throw e instanceof Error ? e : new Error(String(e));
-  }
-};
+// Note: Static named imports are now used for plan and session.
 
 const resolveUI = (): {
   LiveUICtor?: new (opts?: { boring?: boolean }) => RunnerUI;
@@ -116,7 +73,7 @@ export const runSelected = async (
   await ensureOutputDir(cwd, config.stanPath, Boolean(behavior.keep));
 
   // Multi-line plan summary
-  const planBody = getRenderRunPlan()(cwd, {
+  const planBody = renderRunPlan(cwd, {
     selection,
     config,
     mode,
@@ -156,7 +113,7 @@ export const runSelected = async (
   // Outer loop: allow live-mode restart (press 'r') to repeat a session once per trigger.
   let printedPlan = false;
   for (;;) {
-    const { created, cancelled, restartRequested } = await getRunSessionOnce()({
+    const { created, cancelled, restartRequested } = await runSessionOnce({
       cwd,
       config,
       selection: selected,

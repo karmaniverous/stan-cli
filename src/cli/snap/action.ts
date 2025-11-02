@@ -33,7 +33,7 @@ const runLoopHeaderAndGuard = async (
   return true;
 };
 
-/** Resolve stash default (flags > cliDefaults > legacy parse fallback). */
+/** Resolve stash default (flags \> cliDefaults \> legacy parse fallback). */
 const resolveStashDefault = async (
   sub: Command,
   opts: { stash?: boolean } | undefined,
