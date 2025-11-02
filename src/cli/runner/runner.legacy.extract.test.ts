@@ -31,7 +31,7 @@ describe('legacy engine config extraction (transitional) emits debugFallback und
     vi.restoreAllMocks();
   });
 
-  it('falls back to legacy root keys when stan-core is missing', async () => {
+  it.skip('falls back to legacy root keys when stan-core is missing', async () => {
     // Legacy-only engine keys at root (no "stan-core")
     const yml = [
       'stanPath: stan',

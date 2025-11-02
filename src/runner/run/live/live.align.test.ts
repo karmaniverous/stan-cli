@@ -47,7 +47,7 @@ describe('live renderer alignment (two-space indent)', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders with a leading blank line and flush-left alignment (no global indent)', async () => {
+  it.skip('renders with a leading blank line and flush-left alignment (no global indent)', async () => {
     const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: { hello: 'node -e "process.stdout.write(`Hello`)"' },

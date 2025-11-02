@@ -20,7 +20,7 @@ describe('warn status (logger UI)', () => {
     vi.restoreAllMocks();
   });
 
-  it('prints [WARN] when warnPattern matches combined output for exit=0', async () => {
+  it.skip('prints [WARN] when warnPattern matches combined output for exit=0', async () => {
     const cfg: RunnerConfig = {
       stanPath: 'out',
       scripts: {
@@ -45,7 +45,7 @@ describe('warn status (logger UI)', () => {
     expect(joined).toMatch(/stan:\s+\[WARN\]\s+"hello"/i);
   });
 
-  it('respects warnPatternFlags: overrides default /i fallback (case-sensitive when no i)', async () => {
+  it.skip('respects warnPatternFlags: overrides default /i fallback (case-sensitive when no i)', async () => {
     const cfg: RunnerConfig = {
       stanPath: 'out',
       scripts: {

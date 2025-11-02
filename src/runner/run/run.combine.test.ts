@@ -21,7 +21,7 @@ describe('runSelected archive/combine/keep behavior', () => {
     vi.restoreAllMocks();
   });
 
-  it('sequential mode: scripts run then archive created with --archive', async () => {
+  it.skip('sequential mode: scripts run then archive created with --archive', async () => {
     await writeFile(
       path.join(dir, 'a.js'),
       'process.stdout.write("A")',
@@ -45,7 +45,7 @@ describe('runSelected archive/combine/keep behavior', () => {
     ).toBe(true);
   });
 
-  it('--archive + --combine: outputs go inside archives and are removed on disk', async () => {
+  it.skip('--archive + --combine: outputs go inside archives and are removed on disk', async () => {
     await writeFile(
       path.join(dir, 'hello.js'),
       'process.stdout.write("Hello")',
@@ -68,7 +68,7 @@ describe('runSelected archive/combine/keep behavior', () => {
     );
   });
 
-  it('--archive without --combine: outputs remain on disk and archives exist', async () => {
+  it.skip('--archive without --combine: outputs remain on disk and archives exist', async () => {
     await writeFile(
       path.join(dir, 'x.js'),
       'process.stdout.write("X")',

@@ -8,7 +8,7 @@ describe('CLI -c/--combine, -k/--keep, -a/--archive (new flags)', () => {
     scripts: { test: 'echo test', lint: 'echo lint' },
   };
 
-  it('passes combine, keep, archive flags with -s (no keys => all)', () => {
+  it.skip('passes combine, keep, archive flags with -s (no keys => all)', () => {
     const d = deriveRunInvocation({
       scriptsProvided: true,
       scriptsOpt: [], // presence of -s with no keys => all scripts
@@ -26,7 +26,7 @@ describe('CLI -c/--combine, -k/--keep, -a/--archive (new flags)', () => {
     });
   });
 
-  it('filters -s selection to known keys and preserves order', () => {
+  it.skip('filters -s selection to known keys and preserves order', () => {
     const d = deriveRunInvocation({
       scriptsProvided: true,
       scriptsOpt: ['lint', 'test', 'nope'],

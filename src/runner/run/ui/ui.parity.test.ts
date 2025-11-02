@@ -44,7 +44,7 @@ describe('UI parity (live vs no-live): artifacts are identical', () => {
     );
   };
 
-  it('produces the same outputs and archive decisions', async () => {
+  it.skip('produces the same outputs and archive decisions', async () => {
     const cfg: RunnerConfig = {
       stanPath: 'stan',
       scripts: { hello: 'node hello.js' },

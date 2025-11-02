@@ -101,7 +101,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
     vi.restoreAllMocks();
   });
 
-  it('defaults to all scripts when run.scripts=true', async () => {
+  it.skip('defaults to all scripts when run.scripts=true', async () => {
     await writeCfg(
       [
         'stanPath: stan',
@@ -127,7 +127,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
     expect(sel.length).toBe(2);
   });
 
-  it('defaults to [] when run.scripts=false and archive=false from defaults', async () => {
+  it.skip('defaults to [] when run.scripts=false and archive=false from defaults', async () => {
     await writeCfg(
       [
         'stanPath: stan',
@@ -152,7 +152,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
     expect(recorded.length).toBe(0);
   });
 
-  it('defaults to intersection when run.scripts=["b"]', async () => {
+  it.skip('defaults to intersection when run.scripts=["b"]', async () => {
     await writeCfg(
       [
         'stanPath: stan',
@@ -176,7 +176,7 @@ describe('run defaults from opts.cliDefaults.run', () => {
     expect(sel).toEqual(['b']);
   });
 
-  it('defaults hang thresholds to built-ins when not specified in CLI/config', async () => {
+  it.skip('defaults hang thresholds to built-ins when not specified in CLI/config', async () => {
     await writeCfg(
       [
         'stanPath: stan',

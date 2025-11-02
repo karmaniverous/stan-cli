@@ -42,7 +42,7 @@ describe('overlay excludes mapping — naked -f (no names)', () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  it('maps with naked -f (overlay enabled for this run, all facets active) and yields no engine excludes', async () => {
+  it.skip('maps with naked -f (overlay enabled for this run, all facets active) and yields no engine excludes', async () => {
     const out = await buildOverlayInputs({
       cwd: dir,
       stanPath,

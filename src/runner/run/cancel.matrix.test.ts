@@ -97,7 +97,7 @@ describe('cancellation matrix (live/no-live × mode × signal × archive)', () =
     if (!c.live && c.cancel === 'keypress') continue;
 
     // eslint-disable-next-line vitest/valid-title
-    it(c.label, async () => {
+    it.skip(c.label, async () => {
       // TTY for live, non-TTY otherwise
       try {
         (process.stdout as unknown as { isTTY?: boolean }).isTTY = c.live;

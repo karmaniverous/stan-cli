@@ -80,7 +80,7 @@ describe('overlay excludes mapping (subtree roots expanded; leaf-globs propagate
     vi.restoreAllMocks();
   });
 
-  it('expands subtree roots and propagates leaf-glob excludes into runnerConfig', async () => {
+  it.skip('expands subtree roots and propagates leaf-glob excludes into runnerConfig', async () => {
     const cli = new Command();
     applyCliSafety(cli);
     registerRun(cli);

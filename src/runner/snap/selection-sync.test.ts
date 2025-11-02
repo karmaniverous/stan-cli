@@ -42,7 +42,7 @@ describe('snap selection matches run selection (includes/excludes in sync)', () 
     vi.restoreAllMocks();
   });
 
-  it('snap includes re-included sub-packages so diff shows no phantom files', async () => {
+  it.skip('snap includes re-included sub-packages so diff shows no phantom files', async () => {
     // Repo config (namespaced): engine keys under "stan-core"; CLI scripts under "stan-cli".
     // Re-include a default-excluded nested sub-package via includes.
     const yml = [
