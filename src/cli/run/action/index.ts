@@ -7,8 +7,11 @@ import {
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
+import { loadCliConfigSync } from '@/cli/config/load';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
+import { deriveRunParameters } from '@/cli/run/derive';
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
+import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
@@ -17,11 +20,6 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
 import { assertNoScriptsConflict } from './conflict';
-import {
-  loadCliConfigSyncLazy,
-  loadDeriveRunParameters,
-  resolveEngineConfigLazy,
-} from './loaders';
 import { runLoopHeaderAndGuard } from './loop';
 import { resolveOverlayForRun } from './overlay-flow';
 import { makeRunnerConfig } from './runner-config';
@@ -45,7 +43,10 @@ export const registerRunAction = (
     // Engine config (SSR/mocks-robust)
     const config: ContextConfig = await (async () => {
       try {
-        return await resolveEngineConfigLazy(runCwd);
+        return await resolveEffectiveEngineConfig(
+          runCwd,
+          DBG_SCOPE_RUN_ENGINE_LEGACY,
+        );
       } catch {
         try {
           const sp = resolveStanPathSync(runCwd);
@@ -56,11 +57,8 @@ export const registerRunAction = (
       }
     })();
 
-    // CLI defaults and scripts for runner config/derivation (lazy SSR‑safe resolution)
-    const cliCfg = await loadCliConfigSyncLazy(runCwd);
-
-    // Derivation function (SSR-safe)
-    const deriveRunParameters = await loadDeriveRunParameters();
+    // CLI defaults and scripts for runner config/derivation
+    const cliCfg = loadCliConfigSync(runCwd);
 
     // Loop guard (header + reversal)
     {

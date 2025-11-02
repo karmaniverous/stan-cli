@@ -19,6 +19,12 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+- Tests/SSR fallthrough cleanup (static imports; remove flaky suite)
+  - Replaced SSR/test-only dynamic loaders in the run registrars with static named imports (runner index, action).
+  - Simplified snap options default tagging to a static import.
+  - Removed the legacy jsdiff fallback test (src/cli/patch.jsdiff.test.ts) that mocked legacy shapes and exercised SSR-only paths; engine behavior remains covered in stan-core.
+  - Outcome: code base is tested on its own terms; fewer test-only fallthroughs; reduced flake surface.
+
 - CLI derive: replace dynamic resolver with static named import
   - Removed src/cli/run/derive/dri.ts and updated derive/index.ts to import deriveRunInvocation directly.
   - Fixes “deriveRunInvocation not found” in live defaults tests and aligns the CLI with the “static named imports only” policy.
