@@ -61,12 +61,12 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Lint (overlay): explicit narrowing over facet meta
   - Replaced optional-chaining on meta[name] include/exclude with a local object guard and array checks in facets.ts.
-  - Next: clean snap/handlers and snap/safety “??/?.*” cases; then patch diagnostics/service once the patch facet is enabled.
+  - Next: clean snap/handlers and snap/safety “??/?.\*” cases; then patch diagnostics/service once the patch facet is enabled.
 
 - Facets: focus next lint group (snap + patch)
   - Enabled patch facet and kept snap facet enabled to surface remaining lint errors in those areas next thread.
   - Disabled overlay facet (lint pass complete) to minimize archive size.
-  - Next: resolve lint in src/cli/snap/*, src/runner/snap/*, and src/runner/patch/*.
+  - Next: resolve lint in src/cli/snap/_, src/runner/snap/_, and src/runner/patch/\*.
 
 - Lint (snap + patch facets): remove unnecessary coalescing/optional chaining
   - src/cli/snap/handlers.ts: replaced “?? {}” fallbacks with guarded Object.values().
@@ -74,4 +74,13 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - src/runner/patch/diagnostics.ts: dropped unnecessary optional-chains on a non-nullish param; kept safe chaining for optional subfields.
   - src/runner/patch/service.ts: removed “ops?.length ?? 0”, “cfg.stanPath ?? '.stan'”; normalized js=null to undefined for diagnostics.
   - src/runner/snap/capture.ts: removed redundant “??” on required SnapState field.
-  - src/runner/snap/snap-run.ts: simplified condition flagged as always-falsy.
+  - src/runner/snap/snap-run.ts: simplified condition flagged as always-falsy.
+
+- CLI: static import sweep; remove test-driven fallbacks
+  - src/cli/init.ts: replaced dynamic resolver with static named imports; removed duplicate safety fallbacks (kept applyCliSafety idempotent).
+  - src/cli/snap/index.ts: static imports for action and undo/redo/set/info handlers; removed loader indirections; deleted handlers.ts.
+  - src/cli/index.ts: static named imports (applyCliSafety, tagDefault, registerInit/Run/Snap/Patch, getVersionInfo); removed root resolvers and dynamic version import.
+  - src/cli/patch/index.ts: removed default‑export shim; retain named export only.
+  - vitest.config.ts: preferred pool 'threads' and removed cross‑package tar mock scaffolding (server.deps.inline, mock‑tar setup); kept test setup for process/cwd safety.
+  - Docs: added import/export policy — “static named imports only; no dynamic import resolvers; no default‑export shims.”
+  - Production hardening preserved: cancel/archive cleanup loops, PATH augmentation, live UI thresholds, prompt materialization, overlay selection behavior unchanged.

@@ -13,19 +13,10 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    // Vitest Option 1: default to Node; use DOM only per-suite when truly needed.
     environment: 'node',
-    // Use forks unconditionally so tests can safely call process.chdir().
-    // Threads pool (worker_threads) forbids chdir in workers.
-    pool: 'forks',
+    // Prefer threads unless a suite overrides.
+    pool: 'threads',
     exclude: ['node_modules/**', 'dist/**', '.rollup.cache/**'],
-    // Ensure dependencies are inlined so vi.mock('tar') applies within @karmaniverous/stan-core.
-    // Vitest v3: use server.deps.inline (deps.inline is deprecated).
-    server: {
-      deps: {
-        inline: ['@karmaniverous/stan-core', 'tar'],
-      },
-    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
@@ -52,10 +43,7 @@ export default defineConfig({
         },
       ],
     ],
-    setupFiles: [
-      resolve(rootDir, 'src/test/setup.ts'),
-      resolve(rootDir, 'src/test/mock-tar.ts'),
-    ],
+    setupFiles: [resolve(rootDir, 'src/test/setup.ts')],
     testTimeout: 15000,
     hookTimeout: 10000,
   },

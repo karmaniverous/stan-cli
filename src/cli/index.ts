@@ -1,25 +1,19 @@
 /* Root CLI factory — decomposed into small, testable modules.
  * - Preserves makeCli() public API.
  * - Registers run/init/snap/patch.
- * - SSR‑robust dynamic resolvers extracted to src/cli/root/resolvers.ts.
  * - Root defaults/env tagging extracted to src/cli/root/defaults.ts and env.ts.
  */
 import { findConfigPathSync } from '@karmaniverous/stan-core';
 import { Command, Option } from 'commander';
 
 import { renderAvailableScriptsHelp } from '@/runner/help';
-import { printVersionInfo } from '@/runner/version';
+import { getVersionInfo, printVersionInfo } from '@/runner/version';
 
-import * as cliUtils from './cli-utils';
+import { applyCliSafety, tagDefault } from './cli-utils';
 import { performInit, registerInit as registerInitNamed } from './init';
+import { registerPatch } from './patch';
 import { readRootDefaultsFromConfig } from './root/defaults';
 import { installRootEnvPreAction } from './root/env';
-import {
-  resolveApplyCliSafety,
-  resolveRegisterInit,
-  resolveRegisterPatch,
-  resolveTagDefault,
-} from './root/resolvers';
 import { attachSubcommands } from './root/subcommands';
 import { registerRun } from './runner';
 import { registerSnap } from './snap';
@@ -27,11 +21,8 @@ import { registerSnap } from './snap';
 export const makeCli = (): Command => {
   const cli = new Command();
 
-  // Resolve helpers (SSR‑robust)
-  const applyCliSafety = resolveApplyCliSafety();
-  const tagDefault = resolveTagDefault();
-  const registerInitResolved = resolveRegisterInit();
-  const registerPatchResolved = resolveRegisterPatch();
+  // Safety (idempotent)
+  applyCliSafety?.(cli);
 
   // Effective defaults from config (or baseline fallback)
   const safeRootDefaults = (): {
@@ -80,27 +71,7 @@ export const makeCli = (): Command => {
   // Help footer: list available script keys
   cli.addHelpText('after', () => renderAvailableScriptsHelp(process.cwd()));
 
-  // Safety adapters (idempotent)
-  try {
-    applyCliSafety?.(cli);
-  } catch {
-    /* best‑effort */
-  }
-  try {
-    (
-      cliUtils as unknown as {
-        patchParseMethods?: (c: Command) => void;
-        installExitOverride?: (c: Command) => void;
-      }
-    ).patchParseMethods?.(cli);
-    (
-      cliUtils as unknown as {
-        installExitOverride?: (c: Command) => void;
-      }
-    ).installExitOverride?.(cli);
-  } catch {
-    /* best‑effort */
-  }
+  // (applyCliSafety already called above)
 
   // Root env propagation (flags > env > defaults)
   installRootEnvPreAction(cli, safeRootDefaults);
@@ -109,16 +80,15 @@ export const makeCli = (): Command => {
   attachSubcommands(cli, {
     registerRun,
     registerSnap,
-    registerInit: registerInitResolved ?? registerInitNamed,
-    registerPatch: registerPatchResolved,
+    registerInit: registerInitNamed,
+    registerPatch,
   });
 
   // Root action (version, interactive init, or help)
   cli.action(async () => {
     const opts = cli.opts<{ version?: boolean }>();
     if (opts.version) {
-      const vmod = await import('@/runner/version');
-      const info = await vmod.getVersionInfo(process.cwd());
+      const info = await getVersionInfo(process.cwd());
       printVersionInfo(info);
       return;
     }

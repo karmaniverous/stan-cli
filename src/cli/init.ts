@@ -6,27 +6,8 @@
 import type { Command } from 'commander';
 import { Command as Commander } from 'commander';
 
-import { resolveNamedOrDefaultFunction } from '@/common/interop/resolve';
-import * as initServiceMod from '@/runner/init/service';
-
-import * as cliUtils from './cli-utils';
-type CliUtilsModule = typeof import('./cli-utils');
-type ApplyCliSafetyFn = CliUtilsModule['applyCliSafety'];
-type InitModule = typeof import('@/runner/init/service');
-type PerformInitServiceFn = InitModule['performInitService'];
-const performInitServiceResolved: PerformInitServiceFn | undefined = (() => {
-  try {
-    return resolveNamedOrDefaultFunction<PerformInitServiceFn>(
-      initServiceMod as unknown,
-      (m) => (m as InitModule).performInitService,
-      (m) =>
-        (m as { default?: Partial<InitModule> }).default?.performInitService,
-      'performInitService',
-    );
-  } catch {
-    return undefined;
-  }
-})();
+import { performInitService } from '@/runner/init/service';
+import { applyCliSafety } from './cli-utils';
 
 /**
  * Register the `init` subcommand on the provided root CLI.
@@ -43,88 +24,12 @@ export async function performInit(
     dryRun?: boolean;
   },
 ): Promise<string | null> {
-  const fn = performInitServiceResolved;
-  if (typeof fn === 'function') return fn(opts);
-  // Fallback: attempt named access from the module (SSR edge), else null
-  const fallback = (
-    initServiceMod as unknown as {
-      performInitService?: PerformInitServiceFn;
-    }
-  ).performInitService;
-  return typeof fallback === 'function' ? fallback(opts) : null;
+  return performInitService(opts);
 }
 
 export function registerInit(cli: Commander): Command {
-  // Hard guard: ensure parse normalization and exit override are present on the root
-  // before any SSR-sensitive resolution. Idempotent and safe.
-  try {
-    (
-      cliUtils as unknown as {
-        patchParseMethods?: (c: Command) => void;
-        installExitOverride?: (c: Command) => void;
-      }
-    ).patchParseMethods?.(cli);
-    (
-      cliUtils as unknown as {
-        installExitOverride?: (c: Command) => void;
-      }
-    ).installExitOverride?.(cli);
-  } catch {
-    /* best-effort */
-  }
-
-  // SSR‑robust resolver as before (kept for parity and idempotency)
-  {
-    let applied = false;
-    try {
-      const applyCliSafetyResolved: ApplyCliSafetyFn =
-        resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-          cliUtils as unknown,
-          (m) => (m as CliUtilsModule).applyCliSafety,
-          (m) =>
-            (m as { default?: Partial<CliUtilsModule> }).default
-              ?.applyCliSafety,
-          'applyCliSafety',
-        );
-      applyCliSafetyResolved(cli);
-      applied = true;
-    } catch {
-      /* best‑effort */
-    }
-    if (!applied) {
-      try {
-        (
-          cliUtils as unknown as {
-            installExitOverride?: (c: Command) => void;
-            patchParseMethods?: (c: Command) => void;
-          }
-        ).installExitOverride?.(cli);
-        (
-          cliUtils as unknown as {
-            patchParseMethods?: (c: Command) => void;
-          }
-        ).patchParseMethods?.(cli);
-      } catch {
-        /* best‑effort */
-      }
-    }
-  }
-  // Final safety: unconditionally ensure parse normalization and exit override (idempotent).
-  try {
-    (
-      cliUtils as unknown as {
-        installExitOverride?: (c: Command) => void;
-        patchParseMethods?: (c: Command) => void;
-      }
-    ).patchParseMethods?.(cli);
-    (
-      cliUtils as unknown as {
-        installExitOverride?: (c: Command) => void;
-      }
-    ).installExitOverride?.(cli);
-  } catch {
-    /* best‑effort */
-  }
+  // Idempotent safety on the root
+  applyCliSafety(cli);
 
   const sub = cli
     .command('init')
@@ -132,57 +37,8 @@ export function registerInit(cli: Commander): Command {
       'Create or update stan.config.json|yml by scanning package.json scripts.',
     );
 
-  {
-    let applied = false;
-    try {
-      const applyCliSafetySub: ApplyCliSafetyFn =
-        resolveNamedOrDefaultFunction<ApplyCliSafetyFn>(
-          cliUtils as unknown,
-          (m) => (m as CliUtilsModule).applyCliSafety,
-          (m) =>
-            (m as { default?: Partial<CliUtilsModule> }).default
-              ?.applyCliSafety,
-          'applyCliSafety',
-        );
-      applyCliSafetySub(sub);
-      applied = true;
-    } catch {
-      /* best‑effort */
-    }
-    if (!applied) {
-      try {
-        (
-          cliUtils as unknown as {
-            installExitOverride?: (c: Command) => void;
-            patchParseMethods?: (c: Command) => void;
-          }
-        ).installExitOverride?.(sub);
-        (
-          cliUtils as unknown as {
-            patchParseMethods?: (c: Command) => void;
-          }
-        ).patchParseMethods?.(sub);
-      } catch {
-        /* best‑effort */
-      }
-    }
-  }
-  // Final safety on subcommand as well (idempotent).
-  try {
-    (
-      cliUtils as unknown as {
-        installExitOverride?: (c: Command) => void;
-        patchParseMethods?: (c: Command) => void;
-      }
-    ).patchParseMethods?.(sub);
-    (
-      cliUtils as unknown as {
-        installExitOverride?: (c: Command) => void;
-      }
-    ).installExitOverride?.(sub);
-  } catch {
-    /* best‑effort */
-  }
+  // Idempotent safety on the subcommand
+  applyCliSafety(sub as unknown as Command);
 
   sub
     .option(
@@ -201,15 +57,7 @@ export function registerInit(cli: Commander): Command {
       preserveScripts?: boolean;
       dryRun?: boolean;
     }) => {
-      // Resolve service lazily to avoid SSR/evaluation issues
-      const fn = performInitServiceResolved;
-      if (!fn) {
-        // Silent best-effort in rare SSR anomalies; mirror prior behavior
-        // by returning without side effects when the service cannot be resolved.
-        return;
-      }
-      await fn({
-        // performInitService signature accepts the same options bag
+      await performInitService({
         force: Boolean(opts.force),
         preserveScripts: Boolean(opts.preserveScripts),
         dryRun: Boolean(opts.dryRun),

@@ -21,6 +21,13 @@ When decomposing a file named `X.ts`:
 
 This convention keeps module boundaries clear, avoids duplicate barrels (file and folder), and makes refactors predictable. Apply this consistently for new decompositions and when regularizing legacy ones.
 
+## Import/export policy (CLI code)
+
+- Static named imports only for internal modules.
+- Do not use dynamic import resolvers in the CLI (no named‑or‑default probes).
+- Do not introduce default‑export shims to accommodate tests — keep a single canonical export shape (named).
+- Where SSR/ESM test robustness is required, prefer adapting tests or localized loaders in tests rather than altering the production public surface.
+
 ## SSR/ESM test‑stability playbook
 
 When tests run under Vitest SSR and worker forks, import‑time evaluation order and export shape can differ from Node runtime. Use this playbook to keep tests deterministic without changing runtime behavior:

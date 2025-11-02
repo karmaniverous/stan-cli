@@ -4,30 +4,10 @@
 import type { Command } from 'commander';
 import { Command as Commander } from 'commander';
 
-// SSR‑robust resolver (named or default) to avoid module‑shape issues in tests
-import * as snapActionMod from './action';
-import { loadSnapHandler } from './handlers';
+import { handleInfo, handleRedo, handleSet, handleUndo } from '@/runner/snap/history';
+import { registerSnapAction } from './action';
 import { attachSnapOptions } from './options';
 import { applyCliSafetyTo } from './safety';
-
-type ActionModule = typeof import('./action');
-const getRegisterSnapAction = (): ActionModule['registerSnapAction'] => {
-  const mod = snapActionMod as unknown;
-  // named
-  const named = (mod as ActionModule).registerSnapAction as unknown;
-  if (typeof named === 'function')
-    return named as ActionModule['registerSnapAction'];
-  // default.registerSnapAction
-  const viaDefault = (mod as { default?: Partial<ActionModule> }).default
-    ?.registerSnapAction as unknown;
-  if (typeof viaDefault === 'function')
-    return viaDefault as ActionModule['registerSnapAction'];
-  // default as function
-  const defAny = (mod as { default?: unknown }).default;
-  if (typeof defAny === 'function')
-    return defAny as unknown as ActionModule['registerSnapAction'];
-  throw new Error('registerSnapAction not found');
-};
 
 /**
  * Register the `snap` subcommand on the provided root CLI.
@@ -53,16 +33,14 @@ export function registerSnap(cli: Commander): Command {
     .command('undo')
     .description('Revert to the previous snapshot in the history stack')
     .action(async () => {
-      const fn = await loadSnapHandler('handleUndo');
-      await fn();
+      await handleUndo();
     });
 
   sub
     .command('redo')
     .description('Advance to the next snapshot in the history stack')
     .action(async () => {
-      const fn = await loadSnapHandler('handleRedo');
-      await fn();
+      await handleRedo();
     });
 
   sub
@@ -70,27 +48,21 @@ export function registerSnap(cli: Commander): Command {
     .argument('<index>', 'snapshot index to activate (0-based)')
     .description('Jump to a specific snapshot index and restore it')
     .action(async (indexArg: string) => {
-      const fn = await loadSnapHandler('handleSet');
-      // Preserve raw CLI string to retain expected 0-based semantics in history.
-      await fn(indexArg);
+      await handleSet(indexArg);
     });
 
   sub
     .command('info')
     .description('Print the snapshot stack and current position')
     .action(async () => {
-      const fn = await loadSnapHandler('handleInfo');
-      await fn();
+      await handleInfo();
     });
 
   // Stash flags and default tagging
   attachSnapOptions(sub);
 
   // Main action (stash + capture)
-  {
-    const registerSnapAction = getRegisterSnapAction();
-    registerSnapAction(sub);
-  }
+  registerSnapAction(sub);
 
   return cli;
 }
