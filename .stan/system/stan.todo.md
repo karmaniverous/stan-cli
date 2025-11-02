@@ -4,18 +4,11 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Typecheck: eliminate current TS errors and syntax/parse failures
-  - Fix remaining TS errors in tests where argv normalization feeds Commander (src/cli/runner.defaults.test.ts) by ensuring readonly unknown[] → readonly string[] at the boundary only.
-  - Address any stray syntax/parse errors surfaced by vitest (e.g., combine archive behavior tests) and re-run tsc until clean.
-  - Reconfirm derive/loaders resolvers compile cleanly under SSR/forks.
-- Lint: remove flagged unnecessary conditionals and unsafe patterns
-  - Resolve @typescript-eslint/no-unnecessary-condition and unnecessary optional-chaining/nullish-coalescing across flagged modules (config/load.ts, config/schema.ts, init.ts, run/options.ts, overlay/facets.ts, patch/diagnostics.ts, patch/service.ts, run/progress/sinks/live.ts, run/live/frame.ts, run/session/orchestrator.ts, etc.).
-  - Prefer explicit typeof guards over optional chaining on known shapes; keep tests free of unsafe-any by narrowing unknown results locally.
-- Test: stabilize failing suites and harden cancellation paths
-  - Cancel matrix (keypress + archive): guarantee no on-disk archives on cancel for live concurrent and live sequential modes; verify pre-archive guard, late-cancel checks, and best‑effort deletion loops (Windows‑skewed settle).
-  - Snap defaults: fix loadSnapHandler SSR shape so stash defaults tests pass; re-run to green.
-  - Combine archive behavior: fix syntax/parse issue and re-validate output/include/exclude semantics (diff dir and archive files excluded in DIFF; output included only with combine).
-  - UI parity: keep live/no-live artifact parity (final-frame flush and small settles); confirm no regressions.
+- Re‑run full CI locally and smoke CLI surfaces (run/snap/patch) in a temp repo.
+- Snap to refresh the baseline (.stan/diff/.archive.snapshot.json) and attach updated archives in the next turn.
+- Audit for any remaining default‑export shims or dynamic resolvers in CLI codepaths; remove them or replace with a single canonical named export per module.
+- Grep for resolveNamedOrDefaultFunction across CLI; ensure usage is limited to SSR‑safe runtime resolvers only where strictly required by engine/peer boundaries.
+- Optional: expand tests to pin recent refactors (CLI run/options and patch/register) and keep coverage trending upward.
 
 ## Completed (context essentials only)
 
@@ -130,3 +123,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Replaced dynamic loader in patch registrar with a static import:
     - src/cli/patch/register.ts now imports runPatch directly from '@/runner/patch/service'.
   - Outcome: eliminates fall‑throughs and shims that existed only for SSR/tests; aligns with the policy “static named imports only; no dynamic import resolvers; no default‑export shims.” Runtime behavior unchanged. Tests, lint, typecheck, build, docs, and knip remain green.
+
+- Plan maintenance: ingested handoff, pruned stale Next up items after confirming CI green, and aligned Next up with audit/CI/snapshot tasks for the next turn.
