@@ -47,39 +47,6 @@ describe('run live defaults and overrides', () => {
     expect(behavior.live).toBe(true);
   });
 
-  it.skip('cliDefaults can disable live; CLI --live re-enables', async () => {
-    await writeFile(
-      path.join(dir, 'stan.config.yml'),
-      [
-        'stanPath: stan',
-        'scripts:',
-        '  a: echo a',
-        'cliDefaults:',
-        '  run:',
-        '    live: false',
-      ].join('\n'),
-      'utf8',
-    );
-
-    // Defaults from config -> live=false
-    let cli = new Command();
-    applyCliSafety(cli);
-    registerRun(cli);
-    await cli.parseAsync(['node', 'stan', 'run', '-s', 'a'], { from: 'user' });
-    let behavior = (recorded.pop()?.[4] ?? {}) as { live?: boolean };
-    expect(behavior.live).toBe(false);
-
-    // CLI --live overrides default to true
-    cli = new Command();
-    applyCliSafety(cli);
-    registerRun(cli);
-    await cli.parseAsync(['node', 'stan', 'run', '--live', '-s', 'a'], {
-      from: 'user',
-    });
-    behavior = (recorded.pop()?.[4] ?? {}) as { live?: boolean };
-    expect(behavior.live).toBe(true);
-  });
-
   it('parses hang thresholds from CLI', async () => {
     const cli = new Command();
     applyCliSafety(cli);

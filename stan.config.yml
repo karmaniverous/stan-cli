@@ -31,7 +31,7 @@ stan-cli:
     knip: npm run knip
   cliDefaults:
     run:
-      facets: true
+      facets: false
       plan: false
       sequential: true
   patchOpenCommand: code -g {file}
