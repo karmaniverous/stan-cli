@@ -161,3 +161,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Snap header and loop state: show “snap” (not “run”) and record last=snap
   - Added snapLoopHeaderAndGuard in src/cli/run/action/loop.ts mirroring the run guard.
   - Updated src/cli/snap/action.ts to use the snap-specific guard so “stan snap” prints “▣ snap (last command: …)” and updates the loop state correctly without affecting script execution or snapshot behavior.
+
+- Patch UX: de‑duplicate “patch source” log and show intended target on failure
+  - Removed the duplicate “stan: patch source: …” log from src/runner/patch/service.ts; the CLI action remains the sole source so the line prints exactly once.
+  - Unified‑diff failure messages now include the intended target when detectable (e.g., “stan: ✖ patch failed -> path/to/file.ts” and “stan: ✖ patch check failed -> path/to/file.ts”).
+  - No change to File Ops or mixed‑payload diagnostics (multi‑target).

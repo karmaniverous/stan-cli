@@ -102,7 +102,6 @@ export const runPatch = async (
 ): Promise<void> => {
   // 1) Acquire raw input
   let raw = '';
-  let source = 'clipboard';
   try {
     const got = await readPatchSource(cwd, inputMaybe, {
       file: opts.file,
@@ -110,14 +109,11 @@ export const runPatch = async (
       noFile: opts.noFile,
     });
     raw = got.raw;
-    source = got.source;
   } catch {
     console.log(`stan: ${statusFail('patch failed')} (unable to read source)`);
     finalizeLogs();
     return;
   }
-  console.log(`stan: patch source: ${source}`);
-
   // 2) Classify kind (File Ops vs Diff)
   const opsPlan = parseFileOpsBlock(raw);
   const hasOps = opsPlan.ops.length > 0;
@@ -231,17 +227,21 @@ export const runPatch = async (
               })
             : out.js,
       });
-      console.log(
-        `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
-      );
+      {
+        const tail = firstTarget ? ` -> ${firstTarget}` : '';
+        console.log(
+          `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}${tail}`,
+        );
+      }
       await reportDiagnostics(diag);
       // Open the target file on failure as well (best-effort; non-check).
       openTargetIfNeeded(cwd, single.target.path, check);
       finalizeLogs();
       return;
     } catch {
+      const tail = firstTarget ? ` -> ${firstTarget}` : '';
       console.log(
-        `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}`,
+        `stan: ${statusFail(check ? 'patch check failed' : 'patch failed')}${tail}`,
       );
       // Even on unexpected errors, attempt to open the target (non-check).
       openTargetIfNeeded(cwd, single.target.path, check);
