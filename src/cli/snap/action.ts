@@ -13,7 +13,7 @@ import { handleSnap } from '@/runner/snap';
 /** Guard: print header, check for loop reversal, update state. */
 // moved to src/cli/run/action/loop.ts; reused here
 
-/** Resolve stash default (flags \> cliDefaults \> legacy parse fallback). */
+/** Resolve stash default (flags > cliDefaults \> legacy parse fallback). */
 const resolveStashDefault = async (
   sub: Command,
   opts: { stash?: boolean } | undefined,
@@ -92,6 +92,8 @@ export function registerSnapAction(sub: Command): void {
       console.log('stan: stash saved changes');
     }
     await handleSnap({ stash: stashFinal === true });
+    // Confirmation after successful snapshot (parity with published CLI)
+    console.log('stan: snapshot updated');
     if (stashFinal === true) {
       console.log('stan: stash pop restored changes');
     }

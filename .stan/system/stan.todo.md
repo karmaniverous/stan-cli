@@ -166,3 +166,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Removed the duplicate “stan: patch source: …” log from src/runner/patch/service.ts; the CLI action remains the sole source so the line prints exactly once.
   - Unified‑diff failure messages now include the intended target when detectable (e.g., “stan: ✖ patch failed -> path/to/file.ts” and “stan: ✖ patch check failed -> path/to/file.ts”).
   - No change to File Ops or mixed‑payload diagnostics (multi‑target).
+
+- Snap CLI confirmation: print “stan: snapshot updated”
+  - Added an explicit confirmation log after a successful `stan snap` so local builds match the published CLI behavior.
+  - Updated the stash success test to assert the new confirmation line in addition to existing stash logs.

@@ -86,6 +86,8 @@ describe('snap CLI (-s) logs stash/pop confirmations on success', () => {
     await cli.parseAsync(['node', 'stan', 'snap', '-s'], { from: 'user' });
     spy.mockRestore();
     expect(logs.some((l) => /stash saved changes/i.test(l))).toBe(true);
+    // New: confirmation printed after a successful snapshot.
+    expect(logs.some((l) => /snapshot updated/i.test(l))).toBe(true);
     expect(logs.some((l) => /stash pop restored changes/i.test(l))).toBe(true);
   });
 });
