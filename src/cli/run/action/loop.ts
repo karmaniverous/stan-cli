@@ -23,3 +23,25 @@ export const runLoopHeaderAndGuard = async (
   }
   return true;
 };
+
+/** Guard: print header, check for loop reversal, update state (snap action). */
+export const snapLoopHeaderAndGuard = async (
+  cwd: string,
+  stanPath: string,
+): Promise<boolean> => {
+  try {
+    const st = await readLoopState(cwd, stanPath);
+    printHeader('snap', st?.last ?? null);
+    if (st?.last && isBackward(st.last, 'snap')) {
+      const proceed = await confirmLoopReversal();
+      if (!proceed) {
+        console.log('');
+        return false;
+      }
+    }
+    await writeLoopState(cwd, stanPath, 'snap', new Date().toISOString());
+  } catch {
+    /* ignore guard failures */
+  }
+  return true;
+};

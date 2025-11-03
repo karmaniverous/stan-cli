@@ -159,7 +159,7 @@
     "release:pre": "npm run release -- --no-git.requireBranch --github.prerelease --preRelease",
     "relink": "npm uninstall -g @karmaniverous/stan-cli && npm run build && npm link",
     "stan": "tsx src/cli/bin/stan.ts",
-    "test": "vitest --run --coverage --silent",
+    "test": "vitest --run --silent",
     "typecheck": "tsc"
   },
   "type": "module",

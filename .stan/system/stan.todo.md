@@ -156,4 +156,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Lint cleanup (cli-utils): escaped “>” in TSDoc normalizeArgv example and removed an unnecessary optional chain in patchDefaultFile legacy fallback; lint task green.
 
-- Fix export regression (cli-utils): restored getOptionSource export used by snap/action and run/action overlay flow; resolves TS2305, unsafe call/return lint errors, and snap stash test runtime “not a function” failure.
+- Fix export regression (cli-utils): restored getOptionSource export used by snap/action and run/action overlay flow; resolves TS2305, unsafe call/return lint errors, and snap stash test runtime “not a function” failure.
+
+- Snap header and loop state: show “snap” (not “run”) and record last=snap
+  - Added snapLoopHeaderAndGuard in src/cli/run/action/loop.ts mirroring the run guard.
+  - Updated src/cli/snap/action.ts to use the snap-specific guard so “stan snap” prints “▣ snap (last command: …)” and updates the loop state correctly without affecting script execution or snapshot behavior.

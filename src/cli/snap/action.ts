@@ -6,7 +6,7 @@ import type { Command } from 'commander';
 
 import { getOptionSource, snapDefaults } from '@/cli/cli-utils';
 import { loadCliConfigSync } from '@/cli/config/load';
-import { runLoopHeaderAndGuard } from '@/cli/run/action/loop';
+import { snapLoopHeaderAndGuard } from '@/cli/run/action/loop';
 import { parseText } from '@/common/config/parse';
 import { handleSnap } from '@/runner/snap';
 
@@ -82,7 +82,7 @@ export function registerSnapAction(sub: Command): void {
       /* keep default */
     }
     // Header + reversal guard + state update
-    const proceed = await runLoopHeaderAndGuard(cwd, stanPath);
+    const proceed = await snapLoopHeaderAndGuard(cwd, stanPath);
     if (!proceed) return;
 
     // Flags > cliDefaults > legacy parse fallback
