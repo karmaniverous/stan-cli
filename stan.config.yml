@@ -24,7 +24,10 @@ stan-cli:
       # Flag only disallowed Rollup warnings:
       # - ignore @rollup/plugin-typescript outputToFilesystem default message
       # - ignore zod circular dependency chains under node_modules/zod/…
-      warnPattern: \\(!\\)\\s(?!\\[plugin typescript\\][^\\n]*outputToFilesystem option is defaulting to true)(?!Circular dependency[^\\n]*node_modules[\\/\\\\]zod).*
+      # Anchor at start of line and enable multiline matching to evaluate per-line.
+      # Keep all other "(!) ..." warnings visible.
+      warnPattern: ^\\(!\\)\\s(?!\\[plugin typescript\\][^\\n]*outputToFilesystem option is defaulting to true)(?!Circular dependency[^\\n]*node_modules[\\/\\\\]zod).*
+      warnPatternFlags: mi
     docs:
       script: npm run docs -- --emit none
       warnPattern: \\[warning\\]

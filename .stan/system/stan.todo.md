@@ -12,6 +12,12 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+‑ Build warnings filter: ignore specific known Rollup warnings, keep others visible
+  - Anchored the build warnPattern to line start and set flags to multiline (mi).
+  - Continue to ignore:
+    - “[plugin typescript] … outputToFilesystem option is defaulting to true”
+    - “Circular dependency … node_modules/zod/…”
+  - Preserve all other “(!) …” warnings for visibility.
 ‑ Facets: enabled‑wins across leaf‑glob vs subtree conflicts
   - Fix overlay behavior so an enabled facet’s leaf‑glob patterns are not hidden by other disabled facets’ subtree excludes.
   - Implementation:
