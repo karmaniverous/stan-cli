@@ -197,3 +197,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Lint (TSDoc): escape greater-than in snap action
   - Escaped “>” in the TSDoc comment of src/cli/snap/action.ts to satisfy tsdoc/syntax.
+
+- Release readiness: fix types path mismatch — point package.json "types" and exports.types to "dist/types/index.d.ts" to match the build output from rollup-plugin-dts.

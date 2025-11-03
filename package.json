@@ -74,11 +74,11 @@
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.ts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/mjs/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/cjs/index.js"
       }
     }
@@ -163,6 +163,6 @@
     "typecheck": "tsc"
   },
   "type": "module",
-  "types": "dist/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "version": "0.11.1"
 }
