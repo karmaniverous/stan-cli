@@ -218,4 +218,38 @@ describe('computeFacetOverlay', () => {
     // Subtree excludes remain empty (no inactive subtree roots)
     expect(out.excludesOverlay).toEqual([]);
   });
+
+  it('enabled-wins: active leaf-glob patterns are re-included under inactive subtree roots', async () => {
+    const meta: FacetMeta = {
+      core: { exclude: ['src/**'], include: ['src/README.md'] },
+      tests: { exclude: ['**/*.test.ts'], include: [] },
+    };
+    const state: FacetState = {
+      core: false, // inactive -> would exclude 'src/**'
+      tests: true, // active   -> '*.test.ts' should remain visible
+    };
+    await writeJson(sys('facet.meta.json'), meta);
+    await writeJson(sys('facet.state.json'), state);
+    // Ensure ramp-up safety is not triggered for 'core' (anchor exists under src/)
+    await mkdir(path.join(cwd, 'src'), { recursive: true });
+    await writeFile(path.join(cwd, 'src', 'README.md'), 'x', 'utf8');
+    // The actual test files would live under src/*.test.ts; presence not required for overlay calc
+
+    const out = await computeFacetOverlay({
+      cwd,
+      stanPath,
+      enabled: true,
+    });
+    // core remains inactive; its subtree root is kept in excludes
+    // (no active subtree root to drop it)
+    expect(out.excludesOverlay).toEqual(['src']);
+    // Because the tests facet is ACTIVE, protect its leaf-glob tail by adding
+    // an anchor scoped under the inactive root so test files remain included.
+    const expectedScoped = 'src/**/*.test.ts';
+    expect(out.anchorsOverlay).toContain(expectedScoped);
+    // Anchors also include facet.state.json to preserve next-run defaults
+    expect(out.anchorsOverlay).toContain('stan/system/facet.state.json');
+    // No autosuspension expected here (core had an anchor under its excluded root)
+    expect(out.autosuspended).toEqual([]);
+  });
 });

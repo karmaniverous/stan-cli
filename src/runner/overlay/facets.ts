@@ -79,6 +79,13 @@ const collectSubtreeRoots = (patterns: string[] | undefined): string[] =>
     .map(stripGlobTail)
     .filter((r) => r.length > 0);
 
+/** Collect leaf‑glob tails (e.g., '**\/*.test.ts' -\> '*.test.ts') from a list of exclude patterns. */
+const collectLeafGlobTails = (patterns: string[] | undefined): string[] =>
+  (patterns ?? [])
+    .filter((p) => !isSubtreePattern(p))
+    .map(globTail)
+    .filter((t) => t.length > 0);
+
 const isUnder = (childRel: string, root: string): boolean => {
   const c = posix(childRel);
   const r = posix(root);
@@ -152,6 +159,8 @@ export const computeFacetOverlay = async (
   const anchorsKeptCounts: Record<string, number> = {};
   // Track per-facet inactive subtree roots for overlap-kept diagnostics.
   const inactiveEntries: Array<{ facet: string; root: string }> = [];
+  // Collect leaf‑glob tails from active facets (protected patterns).
+  const activeLeafTails = new Set<string>();
 
   // Precompute active subtree roots across all facets (for tie-breakers and scoped anchors).
   const activeRoots = new Set<string>();
@@ -159,6 +168,12 @@ export const computeFacetOverlay = async (
     const isActive = effective[name];
     const exRoots = collectSubtreeRoots(meta[name].exclude);
     if (isActive) for (const r of exRoots) activeRoots.add(posix(r));
+    // Also collect leaf‑glob tails for active facets so they can be protected
+    // under inactive subtree roots (enabled‑wins across leaf‑glob vs subtree).
+    if (isActive) {
+      for (const tail of collectLeafGlobTails(meta[name].exclude))
+        activeLeafTails.add(tail);
+    }
   }
   // Collect leaf-glob tails from inactive facets (for scoped anchors under active roots).
   const inactiveLeafTails = new Set<string>();
@@ -250,7 +265,7 @@ export const computeFacetOverlay = async (
       inactiveEntries.push({ facet: name, root });
       excludesOverlayRoots.push(root.endsWith('/') ? root : root);
     }
-    // Collect leaf-glob tails for scoped re-inclusions under active roots (anchors only).
+    // Collect leaf-glob tails for scoped re-inclusions under active roots.
     for (const g of leafGlobs) {
       const tail = globTail(g);
       if (tail) inactiveLeafTails.add(tail);
@@ -289,6 +304,22 @@ export const computeFacetOverlay = async (
     const uniq = Array.from(new Set(excludesOverlayRoots));
     excludesOverlayArr.length = 0;
     excludesOverlayArr.push(...uniq);
+  }
+
+  // Enabled‑wins for leaf‑glob patterns: protect ACTIVE facets' leaf‑glob tails
+  // under any remaining inactive subtree roots by adding scoped anchors
+  // "<inactiveRoot>/**/<tail>" so those files remain visible.
+  if (activeLeafTails.size > 0 && excludesOverlayArr.length > 0) {
+    try {
+      for (const root of excludesOverlayArr) {
+        for (const tail of activeLeafTails) {
+          const scoped = posix(`${root}/**/${tail}`);
+          anchorsOverlaySet.add(scoped);
+        }
+      }
+    } catch {
+      /* best-effort */
+    }
   }
 
   // Leaf-glob scoped re-inclusion: add anchors "<activeRoot>/**/<tail>" for every collected tail.

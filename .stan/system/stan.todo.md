@@ -12,6 +12,17 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+‑ Facets: enabled‑wins across leaf‑glob vs subtree conflicts
+  - Fix overlay behavior so an enabled facet’s leaf‑glob patterns are not hidden by other disabled facets’ subtree excludes.
+  - Implementation:
+    - In computeFacetOverlay, collect leaf‑glob “tails” from ACTIVE facets (e.g., “**/*.test.ts” -> “*.test.ts”).
+    - For any remaining inactive subtree roots after tie‑breakers, add scoped anchors “<inactiveRoot>/**/<tail>” to re‑include those files.
+    - This complements the existing behavior that re‑includes INACTIVE facets’ leaf‑globs under ACTIVE roots.
+  - Result:
+    - With overlay on, “tests” facet active, and another facet excluding “src/**”, patterns like “src/**/*.test.ts” are anchored and remain visible in archives.
+  - Tests:
+    - Added “enabled‑wins: active leaf‑glob patterns are re‑included under inactive subtree roots” to src/runner/overlay/facets.test.ts.
+
 - Tests/SSR fallthrough cleanup (static imports; remove flaky suite)
   - Replaced SSR/test-only dynamic loaders in the run registrars with static named imports (runner index, action).
   - Simplified snap options default tagging to a static import.
