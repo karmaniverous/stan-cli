@@ -80,6 +80,10 @@ describe('patch subcommand (clipboard and file modes)', () => {
     expect(logs.some((l) => /stan:\s+patch source:\s+clipboard/i.test(l))).toBe(
       true,
     );
+    // Single “patch source” line (no duplicates)
+    expect(
+      logs.filter((l) => /stan:\s+patch source:\s+clipboard/i.test(l)).length,
+    ).toBe(1);
     // Terminal status: applied | failed | check passed | check failed
     expect(hasTerminalStatus(logs)).toBe(true);
 
@@ -104,8 +108,90 @@ describe('patch subcommand (clipboard and file modes)', () => {
     expect(
       logs.some((l) => /stan:\s+patch source:\s+file\s+"my\.patch"/i.test(l)),
     ).toBe(true);
+    // Single “patch source” line (no duplicates)
+    expect(
+      logs.filter((l) => /stan:\s+patch source:\s+file\s+"my\.patch"/i.test(l))
+        .length,
+    ).toBe(1);
     expect(hasTerminalStatus(logs)).toBe(true);
 
+    logSpy.mockRestore();
+  });
+
+  it('reads from argument, logs single source line, and emits terminal status', async () => {
+    const cli = new Command();
+    registerPatch(cli);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    // Minimal invalid diff (ensures failure path without external side effects)
+    const diff = [
+      'diff --git a/src/x.ts b/src/x.ts',
+      '--- a/src/x.ts',
+      '+++ b/src/x.ts',
+      '@@ -1,1 +1,1 @@',
+      '-old',
+      '+new',
+      '',
+    ].join('\n');
+
+    await cli.parseAsync(['node', 'stan', 'patch', diff], { from: 'user' });
+    const logs = logSpy.mock.calls.map((c) => String(c[0]));
+    // Single source line for argument
+    expect(
+      logs.filter((l) => /stan:\s+patch source:\s+argument/i.test(l)).length,
+    ).toBe(1);
+    expect(hasTerminalStatus(logs)).toBe(true);
+    logSpy.mockRestore();
+  });
+
+  it('failure message includes tail "-> <path>" (apply path)', async () => {
+    const cli = new Command();
+    registerPatch(cli);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const diff = [
+      'diff --git a/src/foo.ts b/src/foo.ts',
+      '--- a/src/foo.ts',
+      '+++ b/src/foo.ts',
+      '@@ -1,1 +1,1 @@',
+      '-a',
+      '+b',
+      '',
+    ].join('\n');
+    await cli.parseAsync(['node', 'stan', 'patch', diff], { from: 'user' });
+    const logs = logSpy.mock.calls.map((c) => String(c[0]));
+    // Expect tail arrow with target path on failure
+    expect(
+      logs.some((l) =>
+        /stan:\s+(?:✖|\[FAIL\])\s+patch\s+failed\s+->\s+src\/foo\.ts/i.test(l),
+      ),
+    ).toBe(true);
+    logSpy.mockRestore();
+  });
+
+  it('failure message includes tail "-> <path>" (check path)', async () => {
+    const cli = new Command();
+    registerPatch(cli);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const diff = [
+      'diff --git a/src/bar.ts b/src/bar.ts',
+      '--- a/src/bar.ts',
+      '+++ b/src/bar.ts',
+      '@@ -1,1 +1,1 @@',
+      '-c',
+      '+d',
+      '',
+    ].join('\n');
+    await cli.parseAsync(['node', 'stan', 'patch', '--check', diff], {
+      from: 'user',
+    });
+    const logs = logSpy.mock.calls.map((c) => String(c[0]));
+    // Expect tail arrow with target path on failure (check mode)
+    expect(
+      logs.some((l) =>
+        /stan:\s+(?:✖|\[FAIL\])\s+patch\s+check\s+failed\s+->\s+src\/bar\.ts/i.test(
+          l,
+        ),
+      ),
+    ).toBe(true);
     logSpy.mockRestore();
   });
 });

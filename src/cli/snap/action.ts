@@ -13,7 +13,7 @@ import { handleSnap } from '@/runner/snap';
 /** Guard: print header, check for loop reversal, update state. */
 // moved to src/cli/run/action/loop.ts; reused here
 
-/** Resolve stash default (flags > cliDefaults \> legacy parse fallback). */
+/** Resolve stash default (flags \> cliDefaults \> legacy parse fallback). */
 const resolveStashDefault = async (
   sub: Command,
   opts: { stash?: boolean } | undefined,

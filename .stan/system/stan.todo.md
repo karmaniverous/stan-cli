@@ -170,3 +170,13 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Snap CLI confirmation: print “stan: snapshot updated”
   - Added an explicit confirmation log after a successful `stan snap` so local builds match the published CLI behavior.
   - Updated the stash success test to assert the new confirmation line in addition to existing stash logs.
+
+- Patch tests: single “patch source” log across sources
+  - Extended clipboard and file tests to assert exactly one “stan: patch source: …” line.
+  - Added an argument-flow test to assert a single “stan: patch source: argument” and a terminal status.
+
+- Patch tests: failure tail “-> <path>” for apply and check
+  - Added tests that pass minimal invalid diffs via argument to verify the failure message tail for both normal and --check paths (e.g., “patch failed -> src/foo.ts”).
+
+- Lint (TSDoc): escape greater-than in snap action
+  - Escaped “>” in the TSDoc comment of src/cli/snap/action.ts to satisfy tsdoc/syntax.
