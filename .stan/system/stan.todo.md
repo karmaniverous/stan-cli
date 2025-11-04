@@ -208,4 +208,9 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Type fix: normalize imports map for stageImports (TS2345)
   - Problem: `src/runner/run/session/archive-stage/run-archive.ts` passed an `importsMap` typed as `Record<string, string[] | undefined>` to `stageImports` which requires `Record<string, string[]> | null | undefined`, triggering TS2345 in typecheck/build/docs.
   - Change: added a local `normalizeImportsMap(...)` helper and now pass a cleaned `Record<string, string[]> | null` to `stageImports`.
-  - Impact: resolves strict typing errors and Rollup/TypeDoc warnings; no runtime behavior change.
+  - Impact: resolves strict typing errors and Rollup/TypeDoc warnings; no runtime behavior change.
+
+- Diff suppression for unchanged prompt (ephemeral and local)
+  - Problem: `archive.diff.tar` could still include `.stan/system/stan.system.md` due to snapshot residue when the local prompt existed (auto → local).
+  - Change: compute `includeOnChange` for both ephemeral and local sources by comparing the current prompt hash to the baseline in `.docs.meta.json`; exclude the system prompt from DIFF whenever `includeOnChange === false`.
+  - Result: the prompt appears in DIFF exactly once when it changes; otherwise it is suppressed for both core/path and local sources, neutralizing prior snapshot state.

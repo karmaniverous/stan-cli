@@ -134,11 +134,11 @@ export const runArchiveUnified = async (args: {
   const runDiff = async (): Promise<void> => {
     if (typeof shouldContinue === 'function' && !shouldContinue()) return;
 
-    // Quiet DIFF on unchanged ephemeral prompt:
-    // If a prior snapshot captured an injected stan.system.md but includeOnChange=false
-    // now suppresses injection, exclude the file from DIFF to avoid a spurious “deletion.”
+    // Quiet DIFF when the prompt is unchanged:
+    // Exclude stan.system.md to neutralize snapshot residue (whether the prompt
+    // source is ephemeral or local) so DIFF doesn't reintroduce or delete it.
     const diffCfg =
-      ephemeral && includeOnChange === false
+      includeOnChange === false
         ? {
             ...baseDiff,
             excludes: [
