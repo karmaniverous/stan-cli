@@ -1,16 +1,19 @@
-// src/runner/run/session/run-session/steps/prompt.ts
+/* src/stan/run/session/run-session/steps/prompt.ts
+ * Prompt resolution and plan printing (with prompt line).
+ */
 import {
   printPlanWithPrompt,
   resolvePromptOrThrow,
 } from '@/runner/run/session/prompt-plan';
 import type { RunnerConfig } from '@/runner/run/types';
-import type { ExecutionMode, RunBehavior } from '@/runner/run/types';
+import type { ExecutionMode, RunBehavior, Selection } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
 
-/** Result of resolving prompt for the session. */
 export type ResolvedPrompt = {
   display: string;
   abs: string | null;
+  /** source kind for metadata persistence */
+  source: 'local' | 'core' | 'path' | null;
 };
 
 /**
@@ -25,7 +28,7 @@ export type ResolvedPrompt = {
 export function resolvePromptAndMaybePrintPlan(args: {
   cwd: string;
   config: RunnerConfig;
-  selection: string[];
+  selection: Selection;
   mode: ExecutionMode;
   behavior: RunBehavior;
   ui: RunnerUI;
@@ -47,10 +50,12 @@ export function resolvePromptAndMaybePrintPlan(args: {
 
   let resolvedPromptDisplay = '';
   let resolvedPromptAbs: string | null = null;
+  let resolvedPromptSource: 'local' | 'core' | 'path' | null = null;
   try {
     const rp = resolvePromptOrThrow(cwd, config.stanPath, promptChoice);
     resolvedPromptDisplay = rp.display;
     resolvedPromptAbs = rp.abs;
+    resolvedPromptSource = rp.kind;
     try {
       if (process.env.STAN_DEBUG === '1') {
         const srcKind =
@@ -71,6 +76,7 @@ export function resolvePromptAndMaybePrintPlan(args: {
     console.log('');
     resolvedPromptDisplay = 'auto (unresolved)';
     resolvedPromptAbs = null;
+    resolvedPromptSource = null;
   }
 
   if (printPlan && planBody) {
@@ -88,5 +94,9 @@ export function resolvePromptAndMaybePrintPlan(args: {
       /* ignore plan print failure */
     }
   }
-  return { display: resolvedPromptDisplay, abs: resolvedPromptAbs };
+  return {
+    display: resolvedPromptDisplay,
+    abs: resolvedPromptAbs,
+    source: resolvedPromptSource,
+  };
 }

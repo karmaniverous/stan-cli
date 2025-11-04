@@ -62,18 +62,21 @@ export const runSessionOnce = async (args: {
   );
 
   // Resolve prompt & maybe print plan; then start UI and ensure a first frame
-  const { display: resolvedPromptDisplay, abs: resolvedPromptAbs } =
-    resolvePromptAndMaybePrintPlan({
-      cwd,
-      config,
-      selection,
-      mode,
-      behavior,
-      ui,
-      planBody,
-      printPlan,
-      promptChoice,
-    });
+  const {
+    display: resolvedPromptDisplay,
+    abs: resolvedPromptAbs,
+    source: resolvedPromptSource,
+  } = resolvePromptAndMaybePrintPlan({
+    cwd,
+    config,
+    selection,
+    mode,
+    behavior,
+    ui,
+    planBody,
+    printPlan,
+    promptChoice,
+  });
 
   startUiAndEnsureFirstFrame(ui);
 
@@ -193,6 +196,7 @@ export const runSessionOnce = async (args: {
       ui,
       promptAbs: resolvedPromptAbs,
       promptDisplay: resolvedPromptDisplay,
+      promptSource: resolvedPromptSource ?? undefined,
       supervisor,
     });
     if (short) return short;

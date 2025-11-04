@@ -3,6 +3,8 @@ import path from 'node:path';
 import type { RunnerConfig } from '@/runner/run/types';
 import type { RunBehavior } from '@/runner/run/types';
 import type { RunnerUI } from '@/runner/run/ui';
+import { updateDocsMetaPrompt } from '@/runner/system/docs-meta';
+import { sha256File } from '@/runner/util/hash';
 
 import { makeBaseConfigs } from './config';
 import { getArchivePhase, getStageImports } from './imports';
@@ -18,10 +20,13 @@ export const runArchiveStage = async (args: {
   ui: RunnerUI;
   promptAbs: string | null;
   promptDisplay: string;
+  /** Optional prompt source kind for metadata: local|core|path */
+  promptSource?: 'local' | 'core' | 'path';
   /** Optional guard to abort work when cancellation is requested. */
   shouldContinue?: () => boolean;
 }): Promise<{ created: string[]; cancelled: boolean }> => {
-  const { cwd, config, behavior, ui, promptAbs, promptDisplay } = args;
+  const { cwd, config, behavior, ui, promptAbs, promptDisplay, promptSource } =
+    args;
   const shouldContinue =
     typeof args.shouldContinue === 'function'
       ? args.shouldContinue
@@ -37,6 +42,21 @@ export const runArchiveStage = async (args: {
   const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
   const { full: baseFull, diff: baseDiff } = makeBaseConfigs(config);
   const progress = buildArchiveProgress(ui, cwd);
+
+  // Persist the prompt baseline best-effort (source + hash + path).
+  const persistPromptBaseline = async (): Promise<void> => {
+    try {
+      if (!promptAbs || !promptSource) return;
+      const hash = await sha256File(promptAbs);
+      await updateDocsMetaPrompt(cwd, config.stanPath, {
+        source: promptSource,
+        hash,
+        path: promptAbs,
+      });
+    } catch {
+      /* best-effort */
+    }
+  };
 
   const ephemeral = isEphemeralPrompt(systemAbs, promptAbs);
   if (ephemeral) {
@@ -98,6 +118,7 @@ export const runArchiveStage = async (args: {
         importsMap: config.imports,
       });
       created.push(...out);
+      await persistPromptBaseline();
       return { created, cancelled: false };
     } catch (e) {
       const msg =
@@ -149,6 +170,7 @@ export const runArchiveStage = async (args: {
       ephemeral: false,
     });
     created.push(...out);
+    await persistPromptBaseline();
     return { created, cancelled: false };
   } catch (e) {
     const msg =

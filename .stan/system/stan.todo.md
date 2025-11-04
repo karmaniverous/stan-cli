@@ -13,21 +13,21 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 ## Completed (context essentials only)
 
 ‑ Build warnings filter: ignore specific known Rollup warnings, keep others visible
-  - Anchored the build warnPattern to line start and set flags to multiline (mi).
-  - Continue to ignore:
-    - “[plugin typescript] … outputToFilesystem option is defaulting to true”
-    - “Circular dependency … node_modules/zod/…”
-  - Preserve all other “(!) …” warnings for visibility.
-‑ Facets: enabled‑wins across leaf‑glob vs subtree conflicts
-  - Fix overlay behavior so an enabled facet’s leaf‑glob patterns are not hidden by other disabled facets’ subtree excludes.
-  - Implementation:
-    - In computeFacetOverlay, collect leaf‑glob “tails” from ACTIVE facets (e.g., “**/*.test.ts” -> “*.test.ts”).
-    - For any remaining inactive subtree roots after tie‑breakers, add scoped anchors “<inactiveRoot>/**/<tail>” to re‑include those files.
-    - This complements the existing behavior that re‑includes INACTIVE facets’ leaf‑globs under ACTIVE roots.
-  - Result:
-    - With overlay on, “tests” facet active, and another facet excluding “src/**”, patterns like “src/**/*.test.ts” are anchored and remain visible in archives.
-  - Tests:
-    - Added “enabled‑wins: active leaf‑glob patterns are re‑included under inactive subtree roots” to src/runner/overlay/facets.test.ts.
+
+- Anchored the build warnPattern to line start and set flags to multiline (mi).
+- Continue to ignore:
+  - “[plugin typescript] … outputToFilesystem option is defaulting to true”
+  - “Circular dependency … node_modules/zod/…”
+- Preserve all other “(!) …” warnings for visibility. ‑ Facets: enabled‑wins across leaf‑glob vs subtree conflicts
+- Fix overlay behavior so an enabled facet’s leaf‑glob patterns are not hidden by other disabled facets’ subtree excludes.
+- Implementation:
+  - In computeFacetOverlay, collect leaf‑glob “tails” from ACTIVE facets (e.g., “\*_/_.test.ts” -> “\*.test.ts”).
+  - For any remaining inactive subtree roots after tie‑breakers, add scoped anchors “<inactiveRoot>/\*\*/<tail>” to re‑include those files.
+  - This complements the existing behavior that re‑includes INACTIVE facets’ leaf‑globs under ACTIVE roots.
+- Result:
+  - With overlay on, “tests” facet active, and another facet excluding “src/**”, patterns like “src/**/\*.test.ts” are anchored and remain visible in archives.
+- Tests:
+  - Added “enabled‑wins: active leaf‑glob patterns are re‑included under inactive subtree roots” to src/runner/overlay/facets.test.ts.
 
 - Tests/SSR fallthrough cleanup (static imports; remove flaky suite)
   - Replaced SSR/test-only dynamic loaders in the run registrars with static named imports (runner index, action).
@@ -198,4 +198,9 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Lint (TSDoc): escape greater-than in snap action
   - Escaped “>” in the TSDoc comment of src/cli/snap/action.ts to satisfy tsdoc/syntax.
 
-- Release readiness: fix types path mismatch — point package.json "types" and exports.types to "dist/types/index.d.ts" to match the build output from rollup-plugin-dts.
+- Release readiness: fix types path mismatch — point package.json "types" and exports.types to "dist/types/index.d.ts" to match the build output from rollup-plugin-dts.
+
+- Fix: prevent unchanged stan.system.md from appearing in diffs
+  - Cause: we never persisted a “prompt baseline” to `.stan/system/.docs.meta.json`, so the ephemeral path logic treated the prompt as changed each run.
+  - Change: plumb the resolved prompt `source` (local|core|path) from plan → archive stage and record `{ source, hash, path }` via `updateDocsMetaPrompt` after the archive completes.
+  - Result: when the effective prompt hasn’t changed, `archive.diff.tar` suppresses `stan.system.md`; if it changes, it appears exactly once in the next diff. Full archives always contain the prompt.

@@ -36,6 +36,7 @@ export async function runArchiveIfEnabled(args: {
   ui: RunnerUI;
   promptAbs: string | null;
   promptDisplay: string;
+  promptSource?: 'local' | 'core' | 'path';
   supervisor: ProcessSupervisor;
 }): Promise<{ short?: SessionOutcome; added?: string[] }> {
   const {
