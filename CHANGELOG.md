@@ -2,7 +2,21 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.3](https://github.com/karmaniverous/stan-cli/compare/0.11.2...0.11.3)
+
+- updated docs [`2adb0a9`](https://github.com/karmaniverous/stan-cli/commit/2adb0a9f1ec496f23fdc02ae58102353e21101be)
+- fix: suppress unchanged system prompt in diffs by persisting prompt baseline [`1e815a5`](https://github.com/karmaniverous/stan-cli/commit/1e815a56354e4ae07b9075e125fe77ae818045ab)
+- fix: suppress spurious diff deletion of stan.system.md after snap [`e433931`](https://github.com/karmaniverous/stan-cli/commit/e4339310efa7f4215eeb8bdbb7882ca81c6c6017)
+- updated docs [`f338a9e`](https://github.com/karmaniverous/stan-cli/commit/f338a9e8cd7633d5f770bbce8f2198b34769797c)
+- fix: normalize imports map for stageImports [`1327dc9`](https://github.com/karmaniverous/stan-cli/commit/1327dc9e8b0b4c8d04a955a5f3f0bae183245dd3)
+- fix(run-archive): suppress system prompt in DIFF when unchanged (local + ephemeral) [`0d034c1`](https://github.com/karmaniverous/stan-cli/commit/0d034c1e2c3be68cbd5569241cee477fb4eb1a56)
+- updated stan [`a5b8e37`](https://github.com/karmaniverous/stan-cli/commit/a5b8e3747ecaaaf4d83dc5083b2bd65aae581085)
+- fix(diff): suppress system prompt when baseline is unknown [`25def7f`](https://github.com/karmaniverous/stan-cli/commit/25def7f181d0add31327050e962ab2ada1bdd7ef)
+- updated docs [`1974e38`](https://github.com/karmaniverous/stan-cli/commit/1974e385c279b80ff780717b2bce4fc7c88a4721)
+
 #### [0.11.2](https://github.com/karmaniverous/stan-cli/compare/0.11.1...0.11.2)
+
+> 3 November 2025
 
 - removed skipped tests [`f30eb6b`](https://github.com/karmaniverous/stan-cli/commit/f30eb6bbf2dd34849c9a62c7b98c3cf9bd2e1d67)
 - decompose(run): split cli/run/action.ts into small modules; fix SSR resolvers [`f43f37a`](https://github.com/karmaniverous/stan-cli/commit/f43f37af2a23cb30dd030c1b22672d2c43301bd6)
@@ -15,6 +29,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor(run-session): decompose orchestrator into small step helpers [`31a592a`](https://github.com/karmaniverous/stan-cli/commit/31a592a3738fb64a60aa5addc497b4a46a778953)
 - chore(cli/run): decompose run action and fix typed overlay loader [`b0554e5`](https://github.com/karmaniverous/stan-cli/commit/b0554e5562627ebe25d396882771d9ebf20ff814)
 - fix(snap): robust capture resolver; prefer configured history path [`0da2b45`](https://github.com/karmaniverous/stan-cli/commit/0da2b45f0377c4835deb353f970afe170a06dd82)
+- chore: release v0.11.2 [`db154fc`](https://github.com/karmaniverous/stan-cli/commit/db154fc456405ec0afe02aac7b5922cf1bd384da)
 - chore(cli): decompose patch command into small modules; fix statusOk logging [`60e1783`](https://github.com/karmaniverous/stan-cli/commit/60e1783c7ce76f9285b03cdb9aab3bbac21d602c)
 - chore: remove test-only fallthroughs; staticize run registrars; drop flaky jsdiff test [`2eec8a4`](https://github.com/karmaniverous/stan-cli/commit/2eec8a47c2741e8ebbf66144b106fd328c2521c9)
 - fix(cli): stabilize snap action resolver and patch jsdiff fallback (tests green) [`f47fc4d`](https://github.com/karmaniverous/stan-cli/commit/f47fc4d6b12b34577167f1234d001db61cc4031b)
