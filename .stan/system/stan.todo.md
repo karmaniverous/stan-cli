@@ -204,3 +204,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Cause: we never persisted a “prompt baseline” to `.stan/system/.docs.meta.json`, so the ephemeral path logic treated the prompt as changed each run.
   - Change: plumb the resolved prompt `source` (local|core|path) from plan → archive stage and record `{ source, hash, path }` via `updateDocsMetaPrompt` after the archive completes.
   - Result: when the effective prompt hasn’t changed, `archive.diff.tar` suppresses `stan.system.md`; if it changes, it appears exactly once in the next diff. Full archives always contain the prompt.
+
+- Type fix: normalize imports map for stageImports (TS2345)
+  - Problem: `src/runner/run/session/archive-stage/run-archive.ts` passed an `importsMap` typed as `Record<string, string[] | undefined>` to `stageImports` which requires `Record<string, string[]> | null | undefined`, triggering TS2345 in typecheck/build/docs.
+  - Change: added a local `normalizeImportsMap(...)` helper and now pass a cleaned `Record<string, string[]> | null` to `stageImports`.
+  - Impact: resolves strict typing errors and Rollup/TypeDoc warnings; no runtime behavior change.

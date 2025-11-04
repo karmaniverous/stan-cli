@@ -33,6 +33,21 @@ type StageImports = (
 ) => Promise<void>;
 
 /**
+ * Normalize an imports map so that all values are concrete string[].
+ * Drops entries with undefined values and returns null when empty.
+ */
+const normalizeImportsMap = (
+  m?: Record<string, string[] | undefined> | null,
+): Record<string, string[]> | null | undefined => {
+  if (!m) return m;
+  const out: Record<string, string[]> = {};
+  for (const [k, v] of Object.entries(m)) {
+    if (Array.isArray(v)) out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+};
+
+/**
  * Unified archive runner (ephemeral and non‑ephemeral).
  *  - Ephemeral:
  *    • includeOnChange=true: inject BEFORE diff so prompt appears exactly once in diff; then full.
@@ -112,7 +127,7 @@ export const runArchiveUnified = async (args: {
   // Optional imports staging (ephemeral path stages once for both passes)
   if (ephemeral && typeof stageImports === 'function') {
     if (typeof shouldContinue !== 'function' || shouldContinue())
-      await stageImports(cwd, stanPath, importsMap);
+      await stageImports(cwd, stanPath, normalizeImportsMap(importsMap));
     else return created;
   }
 
