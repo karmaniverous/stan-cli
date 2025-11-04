@@ -214,3 +214,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Problem: `archive.diff.tar` could still include `.stan/system/stan.system.md` due to snapshot residue when the local prompt existed (auto → local).
   - Change: compute `includeOnChange` for both ephemeral and local sources by comparing the current prompt hash to the baseline in `.docs.meta.json`; exclude the system prompt from DIFF whenever `includeOnChange === false`.
   - Result: the prompt appears in DIFF exactly once when it changes; otherwise it is suppressed for both core/path and local sources, neutralizing prior snapshot state.
+
+- DIFF default when baseline unknown: suppress prompt
+  - Problem: After `stan snap`, `.archive.snapshot.json` doesn’t include the prompt; with no docs‑meta baseline yet, DIFF could still include `.stan/system/stan.system.md`.
+  - Change: `decideIncludeOnChange` now defaults to suppression when undecidable (no baseline/hash) so `snap → run` does not surface the prompt in DIFF.
+  - Result: Baseline is persisted at the end of the first `stan run`; subsequent runs will include the prompt exactly once if/when it changes.

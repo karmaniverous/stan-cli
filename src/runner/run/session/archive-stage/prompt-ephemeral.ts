@@ -28,8 +28,8 @@ export const decideIncludeOnChange = async (args: {
   promptAbs: string | null;
 }): Promise<boolean> => {
   const { cwd, stanPath, promptAbs } = args;
-  // Default to include once when we cannot decide safely
-  let includeOnChange = true;
+  // Default to suppress when we cannot decide safely (no baseline yet).
+  let includeOnChange = false;
   let currentHash: string | undefined;
   try {
     if (promptAbs) currentHash = await sha256File(promptAbs);
@@ -45,12 +45,12 @@ export const decideIncludeOnChange = async (args: {
     if (baseline && currentHash) {
       includeOnChange = baseline !== currentHash;
     } else if (!baseline) {
-      includeOnChange = true;
+      includeOnChange = false;
     } else if (!currentHash) {
       includeOnChange = false;
     }
   } catch {
-    includeOnChange = true;
+    includeOnChange = false;
   }
   return includeOnChange;
 };
