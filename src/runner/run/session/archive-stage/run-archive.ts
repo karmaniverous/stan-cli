@@ -33,12 +33,12 @@ type StageImports = (
 ) => Promise<void>;
 
 /**
-+ * Unified archive runner (ephemeral and non‑ephemeral).
- *+  - Ephemeral:
- *+    • includeOnChange=true: inject BEFORE diff so prompt appears exactly once in diff; then full.
- *+    • includeOnChange=false: quiet diff first; inject ONLY for full.
- *+  - Non‑ephemeral:
- *+    • prepare once when needed; run diff then full; restore afterward.
+ * Unified archive runner (ephemeral and non‑ephemeral).
+ *  - Ephemeral:
+ *    • includeOnChange=true: inject BEFORE diff so prompt appears exactly once in diff; then full.
+ *    • includeOnChange=false: quiet diff first; inject ONLY for full.
+ *  - Non‑ephemeral:
+ *    • prepare once when needed; run diff then full; restore afterward.
  */
 export const runArchiveUnified = async (args: {
   cwd: string;
@@ -84,7 +84,7 @@ export const runArchiveUnified = async (args: {
   // mode
   ephemeral: boolean;
   includeOnChange?: boolean;
-  importsMap?: Record<string, string[]> | null;
+  importsMap?: Record<string, string[] | undefined> | null;
 }): Promise<string[]> => {
   const {
     cwd,
@@ -107,6 +107,7 @@ export const runArchiveUnified = async (args: {
 
   const created: string[] = [];
   const includeOutputs = Boolean(behavior.combine);
+  const posix = (p: string): string => p.replace(/\\+/g, '/');
 
   // Optional imports staging (ephemeral path stages once for both passes)
   if (ephemeral && typeof stageImports === 'function') {
@@ -117,12 +118,28 @@ export const runArchiveUnified = async (args: {
 
   const runDiff = async (): Promise<void> => {
     if (typeof shouldContinue === 'function' && !shouldContinue()) return;
+
+    // Quiet DIFF on unchanged ephemeral prompt:
+    // If a prior snapshot captured an injected stan.system.md but includeOnChange=false
+    // now suppresses injection, exclude the file from DIFF to avoid a spurious “deletion.”
+    const diffCfg =
+      ephemeral && includeOnChange === false
+        ? {
+            ...baseDiff,
+            excludes: [
+              ...(baseDiff.excludes ?? []),
+              posix(`${stanPath}/system/stan.system.md`),
+            ],
+          }
+        : baseDiff;
+
     const d = await archivePhase(
-      { cwd, config: baseDiff, includeOutputs },
+      { cwd, config: diffCfg, includeOutputs },
       { silent: true, which: 'diff', progress, shouldContinue },
     );
     if (d.diffPath) created.push(d.diffPath);
   };
+
   const runFull = async (): Promise<void> => {
     if (typeof shouldContinue === 'function' && !shouldContinue()) return;
     const f = await archivePhase(
