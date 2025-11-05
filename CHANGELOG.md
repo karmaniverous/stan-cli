@@ -2,9 +2,16 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.4](https://github.com/karmaniverous/stan-cli/compare/0.11.3...0.11.4)
+
+- updated stan core [`fde7e3f`](https://github.com/karmaniverous/stan-cli/commit/fde7e3fafcfd4420127650c55a17d435105b2f1f)
+
 #### [0.11.3](https://github.com/karmaniverous/stan-cli/compare/0.11.2...0.11.3)
 
+> 4 November 2025
+
 - updated docs [`2adb0a9`](https://github.com/karmaniverous/stan-cli/commit/2adb0a9f1ec496f23fdc02ae58102353e21101be)
+- chore: release v0.11.3 [`5a1b97a`](https://github.com/karmaniverous/stan-cli/commit/5a1b97afdea54dc49f7b83e5decc8a07b0fefae4)
 - fix: suppress unchanged system prompt in diffs by persisting prompt baseline [`1e815a5`](https://github.com/karmaniverous/stan-cli/commit/1e815a56354e4ae07b9075e125fe77ae818045ab)
 - fix: suppress spurious diff deletion of stan.system.md after snap [`e433931`](https://github.com/karmaniverous/stan-cli/commit/e4339310efa7f4215eeb8bdbb7882ca81c6c6017)
 - updated docs [`f338a9e`](https://github.com/karmaniverous/stan-cli/commit/f338a9e8cd7633d5f770bbce8f2198b34769797c)
