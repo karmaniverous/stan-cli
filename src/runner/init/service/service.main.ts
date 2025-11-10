@@ -25,6 +25,7 @@ export const performInitService = async ({
   dryRun?: boolean;
 }): Promise<string | null> => {
   const existingPath = findConfigPathSync(cwd);
+  const hasExisting = Boolean(existingPath);
   const defaultStanPath = '.stan';
 
   // Load existing config (raw) preserving key order; fallback to empty object.
@@ -36,6 +37,7 @@ export const performInitService = async ({
     force: force || dryRun,
   });
   const namespaced = isObj(base['stan-core']) || isObj(base['stan-cli']);
+  const namespacedTarget = namespaced || !hasExisting;
 
   // UI seeds (best-effort) for interactive mode
   const uiSeeds = await deriveUiSeeds(cwd, base, defaultStanPath);
@@ -61,7 +63,7 @@ export const performInitService = async ({
     await applyInteractiveChoices({
       cwd,
       base,
-      namespaced,
+      namespaced: namespacedTarget,
       uiSeeds: {
         stanPath: uiSeeds.stanPath,
         includes: uiSeeds.includes,
@@ -77,7 +79,7 @@ export const performInitService = async ({
       cliCfg?.patchOpenCommand && typeof cliCfg.patchOpenCommand === 'string'
         ? cliCfg.patchOpenCommand
         : 'code -g {file}';
-    if (namespaced) {
+    if (namespacedTarget) {
       const cli = ensureNsNode(base, 'stan-cli');
       if (!hasOwn(cli, 'patchOpenCommand')) cli.patchOpenCommand = poc;
       if (hasOwn(base, 'patchOpenCommand')) delete base.patchOpenCommand;
@@ -102,17 +104,22 @@ export const performInitService = async ({
       cliCfg = undefined;
     }
     if (!existingPath) {
+      // First-time creation: seed a namespaced config immediately.
       base = {
-        excludes: [],
-        includes: [],
-        patchOpenCommand: 'code -g {file}',
-        // Narrow safely instead of relying on a cast + “?? {}” (lints as unnecessary).
-        scripts:
-          cliCfg && typeof cliCfg.scripts === 'object'
-            ? (cliCfg.scripts as Record<string, string>)
-            : ({} as Record<string, string>),
-        stanPath: defaultStanPath,
-      };
+        'stan-core': {
+          stanPath: defaultStanPath,
+          includes: [],
+          excludes: [],
+        },
+        'stan-cli': {
+          // Narrow safely instead of relying on a cast + “?? {}”.
+          scripts:
+            cliCfg && typeof cliCfg.scripts === 'object'
+              ? (cliCfg.scripts as Record<string, string>)
+              : ({} as Record<string, string>),
+          patchOpenCommand: cliCfg?.patchOpenCommand ?? 'code -g {file}',
+        },
+      } as Record<string, unknown>;
     } else if (!namespaced) {
       // Legacy layout (ensure minimums only)
       ensureKey(

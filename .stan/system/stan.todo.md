@@ -219,3 +219,11 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Problem: After `stan snap`, `.archive.snapshot.json` doesn’t include the prompt; with no docs‑meta baseline yet, DIFF could still include `.stan/system/stan.system.md`.
   - Change: `decideIncludeOnChange` now defaults to suppression when undecidable (no baseline/hash) so `snap → run` does not surface the prompt in DIFF.
   - Result: Baseline is persisted at the end of the first `stan run`; subsequent runs will include the prompt exactly once if/when it changes.
+
+- Init: write namespaced config on first run (no migration pass required)
+  - Problem: `stan init` seeded legacy root keys on first run and only migrated to `stan-core/stan-cli` on a second run, contradicting docs and adding friction.
+  - Change:
+    - Interactive path: treat “no existing config” as namespaced target; write `stan-core` and `stan-cli` immediately.
+    - Force path: on a fresh repo, seed a namespaced base (`stan-core` with `stanPath/includes/excludes`; `stan-cli` with `scripts` and `patchOpenCommand`).
+    - Kept legacy migration for existing configs; no change there.
+  - Result: first-time init produces a namespaced config; no second-run migration required.
