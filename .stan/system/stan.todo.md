@@ -226,4 +226,10 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
     - Interactive path: treat “no existing config” as namespaced target; write `stan-core` and `stan-cli` immediately.
     - Force path: on a fresh repo, seed a namespaced base (`stan-core` with `stanPath/includes/excludes`; `stan-cli` with `scripts` and `patchOpenCommand`).
     - Kept legacy migration for existing configs; no change there.
-  - Result: first-time init produces a namespaced config; no second-run migration required.
+  - Result: first-time init produces a namespaced config; no second-run migration required.
+
+- Tests: assert first-run init writes namespaced config
+  - Added two tests to cover new behavior:
+    - Force mode with no existing config: writes `stan-core/stan-cli` immediately.
+    - Interactive mode with no existing config: namespaced targets via applyInteractiveChoices.
+  - Ensures no second-run migration is required for fresh repos and guards regressions.

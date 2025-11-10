@@ -188,7 +188,7 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     ].join('\n');
     await writeUtf8(p, legacy);
 
-    // Simulate answers: keep stanPath, preserve scripts, no extra selections
+    // Simulate answers: keep stanPath, preserve scripts, no extra selection
     promptMock.mockResolvedValue({
       stanPath: '.stan',
       includes: '',
@@ -209,6 +209,50 @@ describe('init service behavior (preserve config, migrate opts.cliDefaults, same
     // No lingering root-level scripts key (allow nested under stan-cli)
     expect(after).not.toMatch(/^scripts:\s*$/m);
     // Ensure we actually prompted (mock consumed)
+    expect(promptMock).toHaveBeenCalled();
+  });
+
+  it('first run (force): writes a namespaced config (stan-core/stan-cli)', async () => {
+    // Fresh temp dir, no existing config
+    const out = await performInitService({ cwd: dir, force: true });
+    expect(out).toBe(path.join(dir, 'stan.config.yml'));
+    const body = await readUtf8(out as string);
+    // Namespaced top-level blocks
+    expect(body).toMatch(/^\s*stan-core:\s*$/m);
+    expect(body).toMatch(/^\s*stan-cli:\s*$/m);
+    // Engine keys live under stan-core
+    expect(body).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*stanPath:\s*\.stan/m);
+    expect(body).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*includes:\s*\[\]/m);
+    expect(body).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*excludes:\s*\[\]/m);
+    // CLI keys live under stan-cli; no root-level scripts/stanPath
+    expect(body).toMatch(/^\s*stan-cli:\s*$/m);
+    expect(body).not.toMatch(/^scripts:\s*$/m);
+    expect(body).not.toMatch(/^stanPath:\s*$/m);
+  });
+
+  it('first run (interactive): writes a namespaced config (stan-core/stan-cli)', async () => {
+    // Simulate prompt answers: keep defaults; no preserved scripts
+    promptMock.mockResolvedValue({
+      stanPath: '.stan',
+      includes: '',
+      excludes: '',
+      preserveScripts: false,
+      selectedScripts: [],
+    });
+    const out = await performInitService({ cwd: dir, force: false });
+    expect(out).toBe(path.join(dir, 'stan.config.yml'));
+    const body = await readUtf8(out as string);
+    // Namespaced top-level blocks
+    expect(body).toMatch(/^\s*stan-core:\s*$/m);
+    expect(body).toMatch(/^\s*stan-cli:\s*$/m);
+    // Engine keys live under stan-core; includes/excludes arrays present
+    expect(body).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*stanPath:\s*\.stan/m);
+    expect(body).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*includes:\s*\[\]/m);
+    expect(body).toMatch(/^\s*stan-core:([\s\S]*?)\n\s*excludes:\s*\[\]/m);
+    // CLI keys under stan-cli; ensure no root-level legacy keys remain
+    expect(body).not.toMatch(/^scripts:\s*$/m);
+    expect(body).not.toMatch(/^stanPath:\s*$/m);
+    // Ensure we actually prompted
     expect(promptMock).toHaveBeenCalled();
   });
 });
