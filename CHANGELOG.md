@@ -2,9 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.5](https://github.com/karmaniverous/stan-cli/compare/0.11.4...0.11.5)
+
+- test(init): add first-run namespaced config tests [`bd6c762`](https://github.com/karmaniverous/stan-cli/commit/bd6c76229e765656ff270169b40bf91c9d466944)
+- init: write namespaced config on first run (no second-run migration) [`5e66029`](https://github.com/karmaniverous/stan-cli/commit/5e6602915be839fa7eaa45d37cc106c0ee1bc4d5)
+- updated stan [`af80255`](https://github.com/karmaniverous/stan-cli/commit/af80255a799443bd397e973c723b4e1910893917)
+
 #### [0.11.4](https://github.com/karmaniverous/stan-cli/compare/0.11.3...0.11.4)
 
+> 5 November 2025
+
 - updated stan core [`fde7e3f`](https://github.com/karmaniverous/stan-cli/commit/fde7e3fafcfd4420127650c55a17d435105b2f1f)
+- chore: release v0.11.4 [`eedc852`](https://github.com/karmaniverous/stan-cli/commit/eedc85215c433b15f7311be9c7e4725adc4fedd0)
 
 #### [0.11.3](https://github.com/karmaniverous/stan-cli/compare/0.11.2...0.11.3)
 
