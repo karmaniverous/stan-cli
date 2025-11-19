@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -50,7 +50,7 @@ describe('stageImports — clear root then stage current map', () => {
     await stageImports(dir, stanPath, undefined);
 
     // Assert: imports root exists but is empty
-    const entries = (await readdir(importsRoot).catch(() => [])) ?? [];
+    const entries = await readdir(importsRoot).catch(() => [] as string[]);
     expect(entries.length).toBe(0);
   });
 
@@ -72,6 +72,8 @@ describe('stageImports — clear root then stage current map', () => {
         stanPath: string;
         map?: Record<string, string[]>;
       }) => {
+        // satisfy require-await rule for async mock
+        await Promise.resolve();
         const { cwd, stanPath, map } = args;
         if (!map) return;
         const entries = Object.entries(map);

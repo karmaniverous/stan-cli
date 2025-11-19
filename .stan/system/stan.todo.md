@@ -239,3 +239,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Core: retain per‑label clearing inside `prepareImports` for robustness and non‑CLI consumers; the CLI’s global clear is a belt‑and‑suspenders approach.
   - Tests: added `stage-imports.test.ts` to verify root clearing with/without a map and restaging behavior.
   - Docs: noted imports clearing in Archives & Snapshots.
+
+- Lint: fix stage-imports test issues
+  - Resolved `@typescript-eslint/no-unused-vars` by removing an unused `rm` import.
+  - Removed unnecessary `?? []` coalescing in a readdir fallback (`no-unnecessary-condition`).
+  - Added a single awaited no-op in the async mock to satisfy `require-await`.
