@@ -233,3 +233,9 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
     - Force mode with no existing config: writes `stan-core/stan-cli` immediately.
     - Interactive mode with no existing config: namespaced targets via applyInteractiveChoices.
   - Ensures no second-run migration is required for fresh repos and guards regressions.
+
+- Imports staging: clear root before staging; keep core per‑label clearing
+  - Change: The CLI now clears the entire `<stanPath>/imports` directory at the start of `stan run` before calling core `prepareImports`. This guarantees that removing a label from `stan.config.*` does not leave stale staged files on disk.
+  - Core: retain per‑label clearing inside `prepareImports` for robustness and non‑CLI consumers; the CLI’s global clear is a belt‑and‑suspenders approach.
+  - Tests: added `stage-imports.test.ts` to verify root clearing with/without a map and restaging behavior.
+  - Docs: noted imports clearing in Archives & Snapshots.
