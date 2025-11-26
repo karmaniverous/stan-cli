@@ -61,7 +61,7 @@
 <pre><code><span class="hl-2">stanPath</span><span class="hl-1">: .</span><span class="hl-0">stan</span><br/><span class="hl-2">includes</span><span class="hl-1">: []</span><br/><span class="hl-2">excludes</span><span class="hl-1">: []</span><br/><span class="hl-2">scripts</span><span class="hl-1">:</span><br/><span class="hl-1">  </span><span class="hl-2">build</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">build</span><br/><span class="hl-1">  </span><span class="hl-2">lint</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">lint</span><br/><span class="hl-1">  </span><span class="hl-2">test</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">test</span><br/><span class="hl-1">  </span><span class="hl-2">typecheck</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">typecheck</span>
 </code><button>Copy</button></pre>
 
-<p>See <a href="https://docs.karmanivero.us/stan/documents/Stan_Configuration.html" target="_blank" class="external">STAN Configuration</a> for more!</p>
+<p>See <a href="documents/Stan_Configuration.html">STAN Configuration</a> for more!</p>
 <hr>
 <h2 id="commands-at-a-glance" class="tsd-anchor-link">Commands at a glance<a href="#commands-at-a-glance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
 <li><strong>Run</strong> (build &amp; snapshot)<pre><code class="bash"><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1">                 </span><span class="hl-5"># runs all configured scripts and writes archives</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-s</span><span class="hl-1"> </span><span class="hl-4">test</span><span class="hl-1">         </span><span class="hl-5"># run only “test”</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-S</span><span class="hl-1">              </span><span class="hl-5"># do not run scripts (combine with -A/-p)</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-x</span><span class="hl-1"> </span><span class="hl-4">test</span><span class="hl-1">         </span><span class="hl-5"># run all except “test”</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-q</span><span class="hl-1"> </span><span class="hl-6">-s</span><span class="hl-1"> </span><span class="hl-4">lint</span><span class="hl-1"> </span><span class="hl-4">test</span><span class="hl-1"> </span><span class="hl-5"># sequential run subset in provided order</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-c</span><span class="hl-1"> </span><span class="hl-6">-s</span><span class="hl-1"> </span><span class="hl-4">test</span><span class="hl-1">      </span><span class="hl-5"># combine archives &amp; outputs</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-A</span><span class="hl-1">              </span><span class="hl-5"># do not create archives</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-p</span><span class="hl-1">              </span><span class="hl-5"># print plan only, no side effects</span><br/><span class="hl-3">stan</span><span class="hl-1"> </span><span class="hl-4">run</span><span class="hl-1"> </span><span class="hl-6">-P</span><span class="hl-1">              </span><span class="hl-5"># do not print the plan first</span>
@@ -77,7 +77,7 @@
 
 </li>
 </ul>
-<p>See <a href="https://docs.karmanivero.us/stan/documents/CLI_Usage___Examples.html" target="_blank" class="external">CLI Usage &amp; Examples</a> for more!</p>
+<p>See <a href="documents/CLI_Usage___Examples.html">CLI Usage &amp; Examples</a> for more!</p>
 <hr>
 <h2 id="documentation" class="tsd-anchor-link">Documentation<a href="#documentation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
 <li>
@@ -86,13 +86,13 @@
 <li>
 <p>Guides:</p>
 <ul>
-<li><a href="https://docs.karmanivero.us/stan/documents/Getting_Started.html" target="_blank" class="external">Getting Started</a> — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via <a href="https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W" target="_blank" class="external">this link</a>.</li>
-<li><a href="https://docs.karmanivero.us/stan/documents/The_STAN_Loop.html" target="_blank" class="external">The STAN Loop</a> — How Build &amp; Snapshot → Share &amp; Baseline → Discuss &amp; Patch work together.</li>
-<li><a href="https://docs.karmanivero.us/stan/documents/CLI_Usage___Examples.html" target="_blank" class="external">CLI Usage &amp; Examples</a> — Common flags and invocation patterns, including <code>-p</code>, <code>-P</code>, <code>-S</code>, <code>-A</code>, and <code>-c</code>.</li>
-<li><a href="https://docs.karmanivero.us/stan/documents/Migration.html" target="_blank" class="external">Migration — Namespaced Configuration</a> — Upgrade legacy configs using <code>stan init</code> (backs up <code>.bak</code>; supports <code>--dry-run</code>).</li>
-<li><a href="https://docs.karmanivero.us/stan/documents/Stan_Configuration.html" target="_blank" class="external">Stan Configuration</a> — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.</li>
-<li><a href="https://docs.karmanivero.us/stan/documents/Patch_Workflow___Diagnostics.html" target="_blank" class="external">Patch Workflow &amp; Diagnostics</a> — Unified diff policy, diagnostics envelopes, and assistant expectations.</li>
-<li><a href="https://docs.karmanivero.us/stan/documents/Archives___Snapshots.html" target="_blank" class="external">Archives &amp; Snapshots</a> — What goes into <code>archive.tar</code>/<code>archive.diff.tar</code>, combine mode, and snapshot history. Additional references:</li>
+<li><a href="documents/Getting_Started.html">Getting Started</a> — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via <a href="https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W" target="_blank" class="external">this link</a>.</li>
+<li><a href="documents/The_STAN_Loop.html">The STAN Loop</a> — How Build &amp; Snapshot → Share &amp; Baseline → Discuss &amp; Patch work together.</li>
+<li><a href="documents/CLI_Usage___Examples.html">CLI Usage &amp; Examples</a> — Common flags and invocation patterns, including <code>-p</code>, <code>-P</code>, <code>-S</code>, <code>-A</code>, and <code>-c</code>.</li>
+<li><a href="documents/Migration_%E2%80%94_Namespaced_Configuration.html">Migration — Namespaced Configuration</a> — Upgrade legacy configs using <code>stan init</code> (backs up <code>.bak</code>; supports <code>--dry-run</code>).</li>
+<li><a href="documents/Stan_Configuration.html">Stan Configuration</a> — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.</li>
+<li><a href="documents/Patch_Workflow___FEEDBACK.html">Patch Workflow &amp; Diagnostics</a> — Unified diff policy, diagnostics envelopes, and assistant expectations.</li>
+<li><a href="documents/Archives___Snapshots.html">Archives &amp; Snapshots</a> — What goes into <code>archive.tar</code>/<code>archive.diff.tar</code>, combine mode, and snapshot history. Additional references:</li>
 </ul>
 </li>
 <li>
@@ -105,20 +105,20 @@
 <li>
 <p>Case studies:</p>
 <ul>
-<li><a href="https://docs.karmanivero.us/stan/documents/Case_Study_%E2%80%94_rrstack.html" target="_blank" class="external">rrstack</a> — how STAN enabled rapid development in a couple of days.</li>
+<li><a href="documents/Case_Study_%E2%80%94_rrstack.html">rrstack</a> — how STAN enabled rapid development in a couple of days.</li>
 </ul>
 </li>
 <li>
-<p>Comparison: <a href="https://docs.karmanivero.us/stan/documents/Why_STAN_Over_Alternatives_.html" target="_blank" class="external">Why STAN Over Alternatives?</a></p>
+<p>Comparison: <a href="documents/Why_STAN_Over_Alternatives_.html">Why STAN Over Alternatives?</a></p>
 </li>
 <li>
-<p>Tutorial: <a href="https://docs.karmanivero.us/stan/documents/Tutorial_%E2%80%94_Quickstart_(End%E2%80%91to%E2%80%91End).html" target="_blank" class="external">Quickstart (End‑to‑End)</a></p>
+<p>Tutorial: <a href="documents/Tutorial_%E2%80%94_Quickstart_(End%E2%80%91to%E2%80%91End).html">Quickstart (End‑to‑End)</a></p>
 </li>
 <li>
 <p>FAQ: answers to common questions and pitfalls.</p>
 </li>
 <li>
-<p>Contributing: <a href="https://docs.karmanivero.us/stan/documents/Contributing_%E2%80%94_Dev_Quickstart.html" target="_blank" class="external">Dev Quickstart</a></p>
+<p>Contributing: <a href="documents/Contributing_%E2%80%94_Dev_Quickstart.html">Dev Quickstart</a></p>
 </li>
 </ul>
 <hr>
@@ -130,7 +130,7 @@
 <hr>
 <h2 id="contributing" class="tsd-anchor-link">Contributing<a href="#contributing" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
 <li>
-<p>See the <a href="https://docs.karmanivero.us/stan/documents/Contributing_%E2%80%94_Dev_Quickstart.html" target="_blank" class="external">Contributing — Dev Quickstart</a> for local setup and workflow tips.</p>
+<p>See the <a href="documents/Contributing_%E2%80%94_Dev_Quickstart.html">Contributing — Dev Quickstart</a> for local setup and workflow tips.</p>
 </li>
 <li>
 <p>Keep the loop simple. Each stage ends with one command.</p>

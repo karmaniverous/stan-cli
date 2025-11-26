@@ -100,7 +100,7 @@ scripts:
   typecheck: npm run typecheck
 ```
 
-See [STAN Configuration](https://docs.karmanivero.us/stan/documents/Stan_Configuration.html) for more!
+See [STAN Configuration](./docs-src/configuration.md) for more!
 
 ---
 
@@ -130,7 +130,7 @@ See [STAN Configuration](https://docs.karmanivero.us/stan/documents/Stan_Configu
   stan patch -f file.patch # from file
   ```
 
-See [CLI Usage & Examples](https://docs.karmanivero.us/stan/documents/CLI_Usage___Examples.html) for more!
+See [CLI Usage & Examples](./docs-src/cli-examples.md) for more!
 
 ---
 
@@ -138,23 +138,24 @@ See [CLI Usage & Examples](https://docs.karmanivero.us/stan/documents/CLI_Usage_
 
 - [API reference](https://docs.karmanivero.us/stan)
 - Guides:
-  - [Getting Started](https://docs.karmanivero.us/stan/documents/Getting_Started.html) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via [this link](https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W).
-  - [The STAN Loop](https://docs.karmanivero.us/stan/documents/The_STAN_Loop.html) — How Build & Snapshot → Share & Baseline → Discuss & Patch work together.
-  - [CLI Usage & Examples](https://docs.karmanivero.us/stan/documents/CLI_Usage___Examples.html) — Common flags and invocation patterns, including `-p`, `-P`, `-S`, `-A`, and `-c`.
-  - [Migration — Namespaced Configuration](https://docs.karmanivero.us/stan/documents/Migration.html) — Upgrade legacy configs using `stan init` (backs up `.bak`; supports `--dry-run`).
-  - [Stan Configuration](https://docs.karmanivero.us/stan/documents/Stan_Configuration.html) — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.
-  - [Patch Workflow & Diagnostics](https://docs.karmanivero.us/stan/documents/Patch_Workflow___Diagnostics.html) — Unified diff policy, diagnostics envelopes, and assistant expectations.
-  - [Archives & Snapshots](https://docs.karmanivero.us/stan/documents/Archives___Snapshots.html) — What goes into `archive.tar`/`archive.diff.tar`, combine mode, and snapshot history. Additional references:
+  - [Getting Started](./docs-src/getting-started.md) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via [this link](https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W).
+  - [The STAN Loop](./docs-src/the-stan-loop.md) — How Build & Snapshot → Share & Baseline → Discuss & Patch work together.
+  - [CLI Usage & Examples](./docs-src/cli-examples.md) — Common flags and invocation patterns, including `-p`, `-P`, `-S`, `-A`, and `-c`.
+  - [Migration — Namespaced Configuration](./docs-src/migration.md) — Upgrade legacy configs using `stan init` (backs up `.bak`; supports `--dry-run`).
+  - [Stan Configuration](./docs-src/configuration.md) — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.
+  - [Patch Workflow & Diagnostics](./docs-src/patch-workflow.md) — Unified diff policy, diagnostics envelopes, and assistant expectations.
+  - [Archives & Snapshots](./docs-src/archives-and-snapshots.md) — What goes into `archive.tar`/`archive.diff.tar`, combine mode, and snapshot history. Additional references:
 
 - The following documents are maintained by STAN and live under `<stanPath>/system/` in your repo:
   - `stan.project.md` contains your evolving project requirements.
   - `stan-todo.md` contains your evolving development plan.
+
 - Case studies:
-  - [rrstack](https://docs.karmanivero.us/stan/documents/Case_Study_%E2%80%94_rrstack.html) — how STAN enabled rapid development in a couple of days.
-- Comparison: [Why STAN Over Alternatives?](https://docs.karmanivero.us/stan/documents/Why_STAN_Over_Alternatives_.html)
-- Tutorial: [Quickstart (End‑to‑End)](<https://docs.karmanivero.us/stan/documents/Tutorial_%E2%80%94_Quickstart_(End%E2%80%91to%E2%80%91End).html>)
+  - [rrstack](./docs-src/case-studies/rrstack.md) — how STAN enabled rapid development in a couple of days.
+- Comparison: [Why STAN Over Alternatives?](./docs-src/why-stan-over-alternatives.md)
+- Tutorial: [Quickstart (End‑to‑End)](./docs-src/tutorial-quickstart.md)
 - FAQ: answers to common questions and pitfalls.
-- Contributing: [Dev Quickstart](https://docs.karmanivero.us/stan/documents/Contributing_%E2%80%94_Dev_Quickstart.html)
+- Contributing: [Dev Quickstart](./contributing.md)
 
 ---
 
@@ -168,7 +169,7 @@ See [CLI Usage & Examples](https://docs.karmanivero.us/stan/documents/CLI_Usage_
 
 ## Contributing
 
-- See the [Contributing — Dev Quickstart](https://docs.karmanivero.us/stan/documents/Contributing_%E2%80%94_Dev_Quickstart.html) for local setup and workflow tips.
+- See the [Contributing — Dev Quickstart](./contributing.md) for local setup and workflow tips.
 
 - Keep the loop simple. Each stage ends with one command.
 - Favor small, testable modules; treat >300 LOC as design feedback.
