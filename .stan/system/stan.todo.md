@@ -14,29 +14,25 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ‑ Snap: ensure baseline directories exist before snapshot write
 
-- Problem: “stan snap” on a fresh/temp repo could miss `.stan/diff/.archive.snapshot.json`
-  (ENOENT) because the diff folder wasn’t created before calling `writeArchiveSnapshot`.
-- Change: call `core.ensureOutputDir(cwd, stanPath, true)` in `snap-run.ts` before writing
-  the snapshot so `<stanPath>/diff` exists. This unblocks the overlay-aware snapshot test
-  and prevents the ENOENT in real runs.
+- Problem: “stan snap” on a fresh/temp repo could miss `.stan/diff/.archive.snapshot.json` (ENOENT) because the diff folder wasn’t created before calling `writeArchiveSnapshot`.
+- Change: call `core.ensureOutputDir(cwd, stanPath, true)` in `snap-run.ts` before writing the snapshot so `<stanPath>/diff` exists. This unblocks the overlay-aware snapshot test and prevents the ENOENT in real runs.
 
 ‑ Tests: replace FS‑bound snap overlay test with a pure contract test
 
-- Problem: The prior integration test tried to validate overlay‑aware snapshots by reading the on‑disk snapshot,
-  which is sensitive to FS timing and platform quirks in test runners.
-- Change: rewrite the test to mock core and overlay/default helpers and assert that `writeArchiveSnapshot`
-  is called with the expected includes/excludes/anchors. No filesystem dependencies; stable and fast.
+- Problem: The prior integration test tried to validate overlay‑aware snapshots by reading the on‑disk snapshot, which is sensitive to FS timing and platform quirks in test runners.
+- Change: rewrite the test to mock core and overlay/default helpers and assert that `writeArchiveSnapshot` is called with the expected includes/excludes/anchors. No filesystem dependencies; stable and fast.
 - Result: preserves behavior guarantees while avoiding flakiness and exotic fallbacks.
 
 ‑ Snap: apply facet overlay to snapshot baseline (overlay-aware snapshots)
 
-- Problem: After “run → snap → run”, files from a newly enabled facet appeared in the full archive but not in the diff archive because the baseline snapshot did not reflect the facet overlay view.- Change:
+- Problem: After “run → snap → run”, files from a newly enabled facet appeared in the full archive but not in the diff archive because the baseline snapshot did not reflect the facet overlay view.
+- Change:
   - In src/runner/snap/snap-run.ts, compute the facet overlay at snap time using run defaults (cliDefaults.run.facets) and facet meta/state.
   - Pass `includes` (from engine config), `excludes` plus `overlay.excludesOverlay`, and `anchors = overlay.anchorsOverlay` into core.writeArchiveSnapshot.
   - Overlay remains a CLI concern; stan-core behavior unchanged.
 - Test:
   - Added src/runner/snap/snap.overlay.snapshot.test.ts:
-    - Arrange a facet that excludes docs/** and anchors docs/README.md while overlay is enabled by default.
+    - Arrange a facet that excludes docs/\*\* and anchors docs/README.md while overlay is enabled by default.
     - Snap writes a baseline that excludes hidden subtree and keeps anchors.
     - Activating the facet and creating DIFF yields a non-empty diff archive (newly visible subtree appears as changes).
 - Docs:
@@ -274,3 +270,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   - Resolved `@typescript-eslint/no-unused-vars` by removing an unused `rm` import.
   - Removed unnecessary `?? []` coalescing in a readdir fallback (`no-unnecessary-condition`).
   - Added a single awaited no-op in the async mock to satisfy `require-await`.
+
+‑ Tests: fix typecheck and lint in overlay snapshot contract test (snap.overlay.snapshot.test.ts) — added awaited no‑ops to async mocks to satisfy require‑await and used non‑null assertions when reading vi mock call args after asserting call counts; no runtime behavior changes.

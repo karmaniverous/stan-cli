@@ -19,15 +19,33 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
 
   it('passes overlay excludes/anchors together with engine selection into writeArchiveSnapshot', async () => {
     // Arrange mocks (capture fn refs for assertions)
-    const ensureOutputDirMock = vi.fn(async () => 'out');
-    const loadConfigMock = vi.fn(async () => ({
-      stanPath: 'out',
-      includes: ['**/*.md'],
-      excludes: ['CHANGELOG.md'],
-    }));
-    const writeSnapshotMock = vi.fn(
-      async () => 'out/diff/.archive.snapshot.json',
-    );
+    const ensureOutputDirMock = vi.fn(async () => {
+      // satisfy require-await without behavior changes
+      await Promise.resolve();
+      return 'out';
+    });
+
+    const loadConfigMock = vi.fn(async () => {
+      await Promise.resolve(); // satisfy require-await
+      return {
+        stanPath: 'out',
+        includes: ['**/*.md'],
+        excludes: ['CHANGELOG.md'],
+      };
+    });
+
+    type SnapshotArgs = {
+      cwd: string;
+      stanPath: string;
+      includes?: string[];
+      excludes?: string[];
+      anchors?: string[];
+    };
+
+    const writeSnapshotMock = vi.fn(async (_args: SnapshotArgs) => {
+      await Promise.resolve(); // satisfy require-await
+      return 'out/diff/.archive.snapshot.json';
+    });
 
     // Mock core (static import in module + dynamic import inside handleSnap)
     vi.doMock('@karmaniverous/stan-core', () => ({
@@ -50,7 +68,10 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
     };
     vi.doMock('@/runner/overlay/facets', () => ({
       __esModule: true,
-      computeFacetOverlay: vi.fn(async () => ov),
+      computeFacetOverlay: vi.fn(async () => {
+        await Promise.resolve(); // satisfy require-await
+        return ov;
+      }),
     }));
 
     // Mock run defaults: overlay enabled by default
@@ -85,13 +106,8 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
 
     // Assert: writeArchiveSnapshot invoked with merged selection + anchors
     expect(writeSnapshotMock).toHaveBeenCalledTimes(1);
-    const call = writeSnapshotMock.mock.calls[0]?.[0] as {
-      cwd: string;
-      stanPath: string;
-      includes?: string[];
-      excludes?: string[];
-      anchors?: string[];
-    };
+    // Safely destructure first call (Args is a single-arg tuple)
+    const [[call]] = writeSnapshotMock.mock.calls;
 
     // includes from engine config
     expect(call.includes).toEqual(['**/*.md']);
