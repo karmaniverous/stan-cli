@@ -2,9 +2,21 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.7](https://github.com/karmaniverous/stan-cli/compare/0.11.6...0.11.7)
+
+- snap: apply facet overlay to baseline snapshot; add regression test and docs [`26f9c6a`](https://github.com/karmaniverous/stan-cli/commit/26f9c6ab49a971b2d95d08889d1509c63f376499)
+- updated docs [`94264a7`](https://github.com/karmaniverous/stan-cli/commit/94264a75b4808e125bbedb98d8465123c6891a88)
+- test(snap): replace FS-bound overlay baseline test with pure contract verification [`5edc593`](https://github.com/karmaniverous/stan-cli/commit/5edc59345b5e7ac47c52822aaa669323762a44c8)
+- updated docs [`2f6096a`](https://github.com/karmaniverous/stan-cli/commit/2f6096ab144427756f0afcb55be24199ac6d8f58)
+- fix(test): satisfy require-await and TS in snap overlay snapshot test [`f61a2f6`](https://github.com/karmaniverous/stan-cli/commit/f61a2f6e1aaa979b96c530d9ce4903497a36edc2)
+- snap: ensure diff dir exists before writing snapshot; fix ENOENT on fresh repos [`4949271`](https://github.com/karmaniverous/stan-cli/commit/49492713a4d77a8928c4acfe4cc150d5e079325f)
+
 #### [0.11.6](https://github.com/karmaniverous/stan-cli/compare/0.11.5...0.11.6)
 
+> 19 November 2025
+
 - chore(run/imports): clear entire &lt;stanPath&gt;/imports before staging; keep core per‑label clearing [`64acd10`](https://github.com/karmaniverous/stan-cli/commit/64acd103e060656cb02af4cc9c33dc35babb1725)
+- chore: release v0.11.6 [`9a7fedd`](https://github.com/karmaniverous/stan-cli/commit/9a7feddb574f720c0abc1e9bc6510fdf1b0f5eea)
 - chore(lint): fix stage-imports test lint errors [`f81aedb`](https://github.com/karmaniverous/stan-cli/commit/f81aedb026b0800ecf56d4c84b6d7b4e4d138e95)
 
 #### [0.11.5](https://github.com/karmaniverous/stan-cli/compare/0.11.4...0.11.5)
