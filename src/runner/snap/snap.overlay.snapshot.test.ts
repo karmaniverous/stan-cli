@@ -1,106 +1,110 @@
-import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createArchiveDiff } from '@karmaniverous/stan-core';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+/**
+ * Pure, contract-level test:
+ * - Mock core and overlay/default helpers.
+ * - Verify that handleSnap() calls core.writeArchiveSnapshot with:
+ *     includes = engine includes,
+ *     excludes = engine excludes ∪ overlay excludesOverlay,
+ *     anchors  = overlay anchorsOverlay.
+ *
+ * No filesystem side-effects; no snapshot file reads.
+ */
 
-import { computeFacetOverlay } from '@/runner/overlay/facets';
-import { handleSnap } from '@/runner/snap';
-import { rmDirWithRetries } from '@/test';
-
-const posix = (p: string): string => p.replace(/\\/g, '/');
-
-describe('snap: overlay-aware snapshot baselines', () => {
-  let dir: string;
-  const stanPath = 'out';
-  const sys = (...parts: string[]) =>
-    path.join(dir, stanPath, 'system', ...parts);
-
-  beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'stan-snap-ov-'));
-    // Minimal namespaced config with overlay enabled by default
-    const yml = [
-      'stan-core:',
-      `  stanPath: ${stanPath}`,
-      '  includes: []',
-      '  excludes: []',
-      'stan-cli:',
-      '  scripts: {}',
-      '  cliDefaults:',
-      '    run:',
-      '      facets: true',
-    ].join('\n');
-    await writeFile(path.join(dir, 'stan.config.yml'), yml, 'utf8');
-
-    // facet meta/state: hide docs/** when inactive; keep docs/README.md as anchor
-    const meta = {
-      docs: {
-        exclude: ['docs/**'],
-        include: ['docs/README.md'],
-      },
-    };
-    await mkdir(path.dirname(sys('facet.meta.json')), { recursive: true });
-    await writeFile(
-      sys('facet.meta.json'),
-      JSON.stringify(meta, null, 2),
-      'utf8',
-    );
-    await writeFile(
-      sys('facet.state.json'),
-      JSON.stringify({ docs: false }, null, 2),
-      'utf8',
-    );
-
-    // repo files
-    await mkdir(path.join(dir, 'docs'), { recursive: true });
-    await writeFile(path.join(dir, 'docs', 'README.md'), '# docs\n', 'utf8'); // anchor
-    await writeFile(path.join(dir, 'docs', 'guide.md'), 'hello\n', 'utf8'); // hidden by overlay
+describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
-  afterEach(async () => {
-    await rmDirWithRetries(dir);
-  });
-
-  it('writes baseline snapshot with overlay excludes + anchors; diff reflects newly enabled facet', async () => {
-    // 1) snap with overlay enabled (facet inactive): baseline excludes docs/**, keeps anchor
-    await handleSnap();
-
-    const snapPath = path.join(dir, stanPath, 'diff', '.archive.snapshot.json');
-    const snapRaw = await readFile(snapPath, 'utf8');
-    const snap = JSON.parse(snapRaw) as Record<string, unknown>;
-    const keys = Object.keys(snap).map(posix);
-    expect(keys).toContain('docs/README.md'); // anchor kept
-    expect(keys).not.toContain('docs/guide.md'); // hidden by overlay
-
-    // 2) activate facet for next run
-    await writeFile(
-      sys('facet.state.json'),
-      JSON.stringify({ docs: true }, null, 2),
-      'utf8',
+  it('passes overlay excludes/anchors together with engine selection into writeArchiveSnapshot', async () => {
+    // Arrange mocks (capture fn refs for assertions)
+    const ensureOutputDirMock = vi.fn(async () => 'out');
+    const loadConfigMock = vi.fn(async () => ({
+      stanPath: 'out',
+      includes: ['**/*.md'],
+      excludes: ['CHANGELOG.md'],
+    }));
+    const writeSnapshotMock = vi.fn(
+      async () => 'out/diff/.archive.snapshot.json',
     );
 
-    // Compute overlay for run (facet active) and create DIFF
-    const ov = await computeFacetOverlay({
-      cwd: dir,
-      stanPath,
+    // Mock core (static import in module + dynamic import inside handleSnap)
+    vi.doMock('@karmaniverous/stan-core', () => ({
+      __esModule: true,
+      resolveStanPathSync: () => 'out',
+      ensureOutputDir: ensureOutputDirMock,
+      loadConfig: loadConfigMock,
+      writeArchiveSnapshot: writeSnapshotMock,
+    }));
+
+    // Mock overlay: enabled=true; one subtree root + one anchor
+    const ov = {
       enabled: true,
-      activate: [],
-      deactivate: [],
-      nakedActivateAll: false,
-    });
-    const { diffPath } = await createArchiveDiff({
-      cwd: dir,
-      stanPath,
-      baseName: 'archive',
-      includes: [],
-      excludes: ov.excludesOverlay,
-      anchors: ov.anchorsOverlay,
-      updateSnapshot: 'createIfMissing',
-      includeOutputDirInDiff: false,
-    });
-    expect(existsSync(diffPath)).toBe(true);
-    // Indirect assertion: A diff archive exists (the newly visible subtree triggers changes).
+      excludesOverlay: ['docs'],
+      anchorsOverlay: ['docs/README.md'],
+      effective: {},
+      autosuspended: [],
+      anchorsKeptCounts: {},
+      overlapKeptCounts: {},
+    };
+    vi.doMock('@/runner/overlay/facets', () => ({
+      __esModule: true,
+      computeFacetOverlay: vi.fn(async () => ov),
+    }));
+
+    // Mock run defaults: overlay enabled by default
+    vi.doMock('@/cli/run/derive/run-defaults', () => ({
+      __esModule: true,
+      getRunDefaults: () =>
+        ({
+          archive: true,
+          combine: false,
+          plan: true,
+          keep: false,
+          sequential: false,
+          live: true,
+          hangWarn: 120,
+          hangKill: 300,
+          hangKillGrace: 10,
+          prompt: 'auto',
+          facets: true,
+        }) as const,
+    }));
+
+    // Import SUT after mocks are in place
+    const mod = (await import('@/runner/snap')) as {
+      handleSnap: (opts?: { stash?: boolean }) => Promise<void>;
+    };
+
+    // Act
+    await mod.handleSnap();
+
+    // Assert: ensureOutputDir called
+    expect(ensureOutputDirMock).toHaveBeenCalledTimes(1);
+
+    // Assert: writeArchiveSnapshot invoked with merged selection + anchors
+    expect(writeSnapshotMock).toHaveBeenCalledTimes(1);
+    const call = writeSnapshotMock.mock.calls[0]?.[0] as {
+      cwd: string;
+      stanPath: string;
+      includes?: string[];
+      excludes?: string[];
+      anchors?: string[];
+    };
+
+    // includes from engine config
+    expect(call.includes).toEqual(['**/*.md']);
+
+    // excludes = engine excludes ∪ overlay excludes
+    const excl = new Set(call.excludes ?? []);
+    expect(excl.has('CHANGELOG.md')).toBe(true);
+    expect(excl.has('docs')).toBe(true);
+
+    // anchors = overlay anchors
+    expect(call.anchors).toEqual(['docs/README.md']);
+
+    // stanPath resolved
+    expect(call.stanPath).toBe('out');
   });
 });

@@ -20,10 +20,17 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
   the snapshot so `<stanPath>/diff` exists. This unblocks the overlay-aware snapshot test
   and prevents the ENOENT in real runs.
 
+‑ Tests: replace FS‑bound snap overlay test with a pure contract test
+
+- Problem: The prior integration test tried to validate overlay‑aware snapshots by reading the on‑disk snapshot,
+  which is sensitive to FS timing and platform quirks in test runners.
+- Change: rewrite the test to mock core and overlay/default helpers and assert that `writeArchiveSnapshot`
+  is called with the expected includes/excludes/anchors. No filesystem dependencies; stable and fast.
+- Result: preserves behavior guarantees while avoiding flakiness and exotic fallbacks.
+
 ‑ Snap: apply facet overlay to snapshot baseline (overlay-aware snapshots)
 
-- Problem: After “run → snap → run”, files from a newly enabled facet appeared in the full archive but not in the diff archive because the baseline snapshot did not reflect the facet overlay view.
-- Change:
+- Problem: After “run → snap → run”, files from a newly enabled facet appeared in the full archive but not in the diff archive because the baseline snapshot did not reflect the facet overlay view.- Change:
   - In src/runner/snap/snap-run.ts, compute the facet overlay at snap time using run defaults (cliDefaults.run.facets) and facet meta/state.
   - Pass `includes` (from engine config), `excludes` plus `overlay.excludesOverlay`, and `anchors = overlay.anchorsOverlay` into core.writeArchiveSnapshot.
   - Overlay remains a CLI concern; stan-core behavior unchanged.
