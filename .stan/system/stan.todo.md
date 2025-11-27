@@ -12,6 +12,14 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+‑ Snap: ensure baseline directories exist before snapshot write
+
+- Problem: “stan snap” on a fresh/temp repo could miss `.stan/diff/.archive.snapshot.json`
+  (ENOENT) because the diff folder wasn’t created before calling `writeArchiveSnapshot`.
+- Change: call `core.ensureOutputDir(cwd, stanPath, true)` in `snap-run.ts` before writing
+  the snapshot so `<stanPath>/diff` exists. This unblocks the overlay-aware snapshot test
+  and prevents the ENOENT in real runs.
+
 ‑ Snap: apply facet overlay to snapshot baseline (overlay-aware snapshots)
 
 - Problem: After “run → snap → run”, files from a newly enabled facet appeared in the full archive but not in the diff archive because the baseline snapshot did not reflect the facet overlay view.

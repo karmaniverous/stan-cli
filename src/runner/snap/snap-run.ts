@@ -126,6 +126,11 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
   try {
     const coreModUnknown: unknown = await import('@karmaniverous/stan-core');
     const core = coreModUnknown as {
+      ensureOutputDir?: (
+        cwd: string,
+        stanPath: string,
+        keep?: boolean,
+      ) => Promise<string>;
       loadConfig?: (cwd: string) => Promise<{
         stanPath: string;
         includes?: string[];
@@ -151,8 +156,19 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
           excludes?: string[];
           anchors?: string[];
         }) => Promise<string>;
+        ensureOutputDir?: (
+          cwd: string,
+          stanPath: string,
+          keep?: boolean,
+        ) => Promise<string>;
       };
     };
+    const ensureOutFn =
+      typeof core.ensureOutputDir === 'function'
+        ? core.ensureOutputDir
+        : typeof core.default?.ensureOutputDir === 'function'
+          ? core.default.ensureOutputDir
+          : null;
     const loadConfigFn =
       typeof core.loadConfig === 'function'
         ? core.loadConfig
@@ -166,6 +182,15 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
           ? core.default.writeArchiveSnapshot
           : null;
     if (writeSnapshotFn) {
+      // Make sure <stanPath>/diff (and output) exist before writing the snapshot.
+      // This avoids ENOENT when snapping a fresh repo or temp workspace.
+      try {
+        if (ensureOutFn) {
+          await ensureOutFn(cwd, stanPath, true);
+        }
+      } catch {
+        /* best‑effort directory ensure */
+      }
       let includes: string[] = [];
       let excludes: string[] = [];
       // Overlay inputs derived the same way as “run”:
