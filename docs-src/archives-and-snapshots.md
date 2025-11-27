@@ -72,6 +72,12 @@ stan snap -s # stash before snap; pop after
 
 Snapshots are used to compute archive diffs; `stan run` creates a diff archive even when nothing changed (a sentinel is written in that case).
 
+### Overlay-aware snapshots
+
+- The baseline snapshot written by `stan snap` applies the same facet overlay view that `stan run` uses (includes, excludes, and anchors).
+- This ensures overlay changes (e.g., activating a facet that was previously inactive, or deactivating one) are reflected accurately in the next `archive.diff.tar`.
+- Concretely, inactive facets contribute subtree excludes to the snapshot, while anchors from facet meta are always kept to preserve breadcrumbs.
+
 ## Preflight
 
 At the start of `stan run`, `stan snap`, and `stan patch`, STAN:

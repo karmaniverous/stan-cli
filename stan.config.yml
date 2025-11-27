@@ -1,8 +1,26 @@
+---
+stan-cli:
+  cliDefaults:
+    run:
+      facets: true
+      plan: false
+      sequential: true
+  patchOpenCommand: code -g {file}
+  scripts:
+    typecheck: npm run typecheck
+    lint: npm run lint:fix
+    test: npm run test -- --no-color
+    build:
+      script: cross-env NO_COLOR=1 npm run build
+      warnPattern: ^\\(!\\)\\s(?!\\[plugin typescript\\][^\\n]*outputToFilesystem option is defaulting to true)(?!Circular dependency[\\s\\S]*?node_modules[\\/\\\\]zod).*
+      warnPatternFlags: mi
+    docs:
+      script: npm run docs -- --emit none
+      warnPattern: \\[warning\\]
+    knip: npm run knip
 stan-core:
-  stanPath: .stan
-  includes: []
   excludes:
-    - "*.local"
+    - '*.local'
     - assets
     - CHANGELOG.md
     - docs
@@ -14,24 +32,5 @@ stan-core:
       - ../stan-core/.stan/system/stan.todo.md
       - ../stan-core/dist/types/index.d.ts
       - ../stan-core/.stan/interop/stan-cli/**
-stan-cli:
-  scripts:
-    typecheck: npm run typecheck
-    lint: npm run lint:fix
-    test: npm run test -- --no-color
-    build:
-      script: cross-env NO_COLOR=1 npm run build
-      warnPattern: ^\\(!\\)\\s(?!\\[plugin typescript\\][^\\n]*outputToFilesystem
-        option is defaulting to true)(?!Circular
-        dependency[\\s\\S]*?node_modules[\\/\\\\]zod).*
-      warnPatternFlags: mi
-    docs:
-      script: npm run docs -- --emit none
-      warnPattern: \\[warning\\]
-    knip: npm run knip
-  cliDefaults:
-    run:
-      facets: true
-      plan: false
-      sequential: true
-  patchOpenCommand: code -g {file}
+  includes: []
+  stanPath: .stan

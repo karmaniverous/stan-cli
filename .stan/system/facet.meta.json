@@ -1,4 +1,12 @@
 {
+  "ci": {
+    "exclude": [".github/**", ".lefthook/**"],
+    "include": [".github/FUNDING.yml"]
+  },
+  "cli-main": {
+    "exclude": ["src/cli/**"],
+    "include": ["src/cli/index.ts"]
+  },
   "config": {
     "include": [
       ".editorconfig",
@@ -14,29 +22,37 @@
       "typedoc.json"
     ]
   },
-  "cli-main": {
-    "exclude": ["src/cli/**"],
-    "include": ["src/cli/index.ts"]
-  },
-  "runner-main": {
-    "exclude": ["src/runner/**"],
-    "include": ["src/runner/index.ts"]
+  "docs": {
+    "exclude": ["docs-src/**", "contributing.md", "README.md", "LICENSE"],
+    "include": ["README.md"]
   },
   "init": {
     "exclude": ["src/cli/init/**", "src/runner/init/**"],
     "include": ["src/cli/init.ts", "src/runner/init/index.ts"]
   },
+  "overlay": {
+    "exclude": ["src/runner/overlay/**"],
+    "include": ["src/runner/overlay/facets.ts"]
+  },
   "patch": {
     "exclude": ["src/cli/patch/**", "src/runner/patch/**"],
     "include": ["src/cli/patch/index.ts", "src/runner/patch/index.ts"]
   },
-  "snap": {
-    "exclude": ["src/cli/snap/**", "src/runner/snap/**"],
-    "include": ["src/cli/snap/index.ts", "src/runner/snap/index.ts"]
+  "prompt": {
+    "exclude": ["src/runner/prompt/**"],
+    "include": ["src/runner/prompt/index.ts"]
   },
   "run": {
     "exclude": ["src/cli/run/**", "src/cli/runner.*.ts", "src/runner/run/**"],
     "include": ["src/cli/runner.ts", "src/runner/run/index.ts"]
+  },
+  "run-exec": {
+    "exclude": ["src/runner/run/exec/**"],
+    "include": ["src/runner/run/exec/index.ts"]
+  },
+  "run-session": {
+    "exclude": ["src/runner/run/session/**"],
+    "include": ["src/runner/run/session/index.ts"]
   },
   "run-ui": {
     "exclude": [
@@ -48,29 +64,13 @@
     ],
     "include": ["src/runner/run/ui/index.ts"]
   },
-  "run-session": {
-    "exclude": ["src/runner/run/session/**"],
-    "include": ["src/runner/run/session/index.ts"]
+  "runner-main": {
+    "exclude": ["src/runner/**"],
+    "include": ["src/runner/index.ts"]
   },
-  "run-exec": {
-    "exclude": ["src/runner/run/exec/**"],
-    "include": ["src/runner/run/exec/index.ts"]
-  },
-  "overlay": {
-    "exclude": ["src/runner/overlay/**"],
-    "include": ["src/runner/overlay/facets.ts"]
-  },
-  "prompt": {
-    "exclude": ["src/runner/prompt/**"],
-    "include": ["src/runner/prompt/index.ts"]
-  },
-  "ci": {
-    "exclude": [".github/**", ".lefthook/**"],
-    "include": [".github/FUNDING.yml"]
-  },
-  "docs": {
-    "exclude": ["docs-src/**", "contributing.md", "README.md", "LICENSE"],
-    "include": ["README.md"]
+  "snap": {
+    "exclude": ["src/cli/snap/**", "src/runner/snap/**"],
+    "include": ["src/cli/snap/index.ts", "src/runner/snap/index.ts"]
   },
   "tests": {
     "exclude": ["src/test/**", "src/test-support/**", "**/*.test.ts"],

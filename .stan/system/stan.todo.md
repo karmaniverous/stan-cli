@@ -12,6 +12,21 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Completed (context essentials only)
 
+‑ Snap: apply facet overlay to snapshot baseline (overlay-aware snapshots)
+
+- Problem: After “run → snap → run”, files from a newly enabled facet appeared in the full archive but not in the diff archive because the baseline snapshot did not reflect the facet overlay view.
+- Change:
+  - In src/runner/snap/snap-run.ts, compute the facet overlay at snap time using run defaults (cliDefaults.run.facets) and facet meta/state.
+  - Pass `includes` (from engine config), `excludes` plus `overlay.excludesOverlay`, and `anchors = overlay.anchorsOverlay` into core.writeArchiveSnapshot.
+  - Overlay remains a CLI concern; stan-core behavior unchanged.
+- Test:
+  - Added src/runner/snap/snap.overlay.snapshot.test.ts:
+    - Arrange a facet that excludes docs/** and anchors docs/README.md while overlay is enabled by default.
+    - Snap writes a baseline that excludes hidden subtree and keeps anchors.
+    - Activating the facet and creating DIFF yields a non-empty diff archive (newly visible subtree appears as changes).
+- Docs:
+  - Updated docs-src/archives-and-snapshots.md (“Overlay-aware snapshots”) to note that snap applies the same view as run, ensuring overlay changes are reflected in the next diff.
+
 ‑ Build warnings filter: ignore specific known Rollup warnings, keep others visible
 
 - Anchored the build warnPattern to line start and set flags to multiline (mi).
