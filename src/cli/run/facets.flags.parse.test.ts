@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import type { Command } from 'commander';
 import { describe, expect, it, vi } from 'vitest';
 
 const writeConfig = async (dir: string): Promise<void> => {
@@ -22,15 +23,16 @@ describe('run facet flags (Commander parsing + overlay enablement)', () => {
   it('parses -FS without bundling (-F must not consume -S)', async () => {
     vi.resetModules();
 
-    const runSelectedMock = vi.fn(async () => []);
+    const runSelectedMock = vi.fn(() => Promise.resolve([] as string[]));
     vi.doMock('@/runner/run', () => ({
       __esModule: true,
       runSelected: runSelectedMock,
     }));
 
+    const updateDocsMetaOverlayMock = vi.fn(() => Promise.resolve());
     vi.doMock('@/runner/system/docs-meta', () => ({
       __esModule: true,
-      updateDocsMetaOverlay: vi.fn(async () => {}),
+      updateDocsMetaOverlay: updateDocsMetaOverlayMock,
     }));
 
     const dir = await mkdtemp(path.join(os.tmpdir(), 'stan-facet-parse-'));
@@ -38,7 +40,9 @@ describe('run facet flags (Commander parsing + overlay enablement)', () => {
       await writeConfig(dir);
       process.chdir(dir);
 
-      const { makeCli } = (await import('@/cli')) as { makeCli: () => any };
+      const { makeCli } = (await import('@/cli')) as unknown as {
+        makeCli: () => Command;
+      };
       const cli = makeCli();
 
       const logs: string[] = [];
@@ -54,13 +58,10 @@ describe('run facet flags (Commander parsing + overlay enablement)', () => {
       logSpy.mockRestore();
 
       expect(runSelectedMock).toHaveBeenCalledTimes(0);
-      expect(
-        logs.some((l) =>
-          /nothing to do; plan only \(scripts disabled, archive disabled\)/i.test(
-            l,
-          ),
-        ),
-      ).toBe(true);
+      const joined = logs.join('\n');
+      expect(joined).toMatch(
+        /nothing to do; plan only \((?:scripts disabled|no scripts selected), archive disabled\)/i,
+      );
     } finally {
       try {
         process.chdir(os.tmpdir());
@@ -75,7 +76,7 @@ describe('run facet flags (Commander parsing + overlay enablement)', () => {
   it('treats --no-facets as overlay OFF (options.facets=false)', async () => {
     vi.resetModules();
 
-    const updateDocsMetaOverlayMock = vi.fn(async () => {});
+    const updateDocsMetaOverlayMock = vi.fn(() => Promise.resolve());
     vi.doMock('@/runner/system/docs-meta', () => ({
       __esModule: true,
       updateDocsMetaOverlay: updateDocsMetaOverlayMock,
@@ -84,7 +85,7 @@ describe('run facet flags (Commander parsing + overlay enablement)', () => {
     // Ensure we never execute; -p prints plan and exits.
     vi.doMock('@/runner/run', () => ({
       __esModule: true,
-      runSelected: vi.fn(async () => []),
+      runSelected: vi.fn(() => Promise.resolve([] as string[])),
     }));
 
     const dir = await mkdtemp(path.join(os.tmpdir(), 'stan-facet-nofacets-'));
@@ -92,7 +93,9 @@ describe('run facet flags (Commander parsing + overlay enablement)', () => {
       await writeConfig(dir);
       process.chdir(dir);
 
-      const { makeCli } = (await import('@/cli')) as { makeCli: () => any };
+      const { makeCli } = (await import('@/cli')) as unknown as {
+        makeCli: () => Command;
+      };
       const cli = makeCli();
 
       await cli.parseAsync(['node', 'stan', 'run', '--no-facets', '-p'], {
