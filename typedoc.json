@@ -33,14 +33,14 @@
     "./guides/configuration.md",
     "./guides/patch-workflow.md",
     "./guides/archives-and-snapshots.md",
-    "./guides/stan-assistant-guide.md",
     "./guides/tutorial-quickstart.md",
     "./guides/why-stan-over-alternatives.md",
     "./guides/case-studies/rrstack.md",
     "./guides/faq.md",
     "./guides/migration.md",
-    "./CHANGELOG.md",
-    "./contributing.md"
+    "./contributing.md",
+    "./guides/stan-assistant-guide.md",
+    "./CHANGELOG.md"
   ],
   "replaceText": {
     "replacements": [
