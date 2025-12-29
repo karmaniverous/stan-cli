@@ -100,7 +100,7 @@ scripts:
   typecheck: npm run typecheck
 ```
 
-See [STAN Configuration](./docs-src/configuration.md) for more!
+See [STAN Configuration](./guides/configuration.md) for more!
 
 ---
 
@@ -130,7 +130,7 @@ See [STAN Configuration](./docs-src/configuration.md) for more!
   stan patch -f file.patch # from file
   ```
 
-See [CLI Usage & Examples](./docs-src/cli-examples.md) for more!
+See [CLI Usage & Examples](./guides/cli-examples.md) for more!
 
 ---
 
@@ -138,22 +138,22 @@ See [CLI Usage & Examples](./docs-src/cli-examples.md) for more!
 
 - [API reference](https://docs.karmanivero.us/stan)
 - Guides:
-  - [Getting Started](./docs-src/getting-started.md) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via [this link](https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W).
-  - [The STAN Loop](./docs-src/the-stan-loop.md) — How Build & Snapshot → Share & Baseline → Discuss & Patch work together.
-  - [CLI Usage & Examples](./docs-src/cli-examples.md) — Common flags and invocation patterns, including `-p`, `-P`, `-S`, `-A`, and `-c`.
-  - [Migration — Namespaced Configuration](./docs-src/migration.md) — Upgrade legacy configs using `stan init` (backs up `.bak`; supports `--dry-run`).
-  - [Stan Configuration](./docs-src/configuration.md) — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.
-  - [Patch Workflow & Diagnostics](./docs-src/patch-workflow.md) — Unified diff policy, diagnostics envelopes, and assistant expectations.
-  - [Archives & Snapshots](./docs-src/archives-and-snapshots.md) — What goes into `archive.tar`/`archive.diff.tar`, combine mode, and snapshot history. Additional references:
+  - [Getting Started](./guides/getting-started.md) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via [this link](https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W).
+  - [The STAN Loop](./guides/the-stan-loop.md) — How Build & Snapshot → Share & Baseline → Discuss & Patch work together.
+  - [CLI Usage & Examples](./guides/cli-examples.md) — Common flags and invocation patterns, including `-p`, `-P`, `-S`, `-A`, and `-c`.
+  - [Migration — Namespaced Configuration](./guides/migration.md) — Upgrade legacy configs using `stan init` (backs up `.bak`; supports `--dry-run`).
+  - [Stan Configuration](./guides/configuration.md) — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.
+  - [Patch Workflow & Diagnostics](./guides/patch-workflow.md) — Unified diff policy, diagnostics envelopes, and assistant expectations.
+  - [Archives & Snapshots](./guides/archives-and-snapshots.md) — What goes into `archive.tar`/`archive.diff.tar`, combine mode, and snapshot history. Additional references:
 
 - The following documents are maintained by STAN and live under `<stanPath>/system/` in your repo:
   - `stan.project.md` contains your evolving project requirements.
   - `stan-todo.md` contains your evolving development plan.
 
 - Case studies:
-  - [rrstack](./docs-src/case-studies/rrstack.md) — how STAN enabled rapid development in a couple of days.
-- Comparison: [Why STAN Over Alternatives?](./docs-src/why-stan-over-alternatives.md)
-- Tutorial: [Quickstart (End‑to‑End)](./docs-src/tutorial-quickstart.md)
+  - [rrstack](./guides/case-studies/rrstack.md) — how STAN enabled rapid development in a couple of days.
+- Comparison: [Why STAN Over Alternatives?](./guides/why-stan-over-alternatives.md)
+- Tutorial: [Quickstart (End‑to‑End)](./guides/tutorial-quickstart.md)
 - FAQ: answers to common questions and pitfalls.
 - Contributing: [Dev Quickstart](./contributing.md)
 

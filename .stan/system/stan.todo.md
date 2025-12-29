@@ -18,5 +18,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Update docs to match new facet flags; add regression tests for `-FS` parsing and `--no-facets` behavior.
 - Amendment: fix `facets.flags.parse.test.ts` lint errors and accept the current plan-only message variant so the `-FS` regression test passes.
 - Fix lint/test fallout from facet flag change; silence `tsdoc/syntax` @jsx warning (lint+tests green).
-- Verify docs-src reflects facet flag breaking change and “diff anchors changed-only” policy (no further doc patches needed).
-- Add integration test proving anchored gitignored state appears in diff only when changed vs snapshot.- Add missing TypeDoc comments for exported config/run types (silence `notDocumented` warnings).- Export `ScriptObject` from `src/index.ts` so TypeDoc includes it when documenting `ScriptEntry`.
+- Verify guides reflects facet flag breaking change and “diff anchors changed-only” policy (no further doc patches needed).
+- Add integration test proving anchored gitignored state appears in diff only when changed vs snapshot.
+- Add missing TypeDoc comments for exported config/run types (silence `notDocumented` warnings).
+- Export `ScriptObject` from `src/index.ts` so TypeDoc includes it when documenting `ScriptEntry`.
