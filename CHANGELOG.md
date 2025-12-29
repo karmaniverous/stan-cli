@@ -2,12 +2,30 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.0](https://github.com/karmaniverous/stan-cli/compare/0.11.7...0.12.0)
+
+- bugfix/10 facets changes enablement are not reflected in archive [`#11`](https://github.com/karmaniverous/stan-cli/pull/11)
+- [10] docs: clarify facets flags and diff anchors [`f19c63c`](https://github.com/karmaniverous/stan-cli/commit/f19c63c8f885b183d9134ef45920011d31a65e57)
+- [10] fix: facet flags + diff anchors; add regressions [`ccb6bb9`](https://github.com/karmaniverous/stan-cli/commit/ccb6bb94446a61e085392683b08ee2e8df49e4f1)
+- [10] docs: refresh guides and cross-links [`d3e51d3`](https://github.com/karmaniverous/stan-cli/commit/d3e51d38b82ef5f6dac466c85369f2dba8f32679)
+- [10] docs: add stan assistant guide [`bd5ed4e`](https://github.com/karmaniverous/stan-cli/commit/bd5ed4ea78eb460c65938d3eacc004d440e1d266)
+- [10] Add diff anchor changed-only integration test [`5454126`](https://github.com/karmaniverous/stan-cli/commit/5454126b90c3927e874bde77b310952c6286452e)
+- [10] renamed docs-src -&gt; guides [`f226ef3`](https://github.com/karmaniverous/stan-cli/commit/f226ef3cba79b7aa45cd6874d74db5585cb89849)
+- [10] Add TypeDoc comments for exported types [`bc3c5d5`](https://github.com/karmaniverous/stan-cli/commit/bc3c5d5896813f873cea00ece7464dca1c99c44e)
+- [10] Fix facets parse test lint + assertion [`fc4b077`](https://github.com/karmaniverous/stan-cli/commit/fc4b077aa79dbc98e473a7dbe16d1bb6ff74e84b)
+- [10] updated typedoc [`3e2ad86`](https://github.com/karmaniverous/stan-cli/commit/3e2ad867fefae28e3684e06079e863d9831f9fb3)
+- [10] Update dev plan after green lint/test [`4904171`](https://github.com/karmaniverous/stan-cli/commit/49041714169d2ab7bb9e577826834d7399c87325)
+- [10] docs(typedoc): export ScriptObject type [`28a09ca`](https://github.com/karmaniverous/stan-cli/commit/28a09ca14649b89e036aa461de3814a265192d51)
+
 #### [0.11.7](https://github.com/karmaniverous/stan-cli/compare/0.11.6...0.11.7)
+
+> 27 November 2025
 
 - snap: apply facet overlay to baseline snapshot; add regression test and docs [`26f9c6a`](https://github.com/karmaniverous/stan-cli/commit/26f9c6ab49a971b2d95d08889d1509c63f376499)
 - updated docs [`94264a7`](https://github.com/karmaniverous/stan-cli/commit/94264a75b4808e125bbedb98d8465123c6891a88)
 - test(snap): replace FS-bound overlay baseline test with pure contract verification [`5edc593`](https://github.com/karmaniverous/stan-cli/commit/5edc59345b5e7ac47c52822aaa669323762a44c8)
 - updated docs [`2f6096a`](https://github.com/karmaniverous/stan-cli/commit/2f6096ab144427756f0afcb55be24199ac6d8f58)
+- chore: release v0.11.7 [`170132e`](https://github.com/karmaniverous/stan-cli/commit/170132e6f55936592f34241182b7df23a3a9e1ae)
 - fix(test): satisfy require-await and TS in snap overlay snapshot test [`f61a2f6`](https://github.com/karmaniverous/stan-cli/commit/f61a2f6e1aaa979b96c530d9ce4903497a36edc2)
 - snap: ensure diff dir exists before writing snapshot; fix ENOENT on fresh repos [`4949271`](https://github.com/karmaniverous/stan-cli/commit/49492713a4d77a8928c4acfe4cc150d5e079325f)
 
