@@ -40,14 +40,28 @@ const coerceBool = z
   })
   .optional();
 
-export type ScriptEntry =
-  | string
-  | {
-      script: string;
-      warnPattern?: string;
-      /** Optional regex flags that override the default flags behavior for warnPattern. */
-      warnPatternFlags?: string;
-    };
+/** Object form of a configured script entry. */
+export type ScriptObject = {
+  /** Shell command to execute for this script key. */
+  script: string;
+  /**
+   * Optional regular expression pattern used to classify output as a warning
+   * even when the process exits with code 0.
+   */
+  warnPattern?: string;
+  /** Optional regex flags that override the default flags behavior for warnPattern. */
+  warnPatternFlags?: string;
+};
+
+/**
+ * Script entry in `stan-cli.scripts`.
+ *
+ * - string: shorthand command (e.g., "npm run test")
+ * - object: extended form with a `script` command and optional warning pattern
+ */
+export type ScriptEntry = string | ScriptObject;
+
+/** Map of script keys to their configured commands (string shorthand or object form). */
 export type ScriptMap = Record<string, ScriptEntry>;
 
 const scriptObjectSchema = z

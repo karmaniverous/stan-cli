@@ -4,6 +4,10 @@ title: Archives & Snapshots
 
 # Archives & snapshots
 
+Related guides:
+- [Stan Configuration](./configuration.md)
+- [CLI Usage & Examples](./cli-examples.md)
+
 ## Artifacts
 
 - `<stanPath>/output/archive.tar` — full snapshot of repo files (excludes binaries).
@@ -19,12 +23,12 @@ STAN selects files for archiving in two passes:
 - Base selection
   - Both regular and diff archives apply the same screening, including exclusion of binary files.
   - Classification is performed by the engine (binary exclusions, large‑text call‑outs). The CLI may surface a concise summary when enabled; by default no additional warnings file is written and archives are created silently.
-  - Applies your `.gitignore`, default denials (`node_modules`, `.git`), user `excludes`, and STAN workspace rules. Explicit `excludes` take precedence over any later `includes`. - Reserved exclusions always apply:
+  - Applies your `.gitignore`, default denials (`node_modules`, `.git`), `stan-core.excludes`, and STAN workspace rules. Explicit `excludes` take precedence over any later `includes`. Reserved exclusions always apply:
     - `<stanPath>/diff` is always excluded.
     - `<stanPath>/output` is excluded unless you enable combine mode.
 
 - Additive includes
-  - `includes` is an allow‑list that ADDS matches back even if they would be excluded by `.gitignore` or default denials.
+  - `stan-core.includes` is an allow‑list that ADDS matches back even if they would be excluded by `.gitignore` or default denials.
   - Explicit `excludes` still win: if a path matches both `includes` and `excludes`, it is excluded.
   - Reserved exclusions still apply (see above).
 
@@ -37,6 +41,13 @@ excludes:
 includes:
   - '**/*.md' # bring docs back even if ignored elsewhere
 ```
+
+### Anchors and diff archives (changed-only)
+
+- Both full and diff archives honor `anchors` (subject to reserved denials enforced by the engine).
+- The diff archive remains “changed-only”: anchored files appear in `archive.diff.tar` only when they have changed since the active snapshot baseline.
+- If you introduce a new anchored file that was not present in the snapshot baseline yet, it may appear once as “added” in the next diff (acceptable).
+- This is important for gitignored-but-important state such as `<stanPath>/system/facet.state.json` and `<stanPath>/system/.docs.meta.json`.
 
 ### Imports staging
 

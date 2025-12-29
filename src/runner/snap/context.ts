@@ -58,9 +58,8 @@ export async function resolveContext(
   // evaluation-order hazards during module import.
   let engine: ContextConfig | undefined;
   try {
-    const effModUnknown = (await import(
-      '@/runner/config/effective'
-    )) as unknown;
+    const effModUnknown =
+      (await import('@/runner/config/effective')) as unknown;
 
     // Decide if we should print a single success trace when STAN_DEBUG=1.
     const debugOn = (): boolean => process.env.STAN_DEBUG === '1';

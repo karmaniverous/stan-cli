@@ -11,19 +11,26 @@ export type ExecutionMode = 'concurrent' | 'sequential';
 
 // Runner-local config (CLI-owned scripts + engine stanPath)
 import type { ScriptMap } from '@/cli/config/schema';
+
+/** Runner-local configuration (CLI-owned scripts + engine selection inputs). */
 export type RunnerConfig = {
+  /** STAN workspace directory name (e.g., ".stan"). */
   stanPath: string;
+  /** CLI-owned scripts mapping (script key -\> command config). */
   scripts: ScriptMap;
   /**
    * Optional engine selection context (propagated to the archive phase).
    * When present, these are honored by createArchive/createArchiveDiff.
    */
   includes?: string[];
+  /** Deny-list globs (engine config excludes plus any overlay-composed excludes). */
   excludes?: string[];
+  /** Optional imports map used to stage external context into <stanPath>/imports. */
   imports?: Record<string, string[]>;
   /** High-precedence re-includes (passed to core; subject to reserved denials). */
   anchors?: string[];
-  overlayPlan?: string[]; // optional extra plan lines (facet view)
+  /** Optional extra plan lines (facet view) printed in the run plan. */
+  overlayPlan?: string[];
 };
 /**
  * Behavior flags controlling archive/combine/keep semantics:
@@ -33,13 +40,21 @@ export type RunnerConfig = {
  * - `plan`: when false, suppress printing the run plan before execution.
  */
 export type RunBehavior = {
+  /** Include script outputs inside archives and remove them from disk afterward. */
   combine?: boolean;
+  /** Keep (do not clear) the output directory before running. */
   keep?: boolean;
+  /** Create archive.tar and archive.diff.tar. */
   archive?: boolean;
+  /** Enable the live TTY UI when available. */
   live?: boolean;
+  /** Seconds of inactivity before warning/stalled labeling (TTY only). */
   hangWarn?: number;
+  /** Seconds of inactivity before terminating the process tree (TTY only). */
   hangKill?: number;
+  /** Seconds to wait after SIGTERM before SIGKILL (TTY only). */
   hangKillGrace?: number;
+  /** When false, suppress printing the plan header before execution. */
   plan?: boolean;
   /** Plan-only display string for resolved system prompt source (when present). */
   prompt?: string;

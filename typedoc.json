@@ -26,19 +26,21 @@
     "typedoc-plugin-zod"
   ],
   "projectDocuments": [
-    "./docs-src/getting-started.md",
-    "./docs-src/the-stan-loop.md",
-    "./docs-src/cli-examples.md",
-    "./docs-src/configuration.md",
-    "./docs-src/patch-workflow.md",
-    "./docs-src/archives-and-snapshots.md",
-    "./docs-src/tutorial-quickstart.md",
-    "./docs-src/why-stan-over-alternatives.md",
-    "./docs-src/case-studies/rrstack.md",
-    "./docs-src/faq.md",
-    "./docs-src/migration.md",
-    "./CHANGELOG.md",
-    "./contributing.md"
+    "./guides/getting-started.md",
+    "./guides/bootloader.md",
+    "./guides/the-stan-loop.md",
+    "./guides/cli-examples.md",
+    "./guides/configuration.md",
+    "./guides/patch-workflow.md",
+    "./guides/archives-and-snapshots.md",
+    "./guides/tutorial-quickstart.md",
+    "./guides/why-stan-over-alternatives.md",
+    "./guides/case-studies/rrstack.md",
+    "./guides/faq.md",
+    "./guides/migration.md",
+    "./contributing.md",
+    "./guides/stan-assistant-guide.md",
+    "./CHANGELOG.md"
   ],
   "replaceText": {
     "replacements": [
@@ -50,5 +52,8 @@
     ]
   },
   "searchInComments": true,
-  "searchInDocuments": true
+  "searchInDocuments": true,
+  "validation": {
+    "notDocumented": true
+  }
 }

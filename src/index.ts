@@ -4,4 +4,4 @@
 export * from './runner/help';
 export * from './runner/run';
 // Consolidated type re‑exports for documentation completeness.
-export type { ScriptEntry, ScriptMap } from './cli/config/schema';
+export type { ScriptEntry, ScriptMap, ScriptObject } from './cli/config/schema';

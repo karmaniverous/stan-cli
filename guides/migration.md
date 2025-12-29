@@ -6,6 +6,11 @@ title: Migration — Namespaced Configuration
 
 STAN now uses a namespaced configuration layout with top‑level sections:
 
+Related guides:
+- [Getting Started](./getting-started.md)
+- [Stan Configuration](./configuration.md)
+- [CLI Usage & Examples](./cli-examples.md)
+
 - stan-core — engine keys (selection and workspace):
   - stanPath: ".stan" (default)
   - includes?: string[]

@@ -23,7 +23,7 @@
     ]
   },
   "docs": {
-    "exclude": ["docs-src/**", "contributing.md", "README.md", "LICENSE"],
+    "exclude": ["guides/**", "contributing.md", "README.md", "LICENSE"],
     "include": ["README.md"]
   },
   "init": {

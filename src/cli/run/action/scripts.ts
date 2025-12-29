@@ -33,9 +33,8 @@ export const resolveScriptsForRun = async (args: {
 
   if (typeof scriptsDefaultCfg === 'undefined') {
     try {
-      const { readRunScriptsDefaultFallback } = await import(
-        '../config-fallback'
-      );
+      const { readRunScriptsDefaultFallback } =
+        await import('../config-fallback');
       scriptsDefaultCfg = readRunScriptsDefaultFallback(cwd);
     } catch {
       /* ignore */

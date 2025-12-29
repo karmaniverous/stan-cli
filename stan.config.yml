@@ -2,13 +2,15 @@
 stan-cli:
   cliDefaults:
     run:
-      facets: true
+      facets: false
       plan: false
       sequential: true
   patchOpenCommand: code -g {file}
   scripts:
     typecheck: npm run typecheck
-    lint: npm run lint:fix
+    lint:
+      script: npm run lint:fix
+      warnPattern: \\d+:\\d+\\s+warning
     test: npm run test -- --no-color
     build:
       script: cross-env NO_COLOR=1 npm run build
@@ -28,9 +30,7 @@ stan-core:
     - package-lock.json
   imports:
     stan-core:
-      - ../stan-core/.stan/system/stan.requirements.md
-      - ../stan-core/.stan/system/stan.todo.md
-      - ../stan-core/dist/types/index.d.ts
       - ../stan-core/.stan/interop/stan-cli/**
+      - ../stan-core/guides/stan-assistant-guide.md
   includes: []
   stanPath: .stan

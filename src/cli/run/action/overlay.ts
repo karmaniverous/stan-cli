@@ -50,14 +50,7 @@ export const buildOverlayInputs = async (args: {
     };
   }
 
-  // Decide whether to map excludes even when the global overlay flag is off:
-  // - If explicit per‑run overrides (-f/-F names) are provided, we still derive
-  //   engine excludes/leaf‑globs so callers can observe the intended mapping.
-  const shouldMap =
-    enabled ||
-    (Array.isArray(args.activateNames) && args.activateNames.length > 0) ||
-    (Array.isArray(args.deactivateNames) && args.deactivateNames.length > 0) ||
-    args.nakedActivateAll;
+  const shouldMap = enabled;
 
   // Map overlay excludes to effective deny-list globs for the engine:
   // - subtree roots like "docs" -> "docs/**"

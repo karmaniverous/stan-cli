@@ -62,7 +62,12 @@ describe('computeFacetOverlay', () => {
     expect(out.effective.b).toBe(false);
     // anchors union contains facet anchors plus the always-anchored facet state file
     expect(out.anchorsOverlay.sort()).toEqual(
-      ['foo/README.md', 'docs/KEEP.md', 'stan/system/facet.state.json'].sort(),
+      [
+        'foo/README.md',
+        'docs/KEEP.md',
+        'stan/system/facet.state.json',
+        'stan/system/.docs.meta.json',
+      ].sort(),
     );
     // excludes overlay includes root for b only (inactive with present anchor)
     // stripGlobTail('docs/**') -> 'docs'
@@ -92,6 +97,25 @@ describe('computeFacetOverlay', () => {
     expect(out.anchorsKeptCounts.pkg).toBe(0);
   });
 
+  it('explicit per-run deactivate: does not autosuspend when anchors are missing', async () => {
+    const meta: FacetMeta = {
+      pkg: { exclude: ['packages/**'], include: ['packages/README.md'] },
+    };
+    const state: FacetState = { pkg: true }; // state active, but explicit off should win
+    await writeJson(sys('facet.meta.json'), meta);
+    await writeJson(sys('facet.state.json'), state);
+    // Do NOT create any anchor under packages/** (anchor missing)
+    const out = await computeFacetOverlay({
+      cwd,
+      stanPath,
+      enabled: true,
+      deactivate: ['pkg'],
+    });
+    expect(out.effective.pkg).toBe(false);
+    expect(out.autosuspended).toEqual([]);
+    expect(out.excludesOverlay).toEqual(['packages']);
+  });
+
   it('overlay disabled: returns anchors union and counts but no excludes overlay', async () => {
     const meta: FacetMeta = {
       x: { exclude: ['x/**'], include: ['x/A.md'] },
@@ -116,7 +140,12 @@ describe('computeFacetOverlay', () => {
     // excludes overlay is empty; anchorsOverlay still announced
     expect(out.excludesOverlay).toEqual([]);
     expect(out.anchorsOverlay.sort()).toEqual(
-      ['x/A.md', 'y/B.md', 'stan/system/facet.state.json'].sort(),
+      [
+        'x/A.md',
+        'y/B.md',
+        'stan/system/facet.state.json',
+        'stan/system/.docs.meta.json',
+      ].sort(),
     );
   });
 
@@ -157,7 +186,11 @@ describe('computeFacetOverlay', () => {
     expect(out.excludesOverlay).toEqual([]);
     // Anchors union remains
     expect(out.anchorsOverlay.sort()).toEqual(
-      ['docs/KEEP.md', 'stan/system/facet.state.json'].sort(),
+      [
+        'docs/KEEP.md',
+        'stan/system/facet.state.json',
+        'stan/system/.docs.meta.json',
+      ].sort(),
     );
   });
 
@@ -190,6 +223,7 @@ describe('computeFacetOverlay', () => {
         'packages/app/ANCHOR.md',
         'packages/KEEP.md',
         'stan/system/facet.state.json',
+        'stan/system/.docs.meta.json',
       ].sort(),
     );
   });
@@ -249,6 +283,7 @@ describe('computeFacetOverlay', () => {
     expect(out.anchorsOverlay).toContain(expectedScoped);
     // Anchors also include facet.state.json to preserve next-run defaults
     expect(out.anchorsOverlay).toContain('stan/system/facet.state.json');
+    expect(out.anchorsOverlay).toContain('stan/system/.docs.meta.json');
     // No autosuspension expected here (core had an anchor under its excluded root)
     expect(out.autosuspended).toEqual([]);
   });
