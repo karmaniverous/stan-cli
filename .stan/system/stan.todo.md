@@ -4,8 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Fix remaining lint/test fallout from the facet flag breaking change; re-run `npm run lint` and `npm run test`.
-- (Optional) Reduce ESLint noise: address `tsdoc/syntax` warning spam (“@jsx already defined”) in `tsdoc.json` and/or ESLint TSDoc plugin configuration.
+- Verify docs-src reflects the breaking facet flag change (`-f/-F` boolean-only; `--facets-on/--facets-off`) and the “diff anchors remain changed-only” policy; if anything is missing, apply doc patches.
 - Consider adding a higher-level integration test that inspects diff archive contents to prove anchored gitignored state (e.g., `facet.state.json`) appears in `archive.diff.tar` when changed.
 
 ## Completed (context essentials only)
@@ -17,4 +16,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Make DIFF honor anchors by passing `anchors` into the diff config (changed-only semantics via snapshot).
 - Enforce Option Y in overlay calc: do not autosuspend explicit per-run deactivations; also anchor `.docs.meta.json`.
 - Update docs to match new facet flags; add regression tests for `-FS` parsing and `--no-facets` behavior.
-- Amendment: fix `facets.flags.parse.test.ts` lint errors and accept the current plan-only message variant so the `-FS` regression test passes.
+- Amendment: fix `facets.flags.parse.test.ts` lint errors and accept the current plan-only message variant so the `-FS` regression test passes.
+- Fix lint/test fallout from facet flag change; silence `tsdoc/syntax` @jsx warning (lint+tests green).
