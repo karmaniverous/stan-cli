@@ -220,17 +220,32 @@ export const registerRunOptions = (
   optHangKill.default(eff.hangKill);
   optHangKillGrace.default(eff.hangKillGrace);
 
-  // Facet overlay (renamed)
-  // -f, --facets [names...]     → overlay ON; activate specific facets; naked -f = all facets active
-  // -F, --no-facets [names...]  → overlay ON; deactivate specific facets; naked -F = overlay OFF
+  // Facet overlay (breaking change):
+  // -f, --facets      → overlay ON for this run
+  // -F, --no-facets   → overlay OFF for this run
+  // Per-run overrides (do not persist to facet.state.json):
+  //   --facets-on  <names...>  → force these facets active for this run
+  //   --facets-off <names...>  → force these facets inactive for this run
   const optFacets = new Option(
-    '-f, --facets [names...]',
-    'activate specific facets for this run (naked form treats all facets active)',
+    '-f, --facets',
+    'enable facet overlay for this run',
   );
   const optNoFacets = new Option(
-    '-F, --no-facets [names...]',
-    'deactivate facets for this run (naked form disables overlay)',
+    '-F, --no-facets',
+    'disable facet overlay for this run',
   );
+  const optFacetsOn = new Option(
+    '--facets-on <names...>',
+    'force named facets active for this run (does not persist)',
+  );
+  const optFacetsOff = new Option(
+    '--facets-off <names...>',
+    'force named facets inactive for this run (does not persist)',
+  );
+
+  // Prevent ambiguous combinations (explicit overlay-off cannot be combined with per-run overrides).
+  optNoFacets.conflicts(['facetsOn', 'facetsOff']);
+
   // Tag default overlay state from cliDefaults.run.facets
   try {
     tagDefault(eff.facets ? optFacets : optNoFacets, true);
@@ -238,7 +253,11 @@ export const registerRunOptions = (
     /* best‑effort */
   }
 
-  cmd.addOption(optFacets).addOption(optNoFacets);
+  cmd
+    .addOption(optFacets)
+    .addOption(optNoFacets)
+    .addOption(optFacetsOn)
+    .addOption(optFacetsOff);
 
   // Overlay event presence (action resolves behavior)
   cmd.on('option:facets', () => void 0);

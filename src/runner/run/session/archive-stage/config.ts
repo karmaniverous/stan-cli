@@ -1,7 +1,7 @@
 // src/runner/run/session/archive-stage/config.ts
 import type { RunnerConfig } from '@/runner/run/types';
 
-/** Build FULL and DIFF base configs; DIFF intentionally excludes anchors. */
+/** Build FULL and DIFF base configs; DIFF honors anchors (changed-only via snapshot). */
 export const makeBaseConfigs = (
   config: RunnerConfig,
 ): {
@@ -17,6 +17,7 @@ export const makeBaseConfigs = (
     includes?: string[];
     excludes?: string[];
     imports?: Record<string, string[]>;
+    anchors?: string[];
   };
 } => {
   const full = {
@@ -31,6 +32,7 @@ export const makeBaseConfigs = (
     includes: config.includes ?? [],
     excludes: config.excludes ?? [],
     imports: config.imports,
+    anchors: config.anchors ?? [],
   };
   return { full, diff };
 };

@@ -38,6 +38,13 @@ includes:
   - '**/*.md' # bring docs back even if ignored elsewhere
 ```
 
+### Anchors and diff archives (changed-only)
+
+- Both full and diff archives honor `anchors` (subject to reserved denials enforced by the engine).
+- The diff archive remains “changed-only”: anchored files appear in `archive.diff.tar` only when they have changed since the active snapshot baseline.
+- If you introduce a new anchored file that was not present in the snapshot baseline yet, it may appear once as “added” in the next diff (acceptable).
+- This is important for gitignored-but-important state such as `<stanPath>/system/facet.state.json` and `<stanPath>/system/.docs.meta.json`.
+
 ### Imports staging
 
 - At the start of `stan run`, the CLI clears `<stanPath>/imports/` and then stages imports for the current configuration. This ensures that removing an import label from `stan.config.*` also removes any previously staged files for that label on the next run.

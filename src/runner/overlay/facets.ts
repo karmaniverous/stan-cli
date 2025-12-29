@@ -124,6 +124,11 @@ export const computeFacetOverlay = async (
   const meta = await readFacetMeta(cwd, stanPath);
   const state = await readFacetState(cwd, stanPath);
   const facetNames = Object.keys(meta);
+  const explicitOff = new Set<string>(
+    Array.isArray(input.deactivate)
+      ? input.deactivate.filter((s): s is string => typeof s === 'string')
+      : [],
+  );
 
   // Narrow a facet definition object safely (avoid optional-chaining on meta[name]).
   const defOf = (name: string): { exclude?: string[]; include?: string[] } => {
@@ -198,6 +203,14 @@ export const computeFacetOverlay = async (
   } catch {
     /* best-effort */
   }
+  // Also anchor docs metadata so assistants can see prompt/overlay baselines.
+  // This file is gitignored but safe to include (subject to reserved denials).
+  try {
+    const docsMeta = posix(path.join(stanPath, 'system', '.docs.meta.json'));
+    anchorsOverlaySet.add(docsMeta);
+  } catch {
+    /* best-effort */
+  }
 
   // If overlay disabled, do not add any excludes, but still report anchorsKept counts.
   if (!input.enabled) {
@@ -252,10 +265,13 @@ export const computeFacetOverlay = async (
       );
 
     if (hasRoots && !hasAnchorUnderRoot) {
-      // Auto-suspend this facet's drop for this run
-      effective[name] = true;
-      autosuspended.push(name);
-      continue;
+      // Option Y: explicit per-run deactivation wins.
+      // Only auto-suspend when the facet is inactive due to default/state (not an explicit --facets-off).
+      if (!explicitOff.has(name)) {
+        effective[name] = true;
+        autosuspended.push(name);
+        continue;
+      }
     }
 
     // Aggregate subtree excludes for truly inactive facets with anchors present under roots (if any).

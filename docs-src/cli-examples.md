@@ -58,21 +58,24 @@ Flags (presented in the same order as `stan run --help`):
 - -q, --sequential / -Q, --no-sequential
   - Run sequentially (preserves -s order) or concurrently (default).
 
-- Facet overlay (selection view; defaults via cliDefaults.run.facets)
-  - -f, --facets [names...]
-    - Activate specific facets for this run (overlay ON). Naked -f treats all facets active (no hiding).
-  - -F, --no-facets [names...]
-    - Deactivate specific facets for this run (overlay ON). Naked -F disables overlay.
+- Facet overlay (selection view; defaults via stan-cli.cliDefaults.run.facets)
+  - -f, --facets
+    - Enable facet overlay for this run.
+  - -F, --no-facets
+    - Disable facet overlay for this run.
+  - --facets-on <names...>
+    - Force named facets active for this run (does not persist to facet.state.json).
+  - --facets-off <names...>
+    - Force named facets inactive for this run (does not persist; explicit off wins).
   - Plan view:
-    - When overlay is enabled, the run plan prints a “facet view” section (overlay on/off, inactive facets, auto‑suspended facets, anchors kept count).
+    - The run plan prints a “facet view” section (overlay on/off, inactive facets, auto‑suspended facets, anchors kept count).
 
 Examples:
 
 ```
-stan run --facets -f docs # overlay ON; keep facet "docs" active
-stan run -F heavy         # overlay ON; hide facet "heavy" (unless auto‑suspended by ramp‑up safety)
-stan run -f               # overlay ON; activate all facets (no hiding)
-stan run -F               # disable overlay (same as --no-facets)
+stan run -f --facets-on docs
+stan run -f --facets-off heavy
+stan run -F
 ```
 
 - -a, --archive / -A, --no-archive
@@ -159,7 +162,7 @@ stan run -c -p               # plan only; combine would include outputs in archi
 stan run -k
 
 # Overlay view
-stan run --facets -p         # plan shows “facet view” section
+stan run -f -p               # plan shows “facet view” section
 ```
 
 ## Patch — options and workflow
@@ -259,46 +262,52 @@ Options:
 
 ---
 
-## Config‑driven defaults (opts.cliDefaults)
+## Config‑driven defaults (stan-cli.cliDefaults)
 
-Phase‑scoped defaults are read from your config when flags are omitted. Precedence: flags > cliDefaults > built‑ins.
+Phase‑scoped defaults are read from your config when flags are omitted. Precedence: flags > stan-cli.cliDefaults > built‑ins.
 
 Example:
 
 ```yaml
-cliDefaults:
-  # Root
-  debug: false
-  boring: false
+stan-cli:
+  cliDefaults:
+    # Root
+    debug: false
+    boring: false
 
-  # Run defaults
-  run:
-    archive: true # -a / -A
-    combine: false # -c / -C
-    keep: false # -k / -K
-    sequential: false # -q / -Q
-    # scripts default when -s is omitted:
-    #   true => all, false => none, ["lint","test"] => only these keys
-    scripts: true
+    # Run defaults
+    run:
+      archive: true # -a / -A
+      combine: false # -c / -C
+      keep: false # -k / -K
+      sequential: false # -q / -Q
+      # scripts default when -s is omitted:
+      #   true => all, false => none, ["lint","test"] => only these keys
+      scripts: true
 
-  # Patch defaults
-  patch:
-    file: .stan/patch/last.patch
+    # Patch defaults
+    patch:
+      file: .stan/patch/last.patch
 
-  # Snap defaults
-  snap:
-    stash: false
+    # Snap defaults
+    snap:
+      stash: false
 ```
 
 ---
 
 ## Negative short flags (quick reference)
 
-- -D => --no-debug
-- -B => --no-boring
-- -P => --no-plan
-- -Q => --no-sequential
-- -K => --no-keep
+- Root:
+  - -D => --no-debug
+  - -B => --no-boring
+- Run:
+  - -F => --no-facets
+  - -P => --no-plan
+  - -Q => --no-sequential
+  - -K => --no-keep
+- Patch:
+  - -F => --no-file
 
 ---
 

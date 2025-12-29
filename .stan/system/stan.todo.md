@@ -4,21 +4,16 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Fix facet flag semantics (breaking change OK):
-  - Make `-f/--facets` and `-F/--no-facets` boolean-only (no optional args) to eliminate Commander bundling ambiguity (`-FS` == `-F S`).
-  - Add `--facets-on <names...>` and `--facets-off <names...>` as explicit per-run overrides (Option Y: explicit wins; do not auto-suspend explicit deactivations).
-  - Ensure `--no-facets` is interpreted correctly (Commander stores it as `options.facets = false` with source `facets: cli`).
-- Make DIFF honor anchors (2B) while keeping DIFF “changed-only”:
-  - Pass anchors into the diff archive selection (subject to reserved denials) so gitignored-but-important state like `.stan/system/facet.state.json` can appear in diffs when it changes.
-  - Ensure baseline snapshot selection includes `.stan/system/facet.state.json` when archiving so it doesn’t continually appear as “new”.
-- Archive visibility:
-  - Keep `.stan/system/facet.state.json` always included in full archives even when gitignored.
-  - Ensure `.stan/system/facet.state.json` appears in diff archives when changed since the snapshot (or once as “added” when first introduced to the snapshot baseline).
-- Add/adjust tests:
-  - CLI parsing: `-FS` must behave the same as `-F -S`; `--no-facets` must disable overlay.
-  - Archive behavior: facet state present in full; present in diff when changed.
 - Update docs (`docs-src/cli-examples.md`, `docs-src/archives-and-snapshots.md`) to reflect new facet flags and diff/anchor behavior.
+- Run the full test suite and fix any regressions caused by the breaking facet flag change.
+- Consider adding a higher-level integration test that inspects diff archive contents to prove anchored gitignored state (e.g., `facet.state.json`) appears in `archive.diff.tar` when changed.
 
 ## Completed (context essentials only)
 
 **CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
+
+- Implement breaking facet flag redesign: `-f/-F` boolean-only and add `--facets-on/--facets-off` (per-run only).
+- Fix overlay enablement: interpret `--no-facets` as `options.facets=false` with source `facets: cli` and disable overlay correctly.
+- Make DIFF honor anchors by passing `anchors` into the diff config (changed-only semantics via snapshot).
+- Enforce Option Y in overlay calc: do not autosuspend explicit per-run deactivations; also anchor `.docs.meta.json`.
+- Update docs to match new facet flags; add regression tests for `-FS` parsing and `--no-facets` behavior.
