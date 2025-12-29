@@ -6,6 +6,12 @@ title: STAN assistant guide (stan-cli)
 
 This guide is a compact, self-contained usage contract for `@karmaniverous/stan-cli` (the CLI + runner). It is written so a STAN assistant can use and integrate the package correctly without consulting `.d.ts` files or other repo documentation.
 
+Related guides:
+- [Bootloader & Assistant Setup](./bootloader.md)
+- [Stan Configuration](./configuration.md)
+- [CLI Usage & Examples](./cli-examples.md)
+- [Archives & Snapshots](./archives-and-snapshots.md)
+
 ## What this package is (mental model)
 
 `@karmaniverous/stan-cli` is the **CLI adapter layer** for STAN. It orchestrates a repeatable loop:

@@ -6,6 +6,10 @@ title: Getting Started
 
 This guide walks you through setting up STAN in an existing repository and using it effectively in chat.
 
+Related guides:
+- [Stan Configuration](./configuration.md)
+- [CLI Usage & Examples](./cli-examples.md)
+
 ## 1) Install
 
 Install the STAN CLI globally (pick one):
@@ -36,6 +40,7 @@ What this does:
 Migration and safety notes:
 
 - On upgrade from legacy (root‑key) configs, `stan init` migrates to the namespaced layout, writes a `.bak` next to your config, and supports a plan‑only mode via `--dry-run`.
+- See [Migration — Namespaced Configuration](./migration.md) for details.
 
 You can re-run `stan init` safely. Use `--force` to accept defaults; otherwise you’ll be prompted.
 
@@ -44,24 +49,29 @@ You can re-run `stan init` safely. Use `--force` to accept defaults; otherwise y
 Minimal example:
 
 ```yaml
-stanPath: .stan
-includes: []
-excludes: []
-scripts:
-  build: npm run stan:build
-  lint: npm run lint
-  test: npm run test
-  typecheck: npm run typecheck
+stan-core:
+  stanPath: .stan
+  includes: []
+  excludes: []
+stan-cli:
+  scripts:
+    build: npm run build
+    lint: npm run lint
+    test: npm run test
+    typecheck: npm run typecheck
 ```
 
 Key settings:
 
-- `stanPath` (default `.stan`): STAN workspace folder.
-- `scripts`: commands whose combined stdout/stderr become deterministic text outputs (e.g., `test.txt`).
-- `includes`/`excludes`: glob controls for archiving; text files are included, binaries automatically excluded.
-- Optional:
+- `stan-core.stanPath` (default `.stan`): STAN workspace folder.
+- `stan-cli.scripts`: commands whose combined stdout/stderr become deterministic text outputs (e.g., `test.txt`).
+- `stan-core.includes` / `stan-core.excludes`: glob controls for archiving (binaries are excluded automatically by the engine).
+- Optional (under `stan-cli`):
   - `maxUndos` (history depth for snapshot undo/redo; default 10).
-  - `patchOpenCommand` (editor open command; default `"code -g {file}"`).
+  - `patchOpenCommand` (editor open command; default `code -g {file}`).
+  - `cliDefaults` (config-driven CLI defaults; see [CLI Usage & Examples](./cli-examples.md)).
+
+See [Stan Configuration](./configuration.md) for the complete schema and examples.
 
 ## 4) Run the loop locally
 
@@ -105,7 +115,7 @@ Tips:
 
 STAN depends on the presence of its bootloader system prompt to load `.stan/system/stan.system.md` from your attached archives. While it can be used in the GPT web app, the most reliable setup is a dedicated client with the bootloader preinstalled.
 
-- Bootloader prompt (source): [.stan/system/stan.bootloader.md](https://github.com/karmaniverous/stan-cli/blob/main/.stan/system/stan.bootloader.md)
+See: [Bootloader & Assistant Setup](./bootloader.md)
 
 TypingMind one‑click setup (recommended; requires an OpenAI API key with GPT‑5 access):
 
@@ -116,7 +126,7 @@ TypingMind one‑click setup (recommended; requires an OpenAI API key with GPT�
 
 Other clients
 
-- If you prefer another client, ensure its system prompt contains the entire bootloader. You can copy it from the source link above.
+- If you prefer another client, ensure its system prompt contains the bootloader (see the guide above).
 - It is possible to run STAN in the GPT web application, but it’s not recommended because the bootloader must be present for reliable operation. If you wish to try, add the bootloader to the project instructions of a GPT project.
 
 ### Guardrails & limits
@@ -139,3 +149,5 @@ Other clients
 - “Missing system prompt”: Attach an archive containing `.stan/system/stan.system.md` (or attach that file directly as `stan.system.md`).
 - Patch failures: Use `--check` to validate; reply in chat with the FEEDBACK packet to receive a corrected diff.
 - Large text files flagged: Consider adding globs to `excludes` to trim runtime noise from archives.
+
+Next: [The STAN Loop](./the-stan-loop.md) and [Archives & Snapshots](./archives-and-snapshots.md).

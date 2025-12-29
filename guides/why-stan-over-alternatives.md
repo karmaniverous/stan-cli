@@ -6,6 +6,11 @@ title: Why STAN Over Alternatives?
 
 STAN focuses on a single goal: making AI‑assisted development reproducible and auditable today, using your existing toolchain.
 
+Related guides:
+- [Getting Started](./getting-started.md)
+- [The STAN Loop](./the-stan-loop.md)
+- [Archives & Snapshots](./archives-and-snapshots.md)
+
 | Tool / Approach         | Reproducible Context | AI‑Ready Archives | Unified Diff Patching | Deterministic Outputs | Learning Curve |
 |-------------------------|----------------------|-------------------|-----------------------|-----------------------|----------------|
 | STAN                    | Yes (archive.tar + outputs) | Yes (attach in any chat) | Yes (with FEEDBACK loop) | Yes (stdout/stderr captured) | Low |

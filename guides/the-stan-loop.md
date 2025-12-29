@@ -8,6 +8,11 @@ title: The STAN Loop
 
 STAN establishes a simple, reproducible loop for AI‑assisted development.
 
+Related guides:
+- [Getting Started](./getting-started.md)
+- [Archives & Snapshots](./archives-and-snapshots.md)
+- [Patch Workflow & Diagnostics](./patch-workflow.md)
+
 ## 1) Build & Snapshot
 
 - Edit code locally.
@@ -29,6 +34,8 @@ Tips:
 - Optionally run `stan snap` to update the diff baseline (and use `undo`/`redo` to navigate history).
 - In chat, STAN reads the system prompt from the archive and verifies integrity before proceeding.
 
+See: [Archives & Snapshots](./archives-and-snapshots.md)
+
 Notes:
 
 - The bootloader system prompt ensures the correct `stan.system.md` is loaded from the archive (see Getting Started).
@@ -44,6 +51,8 @@ Notes:
   - `stan patch -f <file>` (from a file),
   - `stan patch --check` (validate only; writes to sandbox).
 - On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste it back into chat to get a corrected diff.
+
+See: [Patch Workflow & Diagnostics](./patch-workflow.md)
 
 ## 4) Handoff (start a new thread)
 

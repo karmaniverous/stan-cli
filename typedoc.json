@@ -27,11 +27,13 @@
   ],
   "projectDocuments": [
     "./guides/getting-started.md",
+    "./guides/bootloader.md",
     "./guides/the-stan-loop.md",
     "./guides/cli-examples.md",
     "./guides/configuration.md",
     "./guides/patch-workflow.md",
     "./guides/archives-and-snapshots.md",
+    "./guides/stan-assistant-guide.md",
     "./guides/tutorial-quickstart.md",
     "./guides/why-stan-over-alternatives.md",
     "./guides/case-studies/rrstack.md",

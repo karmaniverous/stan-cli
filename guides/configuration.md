@@ -6,6 +6,11 @@ title: Stan Configuration
 
 This guide explains every configuration key, how STAN finds your config, how file selection works (includes/excludes), and how phase‑scoped CLI defaults (cliDefaults) influence the CLI when flags are omitted.
 
+Related guides:
+- [CLI Usage & Examples](./cli-examples.md)
+- [Archives & Snapshots](./archives-and-snapshots.md)
+- [Migration — Namespaced Configuration](./migration.md)
+
 - Formats: YAML (recommended) or JSON.
 - Location: STAN searches upward from the current working directory for the nearest `stan.config.yml|yaml|json`.
 
@@ -282,15 +287,15 @@ stan-cli:
   scripts:
     lint: npm run lint
     test: npm run test
-maxUndos: 10
-patchOpenCommand: 'code -g {file}'
-cliDefaults:
-  run:
-    scripts: true
-    archive: true
-    sequential: false
-  snap:
-    stash: false
+  maxUndos: 10
+  patchOpenCommand: 'code -g {file}'
+  cliDefaults:
+    run:
+      scripts: true
+      archive: true
+      sequential: false
+    snap:
+      stash: false
 ```
 
 - JSON variant (stan.config.json):

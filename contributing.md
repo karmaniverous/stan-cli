@@ -17,7 +17,7 @@ Clone and install:
 
 ```bash
 git clone https://github.com/karmaniverous/stan-cli.git
-cd stan
+cd stan-cli
 npm i
 ```
 

@@ -6,6 +6,11 @@ title: CLI Usage & Examples
 
 This page documents all CLI options and shows practical examples. STAN’s CLI honors phase‑scoped defaults from your configuration (cliDefaults) when flags are omitted; see “Config‑driven defaults” below.
 
+Related guides:
+- [Getting Started](./getting-started.md)
+- [Stan Configuration](./configuration.md)
+- [Archives & Snapshots](./archives-and-snapshots.md)
+
 ## Root (stan) options
 
 - -d, --debug / -D, --no-debug
@@ -32,7 +37,7 @@ If you run `stan` with no subcommand and no config is found, STAN starts interac
 
 ## Run — options and defaults
 
-By default, `stan run`:
+By default (built‑ins), `stan run`:
 
 - runs all configured scripts (concurrent),
 - writes both archive.tar and archive.diff.tar.
@@ -198,8 +203,8 @@ On success:
 
 On failure:
 
-- Writes a compact FEEDBACK envelope to .stan/patch/.debug/feedback.txt and (when possible) copies it to your clipboard; move any new \*.rej files to .stan/patch/rejects/<UTC>/.
-- Paste the FEEDBACK block into chat to receive a corrected diff.
+- Prints a compact diagnostics envelope and (when possible) copies it to your clipboard.
+- Paste the diagnostics block into chat to receive a corrected diff.
 
 Examples:
 

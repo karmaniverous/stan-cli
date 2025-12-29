@@ -6,6 +6,11 @@ title: Tutorial — Quickstart (End‑to‑End)
 
 This guided walkthrough takes you from a fresh repo to a complete STAN loop with a small change set applied via patches.
 
+Related guides:
+- [Getting Started](./getting-started.md)
+- [The STAN Loop](./the-stan-loop.md)
+- [Stan Configuration](./configuration.md)
+
 Prereqs:
 
 - Node ≥ 20

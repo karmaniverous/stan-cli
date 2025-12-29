@@ -2,7 +2,7 @@
 
 # STAN — STAN Tames Autoregressive Nonsense
 
-[![npm version](https://img.shields.io/npm/v/@karmaniverous/stan-cli.svg)](https://www.npmjs.com/package/@karmaniverous/stan-cli) ![Node Current](https://img.shields.io/node/v/@karmaniverous/stan-cli) <!-- TYPEDOC_EXCLUDE --> [![docs](https://img.shields.io/badge/docs-website-blue)](https://docs.karmanivero.us/stan) [![changelog](https://img.shields.io/badge/changelog-latest-blue.svg)](https://github.com/karmaniverous/stan-cli/tree/main/CHANGELOG.md)<!-- /TYPEDOC_EXCLUDE --> [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/karmaniverous/stan-cli/tree/main/LICENSE.md)
+[![npm version](https://img.shields.io/npm/v/@karmaniverous/stan-cli.svg)](https://www.npmjs.com/package/@karmaniverous/stan-cli) ![Node Current](https://img.shields.io/node/v/@karmaniverous/stan-cli) <!-- TYPEDOC_EXCLUDE --> [![docs](https://img.shields.io/badge/docs-website-blue)](https://docs.karmanivero.us/stan) [![changelog](https://img.shields.io/badge/changelog-latest-blue.svg)](https://github.com/karmaniverous/stan-cli/tree/main/CHANGELOG.md)<!-- /TYPEDOC_EXCLUDE --> [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/karmaniverous/stan-cli/tree/main/LICENSE)
 
 ![STAN Loop](https://github.com/karmaniverous/stan-cli/raw/main/assets/stan-loop.png)
 
@@ -145,16 +145,16 @@ See [CLI Usage & Examples](./guides/cli-examples.md) for more!
   - [Stan Configuration](./guides/configuration.md) — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.
   - [Patch Workflow & Diagnostics](./guides/patch-workflow.md) — Unified diff policy, diagnostics envelopes, and assistant expectations.
   - [Archives & Snapshots](./guides/archives-and-snapshots.md) — What goes into `archive.tar`/`archive.diff.tar`, combine mode, and snapshot history. Additional references:
-
+- [Bootloader & Assistant Setup](./guides/bootloader.md) — How the assistant loads `.stan/system/stan.system.md` from attached archives.
 - The following documents are maintained by STAN and live under `<stanPath>/system/` in your repo:
   - `stan.project.md` contains your evolving project requirements.
-  - `stan-todo.md` contains your evolving development plan.
+  - `stan.todo.md` contains your evolving development plan.
 
 - Case studies:
   - [rrstack](./guides/case-studies/rrstack.md) — how STAN enabled rapid development in a couple of days.
 - Comparison: [Why STAN Over Alternatives?](./guides/why-stan-over-alternatives.md)
 - Tutorial: [Quickstart (End‑to‑End)](./guides/tutorial-quickstart.md)
-- FAQ: answers to common questions and pitfalls.
+- [FAQ](./guides/faq.md) — answers to common questions and pitfalls.
 - Contributing: [Dev Quickstart](./contributing.md)
 
 ---
