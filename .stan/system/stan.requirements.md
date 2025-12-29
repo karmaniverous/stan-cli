@@ -123,7 +123,9 @@ Overlay lives entirely in the CLI. Core remains facet‑agnostic and receives on
 
 Archive inclusion (full archives)
 
-- `facet.state.json` is always included in full archives (anchored) whether or not it is gitignored. This guarantees downstream assistants can deterministically read the next‑run facet defaults from attached artifacts.
+- `facet.state.json` is always included in full archives (anchored) whether or not it is gitignored. This allows downstream assistants to deterministically read the next‑run facet defaults from attached artifacts.
+- `facet.state.json` should also appear in the diff archive when it has changed since the current snapshot baseline.
+  - If it was not present in the snapshot baseline, it may appear once as “added” when the user changes the view mid-thread (acceptable).
 - This inclusion does not override reserved denials (e.g., `.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`, and archive outputs under `<stanPath>/output/…`).
 
 - Reserved denials and precedence (engine‑documented behavior, enforced by core):
@@ -133,12 +135,20 @@ Archive inclusion (full archives)
   - Precedence: `excludes` override `includes`; `anchors` override both (subject to reserved denials and binary screening).
 
 - Overlay composition (CLI algorithm):
-  1. Determine effective facet activation from state overridden by flags:
-     - `-f/--facets [names...]`: overlay ON; listed facets active for this run; naked `-f` = all active (no hiding).
-     - `-F/--no-facets [names...]`: overlay ON; listed facets inactive for this run; naked `-F` = overlay OFF.
-     - If a facet is listed in both, activation wins (`-f`).
+  1. Determine effective facet activation for this run:
+     - Overlay enablement (boolean, no-args):
+       - `-f/--facets`: enable the facet overlay for this run.
+       - `-F/--no-facets`: disable the facet overlay for this run.
+     - Per-run overrides (names list; no file edits):
+       - `--facets-on <names...>`: set these facets active for this run.
+       - `--facets-off <names...>`: set these facets inactive for this run.
+     - When overlay is enabled, effective facet state precedence (highest to lowest):
+       - `--facets-on` / `--facets-off` per-run overrides (explicit wins),
+       - `facet.state.json` values,
+       - default for facets missing in state: active.
   2. Ramp‑up safety:
-     - If an inactive facet has no anchor present under any of its excluded subtree roots, auto‑suspend the drop for this run (treat it as active) and report it in the plan/metadata.
+     - Default/state-only safety: if a facet is inactive due to `facet.state.json` (or implicit defaults) and it has no anchor present under any of its excluded subtree roots, the CLI MAY auto‑suspend the drop for this run (treat as active) and report it in the plan/metadata.
+     - Explicit wins (Option Y): if the user explicitly requests `--facets-off <facet>`, the facet MUST remain inactive for that run even if it has no anchors (do not auto‑suspend explicit deactivations).
   3. Compose overlay inputs for core:
      - Start with repo `includes`/`excludes`.
      - Add excludesOverlay (inactive subtree roots only; see tie‑breaker below).
@@ -157,6 +167,10 @@ Archive inclusion (full archives)
   - Plan “Facet view” shows overlay on/off, inactive facets, auto‑suspended facets, and anchor counts.
   - CLI updates `<stanPath>/system/.docs.meta.json.overlay` with:
     - `enabled`, `activated`, `deactivated`, `effective`, `autosuspended`, and `anchorsKept` (counts). Optional `overlapKept` may be recorded for diagnostics.
+
+- Diff archive anchor policy:
+  - The CLI must ensure the diff archive honors the same anchor set as the full archive (subject to reserved denials), so that anchored state (including gitignored state like `facet.state.json`) can appear in diffs when changed.
+  - The diff archive remains “changed since snapshot” (it must not include unchanged files), except that newly introduced anchored files may appear once if they were not present in the snapshot baseline.
 
 ---
 

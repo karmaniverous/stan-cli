@@ -2,7 +2,7 @@
 stan-cli:
   cliDefaults:
     run:
-      facets: true
+      facets: false
       plan: false
       sequential: true
   patchOpenCommand: code -g {file}
@@ -28,9 +28,7 @@ stan-core:
     - package-lock.json
   imports:
     stan-core:
-      - ../stan-core/.stan/system/stan.requirements.md
-      - ../stan-core/.stan/system/stan.todo.md
-      - ../stan-core/dist/types/index.d.ts
       - ../stan-core/.stan/interop/stan-cli/**
+      - ../stan-core/guides/stan-assistant-guide.md
   includes: []
   stanPath: .stan
