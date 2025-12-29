@@ -4,8 +4,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Verify docs-src reflects the breaking facet flag change (`-f/-F` boolean-only; `--facets-on/--facets-off`) and the “diff anchors remain changed-only” policy; if anything is missing, apply doc patches.
-- Consider adding a higher-level integration test that inspects diff archive contents to prove anchored gitignored state (e.g., `facet.state.json`) appears in `archive.diff.tar` when changed.
+- Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
+- (Optional) Expand integration coverage to also assert “new anchored file appears once” behavior when it’s absent from the snapshot baseline.
 
 ## Completed (context essentials only)
 
@@ -18,3 +18,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Update docs to match new facet flags; add regression tests for `-FS` parsing and `--no-facets` behavior.
 - Amendment: fix `facets.flags.parse.test.ts` lint errors and accept the current plan-only message variant so the `-FS` regression test passes.
 - Fix lint/test fallout from facet flag change; silence `tsdoc/syntax` @jsx warning (lint+tests green).
+- Verify docs-src reflects facet flag breaking change and “diff anchors changed-only” policy (no further doc patches needed).
+- Add integration test proving anchored gitignored state appears in diff only when changed vs snapshot.

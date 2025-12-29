@@ -50,5 +50,8 @@
     ]
   },
   "searchInComments": true,
-  "searchInDocuments": true
+  "searchInDocuments": true,
+  "validation": {
+    "notDocumented": true
+  }
 }
