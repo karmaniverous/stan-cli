@@ -15,7 +15,7 @@
 <p>What this does:</p>
 <ul>
 <li>Creates <code>stan.config.yml</code> with sensible defaults.</li>
-<li>Ensures <code>.gitignore</code> entries for <code>.stan/output/</code>, <code>.stan/diff/</code>, <code>.stan/dist/</code>, and <code>.stan/patch/</code>.</li>
+<li>Ensures <code>.gitignore</code> entries for <code>.stan/{output,diff,dist,patch,imports}</code> in .gitignore</li>
 <li>Ensures documentation metadata under <code>.stan/system/</code> and creates required directories. The project prompt (<code>.stan/system/stan.project.md</code>) is created on demand by STAN when repo‑specific requirements emerge (no template is installed).</li>
 <li>Writes an initial diff snapshot to <code>.stan/diff/.archive.snapshot.json</code>.</li>
 </ul>

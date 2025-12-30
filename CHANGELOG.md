@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.1](https://github.com/karmaniverous/stan-cli/compare/0.12.0...0.12.1)
+
+- [6] Auto-include imports; gitignore by default [`#12`](https://github.com/karmaniverous/stan-cli/pull/12)
+- Update src/runner/selection/implicit-imports.ts [`be615fe`](https://github.com/karmaniverous/stan-cli/commit/be615fe825c318703c74b6346f381784033e54c3)
+
 #### [0.12.0](https://github.com/karmaniverous/stan-cli/compare/0.11.7...0.12.0)
+
+> 29 December 2025
 
 - bugfix/10 facets changes enablement are not reflected in archive [`#11`](https://github.com/karmaniverous/stan-cli/pull/11)
 - [10] docs: clarify facets flags and diff anchors [`f19c63c`](https://github.com/karmaniverous/stan-cli/commit/f19c63c8f885b183d9134ef45920011d31a65e57)
+- chore: release v0.12.0 [`9cacb0d`](https://github.com/karmaniverous/stan-cli/commit/9cacb0d78829c9863b85fc6483540a77bc4529c7)
 - [10] fix: facet flags + diff anchors; add regressions [`ccb6bb9`](https://github.com/karmaniverous/stan-cli/commit/ccb6bb94446a61e085392683b08ee2e8df49e4f1)
 - [10] docs: refresh guides and cross-links [`d3e51d3`](https://github.com/karmaniverous/stan-cli/commit/d3e51d38b82ef5f6dac466c85369f2dba8f32679)
 - [10] docs: add stan assistant guide [`bd5ed4e`](https://github.com/karmaniverous/stan-cli/commit/bd5ed4ea78eb460c65938d3eacc004d440e1d266)
