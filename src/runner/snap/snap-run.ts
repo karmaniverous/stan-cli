@@ -9,6 +9,7 @@ import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
 import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import { computeFacetOverlay } from '@/runner/overlay/facets';
+import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { utcStamp } from '@/runner/util/time';
 
 /** Dynamic resolver for './capture'.captureSnapshotAndArchives */
@@ -202,6 +203,7 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         const cfg = loadConfigFn ? await loadConfigFn(cwd) : null;
         includes = Array.isArray(cfg?.includes) ? cfg.includes : [];
         excludes = Array.isArray(cfg?.excludes) ? cfg.excludes : [];
+        includes = withImplicitImportsInclude(stanPath, includes);
         // Decide overlay enablement from run defaults (snap has no facet flags).
         const eff = getRunDefaults(cwd);
         try {

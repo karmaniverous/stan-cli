@@ -33,7 +33,7 @@ stan init
 ```
 
 - Creates stan.config.yml and scaffolds STAN docs under <stanPath> (default .stan).
-- Adds sensible .gitignore entries for <stanPath> subfolders.
+- Adds sensible .gitignore entries for <stanPath> subfolders (including imports/).
 
 ### 3. Run the loop
 

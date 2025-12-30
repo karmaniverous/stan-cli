@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import { writeArchiveSnapshot } from '@karmaniverous/stan-core';
 
+import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
+
 import { resolveIncludesExcludes } from './selection';
 
 export const snapshotPath = (cwd: string, stanPath: string): string =>
@@ -17,10 +19,11 @@ export const writeSnapshot = async (
 ): Promise<void> => {
   const sel = resolveIncludesExcludes(base);
   if (dryRun) return;
+  const includes = withImplicitImportsInclude(stanPath, sel.includes);
   await writeArchiveSnapshot({
     cwd,
     stanPath,
-    includes: sel.includes,
+    includes,
     excludes: sel.excludes,
   });
 };

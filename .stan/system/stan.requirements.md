@@ -238,6 +238,13 @@ The CLI composes these core surfaces (representative, stable):
   - `writeArchiveSnapshot({ cwd, stanPath, includes?, excludes?, anchors? })`
   - `prepareImports({ cwd, stanPath, map })` (stages `.stan/imports/<label>/...`)
 
+- Imports inclusion policy (CLI-owned):
+  - `stan init` gitignores `<stanPath>/imports/` by default.
+  - The CLI implicitly includes `<stanPath>/imports/**` in:
+    - snapshot baselines (`stan init`, `stan snap`), and
+    - archives (`stan run` full + diff),
+    so that changes to staged imports appear in `archive.diff.tar` without requiring users to add includes in config.
+
 - Prompt helpers:
   - `getPackagedSystemPromptPath()`
   - `assembleSystemMonolith(cwd, stanPath)` (dev workflows only; quiet).

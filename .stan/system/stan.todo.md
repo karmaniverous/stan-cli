@@ -22,4 +22,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Add integration test proving anchored gitignored state appears in diff only when changed vs snapshot.
 - Add missing TypeDoc comments for exported config/run types (silence `notDocumented` warnings).
 - Export `ScriptObject` from `src/index.ts` so TypeDoc includes it when documenting `ScriptEntry`.
-- Add `guides/stan-assistant-guide.md` (assistant integration guide).- Documentation pass: align guides with namespaced config, diagnostics, and add cross-links.
+- Add `guides/stan-assistant-guide.md` (assistant integration guide).
+- Documentation pass: align guides with namespaced config, diagnostics, and add cross-links.
+- Gitignore `<stanPath>/imports/` by default and implicitly include `<stanPath>/imports/**` in snapshots/archives so diffs reflect import changes without config includes.
