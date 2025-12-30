@@ -15,13 +15,18 @@
  * - Users can still opt out by explicitly excluding <stanPath>/imports/**.
  */
 
-const posix = (p: string): string =>
-  p.replace(/\\+/g, '/').replace(/^\.\/+/, '');
+const posix = (p: string): string => p.replace(/\\+/g, '/');
 
 const normalizeStanPath = (stanPath: string): string => {
   const raw = typeof stanPath === 'string' ? stanPath.trim() : '';
   const cleaned = posix(raw).replace(/\/+$/, '');
-  return cleaned.length > 0 ? cleaned : '.stan';
+  if (cleaned.length > 0) {
+    return cleaned;
+  }
+  if (raw.startsWith('/')) {
+    return ''; // Handle root path
+  }
+  return '.stan'; // Default for empty/whitespace
 };
 
 export const implicitImportsInclude = (stanPath: string): string => {
