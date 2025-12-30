@@ -7,6 +7,7 @@ title: Getting Started
 This guide walks you through setting up STAN in an existing repository and using it effectively in chat.
 
 Related guides:
+
 - [Stan Configuration](./configuration.md)
 - [CLI Usage & Examples](./cli-examples.md)
 
@@ -33,7 +34,7 @@ stan init
 What this does:
 
 - Creates `stan.config.yml` with sensible defaults.
-- Ensures `.gitignore` entries for `.stan/output/`, `.stan/diff/`, `.stan/dist/`, and `.stan/patch/`.
+- Ensures `.gitignore` entries for `.stan/{output,diff,dist,patch,imports}` in .gitignore
 - Ensures documentation metadata under `.stan/system/` and creates required directories. The project prompt (`.stan/system/stan.project.md`) is created on demand by STAN when repo‑specific requirements emerge (no template is installed).
 - Writes an initial diff snapshot to `.stan/diff/.archive.snapshot.json`.
 
@@ -150,4 +151,4 @@ Other clients
 - Patch failures: Use `--check` to validate; reply in chat with the FEEDBACK packet to receive a corrected diff.
 - Large text files flagged: Consider adding globs to `excludes` to trim runtime noise from archives.
 
-Next: [The STAN Loop](./the-stan-loop.md) and [Archives & Snapshots](./archives-and-snapshots.md).
+Next: [The STAN Loop](./the-stan-loop.md) and [Archives & Snapshots](./archives-and-snapshots.md).

@@ -9,6 +9,7 @@ import {
   cleanupPatchDirAfterArchive,
   stageImports,
 } from '@/runner/run/archive/util';
+import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { alert, ok } from '@/runner/util/color';
 
 type WithAnchors = {
@@ -86,6 +87,10 @@ export const archivePhase = async (
     typeof opts?.shouldContinue === 'function'
       ? opts.shouldContinue
       : undefined;
+  const includes = withImplicitImportsInclude(
+    config.stanPath,
+    config.includes ?? [],
+  );
 
   if (!silent && (which === 'both' || which === 'full')) {
     console.log(`stan: start "${alert('archive')}"`);
@@ -106,7 +111,7 @@ export const archivePhase = async (
       const startedFull = Date.now();
       archivePath = await createArchive(cwd, config.stanPath, {
         includeOutputDir: includeOutputs,
-        includes: config.includes ?? [],
+        includes,
         excludes: config.excludes ?? [],
         anchors: config.anchors ?? [],
       });
@@ -142,7 +147,7 @@ export const archivePhase = async (
         cwd,
         stanPath: config.stanPath,
         baseName: 'archive',
-        includes: config.includes ?? [],
+        includes,
         excludes: config.excludes ?? [],
         anchors: config.anchors ?? [],
         updateSnapshot: 'createIfMissing',

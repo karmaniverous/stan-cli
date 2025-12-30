@@ -110,7 +110,7 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
     const [[call]] = writeSnapshotMock.mock.calls;
 
     // includes from engine config
-    expect(call.includes).toEqual(['**/*.md']);
+    expect(call.includes).toEqual(['**/*.md', 'out/imports/**']);
 
     // excludes = engine excludes ∪ overlay excludes
     const excl = new Set(call.excludes ?? []);

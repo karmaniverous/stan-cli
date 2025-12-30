@@ -53,6 +53,10 @@ includes:
 
 - At the start of `stan run`, the CLI clears `<stanPath>/imports/` and then stages imports for the current configuration. This ensures that removing an import label from `stan.config.*` also removes any previously staged files for that label on the next run.
 - The engine’s `prepareImports` still clears per‑label directories for robustness and for non‑CLI consumers; the CLI’s global clear is an additional safety to remove labels that are no longer configured.
+- By default, `stan init` gitignores `<stanPath>/imports/`.
+- Despite being gitignored, the CLI automatically adds `<stanPath>/imports/**` to both snapshot selection and archive selection so:
+  - staged imports are present in `archive.tar`, and
+  - changes under `<stanPath>/imports/**` appear in `archive.diff.tar` (changed-only vs snapshot baseline), without requiring users to add them to `stan-core.includes`.
 
 ## Combine mode
 

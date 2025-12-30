@@ -49,6 +49,7 @@ Workspace folder for STAN’s operational files.
 - Typical layout under `<stanPath>/`:
   - `system/` — prompts and docs metadata
   - `output/` — script outputs and `archive.tar`/`archive.diff.tar`
+  - `imports/` — staged external context (gitignored; included in archives automatically)
   - `diff/` — snapshot/history (`.archive.snapshot.json`, `.snap.state.json`, prior archives)
   - `patch/` — canonical patch workspace
   - `dist/` — dev build area for internal tasks (not published)
