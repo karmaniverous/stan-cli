@@ -9,7 +9,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Re-scan docs for any lingering mention of anchor-based leaf-glob re-inclusion:
   - Ensure the guides describe leaf-globs as deny-list filters and nested subtrees as carve-outs.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
-- (Optional) Expand integration coverage to also assert “new anchored file appears once” behavior when it’s absent from the snapshot baseline.
 
 ## Completed (context essentials only)
 
@@ -31,3 +30,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Gitignore `<stanPath>/imports/` by default and implicitly include `<stanPath>/imports/**` in snapshots/archives so diffs reflect import changes without config includes.
 - Requirements updated: declare leaf-glob facets (tests) as filters and require nested structural facet carve-outs (no anchor-based leaf-glob re-inclusion).
 - Fix facet overlay semantics: leaf-glob facets are deny-list filters only; nested structural facets use carve-out excludes (no leaf-glob scoped anchors).
+- Add integration test: new anchored file appears once when absent from snapshot baseline.
