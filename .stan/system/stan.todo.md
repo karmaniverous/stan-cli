@@ -4,6 +4,15 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Fix facet overlay semantics to match “tests are a filter”:
+  - Remove/disable any overlay logic that generates scoped anchors intended to re-include leaf-glob patterns (this currently causes tests to appear in otherwise-disabled structural facets).
+  - Ensure leaf-glob patterns from inactive filter facets are applied only as engine excludes (deny-list), and never as anchors.
+- Fix nested structural facet behavior (A contains B):
+  - Replace the current subtree overlap “drop inactive root when overlaps active root” tie-breaker with a carve-out mechanism that can express “B on, rest of A off”.
+  - Implement via on-disk enumeration of immediate children under inactive roots and excluding non-protected children (bounded and stable enough for CLI usage).
+- Add/adjust tests to lock in the four nested-facet scenarios plus filter behavior:
+  - Cover A/B include/exclude combinations and confirm that enabling the tests filter does not surface tests inside structurally-disabled subtrees.
+  - Add a regression test for the specific A/B/T scenario described in this thread.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 - (Optional) Expand integration coverage to also assert “new anchored file appears once” behavior when it’s absent from the snapshot baseline.
 
@@ -25,3 +34,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Add `guides/stan-assistant-guide.md` (assistant integration guide).
 - Documentation pass: align guides with namespaced config, diagnostics, and add cross-links.
 - Gitignore `<stanPath>/imports/` by default and implicitly include `<stanPath>/imports/**` in snapshots/archives so diffs reflect import changes without config includes.
+- Requirements updated: declare leaf-glob facets (tests) as filters and require nested structural facet carve-outs (no anchor-based leaf-glob re-inclusion).

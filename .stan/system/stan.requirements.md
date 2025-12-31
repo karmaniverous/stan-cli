@@ -121,6 +121,17 @@ Overlay lives entirely in the CLI. Core remains facet‑agnostic and receives on
     - include: “anchors” that must always be kept (e.g., READMEs, indices).
   - `facet.state.json` (ephemeral): name → boolean; `true` = active (no drop), `false` = inactive (drop its exclude patterns). Omitted facets default to active.
 
+Facet kinds (semantics)
+
+- Structural facets (subtree scopes)
+  - Defined by subtree patterns like `src/a/**`, `packages/**`, etc.
+  - When inactive (and overlay enabled), they hide the corresponding subtree(s) except for anchor documents.
+  - Nested structural facets must support refinement (e.g., enable a child subtree while keeping the rest of the parent subtree hidden).
+- Filter facets (leaf-glob scopes)
+  - Defined by leaf-glob patterns like `**/*.test.ts`.
+  - They behave as orthogonal filters: when inactive, matching files are hidden even inside active structural facets; when active, they do not force visibility outside active structural facets.
+  - In particular, enabling a filter facet must never cause matching files to appear inside a structural facet subtree that is inactive for the run.
+
 Archive inclusion (full archives)
 
 - `facet.state.json` is always included in full archives (anchored) whether or not it is gitignored. This allows downstream assistants to deterministically read the next‑run facet defaults from attached artifacts.
@@ -151,17 +162,32 @@ Archive inclusion (full archives)
      - Explicit wins (Option Y): if the user explicitly requests `--facets-off <facet>`, the facet MUST remain inactive for that run even if it has no anchors (do not auto‑suspend explicit deactivations).
   3. Compose overlay inputs for core:
      - Start with repo `includes`/`excludes`.
-     - Add excludesOverlay (inactive subtree roots only; see tie‑breaker below).
-     - Compute anchorsOverlay (union of all anchors) and augment for leaf‑globs under active roots (see below).
-  4. Subtree tie‑breaker (enabled facet wins):
+     - Add excludesOverlay for inactive structural facets (subtree scopes). Nested structural facets use the carve‑out rule below.
+     - Compute anchorsOverlay (union of all declared anchors + CLI-owned always-anchors such as facet.state.json), but do not use anchors to simulate filter behavior.
+  4. Nested structural facets (carve‑out, not “drop parent exclude”):
      - Normalize exclude “roots” from `facet.meta.json` (strip `/**`/`/*`, drop trailing `/`).
-     - If an inactive root equals, is an ancestor of, or a descendant of an active root, drop that inactive root from excludesOverlay (do not hide overlapped subtrees).
-  5. Leaf‑glob re‑inclusion (scoped anchors):
-     - Treat leaf‑glob excludes (e.g., `**/*.test.ts`) from inactive facets as re‑included within each active root by adding scoped anchors `<activeRoot>/**/<leafGlobTail>`. This brings back just the matching files inside active areas without exposing them repo‑wide.
+     - Required behavior: nested facets must support these scenarios for any two nested subtree facets:
+       - Include A but cut out B
+       - Include B but not the rest of A
+       - Include all of A (including B)
+       - Include neither
+     - Therefore, if an inactive subtree root contains one or more active descendant subtree roots:
+       - Do not discard the inactive root exclusion.
+       - Instead, compute excludes that remove everything under the inactive root except the active descendant subtree roots.
+       - Practical constraint: because the engine selection uses positive glob/prefix patterns, the CLI may implement this as an on-disk carve-out by enumerating immediate children under the inactive root and excluding each child that is not an ancestor of an active descendant root.
+         - Example: inactive `src/a/**` with active `src/a/b/**` results in excludes for `src/a/*` children other than `b` (and any other protected descendant roots).
+  5. Filter facets (leaf‑globs; tests are a filter):
+     - Leaf‑glob patterns (e.g., `**/*.test.ts`) must be treated as filters, not as re-inclusion mechanisms.
+     - The CLI MUST NOT add anchors such as `<inactiveRoot>/**/<tail>` or `<activeRoot>/**/<tail>` in order to “rescue” or “scope” leaf‑glob behavior.
+       - Rationale: anchors are high-precedence re-includes; using them for filters causes test files to appear inside subtrees that are otherwise disabled, which violates the filter semantics.
+     - Instead:
+       - When a filter facet is inactive (and overlay enabled), add its leaf‑glob patterns to the engine deny-list (`excludes`).
+       - When a filter facet is active, do not add those deny-list patterns.
+     - Filter facets must never override structural facets: enabling a filter facet must not surface any files inside inactive structural facet subtrees.
   6. Pass to core:
      - `includes: repo.includes`
      - `excludes: repo.excludes ∪ excludesOverlay`
-     - `anchors: anchorsOverlay` (base anchors plus scoped anchors from step 5)
+     - `anchors: anchorsOverlay` (anchors are breadcrumbs, not filter machinery)
 
 - Plan and metadata:
   - Plan “Facet view” shows overlay on/off, inactive facets, auto‑suspended facets, and anchor counts.
