@@ -165,6 +165,11 @@
 <li><code>--facets-on &lt;names...&gt;</code> forces named facets active (this run only; does not persist)</li>
 <li><code>--facets-off &lt;names...&gt;</code> forces named facets inactive (this run only; does not persist)</li>
 </ul>
+<p>Notes:</p>
+<ul>
+<li><code>-f, --facets</code> enables the overlay only; it does not implicitly activate all facets. Per-facet activation comes from <code>&lt;stanPath&gt;/system/facet.state.json</code> plus per-run overrides.</li>
+<li>Diff archives remain “changed-only”: anchored files appear in <code>archive.diff.tar</code> only when changed vs the active snapshot baseline. If an anchored file did not exist at baseline time and is introduced afterward, it may appear once as “added” in the next diff (expected).</li>
+</ul>
 <p>Overlay safety:</p>
 <ul>
 <li>When a facet is inactive by default/state and its excluded subtree has no on-disk anchors, the CLI may auto-suspend the drop (treat it active) to avoid accidentally hiding large areas without breadcrumbs.</li>

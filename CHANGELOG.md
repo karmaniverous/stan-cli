@@ -2,9 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.2](https://github.com/karmaniverous/stan-cli/compare/0.12.1...0.12.2)
+
+- Fix overlay filters and nested carve-outs [`27e105f`](https://github.com/karmaniverous/stan-cli/commit/27e105faef28f85537575fd5258bd6ee211f7772)
+- test: cover new anchored file in diff [`f2f3297`](https://github.com/karmaniverous/stan-cli/commit/f2f32973079bd32b299dd169bc8004238fe47e6e)
+- docs: sync facet overlay docs w/ behavior [`06d7f34`](https://github.com/karmaniverous/stan-cli/commit/06d7f3441e214b8fe21109966b08e43a3cc9c9b0)
+- Clarify facet semantics: tests are a filter [`8c3aa17`](https://github.com/karmaniverous/stan-cli/commit/8c3aa1746164f32d4597d7d1d725b86f9978f196)
+- Update dev plan after overlay fixes [`9d3d954`](https://github.com/karmaniverous/stan-cli/commit/9d3d9548df98ff742906cbff67c05d536c02a91e)
+
 #### [0.12.1](https://github.com/karmaniverous/stan-cli/compare/0.12.0...0.12.1)
 
+> 30 December 2025
+
 - [6] Auto-include imports; gitignore by default [`#12`](https://github.com/karmaniverous/stan-cli/pull/12)
+- chore: release v0.12.1 [`404e97b`](https://github.com/karmaniverous/stan-cli/commit/404e97b6e7daa1cd4ee432bcd3dbbd7e9a234784)
 - Update src/runner/selection/implicit-imports.ts [`be615fe`](https://github.com/karmaniverous/stan-cli/commit/be615fe825c318703c74b6346f381784033e54c3)
 
 #### [0.12.0](https://github.com/karmaniverous/stan-cli/compare/0.11.7...0.12.0)

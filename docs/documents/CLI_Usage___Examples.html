@@ -110,6 +110,11 @@
 </ul>
 </li>
 </ul>
+<p>Notes:</p>
+<ul>
+<li><code>-f, --facets</code> enables the overlay only; it does not “activate all facets”. Per-facet activation still comes from <code>&lt;stanPath&gt;/system/facet.state.json</code> plus any <code>--facets-on/--facets-off</code> overrides.</li>
+<li>Leaf-glob facet excludes (e.g., <code>**/*.test.ts</code>) are deny-list filters only; they are not implemented via anchors and must not cause matching files to appear inside structurally inactive subtrees.</li>
+</ul>
 <p>Examples:</p>
 <pre><code><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> -</span><span class="hl-0">f</span><span class="hl-1"> --</span><span class="hl-0">facets</span><span class="hl-1">-</span><span class="hl-0">on</span><span class="hl-1"> </span><span class="hl-0">docs</span><br/><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> -</span><span class="hl-0">f</span><span class="hl-1"> --</span><span class="hl-0">facets</span><span class="hl-1">-</span><span class="hl-0">off</span><span class="hl-1"> </span><span class="hl-0">heavy</span><br/><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> -</span><span class="hl-9">F</span>
 </code><button>Copy</button></pre>
