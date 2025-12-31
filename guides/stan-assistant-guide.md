@@ -219,6 +219,11 @@ Run flags:
 - `--facets-on <names...>` forces named facets active (this run only; does not persist)
 - `--facets-off <names...>` forces named facets inactive (this run only; does not persist)
 
+Notes:
+
+- `-f, --facets` enables the overlay only; it does not implicitly activate all facets. Per-facet activation comes from `<stanPath>/system/facet.state.json` plus per-run overrides.
+- Diff archives remain “changed-only”: anchored files appear in `archive.diff.tar` only when changed vs the active snapshot baseline. If an anchored file did not exist at baseline time and is introduced afterward, it may appear once as “added” in the next diff (expected).
+
 Overlay safety:
 - When a facet is inactive by default/state and its excluded subtree has no on-disk anchors, the CLI may auto-suspend the drop (treat it active) to avoid accidentally hiding large areas without breadcrumbs.
 - Explicit per-run `--facets-off` must remain off (no auto-suspension).

@@ -7,6 +7,7 @@ title: CLI Usage & Examples
 This page documents all CLI options and shows practical examples. STAN’s CLI honors phase‑scoped defaults from your configuration (cliDefaults) when flags are omitted; see “Config‑driven defaults” below.
 
 Related guides:
+
 - [Getting Started](./getting-started.md)
 - [Stan Configuration](./configuration.md)
 - [Archives & Snapshots](./archives-and-snapshots.md)
@@ -74,6 +75,11 @@ Flags (presented in the same order as `stan run --help`):
     - Force named facets inactive for this run (does not persist; explicit off wins).
   - Plan view:
     - The run plan prints a “facet view” section (overlay on/off, inactive facets, auto‑suspended facets, anchors kept count).
+
+Notes:
+
+- `-f, --facets` enables the overlay only; it does not “activate all facets”. Per-facet activation still comes from `<stanPath>/system/facet.state.json` plus any `--facets-on/--facets-off` overrides.
+- Leaf-glob facet excludes (e.g., `**/*.test.ts`) are deny-list filters only; they are not implemented via anchors and must not cause matching files to appear inside structurally inactive subtrees.
 
 Examples:
 

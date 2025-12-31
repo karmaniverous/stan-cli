@@ -157,6 +157,7 @@ Archive inclusion (full archives)
        - `--facets-on` / `--facets-off` per-run overrides (explicit wins),
        - `facet.state.json` values,
        - default for facets missing in state: active.
+     - `-f/--facets` enables the overlay only; it does not implicitly activate all facets. To make everything visible, set all facets to `true` in `facet.state.json` (or avoid marking any facet `false`).
   2. Ramp‑up safety:
      - Default/state-only safety: if a facet is inactive due to `facet.state.json` (or implicit defaults) and it has no anchor present under any of its excluded subtree roots, the CLI MAY auto‑suspend the drop for this run (treat as active) and report it in the plan/metadata.
      - Explicit wins (Option Y): if the user explicitly requests `--facets-off <facet>`, the facet MUST remain inactive for that run even if it has no anchors (do not auto‑suspend explicit deactivations).
@@ -268,8 +269,7 @@ The CLI composes these core surfaces (representative, stable):
   - `stan init` gitignores `<stanPath>/imports/` by default.
   - The CLI implicitly includes `<stanPath>/imports/**` in:
     - snapshot baselines (`stan init`, `stan snap`), and
-    - archives (`stan run` full + diff),
-    so that changes to staged imports appear in `archive.diff.tar` without requiring users to add includes in config.
+    - archives (`stan run` full + diff), so that changes to staged imports appear in `archive.diff.tar` without requiring users to add includes in config.
 
 - Prompt helpers:
   - `getPackagedSystemPromptPath()`

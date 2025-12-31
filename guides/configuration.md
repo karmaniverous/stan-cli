@@ -168,6 +168,9 @@ cliDefaults:
     #   false => none,
     #   ["a","b"] => only these keys
     scripts: true
+    # Note: facets controls whether the overlay is enabled by default.
+    # It does not implicitly activate all facets; per-facet activation still comes
+    # from <stanPath>/system/facet.state.json plus any per-run overrides.
   patch:
     # default patch file when no argument/-f is provided, unless -F/--no-file is used
     file: .stan/patch/last.patch
