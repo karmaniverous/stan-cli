@@ -70,8 +70,7 @@ describe('computeFacetOverlay', () => {
       ].sort(),
     );
     // excludes overlay includes root for b only (inactive with present anchor)
-    // stripGlobTail('docs/**') -> 'docs'
-    expect(out.excludesOverlay).toEqual(['docs']);
+    expect(out.excludesOverlay).toEqual(['docs/**']);
     // autosuspended none (anchors present under excluded root for b; a is active)
     expect(out.autosuspended).toEqual([]);
     // anchors-kept counts reflect on-disk presence
@@ -113,7 +112,7 @@ describe('computeFacetOverlay', () => {
     });
     expect(out.effective.pkg).toBe(false);
     expect(out.autosuspended).toEqual([]);
-    expect(out.excludesOverlay).toEqual(['packages']);
+    expect(out.excludesOverlay).toEqual(['packages/**']);
   });
 
   it('overlay disabled: returns anchors union and counts but no excludes overlay', async () => {
@@ -210,13 +209,20 @@ describe('computeFacetOverlay', () => {
       'utf8',
     );
     await writeFile(path.join(cwd, 'packages', 'KEEP.md'), 'x', 'utf8');
+    // Additional siblings under packages (must be excluded by carve-out)
+    await mkdir(path.join(cwd, 'packages', 'other'), { recursive: true });
+    await writeFile(path.join(cwd, 'packages', 'other', 'X.md'), 'x', 'utf8');
+    await writeFile(path.join(cwd, 'packages', 'ROOT.txt'), 'x', 'utf8');
     const out = await computeFacetOverlay({
       cwd,
       stanPath,
       enabled: true,
     });
-    // Inactive 'packages' root from b is a parent of active 'packages/app' -> dropped
-    expect(out.excludesOverlay).toEqual([]);
+    // Carve-out: exclude non-protected siblings under packages, keep packages/app/**
+    const ex = new Set(out.excludesOverlay);
+    expect(ex.has('packages/KEEP.md')).toBe(true);
+    expect(ex.has('packages/ROOT.txt')).toBe(true);
+    expect(ex.has('packages/other/**')).toBe(true);
     // Anchors union includes both
     expect(out.anchorsOverlay.sort()).toEqual(
       [
@@ -228,8 +234,9 @@ describe('computeFacetOverlay', () => {
     );
   });
 
-  it('leaf-glob re-inclusion: adds scoped anchors under active roots', async () => {
-    // Active facet defines subtree root 'src/**'; inactive facet denies leaf-glob '**/*.test.ts'
+  it('does not use anchors for leaf-glob filters', async () => {
+    // Active facet defines subtree root 'src/**'; inactive facet denies leaf-glob '**/*.test.ts'.
+    // Leaf-glob filters are handled via engine excludes (deny-list) in the CLI layer; never via anchors.
     const meta: FacetMeta = {
       core: { exclude: ['src/**'], include: ['src/README.md'] },
       tests: { exclude: ['**/*.test.ts'], include: ['src/ANCHOR.md'] },
@@ -246,14 +253,13 @@ describe('computeFacetOverlay', () => {
       stanPath,
       enabled: true,
     });
-    // Expect a scoped anchor for '*.test.ts' under active root 'src'
-    const hasScoped = out.anchorsOverlay.some((a) => a === 'src/**/*.test.ts');
-    expect(hasScoped).toBe(true);
-    // Subtree excludes remain empty (no inactive subtree roots)
+    // No scoped anchors are generated for leaf-glob patterns.
+    expect(out.anchorsOverlay).not.toContain('src/**/*.test.ts');
+    // Subtree excludes remain empty (no inactive subtree roots; tests facet is a filter only)
     expect(out.excludesOverlay).toEqual([]);
   });
 
-  it('enabled-wins: active leaf-glob patterns are re-included under inactive subtree roots', async () => {
+  it('filter facets do not override structural facets', async () => {
     const meta: FacetMeta = {
       core: { exclude: ['src/**'], include: ['src/README.md'] },
       tests: { exclude: ['**/*.test.ts'], include: [] },
@@ -274,13 +280,10 @@ describe('computeFacetOverlay', () => {
       stanPath,
       enabled: true,
     });
-    // core remains inactive; its subtree root is kept in excludes
-    // (no active subtree root to drop it)
-    expect(out.excludesOverlay).toEqual(['src']);
-    // Because the tests facet is ACTIVE, protect its leaf-glob tail by adding
-    // an anchor scoped under the inactive root so test files remain included.
-    const expectedScoped = 'src/**/*.test.ts';
-    expect(out.anchorsOverlay).toContain(expectedScoped);
+    // core remains inactive; its structural subtree exclusion applies.
+    expect(out.excludesOverlay).toEqual(['src/**']);
+    // tests facet does not "rescue" files under structurally disabled subtrees via anchors.
+    expect(out.anchorsOverlay).not.toContain('src/**/*.test.ts');
     // Anchors also include facet.state.json to preserve next-run defaults
     expect(out.anchorsOverlay).toContain('stan/system/facet.state.json');
     expect(out.anchorsOverlay).toContain('stan/system/.docs.meta.json');

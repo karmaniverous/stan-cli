@@ -6,12 +6,6 @@ import {
   type FacetOverlayOutput,
 } from '@/runner/overlay/facets';
 
-const hasGlob = (s: string): boolean =>
-  s.includes('*') || s.includes('?') || s.includes('[');
-const ensureSubtreeGlob = (p: string): string => {
-  const s = p.replace(/\/+$/, '');
-  return hasGlob(s) ? s : `${s}/**`;
-};
 const toPosix = (p: string): string => p.replace(/\\+/g, '/');
 
 export const buildOverlayInputs = async (args: {
@@ -52,13 +46,10 @@ export const buildOverlayInputs = async (args: {
 
   const shouldMap = enabled;
 
-  // Map overlay excludes to effective deny-list globs for the engine:
-  // - subtree roots like "docs" -> "docs/**"
-  // - existing glob patterns (contain *, ?, or [) pass through unchanged.
-  const overlayExcludesRaw = shouldMap ? overlay.excludesOverlay : [];
-  const overlayExcludes = overlayExcludesRaw.map(ensureSubtreeGlob);
+  // Overlay structural excludes are already engine-ready patterns (subtree globs and/or exact paths).
+  const overlayExcludes = shouldMap ? overlay.excludesOverlay : [];
 
-  // Also include leaf-glob excludes from inactive facets (e.g., "**/*.test.ts").
+  // Also include leaf‑glob excludes from inactive facets (e.g., "**/*.test.ts").
   // Read facet.meta.json directly and derive leaf-globs for facets that are
   // currently inactive per overlay.effective.
   const leafGlobs: string[] = [];
@@ -87,7 +78,10 @@ export const buildOverlayInputs = async (args: {
     /* best-effort only */
   }
   const engineExcludes = Array.from(
-    new Set<string>([...overlayExcludes, ...leafGlobs]),
+    new Set<string>([
+      ...overlayExcludes.map(toPosix),
+      ...leafGlobs.map(toPosix),
+    ]),
   );
 
   // Facet view lines for plan (same as before; keep compact)

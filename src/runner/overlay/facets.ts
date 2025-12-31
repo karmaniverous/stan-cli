@@ -1,6 +1,6 @@
 // src/runner/overlay/facets.ts
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export type FacetMeta = Record<
@@ -66,12 +66,6 @@ const isSubtreePattern = (s: string): boolean => {
   const p = posix(s.trim());
   return p.endsWith('/**') || p.endsWith('/*');
 };
-/** Extract the "tail" (after last '/') from a glob (e.g., '**\/*.test.ts' -\> '*.test.ts'). */
-const globTail = (s: string): string => {
-  const p = posix(s.trim());
-  const idx = p.lastIndexOf('/');
-  return idx >= 0 ? p.slice(idx + 1) : p;
-};
 /** Normalize subtree roots from a list of exclude patterns. */
 const collectSubtreeRoots = (patterns: string[] | undefined): string[] =>
   (patterns ?? [])
@@ -79,17 +73,22 @@ const collectSubtreeRoots = (patterns: string[] | undefined): string[] =>
     .map(stripGlobTail)
     .filter((r) => r.length > 0);
 
-/** Collect leaf‑glob tails (e.g., '**\/*.test.ts' -\> '*.test.ts') from a list of exclude patterns. */
-const collectLeafGlobTails = (patterns: string[] | undefined): string[] =>
-  (patterns ?? [])
-    .filter((p) => !isSubtreePattern(p))
-    .map(globTail)
-    .filter((t) => t.length > 0);
-
 const isUnder = (childRel: string, root: string): boolean => {
   const c = posix(childRel);
   const r = posix(root);
   return c === r || c.startsWith(r.length ? r + '/' : '');
+};
+
+const toSubtreeGlob = (root: string): string => `${posix(root)}/**`;
+
+const segmentUnderRoot = (root: string, p: string): string | null => {
+  const r = posix(root);
+  const full = posix(p);
+  if (!isUnder(full, r)) return null;
+  const rest = full.slice(r.length).replace(/^\/+/, '');
+  if (!rest.length) return null;
+  const first = rest.split('/')[0];
+  return first && first.length ? first : null;
 };
 
 export const readFacetMeta = async (
@@ -158,14 +157,10 @@ export const computeFacetOverlay = async (
   const anchorsOverlaySet = new Set<string>();
   // Final excludes overlay entries (subtree roots only; leaf-globs are not propagated here).
   const excludesOverlayArr: string[] = [];
-  // Track subtree-root entries for enabled-wins filtering.
-  const excludesOverlayRoots: string[] = [];
   const autosuspended: string[] = [];
   const anchorsKeptCounts: Record<string, number> = {};
   // Track per-facet inactive subtree roots for overlap-kept diagnostics.
   const inactiveEntries: Array<{ facet: string; root: string }> = [];
-  // Collect leaf‑glob tails from active facets (protected patterns).
-  const activeLeafTails = new Set<string>();
 
   // Precompute active subtree roots across all facets (for tie-breakers and scoped anchors).
   const activeRoots = new Set<string>();
@@ -173,15 +168,7 @@ export const computeFacetOverlay = async (
     const isActive = effective[name];
     const exRoots = collectSubtreeRoots(meta[name].exclude);
     if (isActive) for (const r of exRoots) activeRoots.add(posix(r));
-    // Also collect leaf‑glob tails for active facets so they can be protected
-    // under inactive subtree roots (enabled‑wins across leaf‑glob vs subtree).
-    if (isActive) {
-      for (const tail of collectLeafGlobTails(meta[name].exclude))
-        activeLeafTails.add(tail);
-    }
   }
-  // Collect leaf-glob tails from inactive facets (for scoped anchors under active roots).
-  const inactiveLeafTails = new Set<string>();
 
   // Always include all anchors (keep docs breadcrumbs visible even when overlay off)
   for (const name of facetNames) {
@@ -242,7 +229,6 @@ export const computeFacetOverlay = async (
       .filter(isSubtreePattern)
       .map(stripGlobTail)
       .filter(Boolean);
-    const leafGlobs = excludes.filter((p) => !isSubtreePattern(p));
     const inc = Array.isArray(def.include) ? def.include.map(posix) : [];
 
     // Count anchors present on disk (for metadata)
@@ -279,78 +265,90 @@ export const computeFacetOverlay = async (
       const root = posix(rootRaw);
       if (!root) continue;
       inactiveEntries.push({ facet: name, root });
-      excludesOverlayRoots.push(root.endsWith('/') ? root : root);
-    }
-    // Collect leaf-glob tails for scoped re-inclusions under active roots.
-    for (const g of leafGlobs) {
-      const tail = globTail(g);
-      if (tail) inactiveLeafTails.add(tail);
     }
   }
 
-  // Subtree tie-breaker: enabled facet wins (drop inactive roots that equal/overlap with active roots).
+  // Nested structural facets: carve-out inactive roots that contain active descendant roots.
+  // - Keep exact-match "enabled wins" behavior (drop inactive root when the same root is active).
+  // - If an inactive root contains one or more active descendant subtree roots, exclude all
+  //   immediate children under the inactive root that are NOT ancestors of any active root.
+  //   This expresses "B on, rest of A off" without using anchors as filter machinery.
   const overlapKeptCounts: Record<string, number> = {};
-  if (inactiveEntries.length > 0 && activeRoots.size > 0) {
-    const act = Array.from(activeRoots);
-    const keptRoots: string[] = [];
-    const keptEntries: Array<{ facet: string; root: string }> = [];
+  const activeRootsArr = Array.from(activeRoots);
+
+  const carveOutOrExcludeRoot = async (root: string): Promise<string[]> => {
+    const protectedRoots = activeRootsArr.filter(
+      (ar) => ar !== root && isUnder(ar, root),
+    );
+    if (protectedRoots.length === 0) return [toSubtreeGlob(root)];
+
+    // Compute which immediate child entries are "keepers".
+    const keep = new Set<string>();
+    for (const pr of protectedRoots) {
+      const seg = segmentUnderRoot(root, pr);
+      if (seg) keep.add(seg);
+    }
+
+    // Enumerate immediate children under the inactive root and exclude everything
+    // except the keeper segments. Keep deterministic output ordering.
+    const abs = toAbs(cwd, root);
+    let dirents: Array<{ name: string; isDirectory: () => boolean }> | null =
+      null;
+    try {
+      dirents = (await readdir(abs, { withFileTypes: true })) as Array<{
+        name: string;
+        isDirectory: () => boolean;
+      }>;
+    } catch {
+      dirents = null;
+    }
+
+    // If we can't enumerate, fall back to excluding the full root and
+    // anchor-rescuing the protected roots. This preserves correctness without
+    // reintroducing leaf-glob anchor tricks.
+    if (!dirents) {
+      try {
+        for (const pr of protectedRoots)
+          anchorsOverlaySet.add(toSubtreeGlob(pr));
+      } catch {
+        /* best-effort */
+      }
+      return [toSubtreeGlob(root)];
+    }
+
+    const entries = dirents
+      .map((d) => ({ name: d.name, isDir: d.isDirectory() }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const out: string[] = [];
+    for (const e of entries) {
+      if (keep.has(e.name)) continue;
+      const rel = posix(path.join(root, e.name));
+      out.push(e.isDir ? toSubtreeGlob(rel) : rel);
+    }
+    return out;
+  };
+
+  if (inactiveEntries.length > 0) {
+    const patterns = new Set<string>();
     for (const entry of inactiveEntries) {
       const r = entry.root;
-      const drop = act.some(
-        (ar) => ar === r || isUnder(r, ar) || isUnder(ar, r),
-      );
-      if (!drop) {
-        keptRoots.push(r);
-        keptEntries.push(entry);
-      }
+      // Enabled-wins (exact match only): if the same subtree root is active, do not apply the inactive drop.
+      if (activeRoots.has(r)) continue;
+      overlapKeptCounts[entry.facet] =
+        (overlapKeptCounts[entry.facet] ?? 0) + 1;
+      const ps = await carveOutOrExcludeRoot(r);
+      for (const p of ps) patterns.add(posix(p));
     }
-    // Replace with filtered roots only.
     excludesOverlayArr.length = 0;
-    excludesOverlayArr.push(...keptRoots);
-    // Count kept roots per facet
-    for (const { facet } of keptEntries) {
-      overlapKeptCounts[facet] = (overlapKeptCounts[facet] ?? 0) + 1;
-    }
-  } else {
-    // No filtering occurred (no active roots or no excludes); consider all inactive entries as kept.
-    for (const { facet } of inactiveEntries) {
-      overlapKeptCounts[facet] = (overlapKeptCounts[facet] ?? 0) + 1;
-    }
-    // Append the raw subtree roots only.
-    const uniq = Array.from(new Set(excludesOverlayRoots));
-    excludesOverlayArr.length = 0;
-    excludesOverlayArr.push(...uniq);
-  }
-
-  // Enabled‑wins for leaf‑glob patterns: protect ACTIVE facets' leaf‑glob tails
-  // under any remaining inactive subtree roots by adding scoped anchors
-  // "<inactiveRoot>/**/<tail>" so those files remain visible.
-  if (activeLeafTails.size > 0 && excludesOverlayArr.length > 0) {
-    try {
-      for (const root of excludesOverlayArr) {
-        for (const tail of activeLeafTails) {
-          const scoped = posix(`${root}/**/${tail}`);
-          anchorsOverlaySet.add(scoped);
-        }
-      }
-    } catch {
-      /* best-effort */
-    }
-  }
-
-  // Leaf-glob scoped re-inclusion: add anchors "<activeRoot>/**/<tail>" for every collected tail.
-  if (inactiveLeafTails.size > 0 && activeRoots.size > 0) {
-    for (const ar of activeRoots) {
-      for (const tail of inactiveLeafTails) {
-        const scoped = posix(`${ar}/**/${tail}`);
-        anchorsOverlaySet.add(scoped);
-      }
-    }
+    excludesOverlayArr.push(
+      ...Array.from(patterns).sort((a, b) => a.localeCompare(b)),
+    );
   }
 
   // Deduplicate anchors overlay
   const anchorsOverlay = Array.from(anchorsOverlaySet);
-  // Excludes overlay contains subtree roots only (already deduped above).
+  // Excludes overlay contains engine-ready patterns (subtree globs and/or exact paths).
 
   return {
     enabled: true,

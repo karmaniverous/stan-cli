@@ -59,7 +59,7 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
     // Mock overlay: enabled=true; one subtree root + one anchor
     const ov = {
       enabled: true,
-      excludesOverlay: ['docs'],
+      excludesOverlay: ['docs/**'],
       anchorsOverlay: ['docs/README.md'],
       effective: {},
       autosuspended: [],
@@ -115,7 +115,7 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
     // excludes = engine excludes ∪ overlay excludes
     const excl = new Set(call.excludes ?? []);
     expect(excl.has('CHANGELOG.md')).toBe(true);
-    expect(excl.has('docs')).toBe(true);
+    expect(excl.has('docs/**')).toBe(true);
 
     // anchors = overlay anchors
     expect(call.anchors).toEqual(['docs/README.md']);
