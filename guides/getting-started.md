@@ -120,8 +120,8 @@ See: [Bootloader & Assistant Setup](./bootloader.md)
 
 TypingMind one‑click setup (recommended; requires an OpenAI API key with GPT‑5 access):
 
-1. Import the STAN GPT agent (bootloader included) using [this link](https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W)
-2. In TypingMind, start a fresh chat with this agent whenever you attach a new archive set. Use GPT‑5 with “High” reasoning if available (this is built into the agent linked above)
+1. Import the STAN GPT agent (bootloader included) using [this link](https://cloud.typingmind.com/characters/c-01KDYW9NG2KGMFN7FTC4MHRSKB)
+2. In TypingMind, start a fresh chat with this agent whenever you attach a new archive set. Use GPT‑5.2 with “High” reasoning if available (this is built into the agent linked above)
 3. Attach the latest `.stan/output/archive.tar` (and `archive.diff.tar` if present). The bootloader will locate and load `.stan/system/stan.system.md` from the archive automatically.
 4. Begin the discussion (e.g., “Here are my archives; please review the plan in `.stan/system/stan.todo.md` and propose next steps.”).
 

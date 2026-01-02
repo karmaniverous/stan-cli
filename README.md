@@ -138,7 +138,7 @@ See [CLI Usage & Examples](./guides/cli-examples.md) for more!
 
 - [API reference](https://docs.karmanivero.us/stan)
 - Guides:
-  - [Getting Started](./guides/getting-started.md) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5 access) via [this link](https://www.typingmind.com/characters/c-01K5X5RVA4N1DWBQWWJBYDNX2W).
+  - [Getting Started](./guides/getting-started.md) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5.2 access) via [this link](https://cloud.typingmind.com/characters/c-01KDYW9NG2KGMFN7FTC4MHRSKB).
   - [The STAN Loop](./guides/the-stan-loop.md) — How Build & Snapshot → Share & Baseline → Discuss & Patch work together.
   - [CLI Usage & Examples](./guides/cli-examples.md) — Common flags and invocation patterns, including `-p`, `-P`, `-S`, `-A`, and `-c`.
   - [Migration — Namespaced Configuration](./guides/migration.md) — Upgrade legacy configs using `stan init` (backs up `.bak`; supports `--dry-run`).
