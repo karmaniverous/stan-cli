@@ -4,7 +4,7 @@
  * - Clamp incoming indices; do not apply +/-1 adjustments.
  * - Backed by <stanPath>/diff/.snap.state.json (shared constant and shape).
  */
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { copyFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -12,6 +12,8 @@ import {
   findConfigPathSync,
   resolveStanPathSync,
 } from '@karmaniverous/stan-core';
+
+import { parseText } from '@/common/config/parse';
 
 import { readJson, type SnapState, STATE_FILE, writeJson } from './shared';
 
@@ -23,6 +25,46 @@ export const statePath = (cwd: string, stanPath: string): string =>
 
 const snapshotBaselinePath = (diffDirAbs: string): string =>
   path.join(diffDirAbs, '.archive.snapshot.json');
+
+const findConfigPathUpwards = (start: string): string | null => {
+  const names = ['stan.config.yml', 'stan.config.yaml', 'stan.config.json'];
+  let cur = start;
+  for (;;) {
+    for (const n of names) {
+      try {
+        const p = path.join(cur, n);
+        if (existsSync(p)) return p;
+      } catch {
+        /* ignore */
+      }
+    }
+    const parent = path.dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
+  }
+  return null;
+};
+
+const readStanPathFromConfig = (cfgPath: string): string | null => {
+  try {
+    const raw = readFileSync(cfgPath, 'utf8');
+    const rootUnknown: unknown = parseText(cfgPath, raw);
+    if (!rootUnknown || typeof rootUnknown !== 'object') return null;
+    const root = rootUnknown as Record<string, unknown>;
+    const core = root['stan-core'];
+    if (core && typeof core === 'object') {
+      const sp = (core as { stanPath?: unknown }).stanPath;
+      if (typeof sp === 'string' && sp.trim().length > 0) return sp.trim();
+    }
+    // Legacy fallback (ensure tests/older configs still work)
+    const legacy = (root as { stanPath?: unknown }).stanPath;
+    if (typeof legacy === 'string' && legacy.trim().length > 0)
+      return legacy.trim();
+  } catch {
+    /* ignore */
+  }
+  return null;
+};
 
 const readSnapState = async (p: string): Promise<SnapState | null> => {
   return (await readJson<SnapState>(p)) ?? null;
@@ -108,7 +150,10 @@ const resolveRepoRoot = (): string => {
     const cfgPath = findConfigPathSync(cwd);
     return cfgPath ? path.dirname(cfgPath) : cwd;
   } catch {
-    return cwd;
+    // Fallback: core’s finder may stop at a package boundary; tests may not
+    // include package.json. Walk upward for stan.config.* directly.
+    const p = findConfigPathUpwards(cwd);
+    return p ? path.dirname(p) : cwd;
   }
 };
 
@@ -119,7 +164,17 @@ const resolveHistoryPath = (): string => {
   try {
     configured = resolveStanPathSync(repoRoot);
   } catch {
-    /* keep default */
+    // Fallback: derive stanPath by parsing stan.config.* directly when core
+    // resolution cannot locate config from the current working directory.
+    const cfgPath = (() => {
+      try {
+        return findConfigPathSync(repoRoot);
+      } catch {
+        return findConfigPathUpwards(repoRoot);
+      }
+    })();
+    const fromCfg = cfgPath ? readStanPathFromConfig(cfgPath) : null;
+    if (fromCfg) configured = fromCfg;
   }
   // Probe order: configured first (real repos), then common test/legacy names.
   const ordered = [configured, 'out', 'stan', '.stan'] as const;

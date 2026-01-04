@@ -31,4 +31,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Add integration test: new anchored file appears once when absent from snapshot baseline.
 - Documentation pass: reconcile facet overlay docs with current behavior (overlay enablement vs per-facet activation; filter facets are deny-list only; anchored-new-file note in diffs).
 - Fix snap undo/redo/set: restore .archive.snapshot.json baseline and print confirmation.
-- Fix snap history TS/lint; prevent loop prompt hangs in tests.
+- Fix snap history TS/lint; prevent loop prompt hangs in tests.- Fix snap history undo from subdirectories by falling back to an upward stan.config.* search when core config discovery can’t climb (e.g., temp test repos without package.json).
