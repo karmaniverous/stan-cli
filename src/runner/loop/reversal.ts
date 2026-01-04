@@ -11,6 +11,9 @@ import { dim, isBoring, warn } from '@/runner/util/color';
 
 /** Return true to proceed; false to abort. */
 export const confirmLoopReversal = async (): Promise<boolean> => {
+  // Tests must never block on interactive prompts.
+  if (process.env.NODE_ENV === 'test') return true;
+
   // Non-interactive: proceed by default (CI-compatible; matches other prompts).
   const isTTY = Boolean(
     (process.stdout as unknown as { isTTY?: boolean }).isTTY,

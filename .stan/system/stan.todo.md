@@ -28,4 +28,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Gitignore `<stanPath>/imports/` by default and implicitly include `<stanPath>/imports/**` in snapshots/archives so diffs reflect import changes without config includes.
 - Requirements updated: declare leaf-glob facets (tests) as filters and require nested structural facet carve-outs (no anchor-based leaf-glob re-inclusion).
 - Fix facet overlay semantics: leaf-glob facets are deny-list filters only; nested structural facets use carve-out excludes (no leaf-glob scoped anchors).
-- Add integration test: new anchored file appears once when absent from snapshot baseline.- Documentation pass: reconcile facet overlay docs with current behavior (overlay enablement vs per-facet activation; filter facets are deny-list only; anchored-new-file note in diffs).
+- Add integration test: new anchored file appears once when absent from snapshot baseline.
+- Documentation pass: reconcile facet overlay docs with current behavior (overlay enablement vs per-facet activation; filter facets are deny-list only; anchored-new-file note in diffs).
+- Fix snap undo/redo/set: restore .archive.snapshot.json baseline and print confirmation.
+- Fix snap history TS/lint; prevent loop prompt hangs in tests.
