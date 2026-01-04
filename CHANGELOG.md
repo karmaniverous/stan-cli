@@ -2,9 +2,22 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.3](https://github.com/karmaniverous/stan-cli/compare/0.12.2...0.12.3)
+
+- bugfix/3 stan snap undo doesnt appear to roll back snap state [`#14`](https://github.com/karmaniverous/stan-cli/pull/14)
+- [3] Fix snap undo restore + noninteractive tests [`678f89e`](https://github.com/karmaniverous/stan-cli/commit/678f89e783358a8aa69fac1c390410a1c29290bd)
+- updated docs [`5ff9c4f`](https://github.com/karmaniverous/stan-cli/commit/5ff9c4f4aeafdf211117ceca04b1fa783024f6fd)
+- [3] refactor(prompt): use package-directory for pkg roots [`ee2fc72`](https://github.com/karmaniverous/stan-cli/commit/ee2fc72af915497753b488ab9c9b72e40522e43c)
+- [3] fix(snap): undo works from subdirectories [`771a78c`](https://github.com/karmaniverous/stan-cli/commit/771a78c99eaf0ae087588588cb1b81fcb0e65db3)
+- [3] fix(snap): handle null config path from subdirs [`64ba253`](https://github.com/karmaniverous/stan-cli/commit/64ba25356d54535ed08028d2d4f10a701f7fffea)
+- Update .stan/system/stan.todo.md [`4dcb843`](https://github.com/karmaniverous/stan-cli/commit/4dcb8432264f667e9bd125554f3df6208e80d3ca)
+
 #### [0.12.2](https://github.com/karmaniverous/stan-cli/compare/0.12.1...0.12.2)
 
+> 31 December 2025
+
 - Fix overlay filters and nested carve-outs [`27e105f`](https://github.com/karmaniverous/stan-cli/commit/27e105faef28f85537575fd5258bd6ee211f7772)
+- chore: release v0.12.2 [`8b41d39`](https://github.com/karmaniverous/stan-cli/commit/8b41d392ca48dcfa386f2806cac17b07cec3a6f8)
 - test: cover new anchored file in diff [`f2f3297`](https://github.com/karmaniverous/stan-cli/commit/f2f32973079bd32b299dd169bc8004238fe47e6e)
 - docs: sync facet overlay docs w/ behavior [`06d7f34`](https://github.com/karmaniverous/stan-cli/commit/06d7f3441e214b8fe21109966b08e43a3cc9c9b0)
 - Clarify facet semantics: tests are a filter [`8c3aa17`](https://github.com/karmaniverous/stan-cli/commit/8c3aa1746164f32d4597d7d1d725b86f9978f196)
