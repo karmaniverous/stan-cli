@@ -146,15 +146,17 @@ const restoreSnapshotBaseline = async (
  */
 const resolveRepoRoot = (): string => {
   const cwd = process.cwd();
-  try {
-    const cfgPath = findConfigPathSync(cwd);
-    return cfgPath ? path.dirname(cfgPath) : cwd;
-  } catch {
-    // Fallback: core’s finder may stop at a package boundary; tests may not
-    // include package.json. Walk upward for stan.config.* directly.
-    const p = findConfigPathUpwards(cwd);
-    return p ? path.dirname(p) : cwd;
-  }
+  // Prefer core's resolver, but it may return null without throwing.
+  // Fall back to a direct upward scan for repos/tests without package.json.
+  const cfgPath = (() => {
+    try {
+      return findConfigPathSync(cwd);
+    } catch {
+      return null;
+    }
+  })();
+  const chosen = cfgPath ?? findConfigPathUpwards(cwd);
+  return chosen ? path.dirname(chosen) : cwd;
 };
 
 const resolveHistoryPath = (): string => {
@@ -166,13 +168,14 @@ const resolveHistoryPath = (): string => {
   } catch {
     // Fallback: derive stanPath by parsing stan.config.* directly when core
     // resolution cannot locate config from the current working directory.
-    const cfgPath = (() => {
-      try {
-        return findConfigPathSync(repoRoot);
-      } catch {
-        return findConfigPathUpwards(repoRoot);
-      }
-    })();
+    const cfgPath =
+      (() => {
+        try {
+          return findConfigPathSync(repoRoot);
+        } catch {
+          return null;
+        }
+      })() ?? findConfigPathUpwards(repoRoot);
     const fromCfg = cfgPath ? readStanPathFromConfig(cfgPath) : null;
     if (fromCfg) configured = fromCfg;
   }
