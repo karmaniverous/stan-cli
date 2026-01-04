@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { getPackagedSystemPromptPath } from '@karmaniverous/stan-core';
+import { packageDirectorySync } from 'package-directory';
 
 /** Resolve the absolute path to core's packaged stan.system.md, or null if unavailable. */
 export const resolveCorePromptPath = (): string | null => {
@@ -25,21 +26,15 @@ export const resolveCorePromptPath = (): string | null => {
     /* ignore */
   }
 
-  // Fallback A: resolve core's main entry, walk up to the module root "stan-core", then join dist/stan.system.md
+  // Fallback A: resolve core's entry, then use package-directory to locate its package root.
   try {
     const req = createRequire(import.meta.url);
     const mainEntry = req.resolve('@karmaniverous/stan-core');
-    let dir = path.dirname(mainEntry);
-    for (let i = 0; i < 10; i += 1) {
-      const base = path.basename(dir);
-      if (base === 'stan-core') {
-        const candidate = path.join(dir, 'dist', 'stan.system.md');
-        if (existsSync(candidate)) return candidate;
-        break;
-      }
-      const parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
+    const pkgRoot =
+      packageDirectorySync({ cwd: path.dirname(mainEntry) }) ?? null;
+    if (pkgRoot) {
+      const candidate = path.join(pkgRoot, 'dist', 'stan.system.md');
+      if (existsSync(candidate)) return candidate;
     }
   } catch {
     /* ignore */
@@ -66,15 +61,10 @@ export const resolveCorePromptPath = (): string | null => {
 export const getCliPackagedSystemPromptPath = (): string | null => {
   try {
     const here = fileURLToPath(import.meta.url);
-    let dir = path.dirname(here);
-    // Walk upward to find a "dist/stan.system.md" near the package root.
-    for (let i = 0; i < 8; i += 1) {
-      const distDir = path.join(dir, 'dist');
-      const candidate = path.join(distDir, 'stan.system.md');
+    const pkgRoot = packageDirectorySync({ cwd: path.dirname(here) }) ?? null;
+    if (pkgRoot) {
+      const candidate = path.join(pkgRoot, 'dist', 'stan.system.md');
       if (existsSync(candidate)) return candidate;
-      const parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
     }
   } catch {
     /* ignore */
