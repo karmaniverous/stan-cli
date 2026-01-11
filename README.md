@@ -177,6 +177,50 @@ See [CLI Usage & Examples](./guides/cli-examples.md) for more!
 
 ---
 
+## Built With Stan
+
+[aws-api-gateway-tools](https://github.com/karmaniverous/aws-api-gateway-tools) - Tools and get-dotenv plugin for AWS API Gateway (REST APIs, stage cache, API keys).
+
+[aws-secrets-manager-tools](https://github.com/karmaniverous/aws-secrets-manager-tools) - Tools and get-dotenv plugin for AWS Secrets Manager env-map secrets.
+
+[aws-xray-tools](https://github.com/karmaniverous/aws-xray-tools) - Guarded AWS X-Ray capture utilities for AWS SDK v3 clients.
+
+[cached-axios](https://github.com/karmaniverous/cached-axios) - Tag‑aware caching for Axios: stable cache IDs, simple tag invalidation, and a drop‑in Orval mutator on top of axios‑cache‑interceptor.
+
+[electron-react-template](https://github.com/karmaniverous/electron-react-template) - A modern Electron + React starter built on Electron Forge and Vite, with a batteries-included TypeScript/tooling setup for shipping production desktop apps.
+
+[entity-client-dynamodb](https://github.com/karmaniverous/entity-client-dynamodb) - Convenience wrapper for DynamoDB SDK with enhanced batch processing & EntityManager support.
+
+[entity-manager](https://github.com/karmaniverous/entity-manager) Rational indexing & cross-shard querying at scale in your NoSQL database so you can focus on your application logic.
+
+[entity-manager-demo](https://github.com/karmaniverous/entity-manager-demo) - A working demonstration of Entity Manager in action.
+
+[entity-tools](https://github.com/karmaniverous/entity-tools) - Types & low-level functions for entity operations.
+
+[get-dotenv](https://github.com/karmaniverous/get-dotenv) - Manage environment variables from dotenv files across multiple environments. Supports async/CLI operations, dynamic variables, custom CLI creation & more!
+
+[hook-form-semantic](https://github.com/karmaniverous/hook-form-semantic) - React Hook Form components with Semantic UI React integration - date pickers, WYSIWYG editor, phone input, JSON editor, and more.
+
+[identity-engine](https://github.com/karmaniverous/identity-engine) - Deterministic identity-resolution engine in TypeScript: Zod-validated handlers, mocked deps, and a CLI that mirrors the future HTTP API.
+
+[mock-db](https://github.com/karmaniverous/mock-db) - Mock DynamoDB-style query & scan behavior with local JSON data.
+
+[npm-package-template-ts](https://github.com/karmaniverous/npm-package-template-ts) - A feature-rich NPM package template for TypeScript projects.
+
+[react-component-npm-package-template-ts](https://github.com/karmaniverous/react-component-npm-package-template-ts) - A modern, batteries‑included React 18 component library template for TypeScript with ESM‑only bundling, Vite playground, Vitest, ESLint/Prettier, TypeDoc, release‑it, STAN, and optional cloud backup.
+
+[rrstack](https://github.com/karmaniverous/rrstack) - Manage a stack of RRULEs.
+
+[stan-cli](https://github.com/karmaniverous/stan-cli) & [stan-core](https://github.com/karmaniverous/stan-core) - The command-line interface for STAN, a tool for managing snapshots, patches, and archives in software development.
+
+[smoz](https://github.com/karmaniverous/smoz) - SMOZ: a TypeScript toolkit for AWS Lambda combining Serverless, Middy, OpenAPI 3.1 and Zod for schema‑first apps with robust HTTP middleware and typed validation.
+
+[string-utilities](https://github.com/karmaniverous/string-utilities) - Handy tagged template functions & other string utilities.
+
 ## License
 
 BSD‑3‑Clause
+
+---
+
+Built for you with ❤️ on Bali! Find more great tools & templates on [my GitHub Profile](https://github.com/karmaniverous).
