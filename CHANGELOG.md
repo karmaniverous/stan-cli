@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.4](https://github.com/karmaniverous/stan-cli/compare/0.12.3...0.12.4)
+
+- updated dependencies [`7b4ee55`](https://github.com/karmaniverous/stan-cli/commit/7b4ee555bbcd201a7abffe83e23d87d7a0c7d5a0)
+- updated docs [`eba6c9d`](https://github.com/karmaniverous/stan-cli/commit/eba6c9d4a06a81c8d1b7b87878d25c818301513c)
+
 #### [0.12.3](https://github.com/karmaniverous/stan-cli/compare/0.12.2...0.12.3)
+
+> 4 January 2026
 
 - bugfix/3 stan snap undo doesnt appear to roll back snap state [`#14`](https://github.com/karmaniverous/stan-cli/pull/14)
 - [3] Fix snap undo restore + noninteractive tests [`678f89e`](https://github.com/karmaniverous/stan-cli/commit/678f89e783358a8aa69fac1c390410a1c29290bd)
+- chore: release v0.12.3 [`7df576a`](https://github.com/karmaniverous/stan-cli/commit/7df576a3a70f5415d37b23fc8375f3bedd06cac4)
 - updated docs [`5ff9c4f`](https://github.com/karmaniverous/stan-cli/commit/5ff9c4f4aeafdf211117ceca04b1fa783024f6fd)
 - [3] refactor(prompt): use package-directory for pkg roots [`ee2fc72`](https://github.com/karmaniverous/stan-cli/commit/ee2fc72af915497753b488ab9c9b72e40522e43c)
 - [3] fix(snap): undo works from subdirectories [`771a78c`](https://github.com/karmaniverous/stan-cli/commit/771a78c99eaf0ae087588588cb1b81fcb0e65db3)
