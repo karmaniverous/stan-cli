@@ -67,6 +67,19 @@ The engine remains swappable; the CLI must not assume engine location or bundlin
   - Sequential scheduler gate prevents new spawns after cancel.
   - Archives are skipped on a cancelled session; non‑zero exit (best‑effort).
 
+## 3b) Context Mode (New Selection Model)
+
+- Configuration: `cliDefaults.run.context` (boolean).
+- Flags:
+  - `--context`: Enable context mode (mutually exclusive with Facets).
+  - `--no-context`: Disable context mode.
+  - `--meta` (long only): Bootstrap mode.
+    - Requires Context Mode.
+    - Generates an archive containing **ONLY** the System files (Prompts, Plans, Requirements), Staged Imports, and the Dependency Graph.
+    - Ignores source files (treats `context.meta.json` as empty).
+    - Used at the start of a thread to give the AI the "Map" without the "Territory".
+- When Context Mode is active, Facets are disabled.
+
 ---
 
 ## 4) System prompt resolution and materialization
@@ -111,7 +124,9 @@ The engine remains swappable; the CLI must not assume engine location or bundlin
 
 ---
 
-## 7) Facet overlay (view reduction with safe breadcrumbs)
+## 7) Facet overlay (DEPRECATED)
+
+*Note: Facets are deprecated in favor of Context Mode. The logic below applies only when Context Mode is disabled.*
 
 Overlay lives entirely in the CLI. Core remains facet‑agnostic and receives only includes/excludes/anchors.
 
