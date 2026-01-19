@@ -4,6 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- [ ] Verify ESM-only build and exports.
 - Run the remaining CI suite locally before release:
   - build, docs, knip (and any release sanity checks you normally run).
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
@@ -12,6 +13,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 **CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
 
+- Make repo ESM-only: update rollup config (drop CJS) and package.json exports.
 - Implement breaking facet flag redesign: `-f/-F` boolean-only and add `--facets-on/--facets-off` (per-run only).
 - Fix overlay enablement: interpret `--no-facets` as `options.facets=false` with source `facets: cli` and disable overlay correctly.
 - Make DIFF honor anchors by passing `anchors` into the diff config (changed-only semantics via snapshot).

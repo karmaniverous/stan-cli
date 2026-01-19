@@ -101,14 +101,9 @@ const commonInputOptions = (
     Array.from(externalPkgs).some((p) => id === p || id.startsWith(`${p}/`)),
 });
 
-const outCommon = (dest: string): OutputOptions[] => [
-  { dir: `${dest}/mjs`, format: 'esm', sourcemap: false },
-  { dir: `${dest}/cjs`, format: 'cjs', sourcemap: false },
-];
-
 export const buildLibrary = (dest: string): RollupOptions => ({
   input: 'src/index.ts',
-  output: outCommon(dest),
+  output: [{ dir: dest, format: 'esm', sourcemap: false }],
   ...commonInputOptions(
     true,
     // Copy docs once from library config

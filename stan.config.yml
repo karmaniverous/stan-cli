@@ -29,6 +29,9 @@ stan-core:
     - diagrams/**
     - package-lock.json
   imports:
+    stan-context:
+      - ../stan-context/.stan/interop/stan-cli/**
+      - ../stan-context/guides/stan-assistant-guide.md
     stan-core:
       - ../stan-core/.stan/interop/stan-cli/**
       - ../stan-core/guides/stan-assistant-guide.md

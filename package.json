@@ -73,14 +73,8 @@
   },
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/mjs/index.js"
-      },
-      "require": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/cjs/index.js"
-      }
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -107,8 +101,7 @@
     "vitest"
   ],
   "license": "BSD-3-Clause",
-  "main": "dist/cjs/index.js",
-  "module": "dist/mjs/index.js",
+  "main": "dist/index.js",
   "name": "@karmaniverous/stan-cli",
   "publishConfig": {
     "access": "public"

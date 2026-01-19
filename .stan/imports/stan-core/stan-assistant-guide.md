@@ -18,6 +18,7 @@ It is presentation-free: the engine does not own CLI/TTY behavior.
 ## Runtime requirements
 
 - Node: `>= 20`
+- Packaging: ESM-only (no CommonJS `require()` entrypoint)
 - This repo’s default STAN workspace is `stanPath: .stan` (see config below).
 
 ## Configuration (stan.config.\*)
