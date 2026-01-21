@@ -14,64 +14,28 @@ Because a freaking chatbot shouldn’t gaslight your code.
 
 ---
 
-## Quick start
+## Getting Started
 
-### 1. Install
+Please see the [Getting Started](./guides/getting-started.md) guide for setup instructions.
 
-```
-npm i -g @karmaniverous/stan-cli
-# or
-pnpm add -g @karmaniverous/stan-cli
-# or
-yarn global add @karmaniverous/stan-cli
-```
+---
 
-### 2. Initialize in your repo
+## The STAN Loop
 
-```
-stan init
-```
+STAN drives a rigorous, iterative development process:
 
-- Creates stan.config.yml and scaffolds STAN docs under <stanPath> (default .stan).
-- Adds sensible .gitignore entries for <stanPath> subfolders (including imports/).
+1.  **Build & Snapshot** (`stan run`)
+    - Execute tests, lint, and build scripts.
+    - Capture deterministic outputs and snapshot the codebase into a portable archive.
 
-### 3. Run the loop
+2.  **Share & Baseline** (`stan snap`)
+    - Attach the archive to your AI chat context.
+    - The assistant loads your project's system prompt directly from the archive.
 
-- **Build & Snapshot**
-
-  Make any changes you like to your code. Then snapshot your code base and outputs from test, build & diagnostic scripts with:
-
-  ```
-  stan run
-  ```
-
-- **Share & Baseline**
-
-  Commit your changes.
-
-  Attach `.stan/output/archive.tar` and your script outputs to your chat along with your requirements or comments. Or nothing: STAN will just advance your current dev plan. Use the smaller `archive.diff.tar` in subsequent turns to make the most your context window.
-
-  Then baseline your next differential archive with:
-
-  ```
-  stan snap
-  ```
-
-- **Discuss & Patch**
-
-  Iterate in chat until you have a set of patches that advance your dev plan in the direction you want to go. These will include updates to your requirements and your dev plan, as well as a detailed commit message!
-
-  If you exhaust your context window, say `handoff`, copy the resulting document, and paste it into a new chat thread along with your latest artifacts.
-
-  Apply each patch with:
-
-  ```
-  stan patch
-  ```
-
-- **Repeat**
-
-  When all your tests are passing and all your requirements are met, you're done!
+3.  **Discuss & Patch** (`stan patch`)
+    - Iterate on requirements and code in natural language.
+    - Receive plain unified diffs and apply them safely.
+    - If a patch fails, STAN provides actionable diagnostics for the assistant to self-correct.
 
 ---
 
@@ -138,14 +102,14 @@ See [CLI Usage & Examples](./guides/cli-examples.md) for more!
 
 - [API reference](https://docs.karmanivero.us/stan)
 - Guides:
-  - [Getting Started](./guides/getting-started.md) — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5.2 access) via [this link](https://cloud.typingmind.com/characters/c-01KDYW9NG2KGMFN7FTC4MHRSKB).
+  - [Getting Started](./guides/getting-started.md) — Set up your agent and run your first loop.
   - [The STAN Loop](./guides/the-stan-loop.md) — How Build & Snapshot → Share & Baseline → Discuss & Patch work together.
   - [CLI Usage & Examples](./guides/cli-examples.md) — Common flags and invocation patterns, including `-p`, `-P`, `-S`, `-A`, and `-c`.
   - [Migration — Namespaced Configuration](./guides/migration.md) — Upgrade legacy configs using `stan init` (backs up `.bak`; supports `--dry-run`).
   - [Stan Configuration](./guides/configuration.md) — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.
   - [Patch Workflow & Diagnostics](./guides/patch-workflow.md) — Unified diff policy, diagnostics envelopes, and assistant expectations.
   - [Archives & Snapshots](./guides/archives-and-snapshots.md) — What goes into `archive.tar`/`archive.diff.tar`, combine mode, and snapshot history. Additional references:
-- [Bootloader & Assistant Setup](./guides/bootloader.md) — How the assistant loads `.stan/system/stan.system.md` from attached archives.
+- [Reference: The Bootloader](./guides/bootloader.md) — How the assistant loads `.stan/system/stan.system.md` from attached archives.
 - The following documents are maintained by STAN and live under `<stanPath>/system/` in your repo:
   - `stan.project.md` contains your evolving project requirements.
   - `stan.todo.md` contains your evolving development plan.
@@ -153,7 +117,6 @@ See [CLI Usage & Examples](./guides/cli-examples.md) for more!
 - Case studies:
   - [rrstack](./guides/case-studies/rrstack.md) — how STAN enabled rapid development in a couple of days.
 - Comparison: [Why STAN Over Alternatives?](./guides/why-stan-over-alternatives.md)
-- Tutorial: [Quickstart (End‑to‑End)](./guides/tutorial-quickstart.md)
 - [FAQ](./guides/faq.md) — answers to common questions and pitfalls.
 - Contributing: [Dev Quickstart](./contributing.md)
 

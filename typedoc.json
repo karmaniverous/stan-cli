@@ -33,7 +33,6 @@
     "./guides/configuration.md",
     "./guides/patch-workflow.md",
     "./guides/archives-and-snapshots.md",
-    "./guides/tutorial-quickstart.md",
     "./guides/why-stan-over-alternatives.md",
     "./guides/case-studies/rrstack.md",
     "./guides/faq.md",

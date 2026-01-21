@@ -12,3 +12,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Make repo ESM-only: update rollup config (drop CJS) and package.json exports.
 - Verified ESM-only build/exports and full CI suite (build/docs/knip/test/lint/typecheck passed).
+- Refactored documentation to clarify onboarding: rewrote Getting Started with minimal steps, consolidated setup instructions, cleaned up README and Loop guides, and removed redundant tutorial page.

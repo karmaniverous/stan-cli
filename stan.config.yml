@@ -26,7 +26,6 @@ stan-core:
     - assets
     - CHANGELOG.md
     - docs
-    - diagrams/**
     - package-lock.json
   imports:
     stan-context:

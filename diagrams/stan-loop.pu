@@ -2,27 +2,40 @@
 
 skinparam defaultFontName Monospace
 
-state "Build & Snapshot" as Build
-Build: - Edit code
-Build: - Review outputs
-Build: - Run: stan run
+state "**stan run**" as Run
+Run: - review & edit code
+Run: - cmd: **""stan run""**
+Run: - cmd: **""git commit""**
 
-state "Share & Baseline" as Share
-Share: - Attach archives + notes
-Share: - State requirements
-Share: - Run: stan snap
+state "**stan snap**" as Snap
+Snap: - upload outputs
+Snap: - cmd: **""stan snap""**
 
-state "Discuss & Patch" as Discuss
-Discuss: - Iterate to solution
-Discuss: - Get patches + commit
-Discuss: - Run: stan patch
+state "**stan patch**" as Patch
+Patch: - discuss requirements
+Patch: - execute dev plan
+Patch: - copy patches + commit msg
+Patch: - cmd: **""stan patch""**
 
-[*] --> Build
+state "release" as Release
 
-Build --> Share : artifacts ready
-Share --> Discuss : handoff to assistant
-Discuss --> Build : loop until done
+state Done <<choice>>
 
-Discuss --> [*] : done
+[*] -right-> Run: start\nhere
+
+Run -right-> Done: code archived\ntypecheck/lint/test/etc\noutputs packaged
+Done -right-> Release : scripts green\ncode complete
+Release -right-> [*] : done
+Done -down-> Snap : scripts not green\noutstanding questions
+Snap -left-> Patch : diff\nbaselined
+note top on link
+    requirements, 
+    dev plan & history
+    version controlled
+    & patched as code
+end note
+Patch -up-> Run : patches\napplied
+
+
 
 @enduml

@@ -8,10 +8,7 @@ title: The STAN Loop
 
 STAN establishes a simple, reproducible loop for AI‑assisted development.
 
-Related guides:
-- [Getting Started](./getting-started.md)
-- [Archives & Snapshots](./archives-and-snapshots.md)
-- [Patch Workflow & Diagnostics](./patch-workflow.md)
+This cycle ensures that your assistant always works from the ground truth of your code and tool outputs, eliminating hallucinations about project state.
 
 ## 1) Build & Snapshot
 
@@ -30,11 +27,13 @@ Tips:
 
 ## 2) Share & Baseline
 
-- Attach `.stan/output/archive.tar` (and `archive.diff.tar` if present) in your chat.
-- Optionally run `stan snap` to update the diff baseline (and use `undo`/`redo` to navigate history).
-- In chat, STAN reads the system prompt from the archive and verifies integrity before proceeding.
+After committing your local changes:
 
-See: [Archives & Snapshots](./archives-and-snapshots.md)
+- **Share:** Attach `.stan/output/archive.tar` (and `archive.diff.tar` if present) in your chat.
+- **Baseline:** Run `stan snap` to update the diff baseline. This resets the "changed" tracking for the next iteration.
+- **Intake:** In chat, the assistant reads the system prompt directly from the archive and verifies its integrity before proceeding.
+
+*See: [Archives & Snapshots](./archives-and-snapshots.md)*
 
 Notes:
 
@@ -44,22 +43,22 @@ Notes:
 
 ## 3) Discuss & Patch
 
-- Iterate in chat to refine requirements and approach.
-- STAN generates plain unified diffs with adequate context (no base64).
-- Apply patches:
+- **Discuss:** Iterate in chat to refine requirements, debug issues, or plan features. The assistant sees exactly what you see.
+- **Patch:** The assistant generates plain unified diffs with adequate context.
+- **Apply:** Use the CLI to apply these changes safely:
   - `stan patch` (clipboard by default),
   - `stan patch -f <file>` (from a file),
   - `stan patch --check` (validate only; writes to sandbox).
 - On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste it back into chat to get a corrected diff.
 
-See: [Patch Workflow & Diagnostics](./patch-workflow.md)
+*See: [Patch Workflow & Diagnostics](./patch-workflow.md)*
 
 ## 4) Handoff (start a new thread)
 
 Sometimes you need a fresh chat (for example, when the context window is exhausted or you’re switching clients). To preserve continuity without re‑explaining the project:
 
 1. In your current chat, ask STAN for a “handoff” (e.g., “handoff for next thread”).
-2. STAN returns a single self‑identifying code block that contains:
+2. STAN returns a single self‑identifying code block that includes:
    - Project signature (package name, stanPath, node range)
    - Current state from the latest run (Build/Test/Lint/Typecheck/Docs/Knip)
    - Outstanding tasks / near‑term focus
@@ -68,8 +67,6 @@ Sometimes you need a fresh chat (for example, when the context window is exhaust
    - Paste the handoff block as the first message.
    - Attach the latest `.stan/output/archive.tar` (and `archive.diff.tar` if present).
    - STAN will verify the signature, load the prompt from the archive, and execute the startup checklist.
-
-Note: If you paste an existing handoff block into an ongoing chat, STAN treats it as input (it will not generate a new handoff unless you explicitly ask).
 
 ## Rinse and repeat
 
