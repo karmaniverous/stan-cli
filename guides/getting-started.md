@@ -14,16 +14,16 @@ The STAN workflow requires an assistant configured with the "bootloader" prompt,
 
 We recommend **TypingMind** for its superior support of long, stable system prompts and convenient UI features.
 
-1.  **Get TypingMind:** Purchase a license (Extended or Premium recommended) at [typingmind.com](https://www.typingmind.com).
+1.  **Get TypingMind:** Purchase a license (Extended required, Premium recommended) at [typingmind.com](https://www.typingmind.com).
 2.  **Configure API Keys:** Set up your OpenAI or Google Gemini API keys in TypingMind settings.
-3.  **Import a STAN Character:**
-    - **GPT-5.2:** [Import Character](https://www.typingmind.com/characters/c-01KDYW9NG2KGMFN7FTC4MHRSKB)
-    - **Gemini 3 Pro:** [Import Character](https://cloud.typingmind.com/characters/c-01KFDNC35WZA1D54K299RE28T3)
+3.  **Import a STAN Agent:**
+    - **GPT-5.2:** [Import Agent](https://www.typingmind.com/characters/c-01KDYW9NG2KGMFN7FTC4MHRSKB)
+    - **Gemini 3 Pro:** [Import Agent](https://cloud.typingmind.com/characters/c-01KFDNC35WZA1D54K299RE28T3)
 
 ### ChatGPT Users
 
 - **Custom GPT:** Use the [STAN Custom GPT](https://chatgpt.com/g/g-68d2b8b25c248191bf4f2a5c04018527-stan).
-- **Manual Setup:** Alternatively, create a new Project and copy the contents of the [bootloader prompt](https://github.com/karmaniverous/stan-core/blob/main/.stan/system/stan.bootloader.md) into the project instructions.
+- **Manual Setup:** Create a new Project and copy the contents of the [bootloader prompt](https://github.com/karmaniverous/stan-core/blob/main/.stan/system/stan.bootloader.md) into the project instructions.
 
 ### Google Gemini Users
 
@@ -46,7 +46,7 @@ npm i -g @karmaniverous/stan-cli
 
 ### Initialize
 
-In your repository root, initialize STAN. During initialization, you will be prompted to select key scripts (like `test`, `lint`, `typecheck`, `build`) to include in the context.
+In your repository root, initialize STAN. During initialization, you will be prompted to select key scripts (like `test`, `lint`, `typecheck`, `build`) to include in the context. See [Configuration](./configuration.md) for details.
 
 ```bash
 stan init
@@ -57,10 +57,10 @@ stan init
 1.  **Run:** Execute `stan run` to build/test and generate context. Commit your changes (save the state).
 2.  **Snap:** Execute `stan snap` to baseline diffs.
 3.  **Share:** Drop the artifacts into chat:
-    *   New thread: `archive.tar` + outputs.
-    *   Existing thread: `archive.diff.tar` + outputs.
+    - New thread: `archive.tar` + outputs.
+    - Existing thread: `archive.diff.tar` + outputs.
 4.  **Patch:** Discuss with the agent. It will generate patches. Apply them with `stan patch`.
 
-*Return to **Run** to verify.*
+_Return to **Run** to verify._
 
 See [The STAN Loop](./the-stan-loop.md) for details on the development cycle.
