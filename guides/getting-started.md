@@ -54,12 +54,13 @@ stan init
 
 ### Run the loop
 
-1.  **Build & Snapshot:** Run `stan run` to generate the repository context.
-2.  **Share:** Copy the files from `.stan/output/` (specifically `archive.tar` and any `*.txt` outputs) and drop them into your agent chat.
-    - _Tip:_ On subsequent turns, you only need to attach `archive.diff.tar` if you haven't started a new thread.
-3.  **Discuss:** Ask the agent to:
-    - Evaluate your code base.
-    - Extract requirements and discuss improvements.
-    - Evolve & execute a development plan.
+1.  **Run:** Execute `stan run` to build/test and generate context. Commit your changes (save the state).
+2.  **Snap:** Execute `stan snap` to baseline diffs.
+3.  **Share:** Drop the artifacts into chat:
+    *   New thread: `archive.tar` + outputs.
+    *   Existing thread: `archive.diff.tar` + outputs.
+4.  **Patch:** Discuss with the agent. It will generate patches. Apply them with `stan patch`.
+
+*Return to **Run** to verify.*
 
 See [The STAN Loop](./the-stan-loop.md) for details on the development cycle.

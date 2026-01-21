@@ -8,6 +8,8 @@ Related guides:
 - [CLI Usage & Examples](./cli-examples.md)
 - [The STAN Loop](./the-stan-loop.md)
 
+**Patch** is the center of gravity for the AI loop. This is where requirements are refined, code is generated, and the commit message is drafted.
+
 ## Accepted patch kinds
 
 STAN supports two patch payload kinds:

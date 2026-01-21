@@ -24,18 +24,18 @@ Please see the [Getting Started](./guides/getting-started.md) guide for setup in
 
 STAN drives a rigorous, iterative development process:
 
-1.  **Build & Snapshot** (`stan run`)
-    - Execute tests, lint, and build scripts.
-    - Capture deterministic outputs and snapshot the codebase into a portable archive.
+1.  **Run (Validate & Commit)**
+    - Run `stan run` to execute all scripts (test, lint, build, etc.) and generate the "Ground Truth" outputs.
+    - Run `git commit` to save the state (green or red).
 
-2.  **Share & Baseline** (`stan snap`)
-    - Attach the archive to your AI chat context.
-    - The assistant loads your project's system prompt directly from the archive.
+2.  **Snap (Sync)**
+    - Run `stan snap` to baseline the diff.
+    - Upload artifacts (`archive.tar`/`diff.tar` + outputs) to the chat.
 
-3.  **Discuss & Patch** (`stan patch`)
-    - Iterate on requirements and code in natural language.
-    - Receive plain unified diffs and apply them safely.
-    - If a patch fails, STAN provides actionable diagnostics for the assistant to self-correct.
+3.  **Patch (The Intelligence)**
+    - Discuss requirements and plan.
+    - The assistant implements changes and drafts a commit message.
+    - Run `stan patch` to apply changes, then return to **Run**.
 
 ---
 

@@ -16,9 +16,9 @@ Related guides:
 
 `@karmaniverous/stan-cli` is the **CLI adapter layer** for STAN. It orchestrates a repeatable loop:
 
-- **run**: execute scripts → capture deterministic text outputs → (optionally) archive the repo context (full + diff)
-- **snap**: refresh the diff snapshot baseline and maintain a bounded snapshot history
-- **patch**: apply (or validate) a unified diff (and optional File Ops), with diagnostics on failure
+- **run**: Validate & Commit. Execute scripts → capture outputs → save state.
+- **snap**: Sync. Refresh the diff baseline to prepare context for the AI.
+- **patch**: Intelligence. The AI defines requirements, implements code, and drafts the commit message.
 
 This package delegates “engine” responsibilities (file selection, archiving, diffing, patch pipeline internals) to `@karmaniverous/stan-core`.
 

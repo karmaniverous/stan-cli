@@ -176,6 +176,40 @@ stan run -k
 stan run -f -p               # plan shows “facet view” section
 ```
 
+---
+
+## Snap — options and subcommands
+
+Snapshots help STAN compute diffs over time and maintain a bounded undo/redo history.
+
+Main command:
+
+- `stan snap`
+  - Writes/updates .stan/diff/.archive.snapshot.json and captures current archives into history when present.
+
+Flags:
+
+- -s, --stash / -S, --no-stash
+  - Stash changes (git stash -u) before snapshot and pop after; built‑in default: no-stash (config‑driven default supported).
+  - If the stash attempt fails, STAN aborts without writing a snapshot.
+
+Subcommands:
+
+- `stan snap info` — print the snapshot stack (newest → oldest) with the current index.
+- `stan snap undo` — revert to the previous snapshot in history.
+- `stan snap redo` — advance to the next snapshot in history.
+- `stan snap set <index>` — jump to a specific snapshot index and restore it.
+
+History:
+
+- Lives under .stan/diff/:
+  - .snap.state.json (stack and pointer),
+  - snapshots/snap-<UTC>.json (previous snapshot contents),
+  - archives/ (optional captured archives).
+- Retention is bounded by maxUndos (default 10; configurable).
+
+---
+
 ## Patch — options and workflow
 
 Patches must be plain unified diffs (git‑style headers) with LF line endings. STAN cleans and saves the diff to .stan/patch/.patch, then applies it safely (or validates with --check). On failure, it writes diagnostics and a FEEDBACK packet and (when possible) copies it to your clipboard.
@@ -227,38 +261,6 @@ stan patch -f changes.patch
 
 ---
 
-## Snap — options and subcommands
-
-Snapshots help STAN compute diffs over time and maintain a bounded undo/redo history.
-
-Main command:
-
-- `stan snap`
-  - Writes/updates .stan/diff/.archive.snapshot.json and captures current archives into history when present.
-
-Flags:
-
-- -s, --stash / -S, --no-stash
-  - Stash changes (git stash -u) before snapshot and pop after; built‑in default: no-stash (config‑driven default supported).
-  - If the stash attempt fails, STAN aborts without writing a snapshot.
-
-Subcommands:
-
-- `stan snap info` — print the snapshot stack (newest → oldest) with the current index.
-- `stan snap undo` — revert to the previous snapshot in history.
-- `stan snap redo` — advance to the next snapshot in history.
-- `stan snap set <index>` — jump to a specific snapshot index and restore it.
-
-History:
-
-- Lives under .stan/diff/:
-  - .snap.state.json (stack and pointer),
-  - snapshots/snap-<UTC>.json (previous snapshot contents),
-  - archives/ (optional captured archives).
-- Retention is bounded by maxUndos (default 10; configurable).
-
----
-
 ## Init — options
 
 `stan init` scans your package.json, lets you pick scripts, writes stan.config.yml, ensures workspace folders and .gitignore entries, and writes docs metadata under .stan/system/.
@@ -288,24 +290,59 @@ stan-cli:
 
     # Run defaults
     run:
-      archive: true # -a / -A
+      archive: true # -a / -A; combine implies archive=true
       combine: false # -c / -C
       keep: false # -k / -K
       sequential: false # -q / -Q
-      # scripts default when -s is omitted:
-      #   true => all, false => none, ["lint","test"] => only these keys
+      plan: true # print the run plan header before execution when -p/-P not specified
+      live: true # -l / -L
+      hangWarn: 120
+      hangKill: 300
+      hangKillGrace: 10
+      # default script selection when neither -s nor -S is provided:
+      #   true  => all scripts,
+      #   false => none,
+      #   ["a","b"] => only these keys
       scripts: true
-
-    # Patch defaults
+      # Note: facets controls whether the overlay is enabled by default.
+      # It does not implicitly activate all facets; per-facet activation still comes
+      # from <stanPath>/system/facet.state.json plus any per-run overrides.
+      facets: false
     patch:
+      # default patch file when no argument/-f is provided, unless -F/--no-file is used
       file: .stan/patch/last.patch
-
-    # Snap defaults
     snap:
-      stash: false
+      stash: false # -s / -S
 ```
 
----
+Examples:
+
+- Default to all scripts, but disable archives unless requested:
+
+```yaml
+cliDefaults:
+  run:
+    scripts: true
+    archive: false
+```
+
+- Prefer sequential runs and capture a default patch file:
+
+```yaml
+cliDefaults:
+  run:
+    sequential: true
+  patch:
+    file: .stan/patch/pending.patch
+```
+
+- Prefer stashing before snapshot:
+
+```yaml
+cliDefaults:
+  snap:
+    stash: true
+```
 
 ## Negative short flags (quick reference)
 
