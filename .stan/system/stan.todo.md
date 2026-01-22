@@ -12,4 +12,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Make repo ESM-only: update rollup config (drop CJS) and package.json exports.
 - Verified ESM-only build/exports and full CI suite (build/docs/knip/test/lint/typecheck passed).
-- Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.- Implemented `-w/--workspace` support (fast-glob dependency, root option registration, and pre-action context switching).
+- Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.
+- Implemented `-w/--workspace` support (fast-glob dependency, root option registration, and pre-action context switching).
+- Updated documentation (cli-examples, configuration, assistant-guide) to cover `-w/--workspace`.

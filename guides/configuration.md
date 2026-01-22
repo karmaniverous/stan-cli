@@ -34,6 +34,7 @@ stan-cli:
 - STAN starts at the working directory and looks for the nearest `stan.config.yml`, `stan.config.yaml`, or `stan.config.json`.
 - The directory containing that file becomes the “repo root” for the current STAN run.
 - If no config is found, STAN falls back to defaults where applicable (for example, default `stanPath` is `.stan`) but many operations require an explicit config.
+- **Workspace context**: You can change the effective working directory using the `-w/--workspace <query>` global flag. This runs STAN in the context of a sub-package without needing to `cd` manually.
 
 ## Top‑level keys
 

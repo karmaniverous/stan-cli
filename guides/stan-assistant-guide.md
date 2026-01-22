@@ -88,6 +88,10 @@ stan init
 
 ## CLI contracts (what each command guarantees)
 
+### Root flags (Global)
+
+- `-w, --workspace <query>`: Switches `process.chdir()` to the target directory (resolved via path or package name) *before* loading config or executing subcommands.
+
 ### `stan init`
 
 - Creates or migrates `stan.config.*` to the namespaced layout.

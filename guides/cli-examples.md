@@ -1,6 +1,8 @@
+### Full Listing: guides/cli-examples.md
+
 ---
-title: CLI Usage & Examples
----
+
+## title: CLI Usage & Examples
 
 # CLI usage & examples
 
@@ -25,11 +27,19 @@ Related guides:
     - STAN version, Node version, repo root, stanPath,
     - whether your local system prompt matches the packaged baseline,
     - docs baseline version last installed.
+- -w, --workspace <query>
+  - Switch the working directory to a specific workspace package or directory before running the command.
+  - Resolution:
+    1. Directory: if `<query>` is a valid relative path, switch to it.
+    2. Package name: matches `name` in `package.json` found via `pnpm-workspace.yaml` or `package.json` workspaces (exact match).
+  - Feedback: Logs `stan: switched context to <path>`.
 
 Example:
 
 ```
 stan -v
+stan -w packages/core run
+stan -w @my-org/lib snap
 ```
 
 If you run `stan` with no subcommand and no config is found, STAN starts interactive init. Otherwise it prints the help (with a footer listing available run scripts).
