@@ -15,6 +15,7 @@ import { registerPatch } from './patch';
 import { readRootDefaultsFromConfig } from './root/defaults';
 import { installRootEnvPreAction } from './root/env';
 import { attachSubcommands } from './root/subcommands';
+import { switchToWorkspace } from './root/workspace';
 import { registerRun } from './runner';
 import { registerSnap } from './snap';
 
@@ -65,6 +66,18 @@ export const makeCli = (): Command => {
   );
   tagDefault(boringDefault ? optBoring : optNoBoring, true);
   cli.addOption(optBoring).addOption(optNoBoring);
+
+  const optWorkspace = new Option(
+    '-w, --workspace <query>',
+    'switch to a workspace package or directory context',
+  );
+  cli.addOption(optWorkspace);
+  cli.hook('preAction', async (thisCommand) => {
+    const opts = thisCommand.opts<{ workspace?: string }>();
+    if (opts.workspace) {
+      await switchToWorkspace(process.cwd(), opts.workspace);
+    }
+  });
 
   cli.option('-v, --version', 'print version and baseline-docs status');
 

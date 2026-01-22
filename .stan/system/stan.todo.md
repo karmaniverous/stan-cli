@@ -4,10 +4,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Implement `-w/--workspace` support:
-  - Add `fast-glob` to dependencies.
-  - Create `src/cli/root/workspace.ts` (resolution logic for pnpm/npm workspaces).
-  - Update `src/cli/index.ts` to register the global option and pre-hook.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)
@@ -16,4 +12,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 - Make repo ESM-only: update rollup config (drop CJS) and package.json exports.
 - Verified ESM-only build/exports and full CI suite (build/docs/knip/test/lint/typecheck passed).
-- Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.
+- Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.- Implemented `-w/--workspace` support (fast-glob dependency, root option registration, and pre-action context switching).
