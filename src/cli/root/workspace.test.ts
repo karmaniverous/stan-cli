@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { asEsmModule } from '@/test/mock-esm';
 
 // Mock fast-glob
-const fgMock = vi.fn();
+const { fgMock } = vi.hoisted(() => ({ fgMock: vi.fn() }));
 vi.mock('fast-glob', () =>
   asEsmModule({
     default: fgMock,

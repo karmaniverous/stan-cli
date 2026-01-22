@@ -14,10 +14,24 @@ const isDir = (p: string): boolean => {
   }
 };
 
-const readYaml = async (p: string): Promise<any> =>
-  YAML.parse(await readFile(p, 'utf8'));
-const readJson = async (p: string): Promise<any> =>
-  JSON.parse(await readFile(p, 'utf8'));
+type PnpmWorkspace = { packages?: unknown };
+type PackageJson = {
+  workspaces?: unknown;
+  name?: unknown;
+};
+
+const readYaml = async (p: string): Promise<PnpmWorkspace | null> => {
+  const v: unknown = YAML.parse(await readFile(p, 'utf8'));
+  return v && typeof v === 'object' ? (v as PnpmWorkspace) : null;
+};
+
+const readJson = async (p: string): Promise<PackageJson | null> => {
+  const v: unknown = JSON.parse(await readFile(p, 'utf8'));
+  return v && typeof v === 'object' ? (v as PackageJson) : null;
+};
+
+const toStringArray = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
 
 export const resolveWorkspace = async (
   cwd: string,
@@ -32,14 +46,19 @@ export const resolveWorkspace = async (
   const pnpmPath = path.join(cwd, 'pnpm-workspace.yaml');
   if (existsSync(pnpmPath)) {
     const y = await readYaml(pnpmPath);
-    if (y && Array.isArray(y.packages)) patterns = y.packages;
+    if (y) patterns = toStringArray(y.packages);
   } else {
     const pkgPath = path.join(cwd, 'package.json');
     if (existsSync(pkgPath)) {
       const p = await readJson(pkgPath);
-      if (Array.isArray(p.workspaces)) patterns = p.workspaces;
-      else if (p.workspaces && Array.isArray(p.workspaces.packages))
-        patterns = p.workspaces.packages;
+      if (p) {
+        if (Array.isArray(p.workspaces)) patterns = toStringArray(p.workspaces);
+        else if (p.workspaces && typeof p.workspaces === 'object') {
+          patterns = toStringArray(
+            (p.workspaces as { packages?: unknown }).packages,
+          );
+        }
+      }
     }
   }
 
@@ -58,7 +77,7 @@ export const resolveWorkspace = async (
   for (const ent of entries) {
     try {
       const pkg = await readJson(ent);
-      if (pkg.name === query) {
+      if (pkg && typeof pkg.name === 'string' && pkg.name === query) {
         return path.dirname(ent);
       }
     } catch {
