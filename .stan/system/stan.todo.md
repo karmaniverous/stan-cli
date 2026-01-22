@@ -4,6 +4,10 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Implement `-w/--workspace` support:
+  - Add `fast-glob` to dependencies.
+  - Create `src/cli/root/workspace.ts` (resolution logic for pnpm/npm workspaces).
+  - Update `src/cli/index.ts` to register the global option and pre-hook.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)

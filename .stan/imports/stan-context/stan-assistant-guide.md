@@ -19,6 +19,7 @@ This package does **not**:
 ## Runtime requirements
 
 - Node: `>= 20`
+- Packaging: ESM-only
 - TypeScript: optional **peer dependency** (`>= 5`)
   - If TypeScript is not installed, stan-context returns a nodes-only graph and includes a warning in `errors`.
 
@@ -86,6 +87,56 @@ Runtime options:
   - Caps the number of returned `errors` entries to avoid runaway output.
   - When truncation occurs, the final entry is a deterministic sentinel string.
   - Set to `0` to omit errors entirely.
+
+## Graph schema (practical contract)
+
+The returned `graph` is deterministic and JSON-serializable:
+
+- `graph.nodes` keys are sorted.
+- `graph.edges` is a complete map: it contains a key for every node ID (empty array means “no outgoing edges”).
+- Each `graph.edges[source]` list is de-duplicated and sorted deterministically.
+
+Nodes are module-level (file-level) only:
+
+- Node IDs (`NodeId`) are stable strings:
+  - repo-relative POSIX paths for in-repo files (e.g., `src/index.ts`)
+  - POSIX-normalized absolute paths when outside the repo root (e.g., `C:/x/y.d.ts`)
+  - builtins: `node:fs`
+  - missing/unresolved: the original specifier (e.g., `./nope`)
+
+Node kinds:
+
+- `source`: a file discovered by the Universe scan (includes non-code files)
+- `external`: a resolved dependency file (commonly under `node_modules`, but may be outside-root absolute)
+- `builtin`: a Node.js builtin module (`node:<name>`)
+- `missing`: an unresolved module specifier (no file on disk)
+
+Node metadata (important for consumers):
+
+- `graph.nodes[id].metadata.size` is the file size in bytes (when applicable).
+- `graph.nodes[id].metadata.hash` is a SHA-256 content hash (when applicable).
+- For `source` and `external` nodes, `size` and `hash` are expected to be present.
+- For `builtin` and `missing` nodes, `metadata` is omitted.
+
+Edges:
+
+- Only outgoing adjacency lists are stored (`edges[sourceId] -> GraphEdge[]`).
+- `GraphEdge.kind`:
+  - `runtime`: static imports/exports and top-level `require()`
+  - `type`: `import type` / `export type` and best-effort type-only detection
+  - `dynamic`: `import()` and some `require()` calls in function scope
+- `GraphEdge.resolution`:
+  - `explicit`: directly imported module/file
+  - `implicit`: barrel-tunneled dependency to the defining module (or module-level target for namespace forwarding)
+
+## Token budgeting and caching (consumer guidance)
+
+`metadata.size` (bytes) is a useful heuristic, but it is not a reliable token-count proxy.
+
+For accurate prompt budgeting:
+
+- Compute token counts in the consumer (stan-core selection layer) using the tokenizer/model you will call.
+- Cache computed token counts keyed by `metadata.hash` (sha256) so you only re-tokenize when file content changes.
 
 ## Authoring practices for STAN-enabled repos (recommended)
 
@@ -207,6 +258,35 @@ For external entrypoints, tunneling is bounded:
 - Follow re-exports only within the nearest `package.json` boundary of the external package.
 - Do not tunnel across package boundaries (prevents pulling in unrelated transitive dependency packages).
 
+## Integration patterns (stan-core and stan-cli)
+
+This section describes how to integrate stan-context without relying on any stan-context internal modules.
+
+### Integrating in stan-core (engine)
+
+Recommended responsibilities for the engine layer:
+
+- Call `generateDependencyGraph({ cwd, config, previousGraph, ... })` during an archive/snapshot workflow.
+  - Use the same `cwd` and selection config (`includes`/`excludes`/`anchors`) that you use for archiving so the graph aligns with the archived Universe.
+- Persist `previousGraph` in engine-owned state to enable incremental rebuilds.
+  - Use `graph.nodes[id].metadata.hash` (sha256) to cache any derived metadata (especially token counts).
+- Store/embed the graph JSON in the archived context so the assistant can select files using the map.
+  - A common pattern is writing a deterministic JSON file under the STAN workspace (for example under `<stanPath>/system/`), but the exact path is consumer-defined.
+- Treat `errors` as user-facing warnings (especially the “TypeScript missing” case).
+  - `maxErrors` exists to prevent runaway output volume on pathological repos.
+
+### Integrating in stan-cli (CLI adapter)
+
+Recommended responsibilities for the CLI layer:
+
+- Orchestrate the run loop (scripts -> outputs -> archives) by calling into stan-core.
+- Do not call stan-context directly from the CLI unless there is a compelling reason.
+  - Preferred: stan-core owns the optional dependency and exposes a clean “graph generation” seam to the CLI.
+- Surface graph-generation issues as non-fatal warnings when possible:
+  - If TypeScript peer dependency is missing, stan-context returns a nodes-only graph and a warning in `errors`.
+- Keep configuration single-source-of-truth:
+  - pass selection config (`includes`/`excludes`/`anchors`) through to the engine, and let the engine pass it to stan-context.
+
 ## ESLint plugin (optional)
 
 stan-context publishes an ESLint plugin subpath export:
@@ -234,3 +314,4 @@ The rule shares the same “usable prose” semantics as `GraphNode.description`
 - If you rely on TS analysis, ensure `typescript` is installed in the consuming environment (peer dependency).
 - Do not assume `node_modules/**` is in the Universe; it is implicitly excluded unless explicitly included (analysis may still discover external nodes via resolution).
 - If you want precise tunneling through barrels, avoid patterns that obscure the symbol-level dependency (especially namespace imports/exports). Prefer direct named re-exports and named imports to help stan-context produce the most actionable graph.
+- Do not treat `metadata.size` as token count; compute tokens in the consumer and cache by `metadata.hash`.

@@ -25,6 +25,17 @@ Out of scope for the CLI:
 
 ---
 
+## 2b) Workspace context (-w)
+
+- Global option: `-w, --workspace <query>` (root command).
+- Behavior: changes `process.chdir()` to the target directory *before* loading config or executing subcommands.
+- Resolution:
+  1. Directory: if `<query>` is a valid relative path, switch to it.
+  2. Package name: parse `pnpm-workspace.yaml` (or `package.json` workspaces), find exact package name match, switch to its root.
+- Feedback: log the context switch to console ("stan: switched context to ...").
+
+---
+
 ## 2) Architecture and boundaries (CLI ↔ Core)
 
 - CLI (adapters/presentation)
