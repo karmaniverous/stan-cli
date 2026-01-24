@@ -129,6 +129,7 @@ export const registerRunAction = (
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
       dependency = {
         meta: built.meta,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sources: built.sources as any,
         state: undefined,
         clean: false,

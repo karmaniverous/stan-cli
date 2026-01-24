@@ -176,6 +176,7 @@ export const runDefaults = (
   hangKillGrace: number;
   prompt: string;
   facets: boolean;
+  context: boolean;
 } => {
   let runIn: {
     archive?: boolean;
@@ -189,6 +190,7 @@ export const runDefaults = (
     hangKillGrace?: number;
     prompt?: string;
     facets?: boolean;
+    context?: boolean;
   } = {};
   try {
     // Transitional: always accept legacy cliDefaults when present by
@@ -208,7 +210,13 @@ export const runDefaults = (
   } catch {
     // keep empty; use baselines
   }
-  type BoolKeys = 'archive' | 'combine' | 'keep' | 'sequential' | 'live';
+  type BoolKeys =
+    | 'archive'
+    | 'combine'
+    | 'keep'
+    | 'sequential'
+    | 'live'
+    | 'context';
   const pickBool = (k: BoolKeys): boolean => {
     const v = (runIn as Record<BoolKeys, unknown>)[k];
     return typeof v === 'boolean' ? v : RUN_BASE_DEFAULTS[k];
@@ -228,6 +236,7 @@ export const runDefaults = (
   const plan = typeof runIn.plan === 'boolean' ? runIn.plan : true;
   // Overlay default: off unless cliDefaults.run.facets is true
   const facets = typeof runIn.facets === 'boolean' ? runIn.facets : false;
+  const context = pickBool('context');
 
   return {
     archive: pickBool('archive'),
@@ -241,6 +250,7 @@ export const runDefaults = (
     hangKillGrace: pickNum('hangKillGrace', RUN_BASE_DEFAULTS.hangKillGrace),
     prompt,
     facets,
+    context,
   };
 };
 

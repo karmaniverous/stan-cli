@@ -14,7 +14,9 @@ import type { ScriptMap } from '@/cli/config/schema';
 
 export type DependencyContext = {
   // Use any to avoid strict coupling with core's unexported/complex types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sources: Record<string, any>;
   state?: unknown;
   clean?: boolean;

@@ -90,9 +90,9 @@ export const archivePhase = async (
     const { kind, counts, hasWarnings } = report;
     const c = counts;
     const parts = [
-      `candidates ${c.candidates}`,
-      `selected ${c.selected}`,
-      `archived ${c.archived}`,
+      `candidates ${String(c.candidates)}`,
+      `selected ${String(c.selected)}`,
+      `archived ${String(c.archived)}`,
     ];
     if (c.excludedBinaries > 0)
       parts.push(`binaries ${String(c.excludedBinaries)}`);
@@ -139,7 +139,9 @@ export const archivePhase = async (
         const res = await createArchiveWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
           dependency: dependency as any,
+
           archive: {
             includeOutputDir: includeOutputs,
             includes,
@@ -154,6 +156,7 @@ export const archivePhase = async (
           includes,
           excludes: config.excludes ?? [],
           onSelectionReport: reportSelection,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
       }
 
@@ -189,7 +192,9 @@ export const archivePhase = async (
         out = (await createArchiveDiffWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
           dependency: dependency as any,
+
           diff: {
             baseName: 'archive',
             includes,
@@ -209,6 +214,7 @@ export const archivePhase = async (
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
           onSelectionReport: reportSelection,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)) as { diffPath: string };
       }
 
