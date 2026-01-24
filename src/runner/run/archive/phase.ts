@@ -38,8 +38,8 @@ type ArchiveProgress = {
   done?: (
     kind: 'full' | 'diff',
     pathAbs: string,
-    startedAt: number,
-    endedAt: number,
+    startedAt?: number,
+    endedAt?: number,
   ) => void;
 };
 /**
@@ -95,8 +95,8 @@ export const archivePhase = async (
       `archived ${c.archived}`,
     ];
     if (c.excludedBinaries > 0)
-      parts.push(`binaries ${c.excludedBinaries.toString()}`);
-    if (c.largeText > 0) parts.push(`large ${c.largeText.toString()}`);
+      parts.push(`binaries ${String(c.excludedBinaries)}`);
+    if (c.largeText > 0) parts.push(`large ${String(c.largeText)}`);
     const warn = hasWarnings ? ' (warnings)' : '';
     const label = kind === 'diff' ? 'diff' : kind === 'meta' ? 'meta' : 'full';
     // Print to console (CLI-owned)
@@ -136,25 +136,26 @@ export const archivePhase = async (
       const startedFull = Date.now();
 
       if (dependency) {
-        const res = await createArchiveWithDependencyContext({
-          cwd,
-          stanPath: config.stanPath,
-          dependency,
-          archive: {
-            includeOutputDir: includeOutputs,
-            includes,
-            excludes: config.excludes ?? [],
-            onSelectionReport: reportSelection as (r: SelectionReport) => void,
-          },
-        });
+        const res: { archivePath: string } =
+          await createArchiveWithDependencyContext({
+            cwd,
+            stanPath: config.stanPath,
+            dependency,
+            archive: {
+              includeOutputDir: includeOutputs,
+              includes,
+              excludes: config.excludes ?? [],
+              onSelectionReport: reportSelection,
+            } as any,
+          });
         archivePath = res.archivePath;
       } else {
         archivePath = await createArchive(cwd, config.stanPath, {
           includeOutputDir: includeOutputs,
           includes,
           excludes: config.excludes ?? [],
-          onSelectionReport: reportSelection as (r: SelectionReport) => void,
-        });
+          onSelectionReport: reportSelection,
+        } as any);
       }
 
       opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
@@ -196,8 +197,8 @@ export const archivePhase = async (
             excludes: config.excludes ?? [],
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
-            onSelectionReport: reportSelection as (r: SelectionReport) => void,
-          },
+            onSelectionReport: reportSelection,
+          } as any,
         });
       } else {
         out = await createArchiveDiff({
@@ -208,8 +209,8 @@ export const archivePhase = async (
           excludes: config.excludes ?? [],
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
-          onSelectionReport: reportSelection as (r: SelectionReport) => void,
-        });
+          onSelectionReport: reportSelection,
+        } as any);
       }
 
       diffPath = out.diffPath;

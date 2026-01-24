@@ -10,13 +10,12 @@ export type Selection = string[] | null;
 export type ExecutionMode = 'concurrent' | 'sequential';
 
 // Runner-local config (CLI-owned scripts + engine stanPath)
-import type { DependencyGraphMeta } from '@karmaniverous/stan-core';
-
 import type { ScriptMap } from '@/cli/config/schema';
 
 export type DependencyContext = {
-  meta: DependencyGraphMeta;
-  sources: Record<string, string>;
+  // Use any to avoid strict coupling with core's unexported/complex types
+  meta: any;
+  sources: Record<string, any>;
   state?: unknown;
   clean?: boolean;
 };

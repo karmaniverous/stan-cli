@@ -129,7 +129,7 @@ export const registerRunAction = (
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
       dependency = {
         meta: built.meta,
-        sources: built.sources,
+        sources: built.sources as Record<string, any>,
         state: undefined,
         clean: false,
       };
