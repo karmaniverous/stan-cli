@@ -11,13 +11,14 @@ export type ExecutionMode = 'concurrent' | 'sequential';
 
 // Runner-local config (CLI-owned scripts + engine stanPath)
 import type { ScriptMap } from '@/cli/config/schema';
+import type { buildDependencyMeta } from '@karmaniverous/stan-core';
+
+type DependencyMetaResult = Awaited<ReturnType<typeof buildDependencyMeta>>;
 
 export type DependencyContext = {
-  // Use any to avoid strict coupling with core's unexported/complex types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  meta: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sources: Record<string, any>;
+  // Inferred types from core to avoid explicit any and strict coupling to unexported types
+  meta: DependencyMetaResult['meta'];
+  sources: DependencyMetaResult['sources'];
   state?: unknown;
   clean?: boolean;
 };

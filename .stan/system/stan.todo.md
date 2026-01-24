@@ -4,7 +4,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Fix remaining `lint` errors (`unsafe-assignment`, `unsafe-argument`) in `src/cli/run/action/index.ts` and `src/runner/run/archive/phase.ts`.
+- Refactor `DependencyContext` to use inferred types from `stan-core` (remove `any`).
+- Fix `onSelectionReport` type error in `archive/phase.ts` using safe parameter casting instead of `any`.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)

@@ -146,7 +146,9 @@ export const archivePhase = async (
             includes,
             excludes: config.excludes ?? [],
             onSelectionReport: reportSelection,
-          },
+          } as Parameters<
+            typeof createArchiveWithDependencyContext
+          >[0]['archive'],
         });
         archivePath = res.archivePath;
       } else {
@@ -155,7 +157,7 @@ export const archivePhase = async (
           includes,
           excludes: config.excludes ?? [],
           onSelectionReport: reportSelection,
-        });
+        } as Parameters<typeof createArchive>[2]);
       }
 
       opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
@@ -187,7 +189,7 @@ export const archivePhase = async (
 
       let out: { diffPath: string };
       if (dependency) {
-        out = await createArchiveDiffWithDependencyContext({
+        out = (await createArchiveDiffWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
           dependency,
@@ -199,10 +201,12 @@ export const archivePhase = async (
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
             onSelectionReport: reportSelection,
-          },
-        });
+          } as Parameters<
+            typeof createArchiveDiffWithDependencyContext
+          >[0]['diff'],
+        })) as { diffPath: string };
       } else {
-        out = await createArchiveDiff({
+        out = (await createArchiveDiff({
           cwd,
           stanPath: config.stanPath,
           baseName: 'archive',
@@ -211,7 +215,7 @@ export const archivePhase = async (
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
           onSelectionReport: reportSelection,
-        });
+        } as Parameters<typeof createArchiveDiff>[0])) as { diffPath: string };
       }
 
       diffPath = out.diffPath;
