@@ -4,6 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Add `@karmaniverous/stan-context` to dependencies (required for context mode runtime).
 - Create interop note for `stan-core` regarding the missing scratch file check in the system prompt checklist.
 - Reorder `stan run -h` flags: place `--context`/`--no-context` immediately after `--no-archive`.
 - Implement `--meta` (Bootstrap Mode) in CLI: implies context, skips scripts/full-archive, produces meta archive only.
