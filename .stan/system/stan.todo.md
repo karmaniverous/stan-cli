@@ -15,4 +15,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.
 - Implemented `-w/--workspace` support (fast-glob dependency, root option registration, and pre-action context switching).
 - Updated documentation (cli-examples, configuration, assistant-guide) to cover `-w/--workspace`.
-- Removed requirement for swappable core (unused feature).
+- Removed requirement for swappable core (unused feature).- Standardized documentation to consistently use "Run/Snap/Patch" terminology (guides/case-studies/rrstack.md, guides/cli-examples.md, guides/tutorial-quickstart.md).

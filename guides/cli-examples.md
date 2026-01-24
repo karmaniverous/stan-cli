@@ -374,8 +374,8 @@ cliDefaults:
 ```
 # Typical loop
 stan run                     # build & snapshot
-stan patch -f fix.patch      # apply unified diff
 stan snap                    # update baseline
+stan patch -f fix.patch      # apply unified diff
 
 # Focused run
 stan run -q -s lint test     # sequential; run only lint and test

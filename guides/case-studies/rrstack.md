@@ -6,9 +6,9 @@ title: Case Study — rrstack
 
 [rrstack](https://github.com/karmaniverous/rrstack) was built in just a couple of days while iterating on STAN itself. The project’s development loop looked like this:
 
-- Build & Snapshot: frequent `stan run` kept a reproducible context (source snapshot + deterministic outputs).
-- Share & Baseline: archives attached in chat ensured the assistant always had the same view of the repo.
-- Discuss & Patch: STAN proposed plain unified diffs with adequate context; failures produced compact FEEDBACK envelopes for automatic correction.
+- Run: frequent `stan run` kept a reproducible context (source snapshot + deterministic outputs).
+- Snap: `stan snap` baselined diffs, and archives attached in chat ensured the assistant always had the same view of the repo.
+- Patch: STAN proposed plain unified diffs with adequate context; failures produced compact FEEDBACK envelopes for automatic correction.
 
 ## Why it was fast
 

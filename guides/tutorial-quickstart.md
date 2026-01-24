@@ -51,7 +51,7 @@ What this does:
 
 Optional: edit `stan.config.yml` to map STAN scripts to your repo’s tasks.
 
-## 3) Build & Snapshot
+## 3) Run (Validate & Commit)
 
 ```bash
 stan run
@@ -64,13 +64,13 @@ This:
 - Creates `.stan/output/archive.tar` and `.stan/output/archive.diff.tar`.
 - Prints concise “archive warnings” (binaries excluded, large text flagged).
 
-## 4) Share & Baseline
+## 4) Snap (Sync)
 
 Attach `.stan/output/archive.tar` (and `archive.diff.tar` if present) to your AI chat.
 
 Tip: If you need a new chat, ask STAN for a “handoff” block, paste it at the top of the new chat, and attach the latest archives. STAN will verify the signature and resume with full context.
 
-## 5) Discuss & Patch
+## 5) Patch (The Intelligence)
 
 Iterate in chat. When STAN proposes changes, it will return a plain unified diff (no base64) like:
 
