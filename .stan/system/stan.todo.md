@@ -4,6 +4,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Reorder `stan run -h` flags: place `--context`/`--no-context` immediately after `--no-archive`.
+- Implement `--meta` (Bootstrap Mode) in CLI: implies context, skips scripts/full-archive, produces meta archive only.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)

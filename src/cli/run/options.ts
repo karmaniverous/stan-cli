@@ -99,6 +99,17 @@ export const registerRunOptions = (
   optCombine.conflicts('archive');
   optNoArchive.conflicts('combine');
 
+  // Context mode
+  const optContext = new Option(
+    '-c, --context',
+    'enable context mode (dependency graph & staged imports)',
+  );
+  const optNoContext = new Option('-C, --no-context', 'disable context mode');
+  const optMeta = new Option(
+    '--meta',
+    'bootstrap mode: create meta archive only (implies --context, --no-scripts, --no-archive)',
+  );
+
   // Output dir
   const optKeep = new Option(
     '-k, --keep',
@@ -139,6 +150,9 @@ export const registerRunOptions = (
     // archives & outputs
     .addOption(optArchive)
     .addOption(optNoArchive)
+    .addOption(optContext)
+    .addOption(optNoContext)
+    .addOption(optMeta)
     .addOption(optCombine)
     .addOption(optNoCombine)
     .addOption(optKeep)
@@ -220,19 +234,11 @@ export const registerRunOptions = (
   optHangKill.default(eff.hangKill);
   optHangKillGrace.default(eff.hangKillGrace);
 
-  // Context mode
-  const optContext = new Option(
-    '-c, --context',
-    'enable context mode (dependency graph & staged imports)',
-  );
-  const optNoContext = new Option('-C, --no-context', 'disable context mode');
   try {
     tagDefault(eff.context ? optContext : optNoContext, true);
   } catch {
     /* best-effort */
   }
-
-  cmd.addOption(optContext).addOption(optNoContext);
 
   // Help footer
   cmd.addHelpText('after', () => renderAvailableScriptsHelp(process.cwd()));

@@ -69,15 +69,24 @@ export function deriveRunParameters(args: {
   const combine = boolFinal('combine');
   const keep = boolFinal('keep');
   const sequential = boolFinal('sequential');
-  const context = boolFinal('context');
+  let context = boolFinal('context');
   let live = boolFinal('live');
   let archive = boolFinal('archive');
+  const meta = Boolean((options as { meta?: boolean }).meta);
+
   // Explicit -A from CLI always wins
   if (
     src.getOptionValueSource?.('archive') === 'cli' &&
     (options as { archive?: boolean }).archive === false
   )
     archive = false;
+
+  // Meta (bootstrap) overrides: context=true, archive=false (full/diff skipped)
+  if (meta) {
+    context = true;
+    archive = false;
+  }
+
   // Defaults coherence:
   // When the configured default selection is "no scripts" (scripts=false) and
   // the user did not provide an explicit archive flag on the CLI, prefer
@@ -140,7 +149,9 @@ export function deriveRunParameters(args: {
   const noScripts = (options as { scripts?: unknown }).scripts === false;
   const allKeys = Object.keys(scripts);
   let selection: string[] = [];
-  if (noScripts) {
+  if (meta) {
+    selection = []; // meta implies no scripts
+  } else if (noScripts) {
     selection = [];
   } else if (scriptsProvided) {
     selection = derivedBase.selection;
@@ -168,6 +179,7 @@ export function deriveRunParameters(args: {
     archive,
     context,
     live,
+    meta,
     hangWarn: hangWarnFinal,
     hangKill: hangKillFinal,
     hangKillGrace: hangKillGraceFinal,

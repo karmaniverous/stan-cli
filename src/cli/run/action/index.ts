@@ -125,7 +125,13 @@ export const registerRunAction = (
         clean: true,
       });
       await createMetaArchive(runCwd, config.stanPath);
-      // "meta archive always created when context is in effect" -> done.
+      if (derived.behavior.meta) {
+        console.log(
+          `stan: created meta archive at ${path.join(config.stanPath, 'output', 'archive.meta.tar')}`,
+        );
+      }
+
+      // "meta archive always created when context is in effect"
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
       dependency = {
         meta: built.meta,
@@ -160,6 +166,10 @@ export const registerRunAction = (
       mode: derived.mode,
       behavior: derived.behavior,
     });
+
+    if (derived.behavior.meta) {
+      return; // meta mode is done (archive created above)
+    }
 
     const planOpt = (options as { plan?: unknown }).plan;
     const noPlanFlag = Boolean((options as { noPlan?: unknown }).noPlan);
