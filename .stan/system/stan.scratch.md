@@ -1,9 +1,8 @@
-# Scratch: Final Polish
+# Scratch: System Prompt Gap
 
 ## Current Status
-- CLI flags (`--context`, `--meta`) are correctly ordered.
-- Context mode functionality is implemented (action/index.ts).
-- Fixing TypeDoc warning: `DependencyContext` referenced but not exported.
+- Identified a gap in the system prompt verification checklist: `stan.scratch.md` update is mandatory but not enforced by the final gate.
+- Creating interop note for `stan-core` to fix the upstream prompt source.
 
 ## Next Steps
 - Verify docs build.

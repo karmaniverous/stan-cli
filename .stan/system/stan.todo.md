@@ -4,6 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Create interop note for `stan-core` regarding the missing scratch file check in the system prompt checklist.
 - Reorder `stan run -h` flags: place `--context`/`--no-context` immediately after `--no-archive`.
 - Implement `--meta` (Bootstrap Mode) in CLI: implies context, skips scripts/full-archive, produces meta archive only.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
