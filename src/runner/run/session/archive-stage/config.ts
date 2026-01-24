@@ -23,14 +23,12 @@ export const makeBaseConfigs = (
     includes: config.includes ?? [],
     excludes: config.excludes ?? [],
     imports: config.imports,
-    anchors: config.anchors ?? [],
   };
   const diff = {
     stanPath: config.stanPath,
     includes: config.includes ?? [],
     excludes: config.excludes ?? [],
     imports: config.imports,
-    anchors: config.anchors ?? [],
   };
   return { full, diff };
 };

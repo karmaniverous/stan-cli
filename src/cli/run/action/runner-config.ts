@@ -1,9 +1,6 @@
-import type {
-  ContextConfig,
-  DependencyContext,
-} from '@karmaniverous/stan-core';
+import type { ContextConfig } from '@karmaniverous/stan-core';
 
-import type { RunnerConfig } from '@/runner/run/types';
+import type { DependencyContext, RunnerConfig } from '@/runner/run/types';
 
 /** Compose the RunnerConfig from engine config and CLI inputs. */
 export const makeRunnerConfig = (args: {

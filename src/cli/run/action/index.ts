@@ -1,9 +1,6 @@
 import path from 'node:path';
 
-import type {
-  ContextConfig,
-  DependencyContext,
-} from '@karmaniverous/stan-core';
+import type { ContextConfig } from '@karmaniverous/stan-core';
 import {
   buildDependencyMeta,
   createMetaArchive,
@@ -22,7 +19,7 @@ import { getRunDefaults } from '@/cli/run/derive/run-defaults';
 import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
-import type { RunnerConfig } from '@/runner/run/types';
+import type { DependencyContext, RunnerConfig } from '@/runner/run/types';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';

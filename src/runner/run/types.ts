@@ -10,9 +10,16 @@ export type Selection = string[] | null;
 export type ExecutionMode = 'concurrent' | 'sequential';
 
 // Runner-local config (CLI-owned scripts + engine stanPath)
-import type { DependencyContext } from '@karmaniverous/stan-core';
+import type { DependencyGraphMeta } from '@karmaniverous/stan-core';
 
 import type { ScriptMap } from '@/cli/config/schema';
+
+export type DependencyContext = {
+  meta: DependencyGraphMeta;
+  sources: Record<string, string>;
+  state?: unknown;
+  clean?: boolean;
+};
 
 /** Runner-local configuration (CLI-owned scripts + engine selection inputs). */
 export type RunnerConfig = {

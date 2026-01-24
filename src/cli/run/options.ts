@@ -193,8 +193,8 @@ export const registerRunOptions = (
     hangKill: number;
     hangKillGrace: number;
     prompt: string;
-    facets: boolean;
-  } = { ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false };
+    context: boolean;
+  } = { ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto' };
   try {
     eff = runDefaults(process.cwd());
   } catch {

@@ -1,10 +1,6 @@
 import { rm } from 'node:fs/promises';
 
-import type {
-  ContextConfig,
-  DependencyContext,
-  SelectionReport,
-} from '@karmaniverous/stan-core';
+import type { ContextConfig, SelectionReport } from '@karmaniverous/stan-core';
 import {
   createArchive,
   createArchiveDiff,
@@ -18,6 +14,7 @@ import {
   cleanupPatchDirAfterArchive,
   stageImports,
 } from '@/runner/run/archive/util';
+import type { DependencyContext } from '@/runner/run/types';
 import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { alert, ok } from '@/runner/util/color';
 
@@ -97,8 +94,9 @@ export const archivePhase = async (
       `selected ${c.selected}`,
       `archived ${c.archived}`,
     ];
-    if (c.excludedBinaries > 0) parts.push(`binaries ${c.excludedBinaries}`);
-    if (c.largeText > 0) parts.push(`large ${c.largeText}`);
+    if (c.excludedBinaries > 0)
+      parts.push(`binaries ${c.excludedBinaries.toString()}`);
+    if (c.largeText > 0) parts.push(`large ${c.largeText.toString()}`);
     const warn = hasWarnings ? ' (warnings)' : '';
     const label = kind === 'diff' ? 'diff' : kind === 'meta' ? 'meta' : 'full';
     // Print to console (CLI-owned)
@@ -138,7 +136,7 @@ export const archivePhase = async (
       const startedFull = Date.now();
 
       if (dependency) {
-        archivePath = await createArchiveWithDependencyContext({
+        const res = await createArchiveWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
           dependency,
@@ -146,15 +144,16 @@ export const archivePhase = async (
             includeOutputDir: includeOutputs,
             includes,
             excludes: config.excludes ?? [],
-            onSelectionReport: reportSelection,
+            onSelectionReport: reportSelection as (r: SelectionReport) => void,
           },
         });
+        archivePath = res.archivePath;
       } else {
         archivePath = await createArchive(cwd, config.stanPath, {
           includeOutputDir: includeOutputs,
           includes,
           excludes: config.excludes ?? [],
-          onSelectionReport: reportSelection,
+          onSelectionReport: reportSelection as (r: SelectionReport) => void,
         });
       }
 
@@ -164,7 +163,7 @@ export const archivePhase = async (
       // visibility races at the session boundary (best‑effort).
       if (shouldContinue && !shouldContinue()) {
         try {
-          await rm(archivePath, { force: true });
+          if (archivePath) await rm(archivePath, { force: true });
         } catch {
           /* ignore */
         }
@@ -172,9 +171,7 @@ export const archivePhase = async (
       }
       if (!silent) {
         console.log(
-          `stan: ${ok('done')} "${alert('archive')}" -> ${alert(
-            archivePath.replace(/\\/g, '/'),
-          )}`,
+          `stan: ${ok('done')} "${alert('archive')}" -> ${alert(archivePath ? archivePath.replace(/\\/g, '/') : '')}`,
         );
       }
     }
@@ -199,7 +196,7 @@ export const archivePhase = async (
             excludes: config.excludes ?? [],
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
-            onSelectionReport: reportSelection,
+            onSelectionReport: reportSelection as (r: SelectionReport) => void,
           },
         });
       } else {
@@ -211,7 +208,7 @@ export const archivePhase = async (
           excludes: config.excludes ?? [],
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
-          onSelectionReport: reportSelection,
+          onSelectionReport: reportSelection as (r: SelectionReport) => void,
         });
       }
 
