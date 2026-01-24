@@ -49,8 +49,6 @@ Out of scope for the CLI:
   - Presentation‑free; no console I/O. All warnings/notes surface via return values or optional callbacks.
   - Public helpers for prompt packaging and monolith assembly.
 
-The engine remains swappable; the CLI must not assume engine location or bundling flavor.
-
 ---
 
 ## 3) Run (build & snapshot)

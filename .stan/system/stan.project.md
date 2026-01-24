@@ -154,14 +154,6 @@ Use interop messages to coordinate cross‑repo actions (CLI ↔ Core). Messages
 
 ---
 
-## 5) Swappable core awareness (runtime selection by CLI)
-
-- The CLI may run against an alternate or in‑development engine via a `--core` option. You should:
-  - Avoid assumptions about the engine’s physical location or build flavor (dist vs source); reason about behavior solely through the documented public API.
-  - When asked to assist with loader or integration changes, generate small, testable adapter logic on the CLI side (e.g., path resolution, version/shape checks, banner print), and keep the engine API stable and presentation‑free.
-
----
-
 ## 6) Document cadence and commit behavior (unchanged)
 
 - If you emit any code Patch blocks for this repo, you MUST also update the local dev plan under `<stanPath>/system/stan.todo.md` (unless the change set is deletions‑only or explicitly plan‑only) and end with a proper Commit Message block as defined in the system prompt.
