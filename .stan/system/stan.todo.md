@@ -22,3 +22,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Fix `typecheck` error in `src/cli/run/options.ts` by exposing `context` in `runDefaults` (cli-utils).
 - Refactor `DependencyContext` to use inferred types from `stan-core` (remove `any`).
 - Fix `onSelectionReport` type error in `archive/phase.ts` using safe parameter casting instead of `any`.
+- Export `DependencyContext` from `src/runner/run/index.ts` to resolve TypeDoc warning.

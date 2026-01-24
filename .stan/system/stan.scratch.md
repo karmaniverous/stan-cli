@@ -1,8 +1,10 @@
-# Scratch: Release Prep
+# Scratch: Final Polish
 
 ## Current Status
-- Updated `stan.project.md` to endorse the Assistant Guide import strategy.
-- All suites green.
+- CLI flags (`--context`, `--meta`) are correctly ordered.
+- Context mode functionality is implemented (action/index.ts).
+- Fixing TypeDoc warning: `DependencyContext` referenced but not exported.
 
 ## Next Steps
+- Verify docs build.
 - Release prep (changelog/versioning).
