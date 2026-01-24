@@ -1,9 +1,8 @@
-# Scratch: Type Safety & Cleanup
+# Scratch: Release Prep
 
 ## Current Status
-- All lint/typecheck/test regressions are resolved (green).
-- `DependencyContext` now uses inferred types from core (no `any`).
-- `archive/phase.ts` uses safe `Parameters<...>` casting.
+- Updated `stan.project.md` to endorse the Assistant Guide import strategy.
+- All suites green.
 
 ## Next Steps
 - Release prep (changelog/versioning).

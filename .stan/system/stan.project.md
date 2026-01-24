@@ -120,17 +120,20 @@ Use interop messages to coordinate cross‑repo actions (CLI ↔ Core). Messages
 
 ---
 
-## 3) Imports bridge — linking peer docs/types/messages for context
+## 3) Imports bridge — linking peer guides and messages
 
-- Ensure imports in `stan.config.*` stage high‑signal peer artifacts into this repo’s `.stan/imports/<label>/...` before archiving. Typical labels:
-  - In stan-cli:
-    - `core-docs`: `../stan-core/.stan/system/stan.requirements.md`, `../stan-core/.stan/system/stan.todo.md`
-    - `core-types`: `../stan-core/dist/index.d.ts`
-    - `core-interop`: `../stan-core/.stan/interop/stan-cli/*.md`
-  - In stan-core:
-    - `cli-docs`: `../stan-cli/.stan/system/stan.requirements.md`, `../stan-cli/.stan/system/stan.todo.md`
-    - `cli-interop`: `../stan-cli/.stan/interop/stan-core/*.md`
-- If the imports mapping is missing or incomplete and the change at hand benefits from those artifacts, propose a precise patch to `stan.config.*` that adds only the minimal patterns needed. Do not propose broad globs. Avoid adding imports solely for convenience if they create large or noisy archives.
+- Ensure imports in `stan.config.*` stage high‑signal peer artifacts into this repo’s `.stan/imports/<label>/...` before archiving.
+- **Primary Context Strategy**: Import the peer’s **Assistant Guide** (`guides/stan-assistant-guide.md`) instead of raw requirements/types. The guide is the compact, self-contained usage contract.
+- **Standard Peers**:
+  - `stan-core`: Engine. Import guide and interop messages.
+  - `stan-context`: Context compiler. Import guide and interop messages.
+
+Example configuration pattern:
+
+- `stan-core`: `../stan-core/guides/stan-assistant-guide.md`, `../stan-core/.stan/interop/stan-cli/*.md`
+- `stan-context`: `../stan-context/guides/stan-assistant-guide.md`, `../stan-context/.stan/interop/stan-cli/*.md`
+
+If imports are missing, propose a precise patch to `stan.config.*` to add them. Do not import raw source files or build artifacts unless specifically required for deep debugging.
 
 ---
 
