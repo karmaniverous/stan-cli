@@ -38,8 +38,8 @@ type ArchiveProgress = {
   done?: (
     kind: 'full' | 'diff',
     pathAbs: string,
-    startedAt?: number,
-    endedAt?: number,
+    startedAt: number,
+    endedAt: number,
   ) => void;
 };
 /**
@@ -136,18 +136,17 @@ export const archivePhase = async (
       const startedFull = Date.now();
 
       if (dependency) {
-        const res: { archivePath: string } =
-          await createArchiveWithDependencyContext({
-            cwd,
-            stanPath: config.stanPath,
-            dependency,
-            archive: {
-              includeOutputDir: includeOutputs,
-              includes,
-              excludes: config.excludes ?? [],
-              onSelectionReport: reportSelection,
-            } as any,
-          });
+        const res = await createArchiveWithDependencyContext({
+          cwd,
+          stanPath: config.stanPath,
+          dependency: dependency as any,
+          archive: {
+            includeOutputDir: includeOutputs,
+            includes,
+            excludes: config.excludes ?? [],
+            onSelectionReport: reportSelection,
+          } as any,
+        });
         archivePath = res.archivePath;
       } else {
         archivePath = await createArchive(cwd, config.stanPath, {
@@ -187,10 +186,10 @@ export const archivePhase = async (
 
       let out: { diffPath: string };
       if (dependency) {
-        out = await createArchiveDiffWithDependencyContext({
+        out = (await createArchiveDiffWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
-          dependency,
+          dependency: dependency as any,
           diff: {
             baseName: 'archive',
             includes,
@@ -199,9 +198,9 @@ export const archivePhase = async (
             includeOutputDirInDiff: includeOutputs,
             onSelectionReport: reportSelection,
           } as any,
-        });
+        })) as { diffPath: string };
       } else {
-        out = await createArchiveDiff({
+        out = (await createArchiveDiff({
           cwd,
           stanPath: config.stanPath,
           baseName: 'archive',
@@ -210,7 +209,7 @@ export const archivePhase = async (
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
           onSelectionReport: reportSelection,
-        } as any);
+        } as any)) as { diffPath: string };
       }
 
       diffPath = out.diffPath;
