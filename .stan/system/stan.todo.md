@@ -4,8 +4,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Refactor `DependencyContext` to use inferred types from `stan-core` (remove `any`).
-- Fix `onSelectionReport` type error in `archive/phase.ts` using safe parameter casting instead of `any`.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)
@@ -17,4 +15,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.
 - Implemented `-w/--workspace` support (fast-glob dependency, root option registration, and pre-action context switching).
 - Updated documentation (cli-examples, configuration, assistant-guide) to cover `-w/--workspace`.
-- Removed requirement for swappable core (unused feature).- Standardized documentation to consistently use "Run/Snap/Patch" terminology (guides/case-studies/rrstack.md, guides/cli-examples.md, guides/tutorial-quickstart.md).
+- Removed requirement for swappable core (unused feature).
+- Standardized documentation to consistently use "Run/Snap/Patch" terminology (guides/case-studies/rrstack.md, guides/cli-examples.md, guides/tutorial-quickstart.md).
+- Fix `typecheck` error in `src/cli/run/options.ts` by exposing `context` in `runDefaults` (cli-utils).
+- Refactor `DependencyContext` to use inferred types from `stan-core` (remove `any`).
+- Fix `onSelectionReport` type error in `archive/phase.ts` using safe parameter casting instead of `any`.
