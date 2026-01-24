@@ -2,8 +2,8 @@
 
 ## Current Status
 
-- `stan run -c` failing due to missing peer dependencies.
-- Adding `@karmaniverous/stan-context` to `package.json`.
+- `stan run -c` failing with "requires TypeScript" despite `typescript` being in dependencies.
+- Creating interop note for `stan-core` to troubleshoot peer resolution.
 
 ## Next Steps
 

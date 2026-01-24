@@ -4,6 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Create interop note for `stan-core` regarding `stan run -c` TypeScript resolution failure.
 - Add `@karmaniverous/stan-context` to dependencies (required for context mode runtime).
 - Create interop note for `stan-core` regarding the missing scratch file check in the system prompt checklist.
 - Reorder `stan run -h` flags: place `--context`/`--no-context` immediately after `--no-archive`.
