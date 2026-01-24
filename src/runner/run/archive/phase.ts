@@ -139,15 +139,14 @@ export const archivePhase = async (
         const res = await createArchiveWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-          dependency: dependency as any,
+          dependency,
 
           archive: {
             includeOutputDir: includeOutputs,
             includes,
             excludes: config.excludes ?? [],
             onSelectionReport: reportSelection,
-          } as any,
+          },
         });
         archivePath = res.archivePath;
       } else {
@@ -156,8 +155,7 @@ export const archivePhase = async (
           includes,
           excludes: config.excludes ?? [],
           onSelectionReport: reportSelection,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
+        });
       }
 
       opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
@@ -189,11 +187,10 @@ export const archivePhase = async (
 
       let out: { diffPath: string };
       if (dependency) {
-        out = (await createArchiveDiffWithDependencyContext({
+        out = await createArchiveDiffWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-          dependency: dependency as any,
+          dependency,
 
           diff: {
             baseName: 'archive',
@@ -202,10 +199,10 @@ export const archivePhase = async (
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
             onSelectionReport: reportSelection,
-          } as any,
-        })) as { diffPath: string };
+          },
+        });
       } else {
-        out = (await createArchiveDiff({
+        out = await createArchiveDiff({
           cwd,
           stanPath: config.stanPath,
           baseName: 'archive',
@@ -214,8 +211,7 @@ export const archivePhase = async (
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
           onSelectionReport: reportSelection,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)) as { diffPath: string };
+        });
       }
 
       diffPath = out.diffPath;

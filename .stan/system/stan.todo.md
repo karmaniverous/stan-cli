@@ -4,8 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Fix `typecheck` error in `src/cli/run/options.ts` by exposing `context` in `runDefaults` (cli-utils).
-- Fix `lint` errors (`no-explicit-any`, `unsafe-assignment`, `restrict-template-expressions`) in run/archive/phase and types.
+- Fix remaining `lint` errors (`unsafe-assignment`, `unsafe-argument`) in `src/cli/run/action/index.ts` and `src/runner/run/archive/phase.ts`.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)
