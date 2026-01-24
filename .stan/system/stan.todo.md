@@ -4,6 +4,7 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
+- Inject `typescript` module into `buildDependencyMeta` call in `src/cli/run/action/index.ts` to fix context mode runtime error.
 - Create interop note for `stan-core` regarding `stan run -c` TypeScript resolution failure.
 - Add `@karmaniverous/stan-context` to dependencies (required for context mode runtime).
 - Create interop note for `stan-core` regarding the missing scratch file check in the system prompt checklist.

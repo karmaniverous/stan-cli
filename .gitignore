@@ -9,6 +9,7 @@ dist/
 esm/
 node_modules/
 
+.stan/context/
 .stan/diff/
 .stan/output/
 .stan/patch/

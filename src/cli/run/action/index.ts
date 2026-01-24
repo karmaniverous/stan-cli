@@ -10,6 +10,7 @@ import {
   writeDependencyMetaFile,
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
+import ts from 'typescript';
 
 import { loadCliConfigSync } from '@/cli/config/load';
 import { peekAndMaybeDebugLegacy } from '@/cli/config/peek';
@@ -111,6 +112,7 @@ export const registerRunAction = (
           includes: config.includes ?? [],
           excludes: config.excludes ?? [],
         },
+        typescript: ts,
       });
       await writeDependencyMetaFile({
         cwd: runCwd,

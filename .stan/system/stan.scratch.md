@@ -2,8 +2,8 @@
 
 ## Current Status
 
-- `stan run -c` failing with "requires TypeScript" despite `typescript` being in dependencies.
-- Creating interop note for `stan-core` to troubleshoot peer resolution.
+- Identified root cause of `stan run -c` failure: `stan-core` requires host injection of `typescript`.
+- Implemented injection in `src/cli/run/action/index.ts`.
 
 ## Next Steps
 
