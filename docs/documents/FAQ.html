@@ -4,7 +4,7 @@
 <li><a href="Getting_Started.html">Getting Started</a></li>
 <li><a href="The_STAN_Loop.html">The STAN Loop</a></li>
 <li><a href="Archives___Snapshots.html">Archives &amp; Snapshots</a></li>
-<li><a href="CLI_Usage___Examples.html">CLI Usage &amp; Examples</a></li>
+<li><a href="guides_cli-examples.html">CLI Usage &amp; Examples</a></li>
 </ul>
 <h2 id="do-i-need-to-re-upload-the-full-archive-every-time" class="tsd-anchor-link">Do I need to re-upload the full archive every time?<a href="#do-i-need-to-re-upload-the-full-archive-every-time" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>Typically no. Upload the full <code>archive.tar</code> once at the start of a chat thread, then attach the smaller <code>archive.diff.tar</code> for subsequent turns. If you exhaust your context window, start a fresh chat, ask for a <code>handoff</code> in the old one, and paste that into the new chat along with the latest full archive.</p>
@@ -33,7 +33,7 @@
 <p>See: <a href="Migration_%E2%80%94_Namespaced_Configuration.html">Migration — Namespaced Configuration</a></p>
 <h2 id="what-is-the-bootloader-and-why-do-i-need-it" class="tsd-anchor-link">What is the bootloader and why do I need it?<a href="#what-is-the-bootloader-and-why-do-i-need-it" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>Most chat clients don’t automatically “open” your tar archive and read <code>.stan/system/stan.system.md</code>. The bootloader is the system prompt that performs that archive intake step.</p>
-<p>See: <a href="Bootloader___Assistant_Setup.html">Bootloader &amp; Assistant Setup</a></p>
+<p>See: <a href="Reference_%E2%80%94_The_Bootloader.html">Bootloader &amp; Assistant Setup</a></p>
 <h2 id="can-i-run-stan-in-ci" class="tsd-anchor-link">Can I run STAN in CI?<a href="#can-i-run-stan-in-ci" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>Yes. The CLI is designed to be deterministic and scriptable. You can run <code>stan run</code> in a CI job to generate archives and text outputs, then upload them as build artifacts or use them in subsequent pipeline steps, such as automated documentation publishing or quality checks.</p>
 <h2 id="is-there-a-library-api" class="tsd-anchor-link">Is there a library API?<a href="#is-there-a-library-api" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>

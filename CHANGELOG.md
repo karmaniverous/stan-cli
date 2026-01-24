@@ -2,9 +2,46 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.13.0-0](https://github.com/karmaniverous/stan-cli/compare/0.12.4...0.13.0-0)
+
+- When: 2026-01-23 12:45 UTC [`a2ea1cf`](https://github.com/karmaniverous/stan-cli/commit/a2ea1cf222f90dd316899149171b8a948995d376)
+- When: 2025-02-19 [`dd90110`](https://github.com/karmaniverous/stan-cli/commit/dd90110c45952d410f31319badf2bbb4df504ffa)
+- updated dependencies [`8d62515`](https://github.com/karmaniverous/stan-cli/commit/8d625158e67e5e802c6f063bd73a1ee25a053312)
+- When: 2025-05-15 10:00:00Z [`bdce951`](https://github.com/karmaniverous/stan-cli/commit/bdce9510bbda352977c2622bc5bfe19a841cfaba)
+- When: 2025-02-19 [`ce5575e`](https://github.com/karmaniverous/stan-cli/commit/ce5575ee295532d62de6d2c7f3df448d24273ba4)
+- When: 2025-05-15 11:30:00Z [`e3eeabe`](https://github.com/karmaniverous/stan-cli/commit/e3eeabe5efa92021c9cb13160fc7c8953e41b743)
+- When: 2025-02-19 [`1e9d78f`](https://github.com/karmaniverous/stan-cli/commit/1e9d78fb723a3cfd865bf6076d17b4ce4a645309)
+- When: 2026-01-23 13:15 UTC [`2bc123b`](https://github.com/karmaniverous/stan-cli/commit/2bc123bb1e41a73c6b75de822860522d18e2f7ba)
+- When: 2025-02-17 [`99d191a`](https://github.com/karmaniverous/stan-cli/commit/99d191aa0bc6bfe8397402ee0cc5643f56b13252)
+- Docs updates [`1339de8`](https://github.com/karmaniverous/stan-cli/commit/1339de8e6d7a626abf3a8fa731eb7acdf57b648b)
+- feat(cli): reorder context flags and implement --meta bootstrap mode [`5710af4`](https://github.com/karmaniverous/stan-cli/commit/5710af437594dee0c01ec464bb95a87a29f73e35)
+- When: 2026-01-23 13:20 UTC [`14f727f`](https://github.com/karmaniverous/stan-cli/commit/14f727f416c3037116e2103fdf74a13d1f4323c1)
+- When: 2026-01-23 13:40 UTC [`dd32808`](https://github.com/karmaniverous/stan-cli/commit/dd32808e609c629d99350a4cde9ae8725dc6cbcf)
+- When: 2025-02-19 [`7f5ba6a`](https://github.com/karmaniverous/stan-cli/commit/7f5ba6af67009d771271a06cd307946647ff5713)
+- docs: endorse assistant guide strategy in project prompt [`1a49dc9`](https://github.com/karmaniverous/stan-cli/commit/1a49dc913b78c541518d8f1de1475fb26bf041ea)
+- updated deps [`12faa78`](https://github.com/karmaniverous/stan-cli/commit/12faa7858d5ea8927dab0e5cf00af49c7bd2319c)
+- refactor: replace any types with inferred core types and safe casts [`994bd3d`](https://github.com/karmaniverous/stan-cli/commit/994bd3d705f5e9e77719ea6a682ad92057cd4025)
+- When: 2025-02-17 [`da7bb13`](https://github.com/karmaniverous/stan-cli/commit/da7bb13aacf9608e75a4c1f39d361d23104688b8)
+- fix: inject typescript module into dependency graph build [`0463ac8`](https://github.com/karmaniverous/stan-cli/commit/0463ac8af9d3101ce16881de6dd3736b087ca683)
+- docs: update dev plan and establish scratch file [`d9e283c`](https://github.com/karmaniverous/stan-cli/commit/d9e283c1a060fed1153ef3058542a27412e1f0fb)
+- chore: fix typecheck and lint regressions [`8f0cf15`](https://github.com/karmaniverous/stan-cli/commit/8f0cf159d19c24986a37d0a8fee93c4a9b598ce5)
+- unsuppressed lint errors [`d24a7d9`](https://github.com/karmaniverous/stan-cli/commit/d24a7d9367d004cf4b96ae12662d1dbfc5318a03)
+- docs: add interop note for context mode typescript resolution failure [`c7e5cf8`](https://github.com/karmaniverous/stan-cli/commit/c7e5cf8bf5559ffbb5b0628f6e6962ae16c436d3)
+- When: 2025-02-19 [`5587c96`](https://github.com/karmaniverous/stan-cli/commit/5587c96b5a9eccba7ac9b158bede465d0f73e914)
+- fix: add stan-context dependency for context mode support [`461a8c8`](https://github.com/karmaniverous/stan-cli/commit/461a8c8c07e5d5c14e0dd3ba0cdaecaa5a1c09b8)
+- updated requirements [`3e3894b`](https://github.com/karmaniverous/stan-cli/commit/3e3894bf39fabed9f0255ba5ad14af82441acda0)
+- When: 2025-02-19 [`951556a`](https://github.com/karmaniverous/stan-cli/commit/951556a9a38747443fd33ad3600d61ad4fc3ff44)
+- fix: export DependencyContext to resolve TypeDoc warning [`0f60c5e`](https://github.com/karmaniverous/stan-cli/commit/0f60c5e79d2f86165f3ff8b2b28207c3d7c8a042)
+- updated dependencies [`a4fb643`](https://github.com/karmaniverous/stan-cli/commit/a4fb6439ae0f6c37b24fb71e08d5a4f707d93319)
+- docs: add interop note for system prompt checklist gap [`0173d25`](https://github.com/karmaniverous/stan-cli/commit/0173d256d17363876096ad85c7337d47b2f792b4)
+- installed ts as runtime dep [`8bd0283`](https://github.com/karmaniverous/stan-cli/commit/8bd0283837f74477d5d5bc7b67291c6c38447e48)
+
 #### [0.12.4](https://github.com/karmaniverous/stan-cli/compare/0.12.3...0.12.4)
 
+> 18 January 2026
+
 - updated dependencies [`7b4ee55`](https://github.com/karmaniverous/stan-cli/commit/7b4ee555bbcd201a7abffe83e23d87d7a0c7d5a0)
+- chore: release v0.12.4 [`72a01b4`](https://github.com/karmaniverous/stan-cli/commit/72a01b457e18e3c1bdbd24e250e0f874fb13b083)
 - updated docs [`eba6c9d`](https://github.com/karmaniverous/stan-cli/commit/eba6c9d4a06a81c8d1b7b87878d25c818301513c)
 
 #### [0.12.3](https://github.com/karmaniverous/stan-cli/compare/0.12.2...0.12.3)

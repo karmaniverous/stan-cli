@@ -1,93 +1,77 @@
 <!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>The STAN Loop | @karmaniverous/stan-cli</title><meta name="description" content="Documentation for @karmaniverous/stan-cli"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/stan-cli</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/stan-cli">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="" aria-current="page">The STAN Loop</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="the-stan-loop" class="tsd-anchor-link">The STAN Loop<a href="#the-stan-loop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1>
 <p><img src="https://github.com/karmaniverous/stan-cli/raw/main/assets/stan-loop.png" alt="STAN Loop"></p>
-<p>STAN establishes a simple, reproducible loop for AI‑assisted development.</p>
-<p>Related guides:</p>
-<ul>
-<li><a href="Getting_Started.html">Getting Started</a></li>
-<li><a href="Archives___Snapshots.html">Archives &amp; Snapshots</a></li>
-<li><a href="Patch_Workflow___FEEDBACK.html">Patch Workflow &amp; Diagnostics</a></li>
-</ul>
-<h2 id="1-build-snapshot" class="tsd-anchor-link">1) Build &amp; Snapshot<a href="#1-build-snapshot" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
-<ul>
-<li>Edit code locally.</li>
-<li>Run <code>stan run</code> to:
-<ul>
-<li>Execute your configured scripts (build/test/lint/typecheck, etc.).</li>
-<li>Capture deterministic text outputs under <code>.stan/output/*.txt</code>.</li>
-<li>Create <code>archive.tar</code> (full snapshot of text sources) and <code>archive.diff.tar</code> (files changed since the last snapshot).</li>
-</ul>
-</li>
-<li>Archive warnings are written to the console (binaries excluded; large text call‑outs).</li>
-</ul>
-<p>Tips:</p>
-<ul>
-<li>Use <code>stan run -p</code> to print the plan without side effects; use <code>stan run -P</code> to execute without printing the plan first.</li>
-<li>Use <code>-q</code> for sequential execution (preserves <code>-s</code> order).</li>
-<li>Use <code>-c</code> to include outputs inside archives and remove them from disk (combine mode).</li>
-</ul>
-<h2 id="2-share-baseline" class="tsd-anchor-link">2) Share &amp; Baseline<a href="#2-share-baseline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
-<ul>
-<li>Attach <code>.stan/output/archive.tar</code> (and <code>archive.diff.tar</code> if present) in your chat.</li>
-<li>Optionally run <code>stan snap</code> to update the diff baseline (and use <code>undo</code>/<code>redo</code> to navigate history).</li>
-<li>In chat, STAN reads the system prompt from the archive and verifies integrity before proceeding.</li>
-</ul>
-<p>See: <a href="Archives___Snapshots.html">Archives &amp; Snapshots</a></p>
-<p>Notes:</p>
-<ul>
-<li>The bootloader system prompt ensures the correct <code>stan.system.md</code> is loaded from the archive (see Getting Started).</li>
-<li>Starting a new thread? Ask STAN to generate a “handoff” block and paste it at the top of your new chat (see step 4 below).</li>
-<li>If the system prompt appears to differ from the packaged baseline or docs were updated, CLI preflight prints a concise nudge.</li>
-</ul>
-<h2 id="3-discuss-patch" class="tsd-anchor-link">3) Discuss &amp; Patch<a href="#3-discuss-patch" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
-<ul>
-<li>Iterate in chat to refine requirements and approach.</li>
-<li>STAN generates plain unified diffs with adequate context (no base64).</li>
-<li>Apply patches:
-<ul>
-<li><code>stan patch</code> (clipboard by default),</li>
-<li><code>stan patch -f &lt;file&gt;</code> (from a file),</li>
-<li><code>stan patch --check</code> (validate only; writes to sandbox).</li>
-</ul>
-</li>
-<li>On failure, STAN writes a compact FEEDBACK packet and (when possible) copies it to your clipboard—paste it back into chat to get a corrected diff.</li>
-</ul>
-<p>See: <a href="Patch_Workflow___FEEDBACK.html">Patch Workflow &amp; Diagnostics</a></p>
-<h2 id="4-handoff-start-a-new-thread" class="tsd-anchor-link">4) Handoff (start a new thread)<a href="#4-handoff-start-a-new-thread" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
-<p>Sometimes you need a fresh chat (for example, when the context window is exhausted or you’re switching clients). To preserve continuity without re‑explaining the project:</p>
+<p>STAN establishes a grounded, &quot;AI-first&quot; development cycle.</p>
+<p>Instead of &quot;magic,&quot; the AI works from the <strong>Ground Truth</strong> generated by your tools. You commit every step—broken or fixed—so you can rewind instantly.</p>
+<hr>
+<h2 id="1-run-validate-commit" class="tsd-anchor-link">1. Run (Validate &amp; Commit)<a href="#1-run-validate-commit" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>This is the <strong>Reality Check</strong>. The AI cannot know if code works just by reading it. It needs evidence.</p>
 <ol>
-<li>In your current chat, ask STAN for a “handoff” (e.g., “handoff for next thread”).</li>
-<li>STAN returns a single self‑identifying code block that contains:
+<li><strong>Execute:</strong> Run <code>stan run</code>.
 <ul>
-<li>Project signature (package name, stanPath, node range)</li>
-<li>Current state from the latest run (Build/Test/Lint/Typecheck/Docs/Knip)</li>
-<li>Outstanding tasks / near‑term focus</li>
-<li>Assistant startup checklist (what STAN should do first next thread)</li>
+<li>This executes <em>all</em> configured validation scripts (<code>test</code>, <code>lint</code>, <code>build</code>, <code>knip</code>, <code>docs</code>, <code>smoke</code>, etc.).</li>
+<li>It generates deterministic text outputs (<code>.stan/output/*.txt</code>) representing the comprehensive state of your project.</li>
 </ul>
 </li>
-<li>In the new chat:
+<li><strong>Commit:</strong> Run <code>git commit -am &quot;...&quot;</code>.
 <ul>
-<li>Paste the handoff block as the first message.</li>
-<li>Attach the latest <code>.stan/output/archive.tar</code> (and <code>archive.diff.tar</code> if present).</li>
-<li>STAN will verify the signature, load the prompt from the archive, and execute the startup checklist.</li>
+<li><strong>The Save Point:</strong> Commit the state immediately, whether the scripts passed or failed.</li>
+<li>This allows you to &quot;rewind&quot; the loop instantly if the next patch makes things worse.</li>
 </ul>
 </li>
 </ol>
-<p>Note: If you paste an existing handoff block into an ongoing chat, STAN treats it as input (it will not generate a new handoff unless you explicitly ask).</p>
-<h2 id="rinse-and-repeat" class="tsd-anchor-link">Rinse and repeat<a href="#rinse-and-repeat" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><strong>Decision Point:</strong></p>
 <ul>
-<li>Return to step 1 and continue until the feature is complete, CI is green, and the plan (<code>.stan/system/stan.todo.md</code>) is up‑to‑date.</li>
+<li><em>Green &amp; Complete?</em> → <strong>Release</strong>.</li>
+<li><em>Red or New Requirements?</em> → <strong>Snap</strong>.</li>
 </ul>
-<h2 id="why-this-loop" class="tsd-anchor-link">Why this loop?<a href="#why-this-loop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<hr>
+<h2 id="2-snap-sync" class="tsd-anchor-link">2. Snap (Sync)<a href="#2-snap-sync" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>This is the <strong>Context Bridge</strong>. You prepare the artifacts the AI needs to understand the current state.</p>
+<ol>
+<li><strong>Baseline:</strong> Run <code>stan snap</code>.
 <ul>
-<li>Reproducible context: all inputs to the discussion are deterministic (source snapshot + text outputs).</li>
-<li>Auditable diffs: patches are plain unified diffs with adequate context; failures come with actionable FEEDBACK.</li>
-<li>Minimal ceremony: one command to capture, one to apply.</li>
+<li>This updates the internal snapshot so <code>archive.diff.tar</code> will contain only changes made <em>after</em> this point.</li>
 </ul>
-<h2 id="pro-tips" class="tsd-anchor-link">Pro tips<a href="#pro-tips" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+</li>
+<li><strong>Upload:</strong> Attach artifacts to the chat.
 <ul>
-<li>Keep patches tight and anchored. Include ≥3 lines of context and use <code>a/</code> and <code>b/</code> path prefixes.</li>
-<li>Use <code>--check</code> before overwriting files; let FEEDBACK drive corrections instead of manual fixes.</li>
-<li>Update <code>.stan/system/stan.todo.md</code> as part of each change set; include a commit message (fenced) in chat.</li>
-<li>Prefer smaller loops (fewer files at a time) when exploring or refactoring to keep reviews fast and reliable.</li>
+<li><strong>New Thread:</strong> <code>archive.tar</code> (The full repo).</li>
+<li><strong>Same Thread:</strong> <code>archive.diff.tar</code> (The delta—keeps context usage low).</li>
+<li><strong>Always:</strong> Script outputs (<code>.stan/output/*.txt</code>)—the Ground Truth.</li>
 </ul>
-</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#the-stan-loop"><span>The <wbr/>STAN <wbr/>Loop</span></a><ul><li><a href="#1-build-snapshot"><span>1) <wbr/>Build &amp; <wbr/>Snapshot</span></a></li><li><a href="#2-share-baseline"><span>2) <wbr/>Share &amp; <wbr/>Baseline</span></a></li><li><a href="#3-discuss-patch"><span>3) <wbr/>Discuss &amp; <wbr/>Patch</span></a></li><li><a href="#4-handoff-start-a-new-thread"><span>4) <wbr/>Handoff (start a new thread)</span></a></li><li><a href="#rinse-and-repeat"><span>Rinse and repeat</span></a></li><li><a href="#why-this-loop"><span>Why this loop?</span></a></li><li><a href="#pro-tips"><span>Pro tips</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/stan-cli" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../modules.html">@karmaniverous/stan-cli</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
+</li>
+</ol>
+<hr>
+<h2 id="3-patch-the-intelligence" class="tsd-anchor-link">3. Patch (The Intelligence)<a href="#3-patch-the-intelligence" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>This is the <strong>Center of Gravity</strong>. Here, the assistant acts as architect and engineer.</p>
+<ol>
+<li><strong>Discuss:</strong> You review the &quot;Ground Truth&quot; (errors, lint warnings) together.</li>
+<li><strong>Plan:</strong> The assistant updates requirements (<code>stan.requirements.md</code>) and the dev plan (<code>stan.todo.md</code>).</li>
+<li><strong>Implement:</strong> The assistant generates code patches (Unified Diffs).</li>
+<li><strong>Draft:</strong> The assistant drafts the <strong>Commit Message</strong> for the work it just did.</li>
+<li><strong>Apply:</strong> Copy each code patch &amp; run <code>stan patch</code> to apply the changes locally.</li>
+</ol>
+<p><strong>Transition:</strong> Go immediately to <strong>Run</strong> to generate new truth and save the game.</p>
+<hr>
+<h2 id="managing-context-handoffs" class="tsd-anchor-link">Managing Context (Handoffs)<a href="#managing-context-handoffs" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Long context windows eventually degrade. To switch threads without losing momentum:</p>
+<ol>
+<li><strong>Ask for Handoff:</strong> In the old chat, say <code>handoff</code>.</li>
+<li><strong>Copy:</strong> STAN generates a single, self-identifying code block containing the project signature, current state, and immediate tasks.</li>
+<li><strong>Paste:</strong> Start a new chat, paste the handoff, and attach the <em>full</em> <code>archive.tar</code>.</li>
+</ol>
+<p>STAN verifies the signature and resumes work instantly.</p>
+<hr>
+<h2 id="why-this-works" class="tsd-anchor-link">Why this works<a href="#why-this-works" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><strong>Ground Truth &gt; Memory:</strong> The assistant doesn't guess what the code does; it reads the <code>test.txt</code> output you just generated.</li>
+<li><strong>Safety Net:</strong> Committing at the <strong>Run</strong> step means you never lose a working state, and you can always revert a hallucinated patch.</li>
+<li><strong>Focus:</strong> The <strong>Patch</strong> phase is purely for intelligence; the <strong>Run</strong> phase is purely for verification.</li>
+</ul>
+<h2 id="pro-tips" class="tsd-anchor-link">Pro Tips<a href="#pro-tips" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><strong>Scripts are everything:</strong> Add <code>knip</code>, <code>tsc</code>, <code>docs</code>, or smoke tests to your <code>stan.config.yml</code>. If a script produces text output, STAN can use it to verify integrity.</li>
+<li><strong>Context economy:</strong> Use <code>archive.diff.tar</code> for most turns. It’s tiny and keeps the assistant focused on recent changes.</li>
+<li><strong>Patch safely:</strong> Use <code>stan patch --check</code> if you're unsure about a complex refactor.</li>
+</ul>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#the-stan-loop"><span>The <wbr/>STAN <wbr/>Loop</span></a><ul><li><a href="#1-run-validate-commit"><span>1. <wbr/>Run (<wbr/>Validate &amp; <wbr/>Commit)</span></a></li><li><a href="#2-snap-sync"><span>2. <wbr/>Snap (<wbr/>Sync)</span></a></li><li><a href="#3-patch-the-intelligence"><span>3. <wbr/>Patch (<wbr/>The <wbr/>Intelligence)</span></a></li><li><a href="#managing-context-handoffs"><span>Managing <wbr/>Context (<wbr/>Handoffs)</span></a></li><li><a href="#why-this-works"><span>Why this works</span></a></li><li><a href="#pro-tips"><span>Pro <wbr/>Tips</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/stan-cli" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../modules.html">@karmaniverous/stan-cli</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

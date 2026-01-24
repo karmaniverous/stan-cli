@@ -8,51 +8,35 @@
 <p>You get portable, auditable, reproducible context—locally and in CI.</p>
 <p>Because a freaking chatbot shouldn’t gaslight your code.</p>
 <hr>
-<h2 id="quick-start" class="tsd-anchor-link">Quick start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
-<h3 id="1-install" class="tsd-anchor-link">1. Install<a href="#1-install" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">i</span><span class="hl-1"> -</span><span class="hl-0">g</span><span class="hl-1"> @</span><span class="hl-0">karmaniverous</span><span class="hl-1">/</span><span class="hl-0">stan</span><span class="hl-1">-</span><span class="hl-0">cli</span><br/><span class="hl-1"># </span><span class="hl-0">or</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-0">add</span><span class="hl-1"> -</span><span class="hl-0">g</span><span class="hl-1"> @</span><span class="hl-0">karmaniverous</span><span class="hl-1">/</span><span class="hl-0">stan</span><span class="hl-1">-</span><span class="hl-0">cli</span><br/><span class="hl-1"># </span><span class="hl-0">or</span><br/><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-0">global</span><span class="hl-1"> </span><span class="hl-0">add</span><span class="hl-1"> @</span><span class="hl-0">karmaniverous</span><span class="hl-1">/</span><span class="hl-0">stan</span><span class="hl-1">-</span><span class="hl-0">cli</span>
-</code><button>Copy</button></pre>
-
-<h3 id="2-initialize-in-your-repo" class="tsd-anchor-link">2. Initialize in your repo<a href="#2-initialize-in-your-repo" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">init</span>
-</code><button>Copy</button></pre>
-
+<h2 id="getting-started" class="tsd-anchor-link">Getting Started<a href="#getting-started" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Please see the <a href="documents/Getting_Started.html">Getting Started</a> guide for setup instructions.</p>
+<hr>
+<h2 id="the-stan-loop" class="tsd-anchor-link">The STAN Loop<a href="#the-stan-loop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>STAN drives a rigorous, iterative development process:</p>
+<ol>
+<li>
+<p><strong>Run (Validate &amp; Commit)</strong></p>
 <ul>
-<li>Creates stan.config.yml and scaffolds STAN docs under <stanPath> (default .stan).</li>
-<li>Adds sensible .gitignore entries for <stanPath> subfolders (including imports/).</li>
+<li>Run <code>stan run</code> to execute all scripts (test, lint, build, etc.) and generate the &quot;Ground Truth&quot; outputs.</li>
+<li>Run <code>git commit</code> to save the state (green or red).</li>
 </ul>
-<h3 id="3-run-the-loop" class="tsd-anchor-link">3. Run the loop<a href="#3-run-the-loop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+</li>
+<li>
+<p><strong>Snap (Sync)</strong></p>
 <ul>
-<li>
-<p><strong>Build &amp; Snapshot</strong></p>
-<p>Make any changes you like to your code. Then snapshot your code base and outputs from test, build &amp; diagnostic scripts with:</p>
-<pre><code><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">run</span>
-</code><button>Copy</button></pre>
-
-</li>
-<li>
-<p><strong>Share &amp; Baseline</strong></p>
-<p>Commit your changes.</p>
-<p>Attach <code>.stan/output/archive.tar</code> and your script outputs to your chat along with your requirements or comments. Or nothing: STAN will just advance your current dev plan. Use the smaller <code>archive.diff.tar</code> in subsequent turns to make the most your context window.</p>
-<p>Then baseline your next differential archive with:</p>
-<pre><code><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">snap</span>
-</code><button>Copy</button></pre>
-
-</li>
-<li>
-<p><strong>Discuss &amp; Patch</strong></p>
-<p>Iterate in chat until you have a set of patches that advance your dev plan in the direction you want to go. These will include updates to your requirements and your dev plan, as well as a detailed commit message!</p>
-<p>If you exhaust your context window, say <code>handoff</code>, copy the resulting document, and paste it into a new chat thread along with your latest artifacts.</p>
-<p>Apply each patch with:</p>
-<pre><code><span class="hl-0">stan</span><span class="hl-1"> </span><span class="hl-0">patch</span>
-</code><button>Copy</button></pre>
-
-</li>
-<li>
-<p><strong>Repeat</strong></p>
-<p>When all your tests are passing and all your requirements are met, you're done!</p>
-</li>
+<li>Run <code>stan snap</code> to baseline the diff.</li>
+<li>Upload artifacts (<code>archive.tar</code>/<code>diff.tar</code> + outputs) to the chat.</li>
 </ul>
+</li>
+<li>
+<p><strong>Patch (The Intelligence)</strong></p>
+<ul>
+<li>Discuss requirements and plan.</li>
+<li>The assistant implements changes and drafts a commit message.</li>
+<li>Run <code>stan patch</code> to apply changes, then return to <strong>Run</strong>.</li>
+</ul>
+</li>
+</ol>
 <hr>
 <h2 id="why-stan" class="tsd-anchor-link">Why STAN?<a href="#why-stan" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <ul>
@@ -65,7 +49,7 @@
 <hr>
 <h2 id="configuration-stanconfigyml" class="tsd-anchor-link">Configuration (stan.config.yml)<a href="#configuration-stanconfigyml" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>Minimal example:</p>
-<pre><code><span class="hl-2">stanPath</span><span class="hl-1">: .</span><span class="hl-0">stan</span><br/><span class="hl-2">includes</span><span class="hl-1">: []</span><br/><span class="hl-2">excludes</span><span class="hl-1">: []</span><br/><span class="hl-2">scripts</span><span class="hl-1">:</span><br/><span class="hl-1">  </span><span class="hl-2">build</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">build</span><br/><span class="hl-1">  </span><span class="hl-2">lint</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">lint</span><br/><span class="hl-1">  </span><span class="hl-2">test</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">test</span><br/><span class="hl-1">  </span><span class="hl-2">typecheck</span><span class="hl-1">: </span><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">run</span><span class="hl-1"> </span><span class="hl-0">typecheck</span>
+<pre><code><span class="hl-0">stanPath</span><span class="hl-1">: .</span><span class="hl-2">stan</span><br/><span class="hl-0">includes</span><span class="hl-1">: []</span><br/><span class="hl-0">excludes</span><span class="hl-1">: []</span><br/><span class="hl-0">scripts</span><span class="hl-1">:</span><br/><span class="hl-1">  </span><span class="hl-0">build</span><span class="hl-1">: </span><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">build</span><br/><span class="hl-1">  </span><span class="hl-0">lint</span><span class="hl-1">: </span><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">lint</span><br/><span class="hl-1">  </span><span class="hl-0">test</span><span class="hl-1">: </span><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test</span><br/><span class="hl-1">  </span><span class="hl-0">typecheck</span><span class="hl-1">: </span><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">typecheck</span>
 </code><button>Copy</button></pre>
 
 <p>See <a href="documents/Stan_Configuration.html">STAN Configuration</a> for more!</p>
@@ -85,7 +69,7 @@
 
 </li>
 </ul>
-<p>See <a href="documents/CLI_Usage___Examples.html">CLI Usage &amp; Examples</a> for more!</p>
+<p>See <a href="documents/guides_cli-examples.html">CLI Usage &amp; Examples</a> for more!</p>
 <hr>
 <h2 id="documentation" class="tsd-anchor-link">Documentation<a href="#documentation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <ul>
@@ -95,9 +79,9 @@
 <li>
 <p>Guides:</p>
 <ul>
-<li><a href="documents/Getting_Started.html">Getting Started</a> — Install the CLI, initialize a repo, and attach archives in chat. Recommended chat setup: import the STAN GPT agent into TypingMind (bootloader included; requires GPT‑5.2 access) via <a href="https://cloud.typingmind.com/characters/c-01KDYW9NG2KGMFN7FTC4MHRSKB" target="_blank" class="external">this link</a>.</li>
+<li><a href="documents/Getting_Started.html">Getting Started</a> — Set up your agent and run your first loop.</li>
 <li><a href="documents/The_STAN_Loop.html">The STAN Loop</a> — How Build &amp; Snapshot → Share &amp; Baseline → Discuss &amp; Patch work together.</li>
-<li><a href="documents/CLI_Usage___Examples.html">CLI Usage &amp; Examples</a> — Common flags and invocation patterns, including <code>-p</code>, <code>-P</code>, <code>-S</code>, <code>-A</code>, and <code>-c</code>.</li>
+<li><a href="documents/guides_cli-examples.html">CLI Usage &amp; Examples</a> — Common flags and invocation patterns, including <code>-p</code>, <code>-P</code>, <code>-S</code>, <code>-A</code>, and <code>-c</code>.</li>
 <li><a href="documents/Migration_%E2%80%94_Namespaced_Configuration.html">Migration — Namespaced Configuration</a> — Upgrade legacy configs using <code>stan init</code> (backs up <code>.bak</code>; supports <code>--dry-run</code>).</li>
 <li><a href="documents/Stan_Configuration.html">Stan Configuration</a> — All config keys, includes/excludes semantics, and phase‑scoped CLI defaults.</li>
 <li><a href="documents/Patch_Workflow___FEEDBACK.html">Patch Workflow &amp; Diagnostics</a> — Unified diff policy, diagnostics envelopes, and assistant expectations.</li>
@@ -105,7 +89,7 @@
 </ul>
 </li>
 <li>
-<p><a href="documents/Bootloader___Assistant_Setup.html">Bootloader &amp; Assistant Setup</a> — How the assistant loads <code>.stan/system/stan.system.md</code> from attached archives.</p>
+<p><a href="documents/Reference_%E2%80%94_The_Bootloader.html">Reference: The Bootloader</a> — How the assistant loads <code>.stan/system/stan.system.md</code> from attached archives.</p>
 </li>
 <li>
 <p>The following documents are maintained by STAN and live under <code>&lt;stanPath&gt;/system/</code> in your repo:</p>
@@ -122,9 +106,6 @@
 </li>
 <li>
 <p>Comparison: <a href="documents/Why_STAN_Over_Alternatives_.html">Why STAN Over Alternatives?</a></p>
-</li>
-<li>
-<p>Tutorial: <a href="documents/Tutorial_%E2%80%94_Quickstart_(End%E2%80%91to%E2%80%91End).html">Quickstart (End‑to‑End)</a></p>
 </li>
 <li>
 <p><a href="documents/FAQ.html">FAQ</a> — answers to common questions and pitfalls.</p>
@@ -181,4 +162,4 @@
 <p>BSD‑3‑Clause</p>
 <hr>
 <p>Built for you with ❤️ on Bali! Find more great tools &amp; templates on <a href="https://github.com/karmaniverous" target="_blank" class="external">my GitHub Profile</a>.</p>
-</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#stan-stan-tames-autoregressive-nonsense"><span>STAN — <wbr/>STAN <wbr/>Tames <wbr/>Autoregressive <wbr/>Nonsense</span></a><ul><li><a href="#quick-start"><span>Quick start</span></a></li><li><ul><li><a href="#1-install"><span>1. <wbr/>Install</span></a></li><li><a href="#2-initialize-in-your-repo"><span>2. <wbr/>Initialize in your repo</span></a></li><li><a href="#3-run-the-loop"><span>3. <wbr/>Run the loop</span></a></li></ul></li><li><a href="#why-stan"><span>Why <wbr/>STAN?</span></a></li><li><a href="#configuration-stanconfigyml"><span>Configuration (stan.config.yml)</span></a></li><li><a href="#commands-at-a-glance"><span>Commands at a glance</span></a></li><li><a href="#documentation"><span>Documentation</span></a></li><li><a href="#troubleshooting"><span>Troubleshooting</span></a></li><li><a href="#contributing"><span>Contributing</span></a></li><li><a href="#built-with-stan"><span>Built <wbr/>With <wbr/>Stan</span></a></li><li><a href="#license"><span>License</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/stan-cli" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="modules.html">@karmaniverous/stan-cli</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#stan-stan-tames-autoregressive-nonsense"><span>STAN — <wbr/>STAN <wbr/>Tames <wbr/>Autoregressive <wbr/>Nonsense</span></a><ul><li><a href="#getting-started"><span>Getting <wbr/>Started</span></a></li><li><a href="#the-stan-loop"><span>The <wbr/>STAN <wbr/>Loop</span></a></li><li><a href="#why-stan"><span>Why <wbr/>STAN?</span></a></li><li><a href="#configuration-stanconfigyml"><span>Configuration (stan.config.yml)</span></a></li><li><a href="#commands-at-a-glance"><span>Commands at a glance</span></a></li><li><a href="#documentation"><span>Documentation</span></a></li><li><a href="#troubleshooting"><span>Troubleshooting</span></a></li><li><a href="#contributing"><span>Contributing</span></a></li><li><a href="#built-with-stan"><span>Built <wbr/>With <wbr/>Stan</span></a></li><li><a href="#license"><span>License</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/stan-cli" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="modules.html">@karmaniverous/stan-cli</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
