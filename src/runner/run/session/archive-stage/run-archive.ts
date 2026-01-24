@@ -9,7 +9,6 @@ type ArchivePhase = (
       includes?: string[];
       excludes?: string[];
       imports?: Record<string, string[]>;
-      anchors?: string[];
     };
     includeOutputs: boolean;
   },
@@ -68,7 +67,6 @@ export const runArchiveUnified = async (args: {
     includes?: string[];
     excludes?: string[];
     imports?: Record<string, string[]>;
-    anchors?: string[];
   };
   baseDiff: {
     stanPath: string;

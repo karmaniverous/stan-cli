@@ -86,13 +86,13 @@ export const registerRunOptions = (
   );
   const optNoArchive = new Option('-A, --no-archive', 'do not create archives');
   const optCombine = new Option(
-    '-c, --combine',
+    '-b, --combine',
     'include script outputs inside archives and do not keep them on disk',
   )
     .implies({ archive: true })
     .conflicts(['keep']);
   const optNoCombine = new Option(
-    '-C, --no-combine',
+    '-B, --no-combine',
     'do not include outputs inside archives',
   );
   // Parse-time conflict: -c conflicts with -A (combine implies archives).
@@ -220,48 +220,19 @@ export const registerRunOptions = (
   optHangKill.default(eff.hangKill);
   optHangKillGrace.default(eff.hangKillGrace);
 
-  // Facet overlay (breaking change):
-  // -f, --facets      → overlay ON for this run
-  // -F, --no-facets   → overlay OFF for this run
-  // Per-run overrides (do not persist to facet.state.json):
-  //   --facets-on  <names...>  → force these facets active for this run
-  //   --facets-off <names...>  → force these facets inactive for this run
-  const optFacets = new Option(
-    '-f, --facets',
-    'enable facet overlay for this run',
+  // Context mode
+  const optContext = new Option(
+    '-c, --context',
+    'enable context mode (dependency graph & staged imports)',
   );
-  const optNoFacets = new Option(
-    '-F, --no-facets',
-    'disable facet overlay for this run',
-  );
-  const optFacetsOn = new Option(
-    '--facets-on <names...>',
-    'force named facets active for this run (does not persist)',
-  );
-  const optFacetsOff = new Option(
-    '--facets-off <names...>',
-    'force named facets inactive for this run (does not persist)',
-  );
-
-  // Prevent ambiguous combinations (explicit overlay-off cannot be combined with per-run overrides).
-  optNoFacets.conflicts(['facetsOn', 'facetsOff']);
-
-  // Tag default overlay state from cliDefaults.run.facets
+  const optNoContext = new Option('-C, --no-context', 'disable context mode');
   try {
-    tagDefault(eff.facets ? optFacets : optNoFacets, true);
+    tagDefault(eff.context ? optContext : optNoContext, true);
   } catch {
-    /* best‑effort */
+    /* best-effort */
   }
 
-  cmd
-    .addOption(optFacets)
-    .addOption(optNoFacets)
-    .addOption(optFacetsOn)
-    .addOption(optFacetsOff);
-
-  // Overlay event presence (action resolves behavior)
-  cmd.on('option:facets', () => void 0);
-  cmd.on('option:no-facets', () => void 0);
+  cmd.addOption(optContext).addOption(optNoContext);
 
   // Help footer
   cmd.addHelpText('after', () => renderAvailableScriptsHelp(process.cwd()));

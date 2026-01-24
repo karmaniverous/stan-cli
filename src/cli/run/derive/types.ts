@@ -13,7 +13,7 @@ export type RunDefaultsShape = {
   hangKill: number;
   hangKillGrace: number;
   prompt: string;
-  facets: boolean;
+  context: boolean;
 };
 
 /** Public return type for deriveRunParameters. */

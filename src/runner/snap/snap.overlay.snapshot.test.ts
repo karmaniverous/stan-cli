@@ -1,23 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Pure, contract-level test:
- * - Mock core and overlay/default helpers.
- * - Verify that handleSnap() calls core.writeArchiveSnapshot with:
- *     includes = engine includes,
- *     excludes = engine excludes ∪ overlay excludesOverlay,
- *     anchors  = overlay anchorsOverlay.
+ * Pure, contract-level test (simplified after facet removal):
+ * - Mock core helpers.
+ * - Verify that handleSnap() calls core.writeArchiveSnapshot with correct selection.
  *
  * No filesystem side-effects; no snapshot file reads.
  */
 
-describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
+describe('snap: snapshot baseline (pure call contract)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
-  it('passes overlay excludes/anchors together with engine selection into writeArchiveSnapshot', async () => {
+  it('passes engine selection into writeArchiveSnapshot', async () => {
     // Arrange mocks (capture fn refs for assertions)
     const ensureOutputDirMock = vi.fn(async () => {
       // satisfy require-await without behavior changes
@@ -39,7 +36,6 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
       stanPath: string;
       includes?: string[];
       excludes?: string[];
-      anchors?: string[];
     };
 
     const writeSnapshotMock = vi.fn(async (_args: SnapshotArgs) => {
@@ -56,25 +52,7 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
       writeArchiveSnapshot: writeSnapshotMock,
     }));
 
-    // Mock overlay: enabled=true; one subtree root + one anchor
-    const ov = {
-      enabled: true,
-      excludesOverlay: ['docs/**'],
-      anchorsOverlay: ['docs/README.md'],
-      effective: {},
-      autosuspended: [],
-      anchorsKeptCounts: {},
-      overlapKeptCounts: {},
-    };
-    vi.doMock('@/runner/overlay/facets', () => ({
-      __esModule: true,
-      computeFacetOverlay: vi.fn(async () => {
-        await Promise.resolve(); // satisfy require-await
-        return ov;
-      }),
-    }));
-
-    // Mock run defaults: overlay enabled by default
+    // Mock run defaults
     vi.doMock('@/cli/run/derive/run-defaults', () => ({
       __esModule: true,
       getRunDefaults: () =>
@@ -89,7 +67,7 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
           hangKill: 300,
           hangKillGrace: 10,
           prompt: 'auto',
-          facets: true,
+          context: false,
         }) as const,
     }));
 
@@ -112,13 +90,9 @@ describe('snap: overlay-aware snapshot baseline (pure call contract)', () => {
     // includes from engine config
     expect(call.includes).toEqual(['**/*.md', 'out/imports/**']);
 
-    // excludes = engine excludes ∪ overlay excludes
+    // excludes = engine excludes
     const excl = new Set(call.excludes ?? []);
     expect(excl.has('CHANGELOG.md')).toBe(true);
-    expect(excl.has('docs/**')).toBe(true);
-
-    // anchors = overlay anchors
-    expect(call.anchors).toEqual(['docs/README.md']);
 
     // stanPath resolved
     expect(call.stanPath).toBe('out');

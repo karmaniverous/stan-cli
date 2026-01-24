@@ -10,6 +10,8 @@ export type Selection = string[] | null;
 export type ExecutionMode = 'concurrent' | 'sequential';
 
 // Runner-local config (CLI-owned scripts + engine stanPath)
+import type { DependencyContext } from '@karmaniverous/stan-core';
+
 import type { ScriptMap } from '@/cli/config/schema';
 
 /** Runner-local configuration (CLI-owned scripts + engine selection inputs). */
@@ -23,14 +25,15 @@ export type RunnerConfig = {
    * When present, these are honored by createArchive/createArchiveDiff.
    */
   includes?: string[];
-  /** Deny-list globs (engine config excludes plus any overlay-composed excludes). */
+  /** Deny-list globs. */
   excludes?: string[];
   /** Optional imports map used to stage external context into <stanPath>/imports. */
   imports?: Record<string, string[]>;
-  /** High-precedence re-includes (passed to core; subject to reserved denials). */
-  anchors?: string[];
-  /** Optional extra plan lines (facet view) printed in the run plan. */
-  overlayPlan?: string[];
+  /**
+   * Optional dependency context (meta, state, sources) for context mode.
+   * When present, archive phase uses "WithDependencyContext" helpers.
+   */
+  dependency?: DependencyContext;
 };
 /**
  * Behavior flags controlling archive/combine/keep semantics:
@@ -44,6 +47,8 @@ export type RunBehavior = {
   combine?: boolean;
   /** Keep (do not clear) the output directory before running. */
   keep?: boolean;
+  /** Enable context mode (dependency graph & staged imports). */
+  context?: boolean;
   /** Create archive.tar and archive.diff.tar. */
   archive?: boolean;
   /** Enable the live TTY UI when available. */

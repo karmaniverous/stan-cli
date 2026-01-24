@@ -102,6 +102,7 @@ const cliDefaultsRunSchema = z
     hangKillGrace: z.coerce.number().int().positive().optional(),
     scripts: z.union([z.boolean(), z.array(z.string())]).optional(),
     prompt: z.string().optional(),
+    context: coerceBool,
   })
   .strict()
   .optional();

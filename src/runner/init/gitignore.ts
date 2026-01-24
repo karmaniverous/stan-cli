@@ -25,9 +25,9 @@ export const ensureStanGitignore = async (
     `${rel('dist')}/`,
     `${rel('patch')}/`,
     `${rel('imports')}/`,
+    `${rel('context')}/`,
     // System files: ephemeral state/metadata should never be committed.
     // Keep these gitignored explicitly (and add deterministically if absent).
-    rel('system/facet.state.json'),
     rel('system/.docs.meta.json'),
   ];
 

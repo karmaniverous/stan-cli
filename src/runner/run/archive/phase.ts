@@ -1,7 +1,16 @@
 import { rm } from 'node:fs/promises';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
-import { createArchive, createArchiveDiff } from '@karmaniverous/stan-core';
+import type {
+  ContextConfig,
+  DependencyContext,
+  SelectionReport,
+} from '@karmaniverous/stan-core';
+import {
+  createArchive,
+  createArchiveDiff,
+  createArchiveDiffWithDependencyContext,
+  createArchiveWithDependencyContext,
+} from '@karmaniverous/stan-core';
 
 import { stanDirs } from '@/runner/paths';
 import {
@@ -12,10 +21,10 @@ import {
 import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { alert, ok } from '@/runner/util/color';
 
-type WithAnchors = {
+type WithDeps = {
   includes?: string[];
   excludes?: string[];
-  anchors?: string[];
+  dependency?: DependencyContext;
 };
 
 // Progress callbacks for live renderer integration
@@ -48,7 +57,7 @@ type ArchiveProgress = {
 export const archivePhase = async (
   args: {
     cwd: string;
-    config: ContextConfig & WithAnchors;
+    config: ContextConfig & WithDeps;
     includeOutputs: boolean;
   },
   opts?: {
@@ -78,6 +87,24 @@ export const archivePhase = async (
   },
 ): Promise<{ archivePath?: string; diffPath?: string }> => {
   const { cwd, config, includeOutputs } = args;
+  const { dependency } = config;
+
+  const reportSelection = (report: SelectionReport) => {
+    const { kind, counts, hasWarnings } = report;
+    const c = counts;
+    const parts = [
+      `candidates ${c.candidates}`,
+      `selected ${c.selected}`,
+      `archived ${c.archived}`,
+    ];
+    if (c.excludedBinaries > 0) parts.push(`binaries ${c.excludedBinaries}`);
+    if (c.largeText > 0) parts.push(`large ${c.largeText}`);
+    const warn = hasWarnings ? ' (warnings)' : '';
+    const label = kind === 'diff' ? 'diff' : kind === 'meta' ? 'meta' : 'full';
+    // Print to console (CLI-owned)
+    console.log(`stan: selection (${label}): ${parts.join(', ')}${warn}`);
+  };
+
   const silent = Boolean(opts?.silent);
   const which: 'both' | 'full' | 'diff' = opts?.which ?? 'both';
   const doStage = opts?.stage !== false;
@@ -109,12 +136,28 @@ export const archivePhase = async (
       if (shouldContinue && !shouldContinue()) return { archivePath, diffPath };
       opts?.progress?.start?.('full');
       const startedFull = Date.now();
-      archivePath = await createArchive(cwd, config.stanPath, {
-        includeOutputDir: includeOutputs,
-        includes,
-        excludes: config.excludes ?? [],
-        anchors: config.anchors ?? [],
-      });
+
+      if (dependency) {
+        archivePath = await createArchiveWithDependencyContext({
+          cwd,
+          stanPath: config.stanPath,
+          dependency,
+          archive: {
+            includeOutputDir: includeOutputs,
+            includes,
+            excludes: config.excludes ?? [],
+            onSelectionReport: reportSelection,
+          },
+        });
+      } else {
+        archivePath = await createArchive(cwd, config.stanPath, {
+          includeOutputDir: includeOutputs,
+          includes,
+          excludes: config.excludes ?? [],
+          onSelectionReport: reportSelection,
+        });
+      }
+
       opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
       // Late-cancel cleanup: if a cancellation arrived right after FULL completed,
       // prefer to remove the freshly created archive immediately to avoid any
@@ -143,16 +186,35 @@ export const archivePhase = async (
       if (shouldContinue && !shouldContinue()) return { archivePath, diffPath };
       opts?.progress?.start?.('diff');
       const startedDiff = Date.now();
-      const out = await createArchiveDiff({
-        cwd,
-        stanPath: config.stanPath,
-        baseName: 'archive',
-        includes,
-        excludes: config.excludes ?? [],
-        anchors: config.anchors ?? [],
-        updateSnapshot: 'createIfMissing',
-        includeOutputDirInDiff: includeOutputs,
-      });
+
+      let out: { diffPath: string };
+      if (dependency) {
+        out = await createArchiveDiffWithDependencyContext({
+          cwd,
+          stanPath: config.stanPath,
+          dependency,
+          diff: {
+            baseName: 'archive',
+            includes,
+            excludes: config.excludes ?? [],
+            updateSnapshot: 'createIfMissing',
+            includeOutputDirInDiff: includeOutputs,
+            onSelectionReport: reportSelection,
+          },
+        });
+      } else {
+        out = await createArchiveDiff({
+          cwd,
+          stanPath: config.stanPath,
+          baseName: 'archive',
+          includes,
+          excludes: config.excludes ?? [],
+          updateSnapshot: 'createIfMissing',
+          includeOutputDirInDiff: includeOutputs,
+          onSelectionReport: reportSelection,
+        });
+      }
+
       diffPath = out.diffPath;
       opts?.progress?.done?.('diff', diffPath, startedDiff, Date.now());
       // Late-cancel cleanup: if cancellation lands immediately after DIFF,

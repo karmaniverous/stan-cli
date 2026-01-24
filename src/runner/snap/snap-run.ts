@@ -7,8 +7,6 @@
 
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
-import { getRunDefaults } from '@/cli/run/derive/run-defaults';
-import { computeFacetOverlay } from '@/runner/overlay/facets';
 import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { utcStamp } from '@/runner/util/time';
 
@@ -142,7 +140,6 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         stanPath: string;
         includes?: string[];
         excludes?: string[];
-        anchors?: string[];
       }) => Promise<string>;
       default?: {
         loadConfig?: (cwd: string) => Promise<{
@@ -155,7 +152,6 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
           stanPath: string;
           includes?: string[];
           excludes?: string[];
-          anchors?: string[];
         }) => Promise<string>;
         ensureOutputDir?: (
           cwd: string,
@@ -194,53 +190,21 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
       }
       let includes: string[] = [];
       let excludes: string[] = [];
-      // Overlay inputs derived the same way as “run”:
-      // - overlay enabled state from cliDefaults.run.facets
-      // - inactive facets contribute subtree excludes; anchors re-include breadcrumbs
-      let anchors: string[] = [];
-      let overlayExcludes: string[] = [];
       try {
         const cfg = loadConfigFn ? await loadConfigFn(cwd) : null;
         includes = Array.isArray(cfg?.includes) ? cfg.includes : [];
         excludes = Array.isArray(cfg?.excludes) ? cfg.excludes : [];
         includes = withImplicitImportsInclude(stanPath, includes);
-        // Decide overlay enablement from run defaults (snap has no facet flags).
-        const eff = getRunDefaults(cwd);
-        try {
-          const ov = await computeFacetOverlay({
-            cwd,
-            stanPath,
-            enabled: eff.facets,
-            activate: [],
-            deactivate: [],
-            nakedActivateAll: false,
-          });
-          // Always keep anchors (breadcrumbs) materialized in snapshot selection.
-          anchors = Array.isArray(ov.anchorsOverlay) ? ov.anchorsOverlay : [];
-          // Only map subtree roots into excludes when overlay is enabled.
-          overlayExcludes =
-            ov.enabled && Array.isArray(ov.excludesOverlay)
-              ? ov.excludesOverlay
-              : [];
-        } catch {
-          // best-effort overlay; fall back to engine selection only
-          anchors = [];
-          overlayExcludes = [];
-        }
       } catch {
         // best-effort
         includes = [];
         excludes = [];
-        anchors = [];
-        overlayExcludes = [];
       }
-      const excludesFinal = [...excludes, ...overlayExcludes];
       await writeSnapshotFn({
         cwd,
         stanPath,
         includes,
-        excludes: excludesFinal,
-        anchors,
+        excludes,
       });
     }
   } catch {

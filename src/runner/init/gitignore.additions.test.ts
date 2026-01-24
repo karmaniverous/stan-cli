@@ -37,7 +37,7 @@ describe('ensureStanGitignore — adds system state/metadata files', () => {
         'out/dist/',
         'out/patch/',
         'out/imports/',
-        'out/system/facet.state.json',
+        'out/context/',
         'out/system/.docs.meta.json',
       ]),
     );

@@ -14,7 +14,7 @@ export const BASELINE: RunDefaultsShape = {
   ...RUN_BASE_DEFAULTS,
   plan: true,
   prompt: 'auto',
-  facets: false,
+  context: false,
 };
 
 /** Minimal sync parser for cliDefaults.run from stan.config.* (namespaced first; legacy fallback). */
@@ -66,7 +66,7 @@ export const readRunDefaultsFromConfig = (dir?: string): RunDefaultsShape => {
       sequential: toBool(run['sequential']) ?? BASELINE.sequential,
       live: toBool(run['live']) ?? BASELINE.live,
       plan: toBool(run['plan']) ?? BASELINE.plan,
-      facets: toBool(run['facets']) ?? BASELINE.facets,
+      context: toBool(run['context']) ?? BASELINE.context,
       hangWarn: pickNum(run['hangWarn'], BASELINE.hangWarn),
       hangKill: pickNum(run['hangKill'], BASELINE.hangKill),
       hangKillGrace: pickNum(run['hangKillGrace'], BASELINE.hangKillGrace),

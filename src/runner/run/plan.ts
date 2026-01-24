@@ -47,6 +47,7 @@ export const renderRunPlan = (
     `archive: ${behavior.archive ? 'yes' : 'no'}`,
     `combine: ${behavior.combine ? 'yes' : 'no'}`,
     `keep output dir: ${behavior.keep ? 'yes' : 'no'}`,
+    `context: ${behavior.context ? 'yes' : 'no'}`,
     `live: ${behavior.live ? 'yes' : 'no'}`,
     `hang warn: ${typeof behavior.hangWarn === 'number' ? behavior.hangWarn.toString() : 'n/a'}s`,
     `hang kill: ${typeof behavior.hangKill === 'number' ? behavior.hangKill.toString() : 'n/a'}s`,
@@ -55,10 +56,6 @@ export const renderRunPlan = (
         ? behavior.hangKillGrace.toString()
         : 'n/a'
     }s`,
-    // Optional Facet view (supplied by action via RunnerConfig.overlayPlan)
-    ...(Array.isArray(config.overlayPlan) && config.overlayPlan.length
-      ? ['facet view:', ...config.overlayPlan.map((l) => `  ${l}`)]
-      : []),
   ];
   return `stan:\n  ${lines.join('\n  ')}`;
 };

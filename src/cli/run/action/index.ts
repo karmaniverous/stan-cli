@@ -1,9 +1,16 @@
 import path from 'node:path';
 
-import type { ContextConfig } from '@karmaniverous/stan-core';
+import type {
+  ContextConfig,
+  DependencyContext,
+} from '@karmaniverous/stan-core';
 import {
+  buildDependencyMeta,
+  createMetaArchive,
   findConfigPathSync,
   resolveStanPathSync,
+  stageDependencyContext,
+  writeDependencyMetaFile,
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
@@ -16,14 +23,11 @@ import { resolveEffectiveEngineConfig } from '@/runner/config/effective';
 import { runSelected } from '@/runner/run';
 import { renderRunPlan } from '@/runner/run/plan';
 import type { RunnerConfig } from '@/runner/run/types';
-import { updateDocsMetaOverlay } from '@/runner/system/docs-meta';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
 import { assertNoScriptsConflict } from './conflict';
 import { runLoopHeaderAndGuard } from './loop';
-import type { ResolvedOverlayForRun } from './overlay-flow';
-import { resolveOverlayForRun } from './overlay-flow';
 import { makeRunnerConfig } from './runner-config';
 import { resolveScriptsForRun } from './scripts';
 
@@ -99,15 +103,40 @@ export const registerRunAction = (
       dir: runCwd,
     });
 
-    // Overlay mapping (defaults + per-run overrides; SSR-safe)
-    const resolvedOverlay: ResolvedOverlayForRun = await resolveOverlayForRun({
-      cwd: runCwd,
-      stanPath: config.stanPath,
-      cmd,
-      options,
-    });
-    const { overlayInputs, overlayEnabled, activateNames, deactivateNames } =
-      resolvedOverlay;
+    // Context Mode (dependency graph)
+    let dependency: DependencyContext | undefined;
+    if (derived.behavior.context) {
+      console.log('stan: building dependency graph...');
+      const built = await buildDependencyMeta({
+        cwd: runCwd,
+        stanPath: config.stanPath,
+        selection: {
+          includes: config.includes ?? [],
+          excludes: config.excludes ?? [],
+        },
+      });
+      await writeDependencyMetaFile({
+        cwd: runCwd,
+        stanPath: config.stanPath,
+        meta: built.meta,
+      });
+      await stageDependencyContext({
+        cwd: runCwd,
+        stanPath: config.stanPath,
+        meta: built.meta,
+        sources: built.sources,
+        clean: true,
+      });
+      await createMetaArchive(runCwd, config.stanPath);
+      // "meta archive always created when context is in effect" -> done.
+      // Pass dependency info to runner so it can do "WithDependencyContext" archives.
+      dependency = {
+        meta: built.meta,
+        sources: built.sources,
+        state: undefined,
+        clean: false,
+      };
+    }
 
     // Defensive: ensure live default honors config when CLI flag not provided.
     try {
@@ -125,9 +154,7 @@ export const registerRunAction = (
     const runnerConfig: RunnerConfig = makeRunnerConfig({
       config,
       scriptsMap: scriptsMap,
-      engineExcludes: overlayInputs.engineExcludes,
-      anchors: overlayInputs.overlay?.anchorsOverlay,
-      overlayPlan: overlayInputs.overlayPlan,
+      dependency,
     });
 
     const planBody = renderRunPlan(runCwd, {
@@ -152,21 +179,6 @@ export const registerRunAction = (
       );
       console.log(planBody);
       return;
-    }
-
-    // Persist overlay metadata (best-effort)
-    try {
-      await updateDocsMetaOverlay(runCwd, config.stanPath, {
-        enabled: overlayEnabled,
-        activated: activateNames,
-        deactivated: deactivateNames,
-        effective: overlayInputs.overlay?.effective,
-        autosuspended: overlayInputs.overlay?.autosuspended,
-        anchorsKept: overlayInputs.overlay?.anchorsKeptCounts,
-        overlapKept: overlayInputs.overlay?.overlapKeptCounts,
-      });
-    } catch {
-      /* best-effort */
     }
 
     const defaultPrintPlan = getRunDefaults(runCwd).plan;

@@ -42,6 +42,7 @@ export function deriveRunParameters(args: {
     keep: eff.keep,
     sequential: eff.sequential,
     live: eff.live,
+    context: eff.context,
   } as const;
   const effNums = {
     hangWarn: eff.hangWarn,
@@ -68,6 +69,7 @@ export function deriveRunParameters(args: {
   const combine = boolFinal('combine');
   const keep = boolFinal('keep');
   const sequential = boolFinal('sequential');
+  const context = boolFinal('context');
   let live = boolFinal('live');
   let archive = boolFinal('archive');
   // Explicit -A from CLI always wins
@@ -164,6 +166,7 @@ export function deriveRunParameters(args: {
     combine,
     keep,
     archive,
+    context,
     live,
     hangWarn: hangWarnFinal,
     hangKill: hangKillFinal,

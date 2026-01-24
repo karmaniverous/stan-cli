@@ -10,14 +10,12 @@ export const makeBaseConfigs = (
     includes?: string[];
     excludes?: string[];
     imports?: Record<string, string[]>;
-    anchors?: string[];
   };
   diff: {
     stanPath: string;
     includes?: string[];
     excludes?: string[];
     imports?: Record<string, string[]>;
-    anchors?: string[];
   };
 } => {
   const full = {

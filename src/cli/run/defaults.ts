@@ -13,4 +13,5 @@ export const RUN_BASE_DEFAULTS = {
   hangWarn: 120,
   hangKill: 300,
   hangKillGrace: 10,
+  context: false,
 } as const;
