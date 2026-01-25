@@ -101,6 +101,11 @@ stan init
 
 ### `stan run`
 
+Context mode (`--context`):
+
+- When enabled, STAN builds the dependency graph and stages dependency context.
+- STAN creates `archive.meta.tar` as a thread opener on every context-mode run (no `--meta` CLI option).
+
 Produces deterministic outputs and (when enabled) archives:
 
 - Script outputs: `<stanPath>/output/<key>.txt` (combined stdout/stderr).

@@ -105,11 +105,6 @@ export const registerRunOptions = (
     'enable context mode (dependency graph & staged imports)',
   );
   const optNoContext = new Option('-C, --no-context', 'disable context mode');
-  const optMeta = new Option(
-    '--meta',
-    'bootstrap mode: create meta archive only (implies --context, --no-scripts, --no-archive)',
-  );
-
   // Output dir
   const optKeep = new Option(
     '-k, --keep',
@@ -152,7 +147,6 @@ export const registerRunOptions = (
     .addOption(optNoArchive)
     .addOption(optContext)
     .addOption(optNoContext)
-    .addOption(optMeta)
     .addOption(optCombine)
     .addOption(optNoCombine)
     .addOption(optKeep)

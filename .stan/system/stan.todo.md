@@ -4,12 +4,8 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 
 ## Next up (priority order)
 
-- Inject `typescript` module into `buildDependencyMeta` call in `src/cli/run/action/index.ts` to fix context mode runtime error.
-- Create interop note for `stan-core` regarding `stan run -c` TypeScript resolution failure.
-- Add `@karmaniverous/stan-context` to dependencies (required for context mode runtime).
-- Create interop note for `stan-core` regarding the missing scratch file check in the system prompt checklist.
-- Reorder `stan run -h` flags: place `--context`/`--no-context` immediately after `--no-archive`.
-- Implement `--meta` (Bootstrap Mode) in CLI: implies context, skips scripts/full-archive, produces meta archive only.
+- Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
+- Remove remaining docs references to the (now removed) `--meta` option, and ensure docs consistently describe meta archive behavior in context mode.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)
@@ -27,3 +23,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Refactor `DependencyContext` to use inferred types from `stan-core` (remove `any`).
 - Fix `onSelectionReport` type error in `archive/phase.ts` using safe parameter casting instead of `any`.
 - Export `DependencyContext` from `src/runner/run/index.ts` to resolve TypeDoc warning.
+- Removed `--meta` run option; meta archive is created on every context-mode run.
+- Updated docs/requirements to match the no-`--meta` context-mode contract.
+- Added stan-core interop note requesting snap hash fast-path from dependency.map.json.

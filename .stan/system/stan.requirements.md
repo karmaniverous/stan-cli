@@ -82,11 +82,10 @@ Out of scope for the CLI:
 - Flags:
   - `--context`: Enable context mode (mutually exclusive with Facets).
   - `--no-context`: Disable context mode.
-  - `--meta` (long only): Bootstrap mode.
-    - Requires Context Mode.
-    - Generates an archive containing **ONLY** the System files (Prompts, Plans, Requirements), Staged Imports, and the Dependency Graph.
-    - Ignores source files (treats `context.meta.json` as empty).
-    - Used at the start of a thread to give the AI the "Map" without the "Territory".
+- Meta archive:
+  - A meta archive is created on every `stan run --context` (no dedicated CLI flag).
+  - It serves as a thread opener and includes the normal repo-root selection plus dependency context artifacts (per engine selection rules).
+  - Host-private mapping files (e.g., `dependency.map.json`) must not be included in assistant-facing archives.
 - When Context Mode is active, Facets are disabled.
 
 ---
