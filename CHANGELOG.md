@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.13.0-3](https://github.com/karmaniverous/stan-cli/compare/0.13.0-2...0.13.0-3)
+
+- fix: externalize all dependencies to fix asset resolution [`894245b`](https://github.com/karmaniverous/stan-cli/commit/894245b5718ff947ba5d84d0e592c0b8f48acd10)
+
 #### [0.13.0-2](https://github.com/karmaniverous/stan-cli/compare/0.13.0-1...0.13.0-2)
 
+> 26 January 2026
+
+- chore: release v0.13.0-2 [`4f6426b`](https://github.com/karmaniverous/stan-cli/commit/4f6426b9eac0753bc23f32510347806ef013805b)
 - fix: exclude typescript from bundle to prevent ESM runtime error [`db58fd9`](https://github.com/karmaniverous/stan-cli/commit/db58fd95c8178eb7f08ce373d4c5da1dd2da67bf)
 
 #### [0.13.0-1](https://github.com/karmaniverous/stan-cli/compare/0.13.0-0...0.13.0-1)
