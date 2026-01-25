@@ -7,6 +7,7 @@ import {
   findConfigPathSync,
   resolveStanPathSync,
   stageDependencyContext,
+  writeDependencyMapFile,
   writeDependencyMetaFile,
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
@@ -119,11 +120,15 @@ export const registerRunAction = (
         stanPath: config.stanPath,
         meta: built.meta,
       });
+      await writeDependencyMapFile({
+        cwd: runCwd,
+        stanPath: config.stanPath,
+        map: built.map,
+      });
       await stageDependencyContext({
         cwd: runCwd,
         stanPath: config.stanPath,
-        meta: built.meta,
-        sources: built.sources,
+        map: built.map,
         clean: true,
       });
       await createMetaArchive(runCwd, config.stanPath);
@@ -132,7 +137,7 @@ export const registerRunAction = (
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
       dependency = {
         meta: built.meta,
-        sources: built.sources,
+        map: built.map,
         state: undefined,
         clean: false,
       };

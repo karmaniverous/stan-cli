@@ -19,7 +19,7 @@ type DependencyMetaResult = Awaited<ReturnType<typeof buildDependencyMeta>>;
 export type DependencyContext = {
   // Inferred types from core to avoid explicit any and strict coupling to unexported types
   meta: DependencyMetaResult['meta'];
-  sources: DependencyMetaResult['sources'];
+  map: DependencyMetaResult['map'];
   state?: unknown;
   clean?: boolean;
 };

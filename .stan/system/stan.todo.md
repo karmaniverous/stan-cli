@@ -25,4 +25,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Export `DependencyContext` from `src/runner/run/index.ts` to resolve TypeDoc warning.
 - Removed `--meta` run option; meta archive is created on every context-mode run.
 - Updated docs/requirements to match the no-`--meta` context-mode contract.
-- Added stan-core interop note requesting snap hash fast-path from dependency.map.json.
+- Added stan-core interop note requesting snap hash fast-path from dependency.map.json.
+- Updated `stan run -c` implementation to support dependency context v2 (map/meta split, write map file).
