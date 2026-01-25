@@ -1,3 +1,9 @@
+# Scratch: Meta Archive Fix
+
+## Current Status
+- Fixed `stan run -c` deleting `archive.meta.tar`.
+- Moved `ensureOutputDir` to execute before context mode logic.
+- Forced `keep: true` for the downstream runner to preserve the generated meta archive.
 # Scratch: Bundle Fix
 
 ## Current Status

@@ -4,6 +4,7 @@ import type { ContextConfig } from '@karmaniverous/stan-core';
 import {
   buildDependencyMeta,
   createMetaArchive,
+  ensureOutputDir,
   findConfigPathSync,
   resolveStanPathSync,
   stageDependencyContext,
@@ -102,6 +103,9 @@ export const registerRunAction = (
       dir: runCwd,
     });
 
+    // Pre-clean output dir (so we can write meta archive safely without it being wiped by the runner)
+    await ensureOutputDir(runCwd, config.stanPath, derived.behavior.keep);
+
     // Context Mode (dependency graph)
     let dependency: DependencyContext | undefined;
     if (derived.behavior.context) {
@@ -131,7 +135,10 @@ export const registerRunAction = (
         map: built.map,
         clean: true,
       });
-      await createMetaArchive(runCwd, config.stanPath);
+      const metaArch = await createMetaArchive(runCwd, config.stanPath);
+      console.log(
+        `stan: created meta archive ${path.relative(runCwd, metaArch).replace(/\\/g, '/')}`,
+      );
 
       // "meta archive always created when context is in effect"
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
@@ -214,7 +221,9 @@ export const registerRunAction = (
       runnerConfig,
       derived.selection,
       derived.mode,
-      derived.behavior,
+      // We already handled output clearing/retention via the explicit ensureOutputDir call above.
+      // Pass keep: true to prevent the runner from clearing the directory again (which would delete the meta archive).
+      { ...derived.behavior, keep: true },
       derived.promptChoice,
     );
   });
