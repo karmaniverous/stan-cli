@@ -8,6 +8,7 @@
 <ul>
 <li><code>&lt;stanPath&gt;/output/archive.tar</code> — full snapshot of repo files (excludes binaries).</li>
 <li><code>&lt;stanPath&gt;/output/archive.diff.tar</code> — changed files vs snapshot (always when archiving; binaries are also screened out).</li>
+<li><code>&lt;stanPath&gt;/output/archive.meta.tar</code> — thread opener (system files + dependency meta/state). Generated only when context mode is enabled.</li>
 <li><code>*.txt</code> outputs — deterministic stdout/stderr from scripts.</li>
 </ul>
 <p>Attach <code>archive.tar</code> (and <code>archive.diff.tar</code> if present) to your chat.</p>

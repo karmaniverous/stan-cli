@@ -2,9 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.13.0-1](https://github.com/karmaniverous/stan-cli/compare/0.13.0-0...0.13.0-1)
+
+- docs(cli): drop --meta; add core snap note [`561f717`](https://github.com/karmaniverous/stan-cli/commit/561f717ecb8cbf09416075986ed859b160521030)
+- docs: update meta archive and context/combine flag references [`726cec0`](https://github.com/karmaniverous/stan-cli/commit/726cec08b7c532233913d0b0351b7b7338518931)
+- fix: update context mode for dependency v2 (map/meta split) [`4a8b5f0`](https://github.com/karmaniverous/stan-cli/commit/4a8b5f0395344068b2bf2ab553482f9e9c61baa4)
+
 #### [0.13.0-0](https://github.com/karmaniverous/stan-cli/compare/0.12.4...0.13.0-0)
 
+> 24 January 2026
+
 - When: 2026-01-23 12:45 UTC [`a2ea1cf`](https://github.com/karmaniverous/stan-cli/commit/a2ea1cf222f90dd316899149171b8a948995d376)
+- chore: release v0.13.0-0 [`213e0db`](https://github.com/karmaniverous/stan-cli/commit/213e0db7aca74f2a729c2ed016b8c8a31d9ee7ba)
 - When: 2025-02-19 [`dd90110`](https://github.com/karmaniverous/stan-cli/commit/dd90110c45952d410f31319badf2bbb4df504ffa)
 - updated dependencies [`8d62515`](https://github.com/karmaniverous/stan-cli/commit/8d625158e67e5e802c6f063bd73a1ee25a053312)
 - When: 2025-05-15 10:00:00Z [`bdce951`](https://github.com/karmaniverous/stan-cli/commit/bdce9510bbda352977c2622bc5bfe19a841cfaba)
