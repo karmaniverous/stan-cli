@@ -5,7 +5,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 ## Next up (priority order)
 
 - Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
-- Remove remaining docs references to the (now removed) `--meta` option, and ensure docs consistently describe meta archive behavior in context mode.
 - Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)
@@ -26,4 +25,6 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Removed `--meta` run option; meta archive is created on every context-mode run.
 - Updated docs/requirements to match the no-`--meta` context-mode contract.
 - Added stan-core interop note requesting snap hash fast-path from dependency.map.json.
-- Updated `stan run -c` implementation to support dependency context v2 (map/meta split, write map file).
+- Updated `stan run -c` implementation to support dependency context v2 (map/meta split, write map file).
+- Updated docs to remove `--meta`, document `archive.meta.tar`, and fix `-b` (combine) vs `-c` (context) flag references.
+- Added TSDocs to `DependencyContext` and exported `DependencyMetaResult` (hidden) to resolve TypeDoc warnings.

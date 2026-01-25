@@ -77,7 +77,7 @@ See [STAN Configuration](./guides/configuration.md) for more!
   stan run -S              # do not run scripts (combine with -A/-p)
   stan run -x test         # run all except “test”
   stan run -q -s lint test # sequential run subset in provided order
-  stan run -c -s test      # combine archives & outputs
+  stan run -b -s test      # combine archives & outputs
   stan run -A              # do not create archives
   stan run -p              # print plan only, no side effects
   stan run -P              # do not print the plan first

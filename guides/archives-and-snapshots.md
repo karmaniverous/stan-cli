@@ -12,6 +12,7 @@ Related guides:
 
 - `<stanPath>/output/archive.tar` — full snapshot of repo files (excludes binaries).
 - `<stanPath>/output/archive.diff.tar` — changed files vs snapshot (always when archiving; binaries are also screened out).
+- `<stanPath>/output/archive.meta.tar` — thread opener (system files + dependency meta/state). Generated only when context mode is enabled.
 - `*.txt` outputs — deterministic stdout/stderr from scripts.
 
 Attach `archive.tar` (and `archive.diff.tar` if present) to your chat.

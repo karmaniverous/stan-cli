@@ -100,10 +100,13 @@ stan run -F
 ```
 
 - -a, --archive / -A, --no-archive
-  - Create (or skip) archive.tar and archive.diff.tar. Built‑in default: archive enabled unless explicitly negated. Note: -c implies -a.
-- -c, --combine / -C, --no-combine
+  - Create (or skip) archive.tar and archive.diff.tar. Built‑in default: archive enabled unless explicitly negated. Note: -b implies -a.
+- -b, --combine / -B, --no-combine
   - Include .stan/output inside archives and remove outputs from disk (combine mode).
   - Conflicts with -A (cannot combine while disabling archives).
+- -c, --context / -C, --no-context
+  - Enable context mode (dependency graph & staged imports).
+  - Generates `archive.meta.tar` (thread opener) in addition to full/diff archives.
 - -k, --keep / -K, --no-keep
   - Keep (do not clear) the output directory across runs.
 
@@ -152,7 +155,7 @@ Notes:
 
 Conflicts and special cases:
 
-- -c conflicts with -A (combine implies archives).
+- -b conflicts with -A (combine implies archives).
 - -S conflicts with -s and -x.
 - -S plus -A (scripts disabled and archives disabled) => “nothing to do; plan only”.
 
@@ -177,7 +180,7 @@ stan run -x test
 stan run -q -s lint test
 
 # Combine mode and plan
-stan run -c -p               # plan only; combine would include outputs in archives
+stan run -b -p               # plan only; combine would include outputs in archives
 
 # Keep outputs on disk even after runs
 stan run -k
@@ -301,7 +304,7 @@ stan-cli:
     # Run defaults
     run:
       archive: true # -a / -A; combine implies archive=true
-      combine: false # -c / -C
+      combine: false # -b / -B
       keep: false # -k / -K
       sequential: false # -q / -Q
       plan: true # print the run plan header before execution when -p/-P not specified
@@ -381,5 +384,5 @@ stan patch -f fix.patch      # apply unified diff
 stan run -q -s lint test     # sequential; run only lint and test
 
 # Combine mode and plan
-stan run -c -p               # plan only; combine would include outputs in archives
+stan run -b -p               # plan only; combine would include outputs in archives
 ```

@@ -1,17 +1,11 @@
-# Scratch: Dependency Context v2 Fix
+# Scratch: Docs Cleanup
 
 ## Current Status
-- Updated `stan-cli` to align with `stan-core` v2 dependency context model (`map` + `meta` split).
-- Replaced `sources` with `map` in types and action flow.
-- Added `writeDependencyMapFile` call.
-# Scratch: System Prompt Gap
+- All tests passed.
+- Addressing TypeDoc warnings for `DependencyContext` to ensure a clean release.
+- Preparing for release.
+# Scratch: Docs Alignment
 
 ## Current Status
-
-- Identified root cause of `stan run -c` failure: `stan-core` requires host injection of `typescript`.
-- Implemented injection in `src/cli/run/action/index.ts`.
-
-## Next Steps
-
-- Verify docs build.
-- Release prep (changelog/versioning).
+- Updated documentation (`guides/`, `README.md`) to reflect the removal of `--meta` and the correct flags for combine (`-b`) and context (`-c`) modes.
+- Added `archive.meta.tar` description to archives guide.

@@ -54,7 +54,7 @@ stan-cli:
     boring: false
     run:
       archive: true
-      combine: false
+      combine: false # -b / -B
       keep: false
       sequential: false
       plan: true

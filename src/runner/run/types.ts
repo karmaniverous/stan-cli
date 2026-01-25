@@ -14,13 +14,24 @@ import type { buildDependencyMeta } from '@karmaniverous/stan-core';
 
 import type { ScriptMap } from '@/cli/config/schema';
 
-type DependencyMetaResult = Awaited<ReturnType<typeof buildDependencyMeta>>;
+/**
+ * Return type helper for dependency graph build (internal).
+ * @hidden
+ */
+export type DependencyMetaResult = Awaited<
+  ReturnType<typeof buildDependencyMeta>
+>;
 
+/** Dependency context object passed to the runner for context-aware archiving. */
 export type DependencyContext = {
   // Inferred types from core to avoid explicit any and strict coupling to unexported types
+  /** Dependency graph metadata (assistant-facing). */
   meta: DependencyMetaResult['meta'];
+  /** Dependency node map (host-private). */
   map: DependencyMetaResult['map'];
+  /** Optional dependency selection state. */
   state?: unknown;
+  /** Whether to clean the staging area before staging. */
   clean?: boolean;
 };
 
