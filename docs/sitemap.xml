@@ -2,114 +2,114 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/index.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/modules.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/hierarchy.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Getting_Started.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Reference_%E2%80%94_The_Bootloader.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/The_STAN_Loop.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/guides_cli-examples.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Stan_Configuration.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Patch_Workflow___FEEDBACK.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Archives___Snapshots.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Why_STAN_Over_Alternatives_.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Case_Study_%E2%80%94_rrstack.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/FAQ.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Migration_%E2%80%94_Namespaced_Configuration.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/Contributing_%E2%80%94_Dev_Quickstart.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/STAN_assistant_guide_(stan-cli).html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/documents/CHANGELOG.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/modules/index.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.DependencyContext.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.ExecutionMode.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.RunBehavior.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.RunnerConfig.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.ScriptEntry.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.ScriptMap.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.ScriptObject.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/types/index.Selection.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/functions/index.renderAvailableScriptsHelp.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/stan-cli/functions/index.runSelected.html</loc>
-		<lastmod>2026-01-25T17:21:59.481Z</lastmod>
+		<lastmod>2026-01-25T17:30:07.394Z</lastmod>
 	</url>
 </urlset>

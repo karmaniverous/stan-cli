@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.13.0-2](https://github.com/karmaniverous/stan-cli/compare/0.13.0-1...0.13.0-2)
+
+- fix: exclude typescript from bundle to prevent ESM runtime error [`db58fd9`](https://github.com/karmaniverous/stan-cli/commit/db58fd95c8178eb7f08ce373d4c5da1dd2da67bf)
+
 #### [0.13.0-1](https://github.com/karmaniverous/stan-cli/compare/0.13.0-0...0.13.0-1)
 
+> 26 January 2026
+
+- chore: release v0.13.0-1 [`0af3410`](https://github.com/karmaniverous/stan-cli/commit/0af341045fa848b5e4d621ae33ec6e782504021e)
 - docs(cli): drop --meta; add core snap note [`561f717`](https://github.com/karmaniverous/stan-cli/commit/561f717ecb8cbf09416075986ed859b160521030)
 - docs: update meta archive and context/combine flag references [`726cec0`](https://github.com/karmaniverous/stan-cli/commit/726cec08b7c532233913d0b0351b7b7338518931)
 - fix: update context mode for dependency v2 (map/meta split) [`4a8b5f0`](https://github.com/karmaniverous/stan-cli/commit/4a8b5f0395344068b2bf2ab553482f9e9c61baa4)
