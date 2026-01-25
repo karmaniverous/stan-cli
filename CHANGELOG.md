@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.13.0](https://github.com/karmaniverous/stan-cli/compare/0.13.0-3...0.13.0)
+
+- fix: preserve meta archive in context mode [`6c21013`](https://github.com/karmaniverous/stan-cli/commit/6c21013a5c0936fca457984fbe32933fd83faf58)
+
 #### [0.13.0-3](https://github.com/karmaniverous/stan-cli/compare/0.13.0-2...0.13.0-3)
 
+> 26 January 2026
+
+- chore: release v0.13.0-3 [`bf335c4`](https://github.com/karmaniverous/stan-cli/commit/bf335c4b42e86725eb5ef156c95c169b38657702)
 - fix: externalize all dependencies to fix asset resolution [`894245b`](https://github.com/karmaniverous/stan-cli/commit/894245b5718ff947ba5d84d0e592c0b8f48acd10)
 
 #### [0.13.0-2](https://github.com/karmaniverous/stan-cli/compare/0.13.0-1...0.13.0-2)
