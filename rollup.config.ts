@@ -16,15 +16,30 @@ import type {
   RollupOptions,
 } from 'rollup';
 import dtsPlugin from 'rollup-plugin-dts';
+import { createRequire } from 'node:module';
 
 const outputPath = 'dist';
 
-// Path alias @ -> <abs>/src (absolute to avoid module duplication warnings in Rollup)
+// Path alias @ -> <abs>/src
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const srcAbs = path.resolve(__dirname, 'src');
 const aliases: Alias[] = [{ find: '@', replacement: srcAbs }];
 const alias = aliasPlugin({ entries: aliases });
+
+// Externalize all production dependencies to avoid bundling issues (assets, singletons, __filename)
+// and to keep the distribution size small (relying on node_modules).
+const pkg = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'),
+) as { dependencies?: Record<string, string> };
+
+const externalPkgs = new Set([
+  ...(pkg.dependencies ? Object.keys(pkg.dependencies) : []),
+  // Explicit additions if needed (e.g. peer deps or optionals not in dependencies)
+  'clipboardy',
+  'fs-extra',
+  'typescript',
+]);
 
 // Treat Node built-ins and node: specifiers as external.
 const nodeExternals = new Set([
@@ -32,15 +47,9 @@ const nodeExternals = new Set([
   ...builtinModules.map((m) => `node:${m}`),
 ]);
 
-// Runtime deps that must not be bundled (rely on package assets / fallbacks)
-const externalPkgs = new Set<string>([
-  'clipboardy', // requires platform fallback binaries at runtime; bundling breaks resolution
-  // fs-extra is a runtime dependency; keep external to avoid bundling its internals.
-  'fs-extra',
-  // typescript relies on __filename/CJS globals that break when bundled into ESM.
-  'typescript',
-]);const copyDocsPlugin = (dest: string): Plugin => {
-  return {    name: 'stan-copy-docs',
+const copyDocsPlugin = (dest: string): Plugin => {
+  return {
+    name: 'stan-copy-docs',
     async writeBundle() {
       const fromSystem = path.resolve(__dirname, '.stan', 'system');
       const candidates = [
@@ -49,7 +58,8 @@ const externalPkgs = new Set<string>([
           dest: path.join(dest, 'stan.system.md'),
         },
       ];
-      try {        await fs.ensureDir(dest);
+      try {
+        await fs.ensureDir(dest);
         for (const c of candidates) {
           if (await fs.pathExists(c.src)) await fs.copyFile(c.src, c.dest);
         }
@@ -84,8 +94,9 @@ const commonInputOptions = (
     if (warning.code === 'CIRCULAR_DEPENDENCY') {
       const msg = String((warning as { message?: string }).message ?? '');
       const ids =
-        ((warning as unknown as { ids?: string[] }).ids as string[] | undefined) ??
-        [];
+        ((warning as unknown as { ids?: string[] }).ids as
+          | string[]
+          | undefined) ?? [];
       const fromNodeModules =
         (Array.isArray(ids) && ids.some((p) => p.includes('node_modules'))) ||
         /node_modules/.test(msg);
@@ -115,9 +126,9 @@ export const buildLibrary = (dest: string): RollupOptions => ({
 
 const discoverCliEntries = (): string[] => {
   const candidates = [
-    'src/cli/bin/stan.ts',     // preferred: single bootstrap
-    'src/cli/stan.ts',    // legacy fallback (should not exist post‑cleanup)
-    'src/cli/index.ts',   // last resort (library factory only)
+    'src/cli/bin/stan.ts', // preferred: single bootstrap
+    'src/cli/stan.ts', // legacy fallback (should not exist post‑cleanup)
+    'src/cli/index.ts', // last resort (library factory only)
   ];
   const found = candidates.filter((p) => fs.existsSync(p));
   // Prefer a single CLI entry to avoid duplicate bundles.
@@ -146,5 +157,6 @@ export const buildTypes = (dest: string): RollupOptions => ({
 
 export default [
   buildLibrary(outputPath),
-  buildCli(outputPath),  buildTypes(outputPath),
+  buildCli(outputPath),
+  buildTypes(outputPath),
 ];

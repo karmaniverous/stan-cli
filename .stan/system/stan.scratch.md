@@ -1,3 +1,10 @@
+# Scratch: Bundle Fix
+
+## Current Status
+- `stan run` failed to resolve system prompt in global install because `stan-core` was bundled, breaking its asset resolution logic.
+- Updated `rollup.config.ts` to externalize all production dependencies (including `stan-core`).
+- This aligns with standard node-cli practices and fixes asset/singleton issues.
+- Ready for release.
 # Scratch: Runtime Fix
 
 ## Current Status
