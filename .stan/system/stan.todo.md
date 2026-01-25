@@ -27,4 +27,5 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Added stan-core interop note requesting snap hash fast-path from dependency.map.json.
 - Updated `stan run -c` implementation to support dependency context v2 (map/meta split, write map file).
 - Updated docs to remove `--meta`, document `archive.meta.tar`, and fix `-b` (combine) vs `-c` (context) flag references.
-- Added TSDocs to `DependencyContext` and exported `DependencyMetaResult` (hidden) to resolve TypeDoc warnings.
+- Added TSDocs to `DependencyContext` and exported `DependencyMetaResult` (hidden) to resolve TypeDoc warnings.
+- Excluded `typescript` from the Rollup bundle to prevent `__filename` runtime errors in the CLI.

@@ -1,3 +1,9 @@
+# Scratch: Runtime Fix
+
+## Current Status
+- Release candidate failed due to `__filename` reference in bundled `typescript`.
+- Added `typescript` to external packages in Rollup config to prevent bundling.
+- Ready to rebuild and release patch.
 # Scratch: Docs Cleanup
 
 ## Current Status

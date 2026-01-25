@@ -37,6 +37,8 @@ const externalPkgs = new Set<string>([
   'clipboardy', // requires platform fallback binaries at runtime; bundling breaks resolution
   // fs-extra is a runtime dependency; keep external to avoid bundling its internals.
   'fs-extra',
+  // typescript relies on __filename/CJS globals that break when bundled into ESM.
+  'typescript',
 ]);const copyDocsPlugin = (dest: string): Plugin => {
   return {    name: 'stan-copy-docs',
     async writeBundle() {
