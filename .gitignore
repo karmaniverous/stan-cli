@@ -14,6 +14,5 @@ node_modules/
 .stan/output/
 .stan/patch/
 .stan/dist/
-.stan/system/facet.state.json
 .stan/system/.docs.meta.json
 .stan/imports/

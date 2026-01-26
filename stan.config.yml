@@ -1,7 +1,6 @@
 stan-cli:
   cliDefaults:
     run:
-      facets: false
       plan: false
       sequential: true
   patchOpenCommand: code -g {file}

@@ -2,7 +2,7 @@
 
 This document defines the durable requirements for STAN’s command‑line interface and runner (“stan‑cli”). The engine (“stan‑core”) exposes deterministic, presentation‑free services; stan‑cli remains a thin adapter over those services.
 
-The requirements below express the desired end‑state behavior of the CLI, including facet overlay semantics and test infrastructure choices.
+The requirements below express the desired end‑state behavior of the CLI, including test infrastructure choices.
 
 ---
 
@@ -14,7 +14,6 @@ Provide a stable CLI that:
 - Creates full and diff archives that capture the exact context to read.
 - Applies unified‑diff patches safely and emits concise diagnostics when needed.
 - Presents a live TTY UI (or logger output in non‑TTY) and robust cancellation.
-- Manages an optional facet overlay to reduce archive size without losing breadcrumbs.
 - Resolves and materializes the system prompt deterministically.
 - Stays transport‑agnostic by delegating selection/diff/patch to stan‑core.
 
@@ -28,7 +27,7 @@ Out of scope for the CLI:
 ## 2b) Workspace context (-w)
 
 - Global option: `-w, --workspace <query>` (root command).
-- Behavior: changes `process.chdir()` to the target directory *before* loading config or executing subcommands.
+- Behavior: changes `process.chdir()` to the target directory before loading config or executing subcommands.
 - Resolution:
   1. Directory: if `<query>` is a valid relative path, switch to it.
   2. Package name: parse `pnpm-workspace.yaml` (or `package.json` workspaces), find exact package name match, switch to its root.
@@ -41,7 +40,7 @@ Out of scope for the CLI:
 - CLI (adapters/presentation)
   - Acquire inputs (flags, clipboard, files), map them to core service inputs.
   - Render live progress or concise logs; handle TTY controls and exit codes.
-  - Compose overlay (facets → includes/excludes/anchors); do not re‑implement core selection.
+  - Compose selection inputs (includes/excludes); do not re‑implement core selection.
   - Open editors best‑effort; copy diagnostics to clipboard best‑effort.
 
 - Core (services/pure behavior)
@@ -80,13 +79,12 @@ Out of scope for the CLI:
 
 - Configuration: `cliDefaults.run.context` (boolean).
 - Flags:
-  - `--context`: Enable context mode (mutually exclusive with Facets).
+  - `--context`: Enable context mode.
   - `--no-context`: Disable context mode.
 - Meta archive:
   - A meta archive is created on every `stan run --context` (no dedicated CLI flag).
   - It serves as a thread opener and includes the normal repo-root selection plus dependency context artifacts (per engine selection rules).
   - Host-private mapping files (e.g., `dependency.map.json`) must not be included in assistant-facing archives.
-- When Context Mode is active, Facets are disabled.
 
 ---
 
@@ -128,103 +126,11 @@ Out of scope for the CLI:
 - Write/update `<stanPath>/diff/.archive.snapshot.json`.
 - Maintain bounded undo/redo under `<stanPath>/diff` with retention `maxUndos` (default 10).
 - Optional stash: `-s/--stash` (git stash -u then pop), `-S/--no-stash`. On failure to stash, abort without writing a snapshot.
-- Snapshot selection equals the run‑time selection rules composed by the CLI (repo includes/excludes, overlay anchors/excludes).
+- Snapshot selection equals the run‑time selection rules composed by the CLI (repo includes/excludes).
 
 ---
 
-## 7) Facet overlay (DEPRECATED)
-
-*Note: Facets are deprecated in favor of Context Mode. The logic below applies only when Context Mode is disabled.*
-
-Overlay lives entirely in the CLI. Core remains facet‑agnostic and receives only includes/excludes/anchors.
-
-- Files under `<stanPath>/system/` (included in archives):
-  - `facet.meta.json` (durable): facet name → `{ exclude: string[]; include: string[] }`
-    - exclude: subtree or leaf‑glob patterns to drop when inactive and overlay enabled.
-    - include: “anchors” that must always be kept (e.g., READMEs, indices).
-  - `facet.state.json` (ephemeral): name → boolean; `true` = active (no drop), `false` = inactive (drop its exclude patterns). Omitted facets default to active.
-
-Facet kinds (semantics)
-
-- Structural facets (subtree scopes)
-  - Defined by subtree patterns like `src/a/**`, `packages/**`, etc.
-  - When inactive (and overlay enabled), they hide the corresponding subtree(s) except for anchor documents.
-  - Nested structural facets must support refinement (e.g., enable a child subtree while keeping the rest of the parent subtree hidden).
-- Filter facets (leaf-glob scopes)
-  - Defined by leaf-glob patterns like `**/*.test.ts`.
-  - They behave as orthogonal filters: when inactive, matching files are hidden even inside active structural facets; when active, they do not force visibility outside active structural facets.
-  - In particular, enabling a filter facet must never cause matching files to appear inside a structural facet subtree that is inactive for the run.
-
-Archive inclusion (full archives)
-
-- `facet.state.json` is always included in full archives (anchored) whether or not it is gitignored. This allows downstream assistants to deterministically read the next‑run facet defaults from attached artifacts.
-- `facet.state.json` should also appear in the diff archive when it has changed since the current snapshot baseline.
-  - If it was not present in the snapshot baseline, it may appear once as “added” when the user changes the view mid-thread (acceptable).
-- This inclusion does not override reserved denials (e.g., `.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`, and archive outputs under `<stanPath>/output/…`).
-
-- Reserved denials and precedence (engine‑documented behavior, enforced by core):
-  - Anchors may re‑include paths after `.gitignore` and excludes but never override reserved denials:
-    - `.git/**`, `<stanPath>/diff/**`, `<stanPath>/patch/**`,
-    - archive outputs (`<stanPath>/output/archive*.tar`).
-  - Precedence: `excludes` override `includes`; `anchors` override both (subject to reserved denials and binary screening).
-
-- Overlay composition (CLI algorithm):
-  1. Determine effective facet activation for this run:
-     - Overlay enablement (boolean, no-args):
-       - `-f/--facets`: enable the facet overlay for this run.
-       - `-F/--no-facets`: disable the facet overlay for this run.
-     - Per-run overrides (names list; no file edits):
-       - `--facets-on <names...>`: set these facets active for this run.
-       - `--facets-off <names...>`: set these facets inactive for this run.
-     - When overlay is enabled, effective facet state precedence (highest to lowest):
-       - `--facets-on` / `--facets-off` per-run overrides (explicit wins),
-       - `facet.state.json` values,
-       - default for facets missing in state: active.
-     - `-f/--facets` enables the overlay only; it does not implicitly activate all facets. To make everything visible, set all facets to `true` in `facet.state.json` (or avoid marking any facet `false`).
-  2. Ramp‑up safety:
-     - Default/state-only safety: if a facet is inactive due to `facet.state.json` (or implicit defaults) and it has no anchor present under any of its excluded subtree roots, the CLI MAY auto‑suspend the drop for this run (treat as active) and report it in the plan/metadata.
-     - Explicit wins (Option Y): if the user explicitly requests `--facets-off <facet>`, the facet MUST remain inactive for that run even if it has no anchors (do not auto‑suspend explicit deactivations).
-  3. Compose overlay inputs for core:
-     - Start with repo `includes`/`excludes`.
-     - Add excludesOverlay for inactive structural facets (subtree scopes). Nested structural facets use the carve‑out rule below.
-     - Compute anchorsOverlay (union of all declared anchors + CLI-owned always-anchors such as facet.state.json), but do not use anchors to simulate filter behavior.
-  4. Nested structural facets (carve‑out, not “drop parent exclude”):
-     - Normalize exclude “roots” from `facet.meta.json` (strip `/**`/`/*`, drop trailing `/`).
-     - Required behavior: nested facets must support these scenarios for any two nested subtree facets:
-       - Include A but cut out B
-       - Include B but not the rest of A
-       - Include all of A (including B)
-       - Include neither
-     - Therefore, if an inactive subtree root contains one or more active descendant subtree roots:
-       - Do not discard the inactive root exclusion.
-       - Instead, compute excludes that remove everything under the inactive root except the active descendant subtree roots.
-       - Practical constraint: because the engine selection uses positive glob/prefix patterns, the CLI may implement this as an on-disk carve-out by enumerating immediate children under the inactive root and excluding each child that is not an ancestor of an active descendant root.
-         - Example: inactive `src/a/**` with active `src/a/b/**` results in excludes for `src/a/*` children other than `b` (and any other protected descendant roots).
-  5. Filter facets (leaf‑globs; tests are a filter):
-     - Leaf‑glob patterns (e.g., `**/*.test.ts`) must be treated as filters, not as re-inclusion mechanisms.
-     - The CLI MUST NOT add anchors such as `<inactiveRoot>/**/<tail>` or `<activeRoot>/**/<tail>` in order to “rescue” or “scope” leaf‑glob behavior.
-       - Rationale: anchors are high-precedence re-includes; using them for filters causes test files to appear inside subtrees that are otherwise disabled, which violates the filter semantics.
-     - Instead:
-       - When a filter facet is inactive (and overlay enabled), add its leaf‑glob patterns to the engine deny-list (`excludes`).
-       - When a filter facet is active, do not add those deny-list patterns.
-     - Filter facets must never override structural facets: enabling a filter facet must not surface any files inside inactive structural facet subtrees.
-  6. Pass to core:
-     - `includes: repo.includes`
-     - `excludes: repo.excludes ∪ excludesOverlay`
-     - `anchors: anchorsOverlay` (anchors are breadcrumbs, not filter machinery)
-
-- Plan and metadata:
-  - Plan “Facet view” shows overlay on/off, inactive facets, auto‑suspended facets, and anchor counts.
-  - CLI updates `<stanPath>/system/.docs.meta.json.overlay` with:
-    - `enabled`, `activated`, `deactivated`, `effective`, `autosuspended`, and `anchorsKept` (counts). Optional `overlapKept` may be recorded for diagnostics.
-
-- Diff archive anchor policy:
-  - The CLI must ensure the diff archive honors the same anchor set as the full archive (subject to reserved denials), so that anchored state (including gitignored state like `facet.state.json`) can appear in diffs when changed.
-  - The diff archive remains “changed since snapshot” (it must not include unchanged files), except that newly introduced anchored files may appear once if they were not present in the snapshot baseline.
-
----
-
-## 8) Testing and tooling (Vitest Option 1)
+## 7) Testing and tooling (Vitest Option 1)
 
 To minimize SSR‑related friction while keeping fast ESM testing:
 
@@ -251,12 +157,12 @@ To minimize SSR‑related friction while keeping fast ESM testing:
 
 ---
 
-## 9) Configuration and defaults
+## 8) Configuration and defaults
 
 - `cliDefaults` precedence: flags > `cliDefaults` > built‑ins.
 - Supported keys:
   - Root: `debug`, `boring`.
-  - Run: `archive`, `combine`, `keep`, `sequential`, `plan`, `live`, `hangWarn`, `hangKill`, `hangKillGrace`, `scripts`, `prompt`, `facets`.
+  - Run: `archive`, `combine`, `keep`, `sequential`, `plan`, `live`, `hangWarn`, `hangKill`, `hangKillGrace`, `scripts`, `prompt`.
   - Patch: `patch.file` (default filename).
   - Snap: `snap.stash`.
 - Baseline run defaults:
@@ -265,16 +171,16 @@ To minimize SSR‑related friction while keeping fast ESM testing:
 
 ---
 
-## 10) Error handling and guardrails
+## 9) Error handling and guardrails
 
 - Prompt resolution failure: early error; no scripts/archives; suggest an alternative source; non‑zero exit.
 - Cancellation: archives skipped on cancel path; gate prevents post‑cancel spawns; non‑zero exit best‑effort.
 - Avoid spurious prompt rewrites: compare bytes before materializing; restore original or remove when done.
-- Reserved denials: anchors and overlay never re‑include reserved paths; binaries remain screened by core.
+- Reserved denials: selection must never include reserved paths; binaries remain screened by core.
 
 ---
 
-## 11) Engine interactions (explicit)
+## 10) Engine interactions (explicit)
 
 The CLI composes these core surfaces (representative, stable):
 
@@ -283,9 +189,9 @@ The CLI composes these core surfaces (representative, stable):
   - `ensureOutputDir(cwd, stanPath, keep)`.
 
 - Archive/snapshot:
-  - `createArchive(cwd, stanPath, { includes?, excludes?, anchors?, includeOutputDir?, onArchiveWarnings? })`
-  - `createArchiveDiff({ cwd, stanPath, baseName, includes?, excludes?, anchors?, updateSnapshot, includeOutputDirInDiff?, onArchiveWarnings? })`
-  - `writeArchiveSnapshot({ cwd, stanPath, includes?, excludes?, anchors? })`
+  - `createArchive(cwd, stanPath, { includes?, excludes?, includeOutputDir?, onArchiveWarnings? })`
+  - `createArchiveDiff({ cwd, stanPath, baseName, includes?, excludes?, updateSnapshot, includeOutputDirInDiff?, onArchiveWarnings? })`
+  - `writeArchiveSnapshot({ cwd, stanPath, includes?, excludes? })`
   - `prepareImports({ cwd, stanPath, map })` (stages `.stan/imports/<label>/...`)
 
 - Imports inclusion policy (CLI-owned):
@@ -308,11 +214,10 @@ All core APIs are deterministic and presentation‑free; the CLI owns UX.
 
 ---
 
-## 12) Documentation and versioning
+## 11) Documentation and versioning
 
 - CLI help and docs must reflect:
   - Prompt resolution and plan line.
   - PATH augmentation and child env semantics.
-  - Facet overlay strategy (tie‑breaker and scoped re‑inclusion).
   - Vitest Option 1 testing model.
 - Semantic versioning; changelog calls out meaningful functional changes.

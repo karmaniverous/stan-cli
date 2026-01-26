@@ -1,6 +1,11 @@
-# Scratch: UI Fix for Meta Mode
+# Scratch: Remove Deprecated Faceting References
 
-## Current Status
-- Fixed `stan run --context --meta` showing a pending "archive (diff)" row in the live UI.
-- Updated `ui-queue` and `orchestrator` to skip queueing the diff row when `behavior.meta` is true.
-- Execution side was already correct (skipping diff generation).
+## Current focus
+- Faceting is fully deprecated/removed: eliminate mentions from repo docs and config, and delete any facet state/metadata files under `.stan/system/`.
+
+## Work completed in this turn
+- Removed facet meta/state files.
+- Removed references to facets/anchors in `.stan/system` docs (requirements + project prompt) and repo config.
+
+## Follow-ups to confirm
+- Regenerate and publish end-user docs (TypeDoc site) if it still contains legacy references (generated output).

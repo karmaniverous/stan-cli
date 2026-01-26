@@ -45,7 +45,7 @@ When tests run under Vitest SSR and worker forks, import‑time evaluation order
     - Pick functions via a “named‑or‑default” resolver:
       - prefer `mod.named`, fall back to `mod.default.named`, and finally to `mod.default` when it is a callable function.
   - Keep a minimal fallback when a peer cannot be resolved in tests (never in normal runtime), e.g.:
-    - run help defaults: fall back to a fully shaped baseline `{ ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false }`.
+    - run help defaults: fall back to a fully shaped baseline `{ ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto' }`.
     - snap defaults: when CLI defaults are unreadable, parse stan.config.\* directly (namespaced first, legacy root fallback) and map only the needed fields.
 
 - CLI parse normalization is idempotent
@@ -55,7 +55,7 @@ When tests run under Vitest SSR and worker forks, import‑time evaluation order
   - Doing this twice is safe and prevents “unknown command 'node'” in tests.
 
 - Known guardrails to keep
-  - Run help defaults: ensure fallback uses the fully shaped object `{ ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto', facets: false }`.
+  - Run help defaults: ensure fallback uses the fully shaped object `{ ...RUN_BASE_DEFAULTS, plan: true, prompt: 'auto' }`.
   - Optional helpers like `tagDefault(...)` must be behind `?.` (avoid throwing in help/SSR paths).
   - Live/hang thresholds: keep numeric baselines (hangWarn 120, hangKill 300, hangKillGrace 10).
   - Prompt and overlay: default `prompt: 'auto'`; overlay default off unless explicitly enabled.

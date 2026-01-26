@@ -1,11 +1,11 @@
 # STAN Development Plan
 
-Note: Aggressively enable/disable facets to keep visibility on current work while minimizing archive size. Resolve as many issues per turn as possible. No nibbles — take big bites.
+Note: Keep changes cohesive and high-signal. Resolve as many related issues per turn as possible. No nibbles — take big bites.
 
 ## Next up (priority order)
 
 - Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
-- Consider release prep for the breaking facet flag change (changelog/versioning) once you’re satisfied with the docs and test coverage.
+- Consider release prep for the breaking CLI behavior change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
 ## Completed (context essentials only)
 
@@ -35,3 +35,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Fixed test regression in `config.test.ts` and sent interop message to `stan-core`.
 - Corrected documentation to remove `archive.meta.tar` and describe `-m` meta-archive substitution.
 - Fixed live UI to skip "archive (diff)" row when running with `--meta`.
+- Removed deprecated faceting feature mentions and deleted facet system files.
