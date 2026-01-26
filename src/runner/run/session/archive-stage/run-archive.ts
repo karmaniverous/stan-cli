@@ -9,6 +9,7 @@ type ArchivePhase = (
       includes?: string[];
       excludes?: string[];
       imports?: Record<string, string[]>;
+      meta?: boolean;
     };
     includeOutputs: boolean;
   },
@@ -145,6 +146,11 @@ export const runArchiveUnified = async (args: {
             ],
           }
         : baseDiff;
+
+    // Skip diff if meta-only mode is active (archive.tar is meta; diff is undefined).
+    if (behavior.meta) {
+      return;
+    }
 
     const d = await archivePhase(
       { cwd, config: diffCfg, includeOutputs },

@@ -105,6 +105,11 @@ export const registerRunOptions = (
     'enable context mode (dependency graph & staged imports)',
   );
   const optNoContext = new Option('-C, --no-context', 'disable context mode');
+  const optMeta = new Option(
+    '-m, --meta',
+    'create a meta archive (system + context) instead of full source archive (requires --context)',
+  );
+
   // Output dir
   const optKeep = new Option(
     '-k, --keep',
@@ -129,7 +134,7 @@ export const registerRunOptions = (
 
   // System prompt source
   const optPrompt = new Option(
-    '-m, --prompt <value>',
+    '--prompt <value>',
     'system prompt source (auto|local|core|<path>)',
   );
   optPrompt.default('auto');
@@ -147,6 +152,7 @@ export const registerRunOptions = (
     .addOption(optNoArchive)
     .addOption(optContext)
     .addOption(optNoContext)
+    .addOption(optMeta)
     .addOption(optCombine)
     .addOption(optNoCombine)
     .addOption(optKeep)

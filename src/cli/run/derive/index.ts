@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { CommanderError } from 'commander';
 
 import type { ExecutionMode, RunBehavior } from '@/runner/run';
 
@@ -43,6 +44,7 @@ export function deriveRunParameters(args: {
     sequential: eff.sequential,
     live: eff.live,
     context: eff.context,
+    meta: eff.meta,
   } as const;
   const effNums = {
     hangWarn: eff.hangWarn,
@@ -96,6 +98,15 @@ export function deriveRunParameters(args: {
   if (combine) archive = true;
 
   // Numerics
+  const meta = boolFinal('meta');
+  if (meta && !context) {
+    // CommanderError to exit cleanly with help/usage style
+    throw new CommanderError(
+      1,
+      'stan.meta.requires.context',
+      'error: --meta requires --context',
+    );
+  }
   const hangWarnFinal = numFinal('hangWarn', RUN_BASE_DEFAULTS.hangWarn);
   const hangKillFinal = numFinal('hangKill', RUN_BASE_DEFAULTS.hangKill);
   const hangKillGraceFinal = numFinal(
@@ -169,6 +180,7 @@ export function deriveRunParameters(args: {
     keep,
     archive,
     context,
+    meta,
     live,
     hangWarn: hangWarnFinal,
     hangKill: hangKillFinal,

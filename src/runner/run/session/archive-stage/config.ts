@@ -1,15 +1,18 @@
 // src/runner/run/session/archive-stage/config.ts
 import type { RunnerConfig } from '@/runner/run/types';
+import type { RunBehavior } from '@/runner/run/types';
 
 /** Build FULL and DIFF base configs; DIFF honors anchors (changed-only via snapshot). */
 export const makeBaseConfigs = (
   config: RunnerConfig,
+  behavior: RunBehavior,
 ): {
   full: {
     stanPath: string;
     includes?: string[];
     excludes?: string[];
     imports?: Record<string, string[]>;
+    meta?: boolean;
   };
   diff: {
     stanPath: string;
@@ -23,6 +26,7 @@ export const makeBaseConfigs = (
     includes: config.includes ?? [],
     excludes: config.excludes ?? [],
     imports: config.imports,
+    meta: behavior.meta,
   };
   const diff = {
     stanPath: config.stanPath,

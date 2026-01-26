@@ -3,7 +3,6 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import {
   buildDependencyMeta,
-  createMetaArchive,
   ensureOutputDir,
   findConfigPathSync,
   resolveStanPathSync,
@@ -127,28 +126,17 @@ export const registerRunAction = (
       await writeDependencyMapFile({
         cwd: runCwd,
         stanPath: config.stanPath,
+
         map: built.map,
       });
       await stageDependencyContext({
         cwd: runCwd,
         stanPath: config.stanPath,
+
         map: built.map,
         clean: true,
       });
-      const metaArch = await createMetaArchive(
-        runCwd,
-        config.stanPath,
-        {
-          includes: config.includes ?? [],
-          excludes: config.excludes ?? [],
-        },
-        { includeOutputDir: derived.behavior.combine },
-      );
-      console.log(
-        `stan: created meta archive ${path.relative(runCwd, metaArch).replace(/\\/g, '/')}`,
-      );
 
-      // "meta archive always created when context is in effect"
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
       dependency = {
         meta: built.meta,

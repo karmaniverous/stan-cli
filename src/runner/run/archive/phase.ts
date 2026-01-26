@@ -1,4 +1,5 @@
-import { rm } from 'node:fs/promises';
+import { copyFile, rename, rm } from 'node:fs/promises';
+import path from 'node:path';
 
 import type { ContextConfig, SelectionReport } from '@karmaniverous/stan-core';
 import {
@@ -6,7 +7,9 @@ import {
   createArchiveDiff,
   createArchiveDiffWithDependencyContext,
   createArchiveWithDependencyContext,
+  createMetaArchive,
 } from '@karmaniverous/stan-core';
+import { exists } from 'fs-extra';
 
 import { stanDirs } from '@/runner/paths';
 import {
@@ -22,6 +25,7 @@ type WithDeps = {
   includes?: string[];
   excludes?: string[];
   dependency?: DependencyContext;
+  meta?: boolean;
 };
 
 // Progress callbacks for live renderer integration
@@ -135,7 +139,36 @@ export const archivePhase = async (
       opts?.progress?.start?.('full');
       const startedFull = Date.now();
 
-      if (dependency) {
+      if (config.meta) {
+        // Meta archive mode: generate meta archive and rename to archive.tar.
+        // Rotate existing archive.tar -> archive.prev.tar first.
+        const outDir = path.join(cwd, config.stanPath, 'output');
+        const tarAbs = path.join(outDir, 'archive.tar');
+        const prevAbs = path.join(
+          cwd,
+          config.stanPath,
+          'diff',
+          'archive.prev.tar',
+        );
+        if (await exists(tarAbs)) {
+          await copyFile(tarAbs, prevAbs);
+        }
+        const metaPath = await createMetaArchive(
+          cwd,
+          config.stanPath,
+          {
+            includes,
+            excludes: config.excludes ?? [],
+          },
+          {
+            includeOutputDir: includeOutputs,
+            onSelectionReport: reportSelection,
+          },
+        );
+        // Rename meta archive to standard archive.tar name so it serves as the full archive
+        await rename(metaPath, tarAbs);
+        archivePath = tarAbs;
+      } else if (dependency) {
         const res = await createArchiveWithDependencyContext({
           cwd,
           stanPath: config.stanPath,

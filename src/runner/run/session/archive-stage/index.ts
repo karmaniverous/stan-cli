@@ -40,7 +40,7 @@ export const runArchiveStage = async (args: {
   const stageImports = getStageImports();
 
   const systemAbs = path.join(cwd, config.stanPath, 'system', 'stan.system.md');
-  const { full: baseFull, diff: baseDiff } = makeBaseConfigs(config);
+  const { full: baseFull, diff: baseDiff } = makeBaseConfigs(config, behavior);
   const progress = buildArchiveProgress(ui, cwd);
 
   // Persist the prompt baseline best-effort (source + hash + path).

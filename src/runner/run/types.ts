@@ -70,6 +70,8 @@ export type RunBehavior = {
   keep?: boolean;
   /** Enable context mode (dependency graph & staged imports). */
   context?: boolean;
+  /** Create a meta archive (archive.tar = system+context) instead of full source. Requires context. */
+  meta?: boolean;
   /** Create archive.tar and archive.diff.tar. */
   archive?: boolean;
   /** Enable the live TTY UI when available. */

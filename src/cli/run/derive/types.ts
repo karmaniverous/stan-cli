@@ -14,6 +14,7 @@ export type RunDefaultsShape = {
   hangKillGrace: number;
   prompt: string;
   context: boolean;
+  meta: boolean;
 };
 
 /** Public return type for deriveRunParameters. */
