@@ -15,10 +15,11 @@ export function queueRowsAndMark(args: {
   selection: string[];
   config: RunnerConfig;
   includeArchives: boolean;
+  skipDiff?: boolean;
   cancelCtl: CancelController;
 }): string[] {
-  const { ui, selection, config, includeArchives, cancelCtl } = args;
-  const toRun = queueUiRows(ui, selection, config, includeArchives);
+  const { ui, selection, config, includeArchives, skipDiff, cancelCtl } = args;
+  const toRun = queueUiRows(ui, selection, config, includeArchives, skipDiff);
   cancelCtl.markQueued(toRun);
   try {
     const flush = (ui as unknown as { flushNow?: () => void }).flushNow;

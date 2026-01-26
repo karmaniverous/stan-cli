@@ -34,3 +34,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Refactored context mode to support `--meta` flag: replaces `archive.tar` with meta content and skips diffs; removed unconditional `archive.meta.tar`.
 - Fixed test regression in `config.test.ts` and sent interop message to `stan-core`.
 - Corrected documentation to remove `archive.meta.tar` and describe `-m` meta-archive substitution.
+- Fixed live UI to skip "archive (diff)" row when running with `--meta`.

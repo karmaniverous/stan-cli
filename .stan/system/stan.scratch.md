@@ -1,12 +1,6 @@
-# Scratch: Docs Sync
+# Scratch: UI Fix for Meta Mode
 
 ## Current Status
-- Removed `archive.meta.tar` references from documentation.
-- Documented `-m` flag behavior (replaces `archive.tar`, skips diff).
-- Sent interop confirmation to `stan-core`.
-# Scratch: Final Polish
-
-## Current Status
-- Fixed `typecheck` failure in `config.test.ts` (missing argument).
-- Wrote interop message to `stan-core`.
-- Ready for final release.
+- Fixed `stan run --context --meta` showing a pending "archive (diff)" row in the live UI.
+- Updated `ui-queue` and `orchestrator` to skip queueing the diff row when `behavior.meta` is true.
+- Execution side was already correct (skipping diff generation).

@@ -12,6 +12,7 @@ export const queueUiRows = (
   selection: string[] | null | undefined,
   config: RunnerConfig,
   includeArchives: boolean,
+  skipDiff?: boolean,
 ): string[] => {
   const toRun = (selection ?? []).filter((k) =>
     Object.prototype.hasOwnProperty.call(config.scripts, k),
@@ -30,10 +31,12 @@ export const queueUiRows = (
     } catch {
       /* ignore */
     }
-    try {
-      ui.onArchiveQueued('diff');
-    } catch {
-      /* ignore */
+    if (!skipDiff) {
+      try {
+        ui.onArchiveQueued('diff');
+      } catch {
+        /* ignore */
+      }
     }
   }
   return toRun;

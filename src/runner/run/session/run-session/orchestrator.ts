@@ -144,6 +144,7 @@ export const runSessionOnce = async (args: {
     selection,
     config,
     includeArchives: Boolean(behavior.archive),
+    skipDiff: Boolean(behavior.meta),
     cancelCtl,
   });
 
