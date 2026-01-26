@@ -1,11 +1,10 @@
-# Scratch: Remove Deprecated Faceting References
+# Scratch: Dependency Graph Mode Trigger (Thread-Sticky)
 
 ## Current focus
-- Faceting is fully deprecated/removed: eliminate mentions from repo docs and config, and delete any facet state/metadata files under `.stan/system/`.
+- Diagnose a failure mode where dependency graph mode becomes “invisible” on diff-only turns (because `.stan/context/dependency.meta.json` is unchanged and therefore omitted from `archive.diff.tar`).
 
 ## Work completed in this turn
-- Removed facet meta/state files.
-- Removed references to facets/anchors in `.stan/system` docs (requirements + project prompt) and repo config.
+- Wrote a stan-core interop note proposing a thread-sticky activation rule (once dependency meta is seen anywhere in a thread, keep updating `.stan/context/dependency.state.json`).
 
-## Follow-ups to confirm
-- Regenerate and publish end-user docs (TypeDoc site) if it still contains legacy references (generated output).
+## Follow-ups
+- Decide whether to encode this as baseline assistant guidance and/or a tooling behavior (always include dependency meta/state in context-mode archives).

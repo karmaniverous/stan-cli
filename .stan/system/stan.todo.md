@@ -35,4 +35,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed test regression in `config.test.ts` and sent interop message to `stan-core`.
 - Corrected documentation to remove `archive.meta.tar` and describe `-m` meta-archive substitution.
 - Fixed live UI to skip "archive (diff)" row when running with `--meta`.
-- Removed deprecated faceting feature mentions and deleted facet system files.
+- Removed deprecated faceting feature mentions and deleted facet system files.- Sent stan-core interop note: dependency graph mode activation should be thread-sticky (diff-only turns omit unchanged dependency meta).
