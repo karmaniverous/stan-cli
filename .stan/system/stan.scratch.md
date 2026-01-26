@@ -1,15 +1,6 @@
-# Scratch: TypeDoc coverage for exported symbols
+# Scratch: Fix dependency context diffs
 
-## Current focus
+## Recent fix
 
-- Add missing TypeDoc/TSDoc comments to all exported symbols that TypeDoc validates (`typedoc.json` has `validation.notDocumented: true`).
-- Ignore pure barrel re-exports (don’t add noise comments to `index.ts` files that only re-export).
-
-## Exploration approach (dependency graph mode)
-
-- Use `.stan/context/dependency.state.json` to stage the public entrypoint and its downstream modules into the next archive for editing.
-- Start from `src/index.ts` and the key `src/runner/**` modules likely re-exported from the entrypoint; iterate based on TypeDoc’s “not documented” failures.
-
-## Next step
-
-- Re-run the archive with context mode enabled so `src/index.ts` + downstream dependencies appear in the next archive, then add missing TSDoc comments to the specific exported symbols TypeDoc flags.
+- Updated `src/cli/run/action/index.ts` to read `.stan/context/dependency.state.json` and pass it to the runner.
+- This allows `stan-core` to use the explicit selection state for calculating diffs, ensuring newly selected dependency files appear in `archive.diff.tar`.
