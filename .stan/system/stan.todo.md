@@ -39,3 +39,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Removed deprecated faceting feature mentions and deleted facet system files.
 - Sent stan-core interop note: dependency graph mode activation should be thread-sticky (diff-only turns omit unchanged dependency meta).
 - Added initial dependency state selection to stage public API modules for TypeDoc coverage work.
+- Seeded `.stan/context/dependency.state.json` for the TypeDoc/TSDoc documentation sweep (public API + immediate deps).

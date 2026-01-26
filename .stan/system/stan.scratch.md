@@ -1,6 +1,11 @@
-# Scratch: Fix dependency context diffs
+# Scratch: Add missing TypeDoc/TSDoc on public exports
 
-## Recent fix
+## Current objective
 
-- Updated `src/cli/run/action/index.ts` to read `.stan/context/dependency.state.json` and pass it to the runner.
-- This allows `stan-core` to use the explicit selection state for calculating diffs, ensuring newly selected dependency files appear in `archive.diff.tar`.
+- Add missing TypeDoc/TSDoc comments to exported symbols (functions/classes/types/interfaces/enums) at their declaration sites.
+- Ignore barrel re-exports (document the original declarations, not the re-export lines).
+
+## Approach
+
+- Use dependency graph mode to stage the library entrypoint and its exported modules into the next archive via `.stan/context/dependency.state.json`.
+- Run `npm run docs` (TypeDoc with `validation.notDocumented=true`) to surface any remaining “not documented” warnings and iterate until clean.
