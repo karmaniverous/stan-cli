@@ -33,3 +33,4 @@ Note: Aggressively enable/disable facets to keep visibility on current work whil
 - Fixed `stan run -c` logic to preserve `archive.meta.tar` by pre-cleaning the output directory and disabling the runner's internal cleanup.
 - Refactored context mode to support `--meta` flag: replaces `archive.tar` with meta content and skips diffs; removed unconditional `archive.meta.tar`.
 - Fixed test regression in `config.test.ts` and sent interop message to `stan-core`.
+- Corrected documentation to remove `archive.meta.tar` and describe `-m` meta-archive substitution.

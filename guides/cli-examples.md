@@ -106,7 +106,9 @@ stan run -F
   - Conflicts with -A (cannot combine while disabling archives).
 - -c, --context / -C, --no-context
   - Enable context mode (dependency graph & staged imports).
-  - Generates `archive.meta.tar` (thread opener) in addition to full/diff archives.
+- -m, --meta
+  - Create a meta archive (system + context + meta/state) instead of a full source archive.
+  - Requires `--context`. `archive.tar` becomes the meta archive; no diff archive is produced.
 - -k, --keep / -K, --no-keep
   - Keep (do not clear) the output directory across runs.
 

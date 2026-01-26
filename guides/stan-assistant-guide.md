@@ -7,6 +7,7 @@ title: STAN assistant guide (stan-cli)
 This guide is a compact, self-contained usage contract for `@karmaniverous/stan-cli` (the CLI + runner). It is written so a STAN assistant can use and integrate the package correctly without consulting `.d.ts` files or other repo documentation.
 
 Related guides:
+
 - [Bootloader & Assistant Setup](./bootloader.md)
 - [Stan Configuration](./configuration.md)
 - [CLI Usage & Examples](./cli-examples.md)
@@ -23,11 +24,12 @@ Related guides:
 This package delegates “engine” responsibilities (file selection, archiving, diffing, patch pipeline internals) to `@karmaniverous/stan-core`.
 
 Definitions (local):
+
 - **TTY**: terminal mode where stdin/stdout are interactive (enables live UI + keypress capture).
 - **LLM**: large language model (the assistant you are talking to).
 - **Facet overlay**: a CLI-owned “view” that reduces archive size by excluding inactive subtrees while keeping breadcrumb “anchors”.
 
-## Configuration (stan.config.*)
+## Configuration (stan.config.\*)
 
 STAN resolves the nearest `stan.config.yml|yaml|json` by walking upward from `cwd`. The directory containing that config is treated as the effective repo root for the command.
 
@@ -90,7 +92,7 @@ stan init
 
 ### Root flags (Global)
 
-- `-w, --workspace <query>`: Switches `process.chdir()` to the target directory (resolved via path or package name) *before* loading config or executing subcommands.
+- `-w, --workspace <query>`: Switches `process.chdir()` to the target directory (resolved via path or package name) _before_ loading config or executing subcommands.
 
 ### `stan init`
 
@@ -104,20 +106,22 @@ stan init
 Context mode (`--context`):
 
 - When enabled, STAN builds the dependency graph and stages dependency context.
-- STAN creates `archive.meta.tar` as a thread opener on every context-mode run (no `--meta` CLI option).
+- Use `--meta` (`-m`) to produce a meta archive (`archive.tar` = system + context) instead of the full source.
 
 Produces deterministic outputs and (when enabled) archives:
 
 - Script outputs: `<stanPath>/output/<key>.txt` (combined stdout/stderr).
-- Full archive: `<stanPath>/output/archive.tar` (repo snapshot).
+- Full archive: `<stanPath>/output/archive.tar` (repo snapshot; or meta snapshot if `-m`).
 - Diff archive: `<stanPath>/output/archive.diff.tar` (changed-only vs snapshot baseline).
 
 Live UI + cancellation:
+
 - In TTY, live mode shows a progress table. Keys:
   - `q` cancels the run (best-effort skips archives; exit code set).
   - `r` restarts the run session (TTY only).
 
 Combine mode:
+
 - If `combine=true`, outputs are included inside archives and removed from disk afterward (archives remain).
 
 ### `stan snap`
@@ -131,11 +135,13 @@ Combine mode:
 ### `stan patch`
 
 Inputs (precedence):
+
 1. `[input]` argument text
 2. `-f/--file [filename]` (or configured default `stan-cli.cliDefaults.patch.file` unless `-F/--no-file`)
 3. Clipboard
 
 Behavior:
+
 - Persists the raw patch payload to `<stanPath>/patch/.patch` (auditable).
 - Applies either:
   - **File Ops only**, or
@@ -156,9 +162,11 @@ import { runSelected } from '@karmaniverous/stan-cli';
 ```
 
 Signature (contract-level):
+
 - `runSelected(cwd, config, selection, mode, behavior, promptChoice?) => Promise<string[]>`
 
 Where:
+
 - `cwd: string` is the repo root to operate in.
 - `config` is a `RunnerConfig`:
   - `stanPath: string` (workspace dir name, e.g. `.stan`)
@@ -180,6 +188,7 @@ Where:
 - `promptChoice?: string` controls which system prompt is used for archiving (see below).
 
 Notes / invariants:
+
 - `combine` implies archives conceptually; if you call `runSelected` directly, enforce `archive=true` yourself to avoid “combine with no archives” inconsistencies.
 - The return value is the list of created artifact paths (outputs and archives) as absolute paths.
 
@@ -196,6 +205,7 @@ Returns a help footer string listing available script keys (best-effort; returns
 ### Script types
 
 `@karmaniverous/stan-cli` also re-exports (for docs completeness) script config types:
+
 - `ScriptEntry`, `ScriptMap`, `ScriptObject`
 
 These describe the shape of `stan-cli.scripts` entries (string shorthand or object form).
@@ -210,6 +220,7 @@ These describe the shape of `stan-cli.scripts` entries (string shorthand or obje
 - `<path>`: absolute or repo-relative path to a prompt file.
 
 Archiving behavior:
+
 - Full archive always contains `<stanPath>/system/stan.system.md` representing the prompt used for the run (materialized temporarily when needed).
 - Diff archive suppresses `stan.system.md` in steady state for `core`/`<path>` sources when unchanged vs snapshot baseline; it appears once when the effective prompt changes.
 
@@ -218,11 +229,13 @@ Archiving behavior:
 Facet overlay is CLI-owned; it changes what the engine sees via composed `excludes` (deny-list) and `anchors` (high-precedence re-includes).
 
 Facet files (under `<stanPath>/system/`):
+
 - `facet.meta.json`: durable facet definitions (`exclude` patterns + `include` anchor paths)
 - `facet.state.json`: next-run default activation (`true` = active, `false` = inactive)
 - `.docs.meta.json`: stores overlay metadata for the last run (enabled/effective/autosuspended/anchorsKept, etc.)
 
 Run flags:
+
 - `-f, --facets` enables overlay for this run
 - `-F, --no-facets` disables overlay for this run
 - `--facets-on <names...>` forces named facets active (this run only; does not persist)
@@ -234,6 +247,7 @@ Notes:
 - Diff archives remain “changed-only”: anchored files appear in `archive.diff.tar` only when changed vs the active snapshot baseline. If an anchored file did not exist at baseline time and is introduced afterward, it may appear once as “added” in the next diff (expected).
 
 Overlay safety:
+
 - When a facet is inactive by default/state and its excluded subtree has no on-disk anchors, the CLI may auto-suspend the drop (treat it active) to avoid accidentally hiding large areas without breadcrumbs.
 - Explicit per-run `--facets-off` must remain off (no auto-suspension).
 
