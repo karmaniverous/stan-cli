@@ -135,7 +135,15 @@ export const registerRunAction = (
         map: built.map,
         clean: true,
       });
-      const metaArch = await createMetaArchive(runCwd, config.stanPath);
+      const metaArch = await createMetaArchive(
+        runCwd,
+        config.stanPath,
+        {
+          includes: config.includes ?? [],
+          excludes: config.excludes ?? [],
+        },
+        { includeOutputDir: derived.behavior.combine },
+      );
       console.log(
         `stan: created meta archive ${path.relative(runCwd, metaArch).replace(/\\/g, '/')}`,
       );
