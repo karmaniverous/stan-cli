@@ -1,10 +1,14 @@
-# Scratch: Dependency Graph Mode Trigger (Thread-Sticky)
+# Scratch: TypeDoc coverage for exported symbols
 
 ## Current focus
-- Diagnose a failure mode where dependency graph mode becomes “invisible” on diff-only turns (because `.stan/context/dependency.meta.json` is unchanged and therefore omitted from `archive.diff.tar`).
+
+- Ensure exported (non-barrel) symbols have proper TSDoc/TypeDoc comments to satisfy `typedoc.json` validation (`notDocumented: true`).
 
 ## Work completed in this turn
-- Wrote a stan-core interop note proposing a thread-sticky activation rule (once dependency meta is seen anywhere in a thread, keep updating `.stan/context/dependency.state.json`).
+
+- Added module docblocks (`@module`) and documented default exports in `eslint.config.ts` and `vitest.config.ts`.
+- Documented exported build helpers and default config in `rollup.config.ts` (`buildLibrary`, `buildCli`, `buildTypes`, `default`).
 
 ## Follow-ups
-- Decide whether to encode this as baseline assistant guidance and/or a tooling behavior (always include dependency meta/state in context-mode archives).
+
+- If TypeDoc still reports undocumented exports, load the affected `src/**` modules in-thread and add TSDoc to their exported API (ignoring pure barrel re-exports).

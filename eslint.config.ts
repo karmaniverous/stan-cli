@@ -1,4 +1,8 @@
-/** See <stanPath>/system/stan.project.md for global & cross‑cutting requirements. */
+/**
+ * ESLint flat config for this repository; TypeScript-first rules, Prettier
+ * formatting enforcement, and targeted overrides for tests and JSON.
+ * @module
+ */
 import eslint from '@eslint/js';
 import prettierPlugin from 'eslint-plugin-prettier';
 import simpleImportSortPlugin from 'eslint-plugin-simple-import-sort';
@@ -97,4 +101,7 @@ const config = [
   },
 ];
 
+/**
+ * Flat ESLint configuration for this repository.
+ */
 export default config;

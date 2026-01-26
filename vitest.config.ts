@@ -1,10 +1,17 @@
-/** See <stanPath>/system/stan.project.md for global requirements. */
+/**
+ * Vitest configuration for this repository (Node environment with a fork pool).
+ * Uses forks to allow suites to safely call `process.chdir()`.
+ * @module
+ */
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Default Vitest configuration for local development and CI.
+ */
 export default defineConfig({
   resolve: {
     alias: {

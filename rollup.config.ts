@@ -1,4 +1,8 @@
-/** See <stanPath>/system/stan.project.md for global requirements. */
+/**
+ * Rollup build configuration for library, CLI entrypoint, and bundled types.
+ * Externalizes production dependencies; emits ESM outputs; best-effort doc copy.
+ * @module
+ */
 import aliasPlugin, { type Alias } from '@rollup/plugin-alias';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
@@ -114,6 +118,13 @@ const commonInputOptions = (
     Array.from(externalPkgs).some((p) => id === p || id.startsWith(`${p}/`)),
 });
 
+/**
+ * Rollup options to build the public library entrypoint (`src/index.ts`) into an
+ * ESM-only output folder.
+ *
+ * @param dest - Destination directory where Rollup should write the library output.
+ * @returns Rollup configuration for the library build.
+ */
 export const buildLibrary = (dest: string): RollupOptions => ({
   input: 'src/index.ts',
   output: [{ dir: dest, format: 'esm', sourcemap: false }],
@@ -135,6 +146,13 @@ const discoverCliEntries = (): string[] => {
   return found.length ? [found[0]!] : [];
 };
 
+/**
+ * Rollup options to build the CLI entrypoint (preferring `src/cli/bin/stan.ts`)
+ * into a Node-executable ESM bundle with a shebang banner.
+ *
+ * @param dest - Destination directory where Rollup should write the CLI output.
+ * @returns Rollup configuration for the CLI build.
+ */
 export const buildCli = (dest: string): RollupOptions => ({
   input: discoverCliEntries(),
   output: [
@@ -148,6 +166,13 @@ export const buildCli = (dest: string): RollupOptions => ({
   ...commonInputOptions(false),
 });
 
+/**
+ * Rollup options to bundle TypeScript declaration files for the library
+ * entrypoint (`src/index.ts`).
+ *
+ * @param dest - Destination directory where Rollup should write the generated types.
+ * @returns Rollup configuration for the declaration build.
+ */
 export const buildTypes = (dest: string): RollupOptions => ({
   input: 'src/index.ts',
   output: [{ dir: `${dest}/types`, format: 'esm' }],
@@ -155,6 +180,9 @@ export const buildTypes = (dest: string): RollupOptions => ({
   plugins: [alias, dtsPlugin()],
 });
 
+/**
+ * Default Rollup configuration (library build, CLI build, and bundled types).
+ */
 export default [
   buildLibrary(outputPath),
   buildCli(outputPath),
