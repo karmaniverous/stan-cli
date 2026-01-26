@@ -4,6 +4,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
+- Use dependency graph mode (`.stan/context/dependency.state.json`) to stage the library entrypoint (`src/index.ts`) and downstream exported declarations; add missing TSDoc until `typedoc` passes (ignore pure barrels).
 - Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
 - Consider release prep for the breaking CLI behavior change (changelog/versioning) once you’re satisfied with the docs and test coverage.
 
@@ -35,4 +36,6 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed test regression in `config.test.ts` and sent interop message to `stan-core`.
 - Corrected documentation to remove `archive.meta.tar` and describe `-m` meta-archive substitution.
 - Fixed live UI to skip "archive (diff)" row when running with `--meta`.
-- Removed deprecated faceting feature mentions and deleted facet system files.- Sent stan-core interop note: dependency graph mode activation should be thread-sticky (diff-only turns omit unchanged dependency meta).
+- Removed deprecated faceting feature mentions and deleted facet system files.
+- Sent stan-core interop note: dependency graph mode activation should be thread-sticky (diff-only turns omit unchanged dependency meta).
+- Added initial dependency state selection to stage public API modules for TypeDoc coverage work.
