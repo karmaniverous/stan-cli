@@ -12,7 +12,10 @@ describe('makeBaseConfigs', () => {
       imports: { docs: ['README.md'] },
     } as unknown as Parameters<typeof makeBaseConfigs>[0];
 
-    const out = makeBaseConfigs(cfg);
+    const behavior = {
+      meta: false,
+    } as unknown as Parameters<typeof makeBaseConfigs>[1];
+    const out = makeBaseConfigs(cfg, behavior);
 
     expect(out.full.stanPath).toBe('stan');
     expect(out.diff.stanPath).toBe('stan');
