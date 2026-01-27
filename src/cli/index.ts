@@ -9,10 +9,10 @@ import { Command, Option } from 'commander';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 import { getVersionInfo, printVersionInfo } from '@/runner/version';
 
-import { applyCliSafety, tagDefault } from './cli-utils';
+import { readRootDefaultsFromConfig } from './config/defaults';
 import { performInit, registerInit as registerInitNamed } from './init';
+import { applyCliSafety, tagDefault } from './lib/commander';
 import { registerPatch } from './patch';
-import { readRootDefaultsFromConfig } from './root/defaults';
 import { installRootEnvPreAction } from './root/env';
 import { attachSubcommands } from './root/subcommands';
 import { switchToWorkspace } from './root/workspace';

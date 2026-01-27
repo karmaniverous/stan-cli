@@ -2,7 +2,8 @@
 import type { Command } from 'commander';
 import { Option as Opt } from 'commander';
 
-import { snapDefaults, tagDefault } from '../cli-utils';
+import { snapDefaults } from '../config/defaults';
+import { tagDefault } from '../lib/commander';
 
 /** Add -s/--stash and -S/--no-stash with effective defaults tagged in help. */
 export function attachSnapOptions(sub: Command): void {

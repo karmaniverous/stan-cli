@@ -19,7 +19,7 @@
 */
 import type { ExecutionMode, RunBehavior } from '@/runner/run';
 
-import { dedupePreserve, toStringArray } from './cli-utils';
+import { dedupePreserve, toStringArray } from './util/collection';
 
 export type DerivedRunInvocation = {
   selection: string[]; // explicit list (empty allowed)

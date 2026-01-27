@@ -5,7 +5,7 @@ import type { ExecutionMode, RunBehavior } from '@/runner/run';
 
 import { deriveRunInvocation } from '../../run-args';
 import { RUN_BASE_DEFAULTS } from '../defaults';
-import { getRunDefaults } from './run-defaults';
+import { getRunDefaults } from '../derive/run-defaults';
 import type { DerivedRun } from './types';
 
 /**

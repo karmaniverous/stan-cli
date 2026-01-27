@@ -2,15 +2,16 @@
 
 ## Current objective
 
-- Implement refined `stan run` archive composition rules based on context modes:
-  - Default: no dependency artifacts.
-  - Meta (`-c -m`): reset state to `[]`, include state in `archive.tar`, skip `archive.diff.tar`.
-  - Context (`-c`): skip `archive.tar`, write `archive.diff.tar` with selected context.
+- Execute "one high-leverage DRY extraction": centralize shared Commander setup (`cli-utils.ts` junk drawer).
+- Split `cli-utils.ts` into:
+  - `src/cli/lib/commander.ts` (safety + helpers)
+  - `src/cli/config/defaults.ts` (root/run/snap defaults derivation)
+  - `src/cli/util/collection.ts` (data helpers)
 
 ## Immediate next step
 
-- Verify archive contents manually or via test if possible (manual verification in next step).
-- Resume previous plan: DRY refactor pass (shared Commander plumbing).
+- Verify refactor integrity (run tests).
+- Continue DRY pass: identify next target (e.g., named-or-default resolution pattern).
 
 ## Constraints / guardrails
 

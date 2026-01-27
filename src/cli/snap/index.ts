@@ -11,7 +11,7 @@ import {
   handleUndo,
 } from '@/runner/snap/history';
 
-import { applyCliSafety } from '../cli-utils';
+import { applyCliSafety } from '../lib/commander';
 import { registerSnapAction } from './action';
 import { attachSnapOptions } from './options';
 

@@ -4,10 +4,9 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
-- Resume DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading).
+- Verify Commander/Config DRY refactor (run tests).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
-- Start with one high-leverage DRY extraction (small, behavior-preserving): centralize shared Commander setup (parse normalization, exit override, debug/boring), then apply it across `run`, `snap`, `patch`, and root commands.
 - After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
 - Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).
 - Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
@@ -47,4 +46,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Added initial dependency state selection to stage public API modules for TypeDoc coverage work.
 - Seeded `.stan/context/dependency.state.json` for the TypeDoc/TSDoc documentation sweep (public API + immediate deps).
 - Fixed archive progress/UI labeling so meta-mode runs display `archive` item `meta` and logger prints `archive (meta)`.
-- Refined archive composition rules: standard run excludes dependency artifacts; meta run resets state + includes state in archive + skips diff; context run skips full archive.
+- Refined archive composition rules: standard run excludes dependency artifacts; meta run resets state + includes state in archive + skips diff; context run skips full archive.- Refactored `src/cli/cli-utils.ts` (junk drawer) into `cli/lib/commander.ts`, `cli/config/defaults.ts`, and `cli/util/collection.ts`; updated all consumers.

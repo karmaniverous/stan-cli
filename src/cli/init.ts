@@ -8,7 +8,7 @@ import { Command as Commander } from 'commander';
 
 import { performInitService } from '@/runner/init/service';
 
-import { applyCliSafety } from './cli-utils';
+import { applyCliSafety } from './lib/commander';
 
 /**
  * Register the `init` subcommand on the provided root CLI.

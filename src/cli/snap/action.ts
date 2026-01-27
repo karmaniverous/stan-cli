@@ -4,8 +4,9 @@ import {
 } from '@karmaniverous/stan-core';
 import type { Command } from 'commander';
 
-import { getOptionSource, snapDefaults } from '@/cli/cli-utils';
+import { snapDefaults } from '@/cli/config/defaults';
 import { loadCliConfigSync } from '@/cli/config/load';
+import { getOptionSource } from '@/cli/lib/commander';
 import { snapLoopHeaderAndGuard } from '@/cli/run/action/loop';
 import { parseText } from '@/common/config/parse';
 import { handleSnap } from '@/runner/snap';

@@ -19,7 +19,8 @@ import { isBackward, readLoopState, writeLoopState } from '@/runner/loop/state';
 import { runPatch } from '@/runner/patch/service';
 import { statusOk } from '@/runner/patch/status';
 
-import { applyCliSafety, patchDefaultFile } from '../cli-utils';
+import { patchDefaultFile } from '../config/defaults';
+import { applyCliSafety } from '../lib/commander';
 import { applyUnifiedDiffLocally } from './apply-local';
 import { looksLikeUnifiedDiff } from './detect';
 import { readRawFromArgOrFile } from './input';

@@ -5,7 +5,7 @@ import { findConfigPathSync } from '@karmaniverous/stan-core';
 
 import { parseText } from '@/common/config/parse';
 
-import * as cliUtils from '../../cli-utils';
+import * as configDefaults from '../../config/defaults';
 import { RUN_BASE_DEFAULTS } from '../defaults';
 import type { RunDefaultsShape } from './types';
 
@@ -81,12 +81,12 @@ export const readRunDefaultsFromConfig = (dir?: string): RunDefaultsShape => {
 
 /**
  * SSR‑robust run defaults resolver.
- * - Prefer cli-utils.runDefaults() when available (normal runtime).
+ * - Prefer config/defaults.runDefaults() when available (normal runtime).
  * - Fallback: parse stan.config.* synchronously (namespaced first; legacy root).
  */
 export const getRunDefaults = (dir?: string): RunDefaultsShape => {
   try {
-    const maybe = (cliUtils as unknown as { runDefaults?: unknown })
+    const maybe = (configDefaults as unknown as { runDefaults?: unknown })
       .runDefaults;
     if (typeof maybe === 'function') {
       return (maybe as (d?: string) => RunDefaultsShape)(dir);

@@ -4,7 +4,8 @@ import { peekAndMaybeDebugLegacySync } from '@/cli/config/peek';
 import { renderAvailableScriptsHelp } from '@/runner/help';
 import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
-import { applyCliSafety, runDefaults, tagDefault } from '../cli-utils';
+import { runDefaults } from '../config/defaults';
+import { applyCliSafety, tagDefault } from '../lib/commander';
 import { RUN_BASE_DEFAULTS } from './defaults';
 
 export type FlagPresence = {
