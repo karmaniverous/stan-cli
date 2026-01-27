@@ -2,11 +2,9 @@
 
 ## Current objective
 
-- Execute "one high-leverage DRY extraction": centralize shared Commander setup (`cli-utils.ts` junk drawer).
-- Split `cli-utils.ts` into:
-  - `src/cli/lib/commander.ts` (safety + helpers)
-  - `src/cli/config/defaults.ts` (root/run/snap defaults derivation)
-  - `src/cli/util/collection.ts` (data helpers)
+- Fix typing/export errors from DRY refactor:
+  - Rename `rootDefaults` to `readRootDefaultsFromConfig` in `src/cli/config/defaults.ts` to match `index.ts` import.
+  - Fix TSDoc syntax in `src/cli/lib/commander.ts`.
 
 ## Immediate next step
 

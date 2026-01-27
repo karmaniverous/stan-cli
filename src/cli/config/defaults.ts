@@ -28,7 +28,7 @@ export const loadConfigSafe = (dir = cwdSafe()): ContextConfig | null => {
 };
 
 /** Root-level boolean defaults (debug/boring) from config or built-ins. */
-export const rootDefaults = (
+export const readRootDefaultsFromConfig = (
   dir = cwdSafe(),
 ): { debugDefault: boolean; boringDefault: boolean; yesDefault: boolean } => {
   // Read from stan-cli only; fall back to built-ins when absent.

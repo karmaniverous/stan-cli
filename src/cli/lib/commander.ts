@@ -24,7 +24,7 @@ export const getOptionSource = (
   }
 };
 
-/** Normalize argv from unit tests like ["node","stan", ...] -> [...] */
+/** Normalize argv from unit tests like ["node","stan", ...] -\> [...] */
 export const normalizeArgv = (
   argv?: readonly string[],
 ): readonly string[] | undefined => {

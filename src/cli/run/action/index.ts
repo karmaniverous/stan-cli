@@ -147,7 +147,7 @@ export const registerRunAction = (
 
       // In meta mode, reset state to empty (fresh start) before reading
       if (derived.behavior.meta) {
-        await writeFile(stateP, '[]', 'utf8');
+        await writeFile(stateP, JSON.stringify({ v: 2, i: [] }), 'utf8');
       }
 
       // Read current state (if any) so the runner/engine can use it for diff selection
