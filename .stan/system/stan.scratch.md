@@ -1,13 +1,16 @@
-# Scratch: Meta archive labeling in run UI
+# Scratch: DRY refactor pass (stan-cli)
 
 ## Current objective
 
-- Fix `stan run -Scm` meta mode so the live UI shows:
-  - Type: `archive`
-  - Item: `meta`
-- Ensure non-TTY logger output prints `archive (meta)` (e.g., `stan: [RUN] "archive (meta)"`).
+- DRY up the codebase without changing behavior: reduce duplication across CLI command registration, option wiring, config loading, and shared run/snap/patch workflows.
+- Keep module SRP strong and obey the 300-LOC hard gate (decompose before expanding long files).
 
-## Next step
+## Immediate next step
 
-- Treat archive variant as an explicit value (full|diff|meta) derived from the operation/behavior, not from the output filename (`archive.tar`).
-- Extend `ArchiveKind` to include `meta`; queue `meta` (and skip diff) when `behavior.meta` is enabled.
+- Generate a long-file list (`wc -l src/**/*.ts`) and pick 1–2 top targets (highest duplication + highest churn) for the first DRY extraction.
+- Start with shared Commander plumbing (parse normalization + exit override + common global flags), then apply it across subcommands.
+
+## Constraints / guardrails
+
+- Prefer small new helper modules over growing existing “god” helpers; co-locate tests for new non-trivial helpers.
+- Dependency graph mode is active; use `.stan/context/dependency.state.json` to stage specific modules for analysis/refactor when needed.

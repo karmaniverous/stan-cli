@@ -4,9 +4,13 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
-- Use dependency graph mode (`.stan/context/dependency.state.json`) to stage the library entrypoint (`src/index.ts`) and downstream exported declarations; add missing TSDoc until `typedoc` passes (ignore pure barrels).
+- DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
+- Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
+- Start with one high-leverage DRY extraction (small, behavior-preserving): centralize shared Commander setup (parse normalization, exit override, debug/boring), then apply it across `run`, `snap`, `patch`, and root commands.
+- After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
+- Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).
 - Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
-- Consider release prep for the breaking CLI behavior change (changelog/versioning) once you’re satisfied with the docs and test coverage.
+- Consider release prep (changelog/versioning) once refactors and docs/test coverage are stable.
 
 ## Completed (context essentials only)
 
@@ -41,4 +45,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Sent stan-core interop note: dependency graph mode activation should be thread-sticky (diff-only turns omit unchanged dependency meta).
 - Added initial dependency state selection to stage public API modules for TypeDoc coverage work.
 - Seeded `.stan/context/dependency.state.json` for the TypeDoc/TSDoc documentation sweep (public API + immediate deps).
-- Fixed archive progress/UI labeling so meta-mode runs display `archive` item `meta` and logger prints `archive (meta)`.
+- Fixed archive progress/UI labeling so meta-mode runs display `archive` item `meta` and logger prints `archive (meta)`.
