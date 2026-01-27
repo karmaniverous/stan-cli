@@ -1,11 +1,15 @@
-# Scratch: Fix context mode archiving (dependency prop loss)
+# Scratch: DRY pass (phase 1) — config + archive-stage pipeline
 
 ## Current objective
 
-- Fix bug where `stan run -c` produces diff archives missing both the dependency state file and the files selected by it.
-- Cause: `makeBaseConfigs` in the archive stage drops the `dependency` object and fails to force-include gitignored dependency artifacts.
+- Start a targeted DRY refactor by first pulling the relevant modules into the chat context via `.stan/context/dependency.state.json`.
+- Initial focus areas:
+  - Archive-stage config assembly (where `makeBaseConfigs` currently lives/executes).
+  - CLI config loading/parsing/defaults modules (`src/cli/config/*`, `src/common/config/parse.ts`).
+- Keep the known context-mode bug in scope: base config assembly must not drop `dependency` context (diff archives must include dependency artifacts when context mode is active).
 
-## Constraints / guardrails
+## Guardrails
 
-- Ensure `dependency` context is propagated to `archivePhase`.
-- Ensure `dependency.state.json` and `dependency.meta.json` are explicitly included in selection when `context` mode is active (so they appear in diffs despite being gitignored).
+- Prefer small extractions with stable names and co-located tests.
+- Do not change behavior except where required to fix the context-mode archive bug.
+- Avoid pulling large type-only dependency context unless needed; expand selection incrementally.

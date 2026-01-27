@@ -4,6 +4,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
+- Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules).
 - Fix `makeBaseConfigs` to propagate `dependency` context and force-include context artifacts in archives.
 - Verify fixes for DRY refactor (lint + typecheck + tests).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
@@ -52,3 +53,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed typecheck errors in `src/cli/config/defaults.ts` (export rename) and `src/cli/lib/commander.ts` (TSDoc syntax).
 - Fixed lint error (unnecessary conditional) in `src/cli/index.ts` by removing redundant null check on `readRootDefaultsFromConfig` result.
 - Collected long-file scan (all `src/**/*.ts` < 300 LOC); cleared decomposition gate for DRY refactor.
+- Seeded `.stan/context/dependency.state.json` to load DRY hotspots (archive-stage + CLI config) for the next refactor pass.
