@@ -2,9 +2,7 @@
 
 ## Current objective
 
-- Fix typing/export errors from DRY refactor:
-  - Rename `rootDefaults` to `readRootDefaultsFromConfig` in `src/cli/config/defaults.ts` to match `index.ts` import.
-  - Fix TSDoc syntax in `src/cli/lib/commander.ts`.
+- Fix unnecessary conditional in `src/cli/index.ts` (lint error): `readRootDefaultsFromConfig` now handles errors internally and returns a safe value, so `try/catch` is redundant if it returns nullable/object.
 
 ## Immediate next step
 

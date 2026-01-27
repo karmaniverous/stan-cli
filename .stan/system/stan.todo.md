@@ -4,7 +4,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
-- Verify fixes for DRY refactor (typecheck + tests).
+- Verify fixes for DRY refactor (lint + typecheck + tests).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
 - After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
@@ -49,3 +49,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Refined archive composition rules: standard run excludes dependency artifacts; meta run resets state + includes state in archive + skips diff; context run skips full archive.
 - Refactored `src/cli/cli-utils.ts` (junk drawer) into `cli/lib/commander.ts`, `cli/config/defaults.ts`, and `cli/util/collection.ts`; updated all consumers.
 - Fixed typecheck errors in `src/cli/config/defaults.ts` (export rename) and `src/cli/lib/commander.ts` (TSDoc syntax).
+- Fixed lint error (unnecessary conditional) in `src/cli/index.ts` caused by `try/catch` wrapper around `readRootDefaultsFromConfig`.
