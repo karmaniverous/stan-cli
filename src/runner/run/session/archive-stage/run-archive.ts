@@ -171,11 +171,15 @@ export const runArchiveUnified = async (args: {
 
   const runFull = async (): Promise<void> => {
     if (typeof shouldContinue === 'function' && !shouldContinue()) return;
-    const f = await archivePhase(
-      { cwd, config: baseFull, includeOutputs },
-      { silent: true, which: 'full', progress, shouldContinue },
-    );
-    if (f.archivePath) created.push(f.archivePath);
+    // Run full/meta archive only if: (standard run) OR (meta mode).
+    // If context is active but meta is NOT, we skip full archive (diff-only update).
+    if (!behavior.context || behavior.meta) {
+      const f = await archivePhase(
+        { cwd, config: baseFull, includeOutputs },
+        { silent: true, which: 'full', progress, shouldContinue },
+      );
+      if (f.archivePath) created.push(f.archivePath);
+    }
   };
 
   if (ephemeral) {

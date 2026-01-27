@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ContextConfig } from '@karmaniverous/stan-core';
@@ -138,15 +138,21 @@ export const registerRunAction = (
         clean: true,
       });
 
+      const stateP = path.join(
+        runCwd,
+        config.stanPath,
+        'context',
+        'dependency.state.json',
+      );
+
+      // In meta mode, reset state to empty (fresh start) before reading
+      if (derived.behavior.meta) {
+        await writeFile(stateP, '[]', 'utf8');
+      }
+
       // Read current state (if any) so the runner/engine can use it for diff selection
       let state: unknown;
       try {
-        const stateP = path.join(
-          runCwd,
-          config.stanPath,
-          'context',
-          'dependency.state.json',
-        );
         state = JSON.parse(await readFile(stateP, 'utf8'));
       } catch {
         /* ignore */

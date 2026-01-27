@@ -4,6 +4,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
+- Resume DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
 - Start with one high-leverage DRY extraction (small, behavior-preserving): centralize shared Commander setup (parse normalization, exit override, debug/boring), then apply it across `run`, `snap`, `patch`, and root commands.
@@ -46,3 +47,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Added initial dependency state selection to stage public API modules for TypeDoc coverage work.
 - Seeded `.stan/context/dependency.state.json` for the TypeDoc/TSDoc documentation sweep (public API + immediate deps).
 - Fixed archive progress/UI labeling so meta-mode runs display `archive` item `meta` and logger prints `archive (meta)`.
+- Refined archive composition rules: standard run excludes dependency artifacts; meta run resets state + includes state in archive + skips diff; context run skips full archive.

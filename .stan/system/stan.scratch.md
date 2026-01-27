@@ -2,13 +2,15 @@
 
 ## Current objective
 
-- DRY up the codebase without changing behavior: reduce duplication across CLI command registration, option wiring, config loading, and shared run/snap/patch workflows.
-- Keep module SRP strong and obey the 300-LOC hard gate (decompose before expanding long files).
+- Implement refined `stan run` archive composition rules based on context modes:
+  - Default: no dependency artifacts.
+  - Meta (`-c -m`): reset state to `[]`, include state in `archive.tar`, skip `archive.diff.tar`.
+  - Context (`-c`): skip `archive.tar`, write `archive.diff.tar` with selected context.
 
 ## Immediate next step
 
-- Generate a long-file list (`wc -l src/**/*.ts`) and pick 1–2 top targets (highest duplication + highest churn) for the first DRY extraction.
-- Start with shared Commander plumbing (parse normalization + exit override + common global flags), then apply it across subcommands.
+- Verify archive contents manually or via test if possible (manual verification in next step).
+- Resume previous plan: DRY refactor pass (shared Commander plumbing).
 
 ## Constraints / guardrails
 
