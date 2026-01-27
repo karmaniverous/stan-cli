@@ -2,14 +2,15 @@
 
 ## Current objective
 
-- Fix remaining unnecessary conditional in `src/cli/index.ts` (lint error): `readRootDefaultsFromConfig` returns a safe object (not nullable), so checking `if (viaConfig)` is redundant.
+- Start DRY pass by consolidating repeated “named-or-default” module resolution patterns (SSR/Vitest-safe) and any duplicated config fallback/default merging logic in CLI/run/snap paths.
 
 ## Immediate next step
 
-- Verify refactor integrity (run tests).
-- Continue DRY pass: identify next target (e.g., named-or-default resolution pattern).
+- Run `stan run --context` and attach the resulting `.stan/output/archive.diff.tar` so the staged modules (from `.stan/context/dependency.state.json`) are available for refactor.
+- After review of staged modules, extract a single small resolver helper (pure, no IO) + unit tests, then update call sites in one cohesive change set.
 
 ## Constraints / guardrails
 
-- Prefer small new helper modules over growing existing “god” helpers; co-locate tests for new non-trivial helpers.
-- Dependency graph mode is active; use `.stan/context/dependency.state.json` to stage specific modules for analysis/refactor when needed.
+- No long-file decompositions required yet (all modules are <300 LOC), but keep changes cohesive and avoid creating new “god helpers”.
+- Keep CLI as adapter: acquisition/presentation stays in CLI; resolution helper remains pure and reusable.
+- Dependency graph mode is active: update `.stan/context/dependency.state.json` deliberately to control context size.
