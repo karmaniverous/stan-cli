@@ -1,5 +1,5 @@
 // src/stan/run/ui/types.ts
-export type ArchiveKind = 'full' | 'diff';
+export type ArchiveKind = 'full' | 'diff' | 'meta';
 
 export type RunnerUI = {
   start(): void;

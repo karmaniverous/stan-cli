@@ -2,7 +2,7 @@
 import type { CancelController } from '@/runner/run/session/cancel-controller';
 import { queueUiRows } from '@/runner/run/session/ui-queue';
 import type { RunnerConfig } from '@/runner/run/types';
-import type { RunnerUI } from '@/runner/run/ui';
+import type { ArchiveKind, RunnerUI } from '@/runner/run/ui';
 
 /**
  * Queue script rows (and archive rows when applicable), mark cancelled keys,
@@ -15,11 +15,23 @@ export function queueRowsAndMark(args: {
   selection: string[];
   config: RunnerConfig;
   includeArchives: boolean;
+  primaryArchiveKind?: ArchiveKind;
   skipDiff?: boolean;
   cancelCtl: CancelController;
 }): string[] {
-  const { ui, selection, config, includeArchives, skipDiff, cancelCtl } = args;
-  const toRun = queueUiRows(ui, selection, config, includeArchives, skipDiff);
+  const {
+    ui,
+    selection,
+    config,
+    includeArchives,
+    primaryArchiveKind,
+    skipDiff,
+    cancelCtl,
+  } = args;
+  const toRun = queueUiRows(ui, selection, config, includeArchives, {
+    primaryArchiveKind,
+    skipDiff,
+  });
   cancelCtl.markQueued(toRun);
   try {
     const flush = (ui as unknown as { flushNow?: () => void }).flushNow;

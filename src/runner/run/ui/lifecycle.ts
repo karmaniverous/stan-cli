@@ -52,7 +52,7 @@ export const endScript = (
 
 // Archives
 export const queueArchive = (model: ProgressModel, kind: ArchiveKind): void => {
-  const item = kind === 'diff' ? 'diff' : 'full';
+  const item = kind;
   model.update(
     `archive:${item}`,
     { kind: 'waiting' },
@@ -61,7 +61,7 @@ export const queueArchive = (model: ProgressModel, kind: ArchiveKind): void => {
 };
 
 export const startArchive = (model: ProgressModel, kind: ArchiveKind): void => {
-  const item = kind === 'diff' ? 'diff' : 'full';
+  const item = kind;
   model.update(
     `archive:${item}`,
     { kind: 'running', startedAt: Date.now() },
@@ -80,7 +80,7 @@ export const endArchive = (
   startedAt?: number,
   endedAt?: number,
 ): void => {
-  const item = kind === 'diff' ? 'diff' : 'full';
+  const item = kind;
   const dur =
     typeof startedAt === 'number' && typeof endedAt === 'number'
       ? Math.max(0, endedAt - startedAt)

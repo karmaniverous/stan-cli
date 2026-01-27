@@ -144,6 +144,7 @@ export const runSessionOnce = async (args: {
     selection,
     config,
     includeArchives: Boolean(behavior.archive),
+    primaryArchiveKind: behavior.meta ? 'meta' : 'full',
     skipDiff: Boolean(behavior.meta),
     cancelCtl,
   });

@@ -1,10 +1,10 @@
 // src/stan/run/session/ui-queue.ts
 import type { RunnerConfig } from '@/runner/run/types';
-import type { RunnerUI } from '@/runner/run/ui';
+import type { ArchiveKind, RunnerUI } from '@/runner/run/ui';
 
 /**
-+ * Filter selection against config and queue initial rows in the UI.
-+ *
+ * Filter selection against config and queue initial rows in the UI.
+ *
  * @returns Resolved script list to run (config-filtered).
  */
 export const queueUiRows = (
@@ -12,11 +12,15 @@ export const queueUiRows = (
   selection: string[] | null | undefined,
   config: RunnerConfig,
   includeArchives: boolean,
-  skipDiff?: boolean,
+  opts?: { primaryArchiveKind?: ArchiveKind; skipDiff?: boolean },
 ): string[] => {
   const toRun = (selection ?? []).filter((k) =>
     Object.prototype.hasOwnProperty.call(config.scripts, k),
   );
+
+  const primary: ArchiveKind = opts?.primaryArchiveKind ?? 'full';
+  const skipDiff = Boolean(opts?.skipDiff);
+
   // Presentation-only pre-queue; swallow UI callback errors (SSR/mock robustness)
   for (const k of toRun) {
     try {
@@ -25,9 +29,10 @@ export const queueUiRows = (
       /* ignore pre-queue errors */
     }
   }
+
   if (includeArchives) {
     try {
-      ui.onArchiveQueued('full');
+      ui.onArchiveQueued(primary);
     } catch {
       /* ignore */
     }
@@ -39,5 +44,6 @@ export const queueUiRows = (
       }
     }
   }
+
   return toRun;
 };

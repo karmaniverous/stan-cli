@@ -31,7 +31,7 @@ type WithDeps = {
 // Progress callbacks for live renderer integration
 type ArchiveProgress = {
   /** Called when a phase starts (kind: 'full' | 'diff'). */
-  start?: (kind: 'full' | 'diff') => void;
+  start?: (kind: 'full' | 'diff' | 'meta') => void;
   /**
    * Called when a phase completes.
    * @param kind - 'full' | 'diff'
@@ -40,7 +40,7 @@ type ArchiveProgress = {
    * @param endedAt - ms epoch
    */
   done?: (
-    kind: 'full' | 'diff',
+    kind: 'full' | 'diff' | 'meta',
     pathAbs: string,
     startedAt: number,
     endedAt: number,
@@ -136,7 +136,8 @@ export const archivePhase = async (
 
     if (which === 'both' || which === 'full') {
       if (shouldContinue && !shouldContinue()) return { archivePath, diffPath };
-      opts?.progress?.start?.('full');
+      const fullKind: 'full' | 'meta' = config.meta ? 'meta' : 'full';
+      opts?.progress?.start?.(fullKind);
       const startedFull = Date.now();
 
       if (config.meta) {
@@ -193,7 +194,7 @@ export const archivePhase = async (
         } as Parameters<typeof createArchive>[2]);
       }
 
-      opts?.progress?.done?.('full', archivePath, startedFull, Date.now());
+      opts?.progress?.done?.(fullKind, archivePath, startedFull, Date.now());
       // Late-cancel cleanup: if a cancellation arrived right after FULL completed,
       // prefer to remove the freshly created archive immediately to avoid any
       // visibility races at the session boundary (best‑effort).

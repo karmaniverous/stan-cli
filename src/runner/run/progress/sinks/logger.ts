@@ -27,7 +27,9 @@ export class LoggerSink extends BaseSink {
     const item = meta.item;
     const printable =
       meta.type === 'archive'
-        ? archivePrintable(item === 'diff' ? 'diff' : 'full')
+        ? archivePrintable(
+            item === 'diff' ? 'diff' : item === 'meta' ? 'meta' : 'full',
+          )
         : item;
     const mapped = presentRow({ state, cwd: this.cwd });
     if (state.kind === 'waiting') {

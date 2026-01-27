@@ -1,10 +1,13 @@
-# Scratch: Meta archive mislabeled as full; tighten context workflow
+# Scratch: Meta archive labeling in run UI
 
 ## Current objective
 
-- Bug report: `stan run -Scm` (meta archive mode) shows live UI row `archive full` instead of `archive meta`.
-- Process gap: assistant should prefer `dependency.meta.json` → `dependency.state.json` selection planning over web search or manual file-paste requests for in-repo code.
+- Fix `stan run -Scm` meta mode so the live UI shows:
+  - Type: `archive`
+  - Item: `meta`
+- Ensure non-TTY logger output prints `archive (meta)` (e.g., `stan: [RUN] "archive (meta)"`).
 
 ## Next step
 
-- Stage the archive/progress/live-UI modules via `.stan/context/dependency.state.json`, then patch the CLI to emit/display the correct archive item label for meta mode.
+- Treat archive variant as an explicit value (full|diff|meta) derived from the operation/behavior, not from the output filename (`archive.tar`).
+- Extend `ArchiveKind` to include `meta`; queue `meta` (and skip diff) when `behavior.meta` is enabled.

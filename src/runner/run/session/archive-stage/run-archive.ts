@@ -17,8 +17,13 @@ type ArchivePhase = (
     silent?: boolean;
     which: 'full' | 'diff';
     progress: {
-      start: (k: 'full' | 'diff') => void;
-      done: (k: 'full' | 'diff', p: string, s: number, e: number) => void;
+      start: (k: 'full' | 'diff' | 'meta') => void;
+      done: (
+        k: 'full' | 'diff' | 'meta',
+        p: string,
+        s: number,
+        e: number,
+      ) => void;
     };
     /** Optional late-cancel guard forwarded into archive phase. */
     shouldContinue?: () => boolean;
@@ -92,8 +97,13 @@ export const runArchiveUnified = async (args: {
   }) => Promise<(() => Promise<void>) | null>;
   shouldContinue?: () => boolean;
   progress: {
-    start: (k: 'full' | 'diff') => void;
-    done: (k: 'full' | 'diff', p: string, s: number, e: number) => void;
+    start: (k: 'full' | 'diff' | 'meta') => void;
+    done: (
+      k: 'full' | 'diff' | 'meta',
+      p: string,
+      s: number,
+      e: number,
+    ) => void;
   };
   // mode
   ephemeral: boolean;
