@@ -2,7 +2,7 @@
 
 ## Current objective
 
-- Fix unnecessary conditional in `src/cli/index.ts` (lint error): `readRootDefaultsFromConfig` now handles errors internally and returns a safe value, so `try/catch` is redundant if it returns nullable/object.
+- Fix remaining unnecessary conditional in `src/cli/index.ts` (lint error): `readRootDefaultsFromConfig` returns a safe object (not nullable), so checking `if (viaConfig)` is redundant.
 
 ## Immediate next step
 

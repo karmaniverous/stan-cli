@@ -31,9 +31,7 @@ export const makeCli = (): Command => {
     boringDefault: boolean;
     yesDefault: boolean;
   } => {
-    const viaConfig = readRootDefaultsFromConfig(process.cwd());
-    if (viaConfig) return viaConfig;
-    return { debugDefault: false, boringDefault: false, yesDefault: false };
+    return readRootDefaultsFromConfig(process.cwd());
   };
   const { debugDefault, boringDefault } = safeRootDefaults();
 
