@@ -1,5 +1,5 @@
 // src/runner/run/session/archive-stage/config.ts
-import type { RunnerConfig } from '@/runner/run/types';
+import type { DependencyContext, RunnerConfig } from '@/runner/run/types';
 import type { RunBehavior } from '@/runner/run/types';
 
 /** Build FULL and DIFF base configs; DIFF honors anchors (changed-only via snapshot). */
@@ -13,12 +13,14 @@ export const makeBaseConfigs = (
     excludes?: string[];
     imports?: Record<string, string[]>;
     meta?: boolean;
+    dependency?: DependencyContext;
   };
   diff: {
     stanPath: string;
     includes?: string[];
     excludes?: string[];
     imports?: Record<string, string[]>;
+    dependency?: DependencyContext;
   };
 } => {
   const posix = (p: string) => p.replace(/\\/g, '/');
@@ -30,10 +32,13 @@ export const makeBaseConfigs = (
   // Standard run (no context): explicitly exclude dependency artifacts to meet "NOT contain" requirement.
   const forcedExcludes = !behavior.context ? depFiles : [];
 
-  // Meta run: explicitly include state file (user requirement: "SHOULD contain dependency.state.json").
-  // Core's createMetaArchive excludes it by default (clean slate), so we force it back via includes.
-  const forcedIncludes = behavior.meta
-    ? [posix(`${config.stanPath}/context/dependency.state.json`)]
+  // Context run (meta or diff): explicitly include meta/state files so they
+  // appear in archives (diffs) even if gitignored.
+  const forcedIncludes = behavior.context
+    ? [
+        posix(`${config.stanPath}/context/dependency.meta.json`),
+        posix(`${config.stanPath}/context/dependency.state.json`),
+      ]
     : [];
 
   const full = {
@@ -42,12 +47,14 @@ export const makeBaseConfigs = (
     excludes: [...(config.excludes ?? []), ...forcedExcludes],
     imports: config.imports,
     meta: behavior.meta,
+    dependency: config.dependency,
   };
   const diff = {
     stanPath: config.stanPath,
     includes: [...(config.includes ?? []), ...forcedIncludes],
     excludes: [...(config.excludes ?? []), ...forcedExcludes],
     imports: config.imports,
+    dependency: config.dependency,
   };
   return { full, diff };
 };
