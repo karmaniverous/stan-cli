@@ -1,11 +1,10 @@
-# Scratch: Add missing TypeDoc/TSDoc on public exports
+# Scratch: Meta archive mislabeled as full; tighten context workflow
 
 ## Current objective
 
-- Add missing TypeDoc/TSDoc comments to exported symbols (functions/classes/types/interfaces/enums) at their declaration sites.
-- Ignore barrel re-exports (document the original declarations, not the re-export lines).
+- Bug report: `stan run -Scm` (meta archive mode) shows live UI row `archive full` instead of `archive meta`.
+- Process gap: assistant should prefer `dependency.meta.json` → `dependency.state.json` selection planning over web search or manual file-paste requests for in-repo code.
 
-## Approach
+## Next step
 
-- Use dependency graph mode to stage the library entrypoint and its exported modules into the next archive via `.stan/context/dependency.state.json`.
-- Run `npm run docs` (TypeDoc with `validation.notDocumented=true`) to surface any remaining “not documented” warnings and iterate until clean.
+- Stage the archive/progress/live-UI modules via `.stan/context/dependency.state.json`, then patch the CLI to emit/display the correct archive item label for meta mode.
