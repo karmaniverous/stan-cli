@@ -62,3 +62,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed `patch.test.ts` to simulate failure codes correctly when testing failure paths, and ensured `snap.overlay.snapshot.test.ts` resets modules before mocking.
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.
 - Fixed type cast and removed `vi.restoreAllMocks()` in `snap.overlay.snapshot.test.ts` to prevent mock reset issues.
+- Reverted `snap.overlay.snapshot.test.ts` to `vi.doMock` with strict `vi.resetModules` per-test to fix persistence/resolution issues and resolve lint errors.
