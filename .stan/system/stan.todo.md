@@ -6,11 +6,11 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 - Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules) to prepare for refactor.
 - Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
+- Resolve the TypeDoc warning by exporting/documenting the missing symbol(s) referenced from the public API (do not silence TypeDoc validation).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
 - After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
-- Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).
-- Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
+- Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).- Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
 - Consider release prep (changelog/versioning) once refactors and docs/test coverage are stable.
 
 ## Completed (context essentials only)
@@ -63,3 +63,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.
 - Fixed type cast and removed `vi.restoreAllMocks()` in `snap.overlay.snapshot.test.ts` to prevent mock reset issues.
 - Reverted `snap.overlay.snapshot.test.ts` to `vi.doMock` with strict `vi.resetModules` per-test to fix persistence/resolution issues and resolve lint errors.
+- Seeded dependency state for TypeDoc warning triage and sent a `stan-core` interop note to tighten prompt rules so `--context` exploration uses `dependency.state.json` by default.

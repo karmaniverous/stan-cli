@@ -1,13 +1,16 @@
-# Scratch: Final snap test fix
+# Scratch: TypeDoc warning + dependency-state exploration
 
 ## Current objective
 
-- Proceed with the DRY refactor (CLI internals) now that context archive composition and snapshot keying are stable.## State
-- Context mode (Option B): `stan run --context` now produces `archive.tar` (FULL) and `archive.diff.tar` (DIFF).
-- Snapshots: `stan snap` updates both `.archive.snapshot.json` and `.archive.snapshot.context.json` when applicable.
-- Config: `makeBaseConfigs` handles dependency context propagation.
+- Fix TypeDoc warning without silencing validation by exporting/documenting the missing symbol(s) implicated by the warning.
+- Use dependency graph mode correctly: stage the implicated modules via `.stan/context/dependency.state.json`, then re-run `stan run --context` to load authoritative file contents into the next archive.
 
-## Next step
+## What’s staged (dependency.state.json)
 
-- Identify DRY hotspots (command registration, config loading, run defaults) and begin extraction.
-- Refactored `snap.overlay.snapshot.test.ts` to use `vi.mock` (hoisted) instead of `vi.doMock` to guarantee mock application before static imports.
+- `src/index.ts`
+- `src/runner/run/index.ts`
+- `src/runner/run/types.ts`
+
+## Coordination
+
+- Posted an interop note to `stan-core` proposing a stricter packaged system-prompt rule: in `--context` mode, assistants must use `dependency.state.json` for exploration instead of requesting manual file pastes.
