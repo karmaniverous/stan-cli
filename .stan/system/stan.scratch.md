@@ -1,8 +1,8 @@
-# Scratch: Fix smoke test (ESM __dirname)
+# Scratch: Robust smoke test
 
 ## Current objective
 
-- Fix `scripts/smoke-context-diff.ts` to use `import.meta.url` instead of `__dirname` (ESM compatibility).
+- Enhance `scripts/smoke-context-diff.ts` to verify external dependency staging and strict exclusion of unselected files in context mode.
 
 ## What’s staged
 - `scripts/smoke-context-diff.ts`

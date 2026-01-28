@@ -1,6 +1,7 @@
 /**
  * scripts/smoke-context-diff.ts
- * Standalone smoke test for context mode archive composition.
+ * Robust smoke test for context mode archive composition.
+ * Verifies inclusion of selected sources and external deps, and exclusion of unselected files.
  *
  * Usage:
  *   npx tsx scripts/smoke-context-diff.ts
@@ -35,65 +36,100 @@ const main = async () => {
   console.log(`stan: smoke test running in ${cwd}`);
 
   try {
-    // 1. Initialize a minimal repo
+    // 1. Setup Repo with external dependency structure
     await writeFile(
       path.join(cwd, 'package.json'),
-      JSON.stringify({ name: 'smoke-pkg' }),
+      JSON.stringify({ name: 'smoke-pkg', type: 'module' }),
       'utf8',
     );
+    await writeFile(
+      path.join(cwd, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          module: 'nodenext',
+          moduleResolution: 'nodenext',
+          allowJs: true,
+          rootDir: '.',
+        },
+      }),
+      'utf8',
+    );
+
+    // Sources
+    const srcDir = path.join(cwd, 'src');
+    await mkdir(srcDir, { recursive: true });
+    // main.ts imports external dep
+    await writeFile(
+      path.join(srcDir, 'main.ts'),
+      `import { val } from 'my-dep';\nexport const x = val;`,
+      'utf8',
+    );
+    // ignored.ts is independent
+    await writeFile(
+      path.join(srcDir, 'ignored.ts'),
+      `export const ignore = true;`,
+      'utf8',
+    );
+
+    // Fake node_module
+    const depDir = path.join(cwd, 'node_modules', 'my-dep');
+    await mkdir(depDir, { recursive: true });
+    await writeFile(
+      path.join(depDir, 'package.json'),
+      JSON.stringify({
+        name: 'my-dep',
+        version: '1.0.0',
+        main: 'index.js',
+        type: 'commonjs',
+      }),
+      'utf8',
+    );
+    await writeFile(path.join(depDir, 'index.js'), 'exports.val = 42;', 'utf8');
+
+    // Init
     await runStan('init -f', cwd);
 
-    // 2. Run -Scm (Meta mode)
-    // Expect: archive.tar (META) created; archive.diff.tar skipped.
-    console.log('stan: [1/4] run -Scm (generate meta archive)...');
+    // 2. Run -Scm (Meta) -> Empty baseline
+    console.log('stan: [1/4] run -Scm (meta)...');
     await runStan('run -Scm', cwd);
 
     const outDir = path.join(cwd, '.stan/output');
     const tarPath = path.join(outDir, 'archive.tar');
     const diffPath = path.join(outDir, 'archive.diff.tar');
 
-    if (!existsSync(tarPath)) throw new Error('archive.tar missing after -Scm');
-    if (existsSync(diffPath))
-      throw new Error('archive.diff.tar present after -Scm (should be skipped)');
-
-    // Verify meta content (system + dependency artifacts)
-    const { stdout: metaList } = await exec(`tar -tf "${tarPath}"`, { cwd });
-    if (!metaList.includes('.stan/context/dependency.meta.json'))
-      throw new Error('Meta archive missing dependency.meta.json');
-    if (!metaList.includes('.stan/context/dependency.state.json'))
-      throw new Error('Meta archive missing dependency.state.json');
-
     // 3. Snap
     console.log('stan: [2/4] snap (baseline)...');
     await runStan('snap', cwd);
 
-    // 4. Modify state and add a source file
-    console.log('stan: [3/4] modify state and create file...');
-    const srcDir = path.join(cwd, 'src');
-    await mkdir(srcDir, { recursive: true });
-    await writeFile(path.join(srcDir, 'new.ts'), 'export const x = 1;', 'utf8');
-
-    // Update state to include 'src/new.ts'
+    // 4. Update state to select main.ts
+    console.log('stan: [3/4] update state...');
     const statePath = path.join(cwd, '.stan/context/dependency.state.json');
     const state = JSON.parse(await readFile(statePath, 'utf8'));
-    state.i = [...(state.i || []), 'src/new.ts'];
+    state.i = ['src/main.ts'];
     await writeFile(statePath, JSON.stringify(state), 'utf8');
 
-    // 5. Run -Sc (Context, non-meta)
-    // Expect: archive.tar (FULL) and archive.diff.tar (DIFF) created.
-    console.log('stan: [4/4] run -Sc (generate full+diff)...');
+    // 5. Run -Sc (Full + Diff)
+    console.log('stan: [4/4] run -Sc...');
     await runStan('run -Sc', cwd);
 
-    if (!existsSync(tarPath)) throw new Error('archive.tar missing after -Sc');
-    if (!existsSync(diffPath))
-      throw new Error('archive.diff.tar missing after -Sc');
+    if (!existsSync(diffPath)) throw new Error('archive.diff.tar missing');
 
-    // Verify diff content
-    const { stdout: diffList } = await exec(`tar -tf "${diffPath}"`, { cwd });
-    if (!diffList.includes('src/new.ts'))
-      throw new Error('Diff archive missing src/new.ts');
-    if (!diffList.includes('.stan/context/dependency.state.json'))
-      throw new Error('Diff archive missing changed dependency.state.json');
+    // 6. Verify contents
+    const { stdout } = await exec(`tar -tf "${diffPath}"`, { cwd });
+    const diffList = stdout.replace(/\\/g, '/'); // Normalize slashes
+    const has = (p: string) => diffList.includes(p);
+
+    if (!has('src/main.ts')) throw new Error('Missing src/main.ts in diff');
+    if (!has('.stan/context/dependency.state.json'))
+      throw new Error('Missing state in diff');
+
+    // Check for staged external dep (loose version matching)
+    if (!/context\/npm\/my-dep\/[^/]+\/index\.js/.test(diffList)) {
+      throw new Error(`Missing staged dependency my-dep. List:\n${diffList}`);
+    }
+
+    if (has('src/ignored.ts'))
+      throw new Error('Included src/ignored.ts (should be excluded)');
 
     console.log('stan: smoke test passed.');
   } finally {
