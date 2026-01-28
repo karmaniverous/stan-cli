@@ -63,4 +63,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.
 - Fixed type cast and removed `vi.restoreAllMocks()` in `snap.overlay.snapshot.test.ts` to prevent mock reset issues.
 - Reverted `snap.overlay.snapshot.test.ts` to `vi.doMock` with strict `vi.resetModules` per-test to fix persistence/resolution issues and resolve lint errors.
-- Seeded dependency state for TypeDoc warning triage and sent a `stan-core` interop note to tighten prompt rules so `--context` exploration uses `dependency.state.json` by default.
+- Seeded dependency state for TypeDoc warning triage and sent a `stan-core` interop note to tighten prompt rules so `--context` exploration uses `dependency.state.json` by default.
+- Added standalone smoke test script `scripts/smoke-context-diff.ts` to exercise context-mode archives/diffs without Vitest.
