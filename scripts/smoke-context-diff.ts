@@ -124,6 +124,17 @@ const main = async () => {
     console.log('stan: [4/4] run -Sc...');
     await runStan('run -Sc', cwd);
 
+    // Print artifacts for debugging
+    const metaContent = await readFile(path.join(cwd, '.stan/context/dependency.meta.json'), 'utf8');
+    console.log('\n--- dependency.meta.json ---');
+    console.log(metaContent);
+    console.log('----------------------------\n');
+
+    const stateContent = await readFile(statePath, 'utf8');
+    console.log('\n--- dependency.state.json ---');
+    console.log(stateContent);
+    console.log('-----------------------------\n');
+
     // 6. Verify contents
     const fullList = await listTar(tarPath, cwd);
     const diffList = await listTar(diffPath, cwd);

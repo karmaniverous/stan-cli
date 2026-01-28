@@ -68,4 +68,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed ESM compatibility in `scripts/smoke-context-diff.ts` (replaced `__dirname` with URL-based resolution).
 - Enhanced `scripts/smoke-context-diff.ts` with external dependency simulation and strict exclusion checks.
 - Added detailed archive content listing to `scripts/smoke-context-diff.ts` on failure for debugging.
-- Fixed `scripts/smoke-context-diff.ts` logic to use `.gitignore` for unselected files, ensuring proper exclusion testing.
+- Fixed `scripts/smoke-context-diff.ts` logic to use `.gitignore` for unselected files, ensuring proper exclusion testing.
+- Added debug printing of dependency meta and state to `scripts/smoke-context-diff.ts`.

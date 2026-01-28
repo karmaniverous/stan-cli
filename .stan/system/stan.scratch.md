@@ -1,8 +1,8 @@
-# Scratch: Fix smoke test (gitignore)
+# Scratch: Debug smoke test (meta content)
 
 ## Current objective
 
-- Fix `scripts/smoke-context-diff.ts` failure where `src/ignored.ts` was unexpectedly included. Add `.gitignore` to exclude sources by default, verifying that `dependency.state.json` selection overrides gitignore for `src/main.ts`.
+- Add debug printing of `dependency.meta.json` and `dependency.state.json` to `scripts/smoke-context-diff.ts` to diagnose why `src/main.ts` is missing from the archive despite `my-dep` being present.
 
 ## What’s staged
 - `scripts/smoke-context-diff.ts`
