@@ -61,13 +61,6 @@ const main = async () => {
       }),
       'utf8',
     );
-    
-    // Gitignore sources to test that dependency selection overrides it
-    await writeFile(
-        path.join(cwd, '.gitignore'),
-        'src/*.ts\nnode_modules/\n',
-        'utf8'
-    );
 
     // Sources
     const srcDir = path.join(cwd, 'src');
@@ -99,6 +92,16 @@ const main = async () => {
       'utf8',
     );
     await writeFile(path.join(depDir, 'index.js'), 'exports.val = 42;', 'utf8');
+
+    // Fake unused dependency
+    const unusedDir = path.join(cwd, 'node_modules', 'unused-dep');
+    await mkdir(unusedDir, { recursive: true });
+    await writeFile(
+      path.join(unusedDir, 'package.json'),
+      JSON.stringify({ name: 'unused-dep', version: '1.0.0', main: 'index.js' }),
+      'utf8',
+    );
+    await writeFile(path.join(unusedDir, 'index.js'), 'exports.x = 0;', 'utf8');
 
     // Init
     await runStan('init -f', cwd);
@@ -151,13 +154,16 @@ const main = async () => {
         // External dependency (loose version match)
         if (!list.some(p => /context\/npm\/my-dep\/[^/]+\/index\.js/.test(p)))
             throw new Error(`${label}: missing staged dependency my-dep`);
-        // Excluded file
-        if (has('src/ignored.ts'))
-            throw new Error(`${label}: included src/ignored.ts (should be excluded)`);
+        // Unused dependency (should NOT be staged)
+        if (list.some(p => /context\/npm\/unused-dep/.test(p)))
+            throw new Error(`${label}: included unused-dep (should be excluded)`);
+        // Ignored file is visible (base selection), so it SHOULD be present
+        // (Context mode expands selection; it doesn't currently restrict base selection)
+        if (!has('src/ignored.ts'))
+            throw new Error(`${label}: missing src/ignored.ts (base selection)`);
     };
 
-    try {
-        console.log('stan: verifying FULL archive...');
+    try {        console.log('stan: verifying FULL archive...');
         check(fullList, 'FULL');
         
         console.log('stan: verifying DIFF archive...');

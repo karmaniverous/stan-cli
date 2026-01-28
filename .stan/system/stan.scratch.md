@@ -1,8 +1,8 @@
-# Scratch: Fix smoke test (stale graph)
+# Scratch: Robust smoke test (deps)
 
 ## Current objective
 
-- Fix `scripts/smoke-context-diff.ts` failure where `src/main.ts` was missing from archives. Ensure source files are created *before* the initial `stan run -Scm` so the dependency graph includes them.
+- Verify `scripts/smoke-context-diff.ts` correctly handles external dependencies: `my-dep` (imported) should be staged/archived, `unused-dep` should not. `src/ignored.ts` remains as base selection.
 
 ## What’s staged
 - `scripts/smoke-context-diff.ts`
