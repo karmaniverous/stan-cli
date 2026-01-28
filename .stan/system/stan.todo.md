@@ -66,4 +66,6 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Seeded dependency state for TypeDoc warning triage and sent a `stan-core` interop note to tighten prompt rules so `--context` exploration uses `dependency.state.json` by default.
 - Added standalone smoke test script `scripts/smoke-context-diff.ts` to exercise context-mode archives/diffs without Vitest.
 - Fixed ESM compatibility in `scripts/smoke-context-diff.ts` (replaced `__dirname` with URL-based resolution).
-- Enhanced `scripts/smoke-context-diff.ts` with external dependency simulation and strict exclusion checks.
+- Enhanced `scripts/smoke-context-diff.ts` with external dependency simulation and strict exclusion checks.
+- Added detailed archive content listing to `scripts/smoke-context-diff.ts` on failure for debugging.
+- Fixed `scripts/smoke-context-diff.ts` logic to use `.gitignore` for unselected files, ensuring proper exclusion testing.

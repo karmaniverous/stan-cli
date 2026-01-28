@@ -31,6 +31,13 @@ const runStan = async (args: string, cwd: string) => {
   return exec(cmd, { cwd });
 };
 
+const listTar = async (tarPath: string, cwd: string) => {
+  if (!existsSync(tarPath)) return [];
+  const { stdout } = await exec(`tar -tf "${tarPath}"`, { cwd });
+  // Normalize to forward slashes and filter empty lines
+  return stdout.split(/[\r\n]+/).map(l => l.trim().replace(/\\/g, '/')).filter(Boolean);
+};
+
 const main = async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), 'stan-smoke-manual-'));
   console.log(`stan: smoke test running in ${cwd}`);
@@ -53,6 +60,13 @@ const main = async () => {
         },
       }),
       'utf8',
+    );
+    
+    // Gitignore sources to test that dependency selection overrides it
+    await writeFile(
+        path.join(cwd, '.gitignore'),
+        'src/*.ts\nnode_modules/\n',
+        'utf8'
     );
 
     // Sources
@@ -92,11 +106,9 @@ const main = async () => {
     // 2. Run -Scm (Meta) -> Empty baseline
     console.log('stan: [1/4] run -Scm (meta)...');
     await runStan('run -Scm', cwd);
-
     const outDir = path.join(cwd, '.stan/output');
     const tarPath = path.join(outDir, 'archive.tar');
     const diffPath = path.join(outDir, 'archive.diff.tar');
-
     // 3. Snap
     console.log('stan: [2/4] snap (baseline)...');
     await runStan('snap', cwd);
@@ -112,24 +124,38 @@ const main = async () => {
     console.log('stan: [4/4] run -Sc...');
     await runStan('run -Sc', cwd);
 
-    if (!existsSync(diffPath)) throw new Error('archive.diff.tar missing');
-
     // 6. Verify contents
-    const { stdout } = await exec(`tar -tf "${diffPath}"`, { cwd });
-    const diffList = stdout.replace(/\\/g, '/'); // Normalize slashes
-    const has = (p: string) => diffList.includes(p);
+    const fullList = await listTar(tarPath, cwd);
+    const diffList = await listTar(diffPath, cwd);
 
-    if (!has('src/main.ts')) throw new Error('Missing src/main.ts in diff');
-    if (!has('.stan/context/dependency.state.json'))
-      throw new Error('Missing state in diff');
+    const check = (list: string[], label: string) => {
+        const has = (p: string) => list.includes(p);
+        // Main source
+        if (!has('src/main.ts')) 
+            throw new Error(`${label}: missing src/main.ts`);
+        // State file
+        if (!has('.stan/context/dependency.state.json'))
+            throw new Error(`${label}: missing dependency.state.json`);
+        // External dependency (loose version match)
+        if (!list.some(p => /context\/npm\/my-dep\/[^/]+\/index\.js/.test(p)))
+            throw new Error(`${label}: missing staged dependency my-dep`);
+        // Excluded file
+        if (has('src/ignored.ts'))
+            throw new Error(`${label}: included src/ignored.ts (should be excluded)`);
+    };
 
-    // Check for staged external dep (loose version matching)
-    if (!/context\/npm\/my-dep\/[^/]+\/index\.js/.test(diffList)) {
-      throw new Error(`Missing staged dependency my-dep. List:\n${diffList}`);
+    try {
+        console.log('stan: verifying FULL archive...');
+        check(fullList, 'FULL');
+        
+        console.log('stan: verifying DIFF archive...');
+        check(diffList, 'DIFF');
+    } catch (e) {
+        console.error('stan: verification failed.');
+        console.error('FULL content:', fullList);
+        console.error('DIFF content:', diffList);
+        throw e;
     }
-
-    if (has('src/ignored.ts'))
-      throw new Error('Included src/ignored.ts (should be excluded)');
 
     console.log('stan: smoke test passed.');
   } finally {

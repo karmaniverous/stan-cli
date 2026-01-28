@@ -1,8 +1,8 @@
-# Scratch: Robust smoke test
+# Scratch: Fix smoke test (gitignore)
 
 ## Current objective
 
-- Enhance `scripts/smoke-context-diff.ts` to verify external dependency staging and strict exclusion of unselected files in context mode.
+- Fix `scripts/smoke-context-diff.ts` failure where `src/ignored.ts` was unexpectedly included. Add `.gitignore` to exclude sources by default, verifying that `dependency.state.json` selection overrides gitignore for `src/main.ts`.
 
 ## What’s staged
 - `scripts/smoke-context-diff.ts`
