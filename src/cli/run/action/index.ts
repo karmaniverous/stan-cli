@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -7,7 +8,6 @@ import {
   ensureOutputDir,
   findConfigPathSync,
   resolveStanPathSync,
-  stageDependencyContext,
   writeDependencyMapFile,
   writeDependencyMetaFile,
 } from '@karmaniverous/stan-core';
@@ -130,13 +130,6 @@ export const registerRunAction = (
 
         map: built.map,
       });
-      await stageDependencyContext({
-        cwd: runCwd,
-        stanPath: config.stanPath,
-
-        map: built.map,
-        clean: true,
-      });
 
       const stateP = path.join(
         runCwd,
@@ -147,6 +140,10 @@ export const registerRunAction = (
 
       // In meta mode, reset state to empty (fresh start) before reading
       if (derived.behavior.meta) {
+        await writeFile(stateP, JSON.stringify({ v: 2, i: [] }), 'utf8');
+      } else if (!existsSync(stateP)) {
+        // Ensure the state file exists for normal context runs as well.
+        // Depth defaults to 0; an empty state means “no extra allowlist selection”.
         await writeFile(stateP, JSON.stringify({ v: 2, i: [] }), 'utf8');
       }
 
@@ -163,7 +160,10 @@ export const registerRunAction = (
         meta: built.meta,
         map: built.map,
         state,
-        clean: false,
+        // Keep the staging area deterministic per-run. This prevents stale staged
+        // payloads from prior selections being archived when the current state
+        // does not select them (depth defaults to 0).
+        clean: true,
       };
     }
 

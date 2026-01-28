@@ -135,7 +135,9 @@ const main = async () => {
     console.log('stan: [3/4] update state...');
     const statePath = path.join(cwd, '.stan/context/dependency.state.json');
     const state = JSON.parse(await readFile(statePath, 'utf8'));
-    state.i = ['src/main.ts'];
+    // Explicitly request depth=1 so runtime deps are staged/archived.
+    // Depth defaults to 0 (seed only), so a bare "src/main.ts" would not include my-dep.
+    state.i = [['src/main.ts', 1]];
     await writeFile(statePath, JSON.stringify(state), 'utf8');
 
     // 5. Run -Sc (Full + Diff)
@@ -162,7 +164,8 @@ const main = async () => {
 
     const errors: string[] = [];
 
-    const check = (list: string[], label: string) => {
+    const checkFull = (list: string[]) => {
+      const label = 'FULL';
       const has = (p: string) => list.includes(p);
       // Main source
       if (!has('src/main.ts')) errors.push(`${label}: missing src/main.ts`);
@@ -175,17 +178,35 @@ const main = async () => {
       // Unused dependency (should NOT be staged)
       if (list.some((p) => /context\/npm\/unused-dep/.test(p)))
         errors.push(`${label}: included unused-dep (should be excluded)`);
-      // Ignored file is visible (base selection), so it SHOULD be present
-      // (Context mode expands selection; it doesn't currently restrict base selection)
+      // Base selection file should be present in FULL.
       if (!has('src/ignored.ts'))
         errors.push(`${label}: missing src/ignored.ts (base selection)`);
     };
 
+    const checkDiff = (list: string[]) => {
+      const label = 'DIFF';
+      const has = (p: string) => list.includes(p);
+      // Main source should be present because we modified it after snap.
+      if (!has('src/main.ts')) errors.push(`${label}: missing src/main.ts`);
+      // State file should be present because we modified it after snap.
+      if (!has('.stan/context/dependency.state.json'))
+        errors.push(`${label}: missing dependency.state.json`);
+      // External dependency should be present because it becomes newly selected/staged.
+      if (!list.some((p) => /context\/npm\/my-dep\/[^/]+\/index\.js/.test(p)))
+        errors.push(`${label}: missing staged dependency my-dep`);
+      // Unused dependency must not appear.
+      if (list.some((p) => /context\/npm\/unused-dep/.test(p)))
+        errors.push(`${label}: included unused-dep (should be excluded)`);
+      // Base selection files are changed-only: do not require unchanged files in DIFF.
+      if (has('src/ignored.ts'))
+        errors.push(`${label}: included src/ignored.ts (should be unchanged)`);
+    };
+
     console.log('stan: verifying FULL archive...');
-    check(fullList, 'FULL');
+    checkFull(fullList);
 
     console.log('stan: verifying DIFF archive...');
-    check(diffList, 'DIFF');
+    checkDiff(diffList);
 
     if (errors.length > 0) {
       console.error('stan: verification failed.');

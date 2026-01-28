@@ -58,9 +58,10 @@ describe('smoke: archive context composition (meta/diff)', () => {
     // Read the file created by the previous run
     const stateContent = JSON.parse(await readFile(statePath, 'utf8')) as {
       i?: string[];
+      x?: string[];
     };
     // Modify it
-    stateContent.i = ['added-node'];
+    stateContent.x = [];
     await writeFile(statePath, JSON.stringify(stateContent), 'utf8');
 
     // 4. Run -Sc (Context, no meta) -> Diff

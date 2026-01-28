@@ -72,4 +72,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Added debug printing of dependency meta and state to `scripts/smoke-context-diff.ts`.
 - Fixed stale graph issue in `scripts/smoke-context-diff.ts` by ensuring sources exist before the initial META run.
 - Enhanced `scripts/smoke-context-diff.ts` to verify inclusion of used external deps and exclusion of unused ones.
-- Fixed smoke test to modify sources after snapping (ensures diff inclusion) and aggregate verification errors.
+- Fixed smoke test to modify sources after snapping (ensures diff inclusion) and aggregate verification errors.
+- Fixed `stan run --context` to avoid eager staging of all external deps; staging is now selection-aware (depth=0 default), and smoke harnesses explicitly request depth=1 when needed.

@@ -94,12 +94,12 @@ Out of scope for the CLI:
 - Context mode archive composition (`--context` non-meta; Option B):
   - `stan run --context` (non-meta) writes BOTH `archive.tar` (FULL allowlist context archive) and `archive.diff.tar` (DIFF allowlist context archive).
   - `archive.tar` MUST contain `dependency.meta.json` and `dependency.state.json` and MUST include the same files as the META archive plus the staged/selected files indicated by `dependency.state.json` (per engine dependency-context rules).
+  - Dependency staging MUST be selection-aware: do not stage/include external dependency payloads unless they are in the `dependency.state.json` selection closure (depth defaults to 0).
   - `archive.diff.tar` MUST include `dependency.meta.json` and `dependency.state.json` only when they changed since the last `stan snap`, and MUST include only files that are in the FULL allowlist context archive and were added/changed since the last `stan snap`.
   - The DIFF archive is keyed to the FULL selection universe for the same command; it is the same selection universe as FULL, minus files unchanged since the last `stan snap`.
 - Snapshot baseline requirements:
   - The context diff baseline MUST NOT clobber the non-context baseline; maintain a separate context snapshot baseline file (e.g., `.archive.snapshot.context.json`).
   - `stan snap` MUST update BOTH the non-context snapshot baseline and the context snapshot baseline when dependency context artifacts are present/applicable.
-
 ---
 
 ## 4) System prompt resolution and materialization
