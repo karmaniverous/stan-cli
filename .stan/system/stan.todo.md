@@ -61,3 +61,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Updated `vitest.config.ts` to inline `@karmaniverous/stan-core` and `tar`, ensuring `vi.doMock` applies correctly in unit tests.
 - Fixed `patch.test.ts` to simulate failure codes correctly when testing failure paths, and ensured `snap.overlay.snapshot.test.ts` resets modules before mocking.
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.
+- Fixed type cast and removed `vi.restoreAllMocks()` in `snap.overlay.snapshot.test.ts` to prevent mock reset issues.

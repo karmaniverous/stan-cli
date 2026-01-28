@@ -1,4 +1,4 @@
-# Scratch: Snap test robustness
+# Scratch: Snap test type & restore fix
 
 ## Current objective
 

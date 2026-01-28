@@ -51,10 +51,6 @@ vi.mock('@karmaniverous/stan-core', () => {
 });
 
 describe('snap: snapshot baseline (pure call contract)', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('passes engine selection into writeArchiveSnapshot', async () => {
     // Reset mocks to ensure clean call counts
     ensureOutputDirMock.mockClear();
@@ -93,9 +89,11 @@ describe('snap: snapshot baseline (pure call contract)', () => {
     // Assert: writeArchiveSnapshot invoked with merged selection + anchors
     expect(writeSnapshotMock).toHaveBeenCalledTimes(1);
     // Safely destructure first call (Args is a single-arg tuple)
-    const [[call]] = writeSnapshotMock.mock.calls as [
-      [{ includes: string[]; excludes: string[]; stanPath: string }],
+    const calls = writeSnapshotMock.mock.calls;
+    const firstCall = calls[0] as [
+      { includes: string[]; excludes: string[]; stanPath: string },
     ];
+    const call = firstCall[0];
 
     // includes from engine config
     expect(call.includes).toEqual(['**/*.md', 'out/imports/**']);
