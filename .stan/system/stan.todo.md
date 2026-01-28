@@ -4,7 +4,6 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
-- Verify removal of q/r keys logic and restart handling.
 - Verify smoke test `src/test/smoke/archive-context.test.ts`.
 - Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules).
 - Fix `makeBaseConfigs` to propagate `dependency` context and force-include context artifacts in archives.
@@ -58,3 +57,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Seeded `.stan/context/dependency.state.json` to load DRY hotspots (archive-stage + CLI config) for the next refactor pass.
 - Added `src/test/smoke/archive-context.test.ts` to validate archive composition and dependency state inclusion in diffs.
 - Removed `src/runner/run/control.ts` and restart logic from the live console (q/r keys); usage now relies on Ctrl-C.
+- Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.

@@ -68,7 +68,7 @@ Out of scope for the CLI:
 
 - Plan and live UI
   - Print a multi‑line plan unless `-P/--no-plan`.
-  - Live TTY table with cancellation keys (‘q’ cancel, ‘r’ restart session); logger lines in non‑TTY.
+  - Live TTY table with standard signal cancellation (Ctrl-C); logger lines in non‑TTY.
 
 - Cancellation
   - SIGINT parity for live/non‑live.

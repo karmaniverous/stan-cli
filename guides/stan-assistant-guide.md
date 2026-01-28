@@ -116,9 +116,8 @@ Produces deterministic outputs and (when enabled) archives:
 
 Live UI + cancellation:
 
-- In TTY, live mode shows a progress table. Keys:
-  - `q` cancels the run (best-effort skips archives; exit code set).
-  - `r` restarts the run session (TTY only).
+- In TTY, live mode shows a progress table.
+- Use `Ctrl-C` to cancel the run (best-effort skips archives; exit code set).
 
 Combine mode:
 

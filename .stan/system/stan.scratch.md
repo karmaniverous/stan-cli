@@ -1,6 +1,5 @@
-# Scratch: Removing live console keys (q/r)
+# Scratch: Documentation cleanup (q/r removal)
 
 ## Current objective
-- Removing the interactive `q` and `r` keys from the live run console.
-- Cancellation now relies on standard SIGINT (Ctrl-C) which is already handled via signals.
-- Simplifying the session runner (removing restart loop) and UI internals.
+- Updating documentation to reflect the removal of `q` (quit) and `r` (reset) keys from the live UI.
+- Verified `stan run` tests passed after code removal.
