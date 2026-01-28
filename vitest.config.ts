@@ -23,6 +23,12 @@ export default defineConfig({
     environment: 'node',
     // Use forks to allow process.chdir in suites that rely on it.
     pool: 'forks',
+    // Ensure stan-core is processed by Vitest so mocks apply correctly.
+    server: {
+      deps: {
+        inline: ['@karmaniverous/stan-core', 'tar'],
+      },
+    },
     exclude: ['node_modules/**', 'dist/**', '.rollup.cache/**'],
     coverage: {
       provider: 'v8',
