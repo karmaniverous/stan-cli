@@ -71,4 +71,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed `scripts/smoke-context-diff.ts` logic to use `.gitignore` for unselected files, ensuring proper exclusion testing.
 - Added debug printing of dependency meta and state to `scripts/smoke-context-diff.ts`.
 - Fixed stale graph issue in `scripts/smoke-context-diff.ts` by ensuring sources exist before the initial META run.
-- Enhanced `scripts/smoke-context-diff.ts` to verify inclusion of used external deps and exclusion of unused ones.
+- Enhanced `scripts/smoke-context-diff.ts` to verify inclusion of used external deps and exclusion of unused ones.
+- Fixed smoke test to modify sources after snapping (ensures diff inclusion) and aggregate verification errors.

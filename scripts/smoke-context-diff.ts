@@ -35,7 +35,10 @@ const listTar = async (tarPath: string, cwd: string) => {
   if (!existsSync(tarPath)) return [];
   const { stdout } = await exec(`tar -tf "${tarPath}"`, { cwd });
   // Normalize to forward slashes and filter empty lines
-  return stdout.split(/[\r\n]+/).map(l => l.trim().replace(/\\/g, '/')).filter(Boolean);
+  return stdout
+    .split(/[\r\n]+/)
+    .map((l) => l.trim().replace(/\\/g, '/'))
+    .filter(Boolean);
 };
 
 const main = async () => {
@@ -98,7 +101,11 @@ const main = async () => {
     await mkdir(unusedDir, { recursive: true });
     await writeFile(
       path.join(unusedDir, 'package.json'),
-      JSON.stringify({ name: 'unused-dep', version: '1.0.0', main: 'index.js' }),
+      JSON.stringify({
+        name: 'unused-dep',
+        version: '1.0.0',
+        main: 'index.js',
+      }),
       'utf8',
     );
     await writeFile(path.join(unusedDir, 'index.js'), 'exports.x = 0;', 'utf8');
@@ -117,6 +124,13 @@ const main = async () => {
     console.log('stan: [2/4] snap (baseline)...');
     await runStan('snap', cwd);
 
+    // Modify src/main.ts so it appears in the diff (otherwise it's baselined and excluded)
+    await writeFile(
+      path.join(srcDir, 'main.ts'),
+      `import { val } from 'my-dep';\nexport const x = val + 1;`,
+      'utf8',
+    );
+
     // 4. Update state to select main.ts
     console.log('stan: [3/4] update state...');
     const statePath = path.join(cwd, '.stan/context/dependency.state.json');
@@ -129,7 +143,10 @@ const main = async () => {
     await runStan('run -Sc', cwd);
 
     // Print artifacts for debugging
-    const metaContent = await readFile(path.join(cwd, '.stan/context/dependency.meta.json'), 'utf8');
+    const metaContent = await readFile(
+      path.join(cwd, '.stan/context/dependency.meta.json'),
+      'utf8',
+    );
     console.log('\n--- dependency.meta.json ---');
     console.log(JSON.stringify(JSON.parse(metaContent), null, 2));
     console.log('----------------------------\n');
@@ -143,36 +160,39 @@ const main = async () => {
     const fullList = await listTar(tarPath, cwd);
     const diffList = await listTar(diffPath, cwd);
 
+    const errors: string[] = [];
+
     const check = (list: string[], label: string) => {
-        const has = (p: string) => list.includes(p);
-        // Main source
-        if (!has('src/main.ts')) 
-            throw new Error(`${label}: missing src/main.ts`);
-        // State file
-        if (!has('.stan/context/dependency.state.json'))
-            throw new Error(`${label}: missing dependency.state.json`);
-        // External dependency (loose version match)
-        if (!list.some(p => /context\/npm\/my-dep\/[^/]+\/index\.js/.test(p)))
-            throw new Error(`${label}: missing staged dependency my-dep`);
-        // Unused dependency (should NOT be staged)
-        if (list.some(p => /context\/npm\/unused-dep/.test(p)))
-            throw new Error(`${label}: included unused-dep (should be excluded)`);
-        // Ignored file is visible (base selection), so it SHOULD be present
-        // (Context mode expands selection; it doesn't currently restrict base selection)
-        if (!has('src/ignored.ts'))
-            throw new Error(`${label}: missing src/ignored.ts (base selection)`);
+      const has = (p: string) => list.includes(p);
+      // Main source
+      if (!has('src/main.ts')) errors.push(`${label}: missing src/main.ts`);
+      // State file
+      if (!has('.stan/context/dependency.state.json'))
+        errors.push(`${label}: missing dependency.state.json`);
+      // External dependency (loose version match)
+      if (!list.some((p) => /context\/npm\/my-dep\/[^/]+\/index\.js/.test(p)))
+        errors.push(`${label}: missing staged dependency my-dep`);
+      // Unused dependency (should NOT be staged)
+      if (list.some((p) => /context\/npm\/unused-dep/.test(p)))
+        errors.push(`${label}: included unused-dep (should be excluded)`);
+      // Ignored file is visible (base selection), so it SHOULD be present
+      // (Context mode expands selection; it doesn't currently restrict base selection)
+      if (!has('src/ignored.ts'))
+        errors.push(`${label}: missing src/ignored.ts (base selection)`);
     };
 
-    try {        console.log('stan: verifying FULL archive...');
-        check(fullList, 'FULL');
-        
-        console.log('stan: verifying DIFF archive...');
-        check(diffList, 'DIFF');
-    } catch (e) {
-        console.error('stan: verification failed.');
-        console.error('FULL content:', fullList);
-        console.error('DIFF content:', diffList);
-        throw e;
+    console.log('stan: verifying FULL archive...');
+    check(fullList, 'FULL');
+
+    console.log('stan: verifying DIFF archive...');
+    check(diffList, 'DIFF');
+
+    if (errors.length > 0) {
+      console.error('stan: verification failed.');
+      console.error('FULL content:', fullList);
+      console.error('DIFF content:', diffList);
+      console.error('Errors:', errors);
+      process.exit(1);
     }
 
     console.log('stan: smoke test passed.');
