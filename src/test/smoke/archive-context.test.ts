@@ -11,11 +11,12 @@ const exec = promisify(execCb);
 // Resolve absolute paths to the CLI source and runner
 const CLI_ENTRY = path.resolve(__dirname, '../../cli/bin/stan.ts');
 const TSX = path.resolve(__dirname, '../../../node_modules/.bin/tsx');
+const TSCONFIG = path.resolve(__dirname, '../../../tsconfig.json');
 
 // Helper to run the CLI in the temp dir
 const runStan = async (args: string, cwd: string) => {
   // Quote paths to handle potential spaces
-  const cmd = `"${TSX}" "${CLI_ENTRY}" ${args}`;
+  const cmd = `"${TSX}" --tsconfig "${TSCONFIG}" "${CLI_ENTRY}" ${args}`;
   return exec(cmd, { cwd });
 };
 

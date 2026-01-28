@@ -4,6 +4,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
+- Verify `src/runner/snap/snap.overlay.snapshot.test.ts` failure resolution (mock robustness).
 - Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules) to prepare for refactor.
 - Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
@@ -57,4 +58,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Removed `src/runner/run/control.ts` and restart logic from the live console (q/r keys); usage now relies on Ctrl-C.
 - Updated archive composition (Option B) and snapshot baselines: `stan run --context` writes FULL+DIFF; `stan snap` updates both standard and context snapshots; smoke tests extended.
 - Fixed `snap.overlay.snapshot.test.ts` mock for robust dynamic import handling and enabled `archive-context.test.ts` smoke test.
+- Updated smoke test runner to pass `--tsconfig` to `tsx`, ensuring path alias resolution in the child process.
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.
