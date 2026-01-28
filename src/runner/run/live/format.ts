@@ -65,7 +65,5 @@ export const bodyTable = (rows: string[][]): string =>
 export const hintLine = (uiId: number): string => {
   const tag =
     process.env.STAN_TEST_UI_TAG === '1' ? ` UI#${uiId.toString()}` : '';
-  return `${dim('Press')} ${bold('q')} ${dim('to cancel,')} ${bold(
-    'r',
-  )} ${dim('to restart')}${tag}`;
+  return `${dim('Press')} ${bold('Ctrl-C')} ${dim('to cancel')}${tag}`;
 };

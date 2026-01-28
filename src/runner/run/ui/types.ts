@@ -24,7 +24,6 @@ export type RunnerUI = {
     startedAt: number,
     endedAt: number,
   ): void;
-  onCancelled(mode?: 'cancel' | 'restart'): void;
-  installCancellation(triggerCancel: () => void, onRestart?: () => void): void;
+  onCancelled(): void;
   stop(): void;
 };

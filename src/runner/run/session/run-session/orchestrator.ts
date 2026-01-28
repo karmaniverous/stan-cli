@@ -88,22 +88,6 @@ export const runSessionOnce = async (args: {
   });
   const cancelCtl = new CancelController(ui, supervisor);
 
-  // Wire UI cancellation keys (q/r)
-  try {
-    ui.installCancellation(
-      () => {
-        cancelCtl.triggerCancel();
-      },
-      liveEnabled
-        ? () => {
-            cancelCtl.triggerRestart();
-          }
-        : undefined,
-    );
-  } catch {
-    /* ignore */
-  }
-
   // Session-wide SIGINT → cancel (parity)
   const onSigint = (): void => {
     cancelCtl.triggerCancel();
@@ -215,5 +199,5 @@ export const runSessionOnce = async (args: {
   } catch {
     /* ignore */
   }
-  return { created, cancelled: false, restartRequested: false };
+  return { created, cancelled: false };
 };

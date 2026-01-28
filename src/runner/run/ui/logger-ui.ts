@@ -87,7 +87,6 @@ export class LoggerUI implements RunnerUI {
     this.forwards?.onArchiveEnd(kind, outAbs, cwd, undefined, undefined);
   }
   onCancelled(): void {}
-  installCancellation(): void {}
   stop(): void {
     this.sink.stop();
   }

@@ -4,7 +4,7 @@ import type { ProcessSupervisor } from '@/runner/run/live/supervisor';
 import type { SessionOutcome } from '@/runner/run/session/types';
 import type { RunnerUI } from '@/runner/run/ui';
 
-import { cancelAndReturn, restartAndReturn } from './cancel';
+import { cancelAndReturn } from './cancel';
 import { settle, win32 } from './cleanup';
 
 export type CancelDeps = {
@@ -18,7 +18,6 @@ export type CancelDeps = {
 
 export type CancelCtl = {
   isCancelled(): boolean;
-  isRestart(): boolean;
 };
 
 /** Immediate check for cancel/restart. Returns a SessionOutcome or null to continue. */
@@ -26,14 +25,8 @@ export async function checkCancelNow(
   cancelCtl: CancelCtl,
   deps: CancelDeps,
 ): Promise<SessionOutcome | null> {
-  if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+  if (cancelCtl.isCancelled()) {
     return await cancelAndReturn(deps);
-  }
-  if (cancelCtl.isRestart()) {
-    return restartAndReturn({
-      created: deps.created,
-      detachSignals: deps.detachSignals,
-    });
   }
   return null;
 }

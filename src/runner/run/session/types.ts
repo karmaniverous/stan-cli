@@ -19,7 +19,6 @@ export type SessionArgs = {
 export type SessionOutcome = {
   created: string[];
   cancelled: boolean;
-  restartRequested: boolean;
 };
 
 export type Epoch = symbol;

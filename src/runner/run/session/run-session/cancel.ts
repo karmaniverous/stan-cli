@@ -77,18 +77,5 @@ export const cancelAndReturn = async (args: {
   } catch {
     /* ignore */
   }
-  return { created, cancelled: true, restartRequested: false };
-};
-
-/** Restart path: detach signals and hand control back to caller. */
-export const restartAndReturn = (args: {
-  created: string[];
-  detachSignals: () => void;
-}): SessionOutcome => {
-  try {
-    args.detachSignals();
-  } catch {
-    /* ignore */
-  }
-  return { created: args.created, cancelled: true, restartRequested: true };
+  return { created, cancelled: true };
 };

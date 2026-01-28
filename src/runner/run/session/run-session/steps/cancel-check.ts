@@ -9,7 +9,6 @@ import type { SessionOutcome } from '@/runner/run/session/types';
 
 export type CancelCtlLike = {
   isCancelled(): boolean;
-  isRestart(): boolean;
 };
 
 /** Run the standard cancellation guard sequence; return an outcome when cancelling/restarting. */

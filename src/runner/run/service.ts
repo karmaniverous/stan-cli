@@ -110,95 +110,58 @@ export const runSelected = async (
             stop() {},
           } as unknown as RunnerUI);
 
-  // Outer loop: allow live-mode restart (press 'r') to repeat a session once per trigger.
-  let printedPlan = false;
-  for (;;) {
-    const { created, cancelled, restartRequested } = await runSessionOnce({
-      cwd,
-      config,
-      selection: selected,
-      mode,
-      behavior,
-      liveEnabled,
-      planBody,
-      printPlan: !printedPlan && behavior.plan !== false,
-      ui,
-      // Honor CLI/system choice for prompt resolution within the session.
-      promptChoice,
-    });
-    printedPlan = true;
+  const { created, cancelled } = await runSessionOnce({
+    cwd,
+    config,
+    selection: selected,
+    mode,
+    behavior,
+    liveEnabled,
+    planBody,
+    printPlan: behavior.plan !== false,
+    ui,
+    // Honor CLI/system choice for prompt resolution within the session.
+    promptChoice,
+  });
 
-    if (restartRequested) {
-      // Next iteration (live restart)
-      continue;
-    }
-    if (cancelled) {
-      // Secondary guard: ensure on-disk archives are absent on cancellation
-      // even if a late race created them; best-effort only.
-      const outAbs = path.join(cwd, config.stanPath, 'output');
-      const tarP = path.join(outAbs, 'archive.tar');
-      const diffP = path.join(outAbs, 'archive.diff.tar');
-      const settle = async (ms: number) =>
-        new Promise<void>((r) => setTimeout(r, ms));
-      // Robust bounded retry: try a few short cycles to absorb lingering handles.
-      const isGone = () => !existsSync(tarP) && !existsSync(diffP);
-      const attemptDelete = async (): Promise<void> => {
-        await Promise.allSettled([
-          rm(tarP, { force: true }),
-          rm(diffP, { force: true }),
-        ]);
-      };
-      const maxTries = 8;
-      for (let i = 0; i < maxTries; i += 1) {
-        try {
-          await attemptDelete();
-        } catch {
-          /* ignore */
-        }
-        if (isGone()) break;
-        // Platform-aware small settle between attempts.
-        const win = process.platform === 'win32';
-        await settle(win ? 200 : 40);
-      }
-      // Brief settle to reflect deletions across platforms
+  if (cancelled) {
+    // Secondary guard: ensure on-disk archives are absent on cancellation
+    // even if a late race created them; best-effort only.
+    const outAbs = path.join(cwd, config.stanPath, 'output');
+    const tarP = path.join(outAbs, 'archive.tar');
+    const diffP = path.join(outAbs, 'archive.diff.tar');
+    const settle = async (ms: number) =>
+      new Promise<void>((r) => setTimeout(r, ms));
+    // Robust bounded retry: try a few short cycles to absorb lingering handles.
+    const isGone = () => !existsSync(tarP) && !existsSync(diffP);
+    const attemptDelete = async (): Promise<void> => {
+      await Promise.allSettled([
+        rm(tarP, { force: true }),
+        rm(diffP, { force: true }),
+      ]);
+    };
+    const maxTries = 8;
+    for (let i = 0; i < maxTries; i += 1) {
       try {
-        await new Promise((r) =>
-          setTimeout(r, process.platform === 'win32' ? 100 : 25),
-        );
+        await attemptDelete();
       } catch {
         /* ignore */
       }
-      // Cancelled (non-restart): session already stopped UI and printed spacing.
-      // Brief settle to ensure any best-effort deletions (archives) are reflected.
-      try {
-        const ms = process.platform === 'win32' ? 30 : process.env.CI ? 20 : 15;
-        await new Promise((r) => setTimeout(r, ms));
-      } catch {
-        /* ignore */
-      }
-      return created;
+      if (isGone()) break;
+      // Platform-aware small settle between attempts.
+      const win = process.platform === 'win32';
+      await settle(win ? 200 : 40);
     }
-    // Normal completion: ensure any final progress callbacks land,
-    // flush the current table state once, then persist the final frame.
+    // Brief settle to reflect deletions across platforms
     try {
-      try {
-        await yieldToEventLoop();
-      } catch {
-        /* ignore */
-      }
-      const maybeFlush = (ui as unknown as { flushNow?: () => void }).flushNow;
-      if (typeof maybeFlush === 'function') {
-        try {
-          maybeFlush();
-        } catch {
-          /* ignore */
-        }
-      }
-      ui.stop();
+      await new Promise((r) =>
+        setTimeout(r, process.platform === 'win32' ? 100 : 25),
+      );
     } catch {
       /* ignore */
     }
-    // Minor settle to stabilize FS visibility (archives, outputs) for immediate assertions.
+    // Cancelled: session already stopped UI and printed spacing.
+    // Brief settle to ensure any best-effort deletions (archives) are reflected.
     try {
       const ms = process.platform === 'win32' ? 30 : process.env.CI ? 20 : 15;
       await new Promise((r) => setTimeout(r, ms));
@@ -207,4 +170,32 @@ export const runSelected = async (
     }
     return created;
   }
+  // Normal completion: ensure any final progress callbacks land,
+  // flush the current table state once, then persist the final frame.
+  try {
+    try {
+      await yieldToEventLoop();
+    } catch {
+      /* ignore */
+    }
+    const maybeFlush = (ui as unknown as { flushNow?: () => void }).flushNow;
+    if (typeof maybeFlush === 'function') {
+      try {
+        maybeFlush();
+      } catch {
+        /* ignore */
+      }
+    }
+    ui.stop();
+  } catch {
+    /* ignore */
+  }
+  // Minor settle to stabilize FS visibility (archives, outputs) for immediate assertions.
+  try {
+    const ms = process.platform === 'win32' ? 30 : process.env.CI ? 20 : 15;
+    await new Promise((r) => setTimeout(r, ms));
+  } catch {
+    /* ignore */
+  }
+  return created;
 };

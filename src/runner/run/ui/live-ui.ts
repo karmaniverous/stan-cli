@@ -1,6 +1,5 @@
 // src/stan/run/ui/live-ui.ts
 
-import { RunnerControl } from '@/runner/run/control';
 import { liveTrace, ProgressRenderer } from '@/runner/run/live';
 import { LiveSink, ProgressModel } from '@/runner/run/progress';
 import { createUiEndForwarders } from '@/runner/run/ui/forward';
@@ -15,7 +14,6 @@ import type { ArchiveKind, RunnerUI } from './types';
 
 export class LiveUI implements RunnerUI {
   private renderer: ProgressRenderer | null = null;
-  private control: RunnerControl | null = null;
   private readonly model = new ProgressModel();
   private readonly sink: LiveSink;
   private forwards = createUiEndForwarders(this.model, { useDurations: true });
@@ -83,57 +81,18 @@ export class LiveUI implements RunnerUI {
   }
   /**
    * Tear down live rendering on cancellation.
-   * - mode === 'cancel': persist the final table (hint hidden by renderer on finalize).
-   * - mode === 'restart': paint CANCELLED immediately and leave table visible for overwrite.
+   * - Persist the final table (hint hidden by renderer on finalize).
    */
-  onCancelled(mode: 'cancel' | 'restart' = 'cancel'): void {
-    liveTrace.ui.onCancelled(mode);
+  onCancelled(): void {
+    liveTrace.ui.onCancelled();
     try {
       this.sink.cancelPending();
     } catch {
       /* ignore */
     }
-    // Reset elapsed timer for a subsequent restart session.
-    try {
-      this.sink.resetElapsed();
-    } catch {
-      /* ignore */
-    }
-    try {
-      if (mode === 'restart') {
-        liveTrace.session.info(
-          'restart: paint CANCELLED immediately; detach keys; table remains for overwrite',
-        );
-        // Force an immediate render so CANCELLED appears between restart and next session.
-        try {
-          this.sink.flushNow();
-        } catch {
-          /* ignore */
-        }
-        try {
-          const ctl = this.control;
-          if (ctl) ctl.detach();
-        } catch {
-          /* ignore */
-        } finally {
-          this.control = null;
-        }
-      } else {
-        liveTrace.ui.stop();
-        // Persist final table; renderer will hide the hint on finalize.
-        this.sink.stop();
-      }
-    } catch {
-      /* ignore */
-    }
-    try {
-      const ctl = this.control;
-      if (ctl) ctl.detach();
-    } catch {
-      /* ignore */
-    } finally {
-      this.control = null;
-    }
+    liveTrace.ui.stop();
+    // Persist final table; renderer will hide the hint on finalize.
+    this.sink.stop();
   }
   /** Called just before queueing rows for a new session to remove cancelled carryover. */
   prepareForNewSession(): void {
@@ -149,12 +108,6 @@ export class LiveUI implements RunnerUI {
     } catch {
       /* ignore */
     }
-    try {
-      // Drop renderer rows so the first new frame shows the next session only.
-      this.sink.resetForRestart();
-    } catch {
-      /* ignore */
-    }
   }
   /** Optional passthrough for an immediate render (used to avoid UI gaps). */
   flushNow(): void {
@@ -162,15 +115,6 @@ export class LiveUI implements RunnerUI {
       this.sink.flushNow();
     } catch {
       /* ignore */
-    }
-  }
-  installCancellation(triggerCancel: () => void, onRestart?: () => void): void {
-    try {
-      this.control = new RunnerControl({ onCancel: triggerCancel, onRestart });
-      liveTrace.ui.installCancellation();
-      this.control.attach();
-    } catch {
-      this.control = null;
     }
   }
   stop(): void {
@@ -185,14 +129,5 @@ export class LiveUI implements RunnerUI {
     } catch {
       /* ignore */
     }
-    try {
-      const ctl = this.control;
-      if (ctl) {
-        ctl.detach();
-      }
-    } catch {
-      /* ignore */
-    }
-    this.control = null;
   }
 }

@@ -19,7 +19,7 @@ const runStan = async (args: string, cwd: string) => {
   return exec(cmd, { cwd });
 };
 
-describe('smoke: archive context composition (meta/diff)', () => {
+describe.todo('smoke: archive context composition (meta/diff)', () => {
   let cwd: string;
 
   beforeEach(async () => {

@@ -11,7 +11,6 @@ import type { RunnerUI } from '@/runner/run/ui';
 
 export type CancelCtlLike = {
   isCancelled(): boolean;
-  isRestart(): boolean;
 };
 export type DepsLike = {
   created: string[];
@@ -74,12 +73,7 @@ export async function runArchiveIfEnabled(args: {
     promptDisplay,
     shouldContinue: () => !cancelCtl.isCancelled(),
   });
-  if (a.cancelled) {
-    return {
-      short: { created: deps.created, cancelled: true, restartRequested: true },
-    };
-  }
-  if (cancelCtl.isCancelled() && !cancelCtl.isRestart()) {
+  if (a.cancelled || cancelCtl.isCancelled()) {
     await Promise.all(a.created.map((p) => rm(p, { force: true }))).catch(
       () => void 0,
     );
@@ -94,7 +88,6 @@ export async function runArchiveIfEnabled(args: {
       short: {
         created: deps.created,
         cancelled: true,
-        restartRequested: false,
       },
     };
   }

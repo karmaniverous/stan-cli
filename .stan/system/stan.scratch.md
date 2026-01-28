@@ -1,11 +1,6 @@
-# Scratch: Smoke testing archive composition
+# Scratch: Removing live console keys (q/r)
 
 ## Current objective
-
-- Validating archive composition logic (context/meta flags) via end-to-end smoke tests.
-- Added `src/test/smoke/archive-context.test.ts` to prove dependency state inclusion in diffs.
-
-## Next steps
-
-- Verify test pass.
-- Proceed with DRY refactor (config/archive-stage).
+- Removing the interactive `q` and `r` keys from the live run console.
+- Cancellation now relies on standard SIGINT (Ctrl-C) which is already handled via signals.
+- Simplifying the session runner (removing restart loop) and UI internals.

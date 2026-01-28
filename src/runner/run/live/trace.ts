@@ -60,11 +60,8 @@ export const liveTrace = {
     start() {
       emit('UI', 'start()');
     },
-    installCancellation() {
-      emit('UI', 'installCancellation(): control.attach()');
-    },
-    onCancelled(mode: 'cancel' | 'restart') {
-      emit('UI', 'onCancelled()', { mode });
+    onCancelled() {
+      emit('UI', 'onCancelled()');
     },
     stop() {
       emit('UI', 'stop() -> sink.stop()');
