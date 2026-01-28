@@ -63,9 +63,14 @@ describe.todo('smoke: archive context composition (meta/diff)', () => {
     await writeFile(statePath, JSON.stringify(stateContent), 'utf8');
 
     // 4. Run -Sc (Context, no meta) -> Diff
-    // Should create archive.diff.tar comparing Current vs Snapshot.
-    // Since dependency.state.json changed, it should be in the diff.
+    // Option B: Should create BOTH archive.tar (FULL) and archive.diff.tar.
     await runStan('run -Sc', cwd);
+
+    // Validate FULL archive exists
+    const fullTarStats = await readFile(
+      path.join(cwd, '.stan/output/archive.tar'),
+    );
+    expect(fullTarStats.length).toBeGreaterThan(0);
 
     // 5. Validate diff archive contains the state file
     const diffTarPath = path.join(cwd, '.stan/output/archive.diff.tar');

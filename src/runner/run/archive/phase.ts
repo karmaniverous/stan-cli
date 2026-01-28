@@ -235,6 +235,7 @@ export const archivePhase = async (
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
             onSelectionReport: reportSelection,
+            snapshotFileName: '.archive.snapshot.context.json',
           } as Parameters<
             typeof createArchiveDiffWithDependencyContext
           >[0]['diff'],

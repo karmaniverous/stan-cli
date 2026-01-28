@@ -5,6 +5,9 @@
  * named/default export shape differences under Vitest SSR/bundlers.
  */
 
+import { existsSync, readFile } from 'node:fs';
+import path from 'node:path';
+
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
 import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
@@ -141,6 +144,19 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         includes?: string[];
         excludes?: string[];
       }) => Promise<string>;
+      computeContextAllowlistPlan?: (args: {
+        cwd: string;
+        stanPath: string;
+        meta: unknown;
+        state: unknown;
+      }) => Promise<string[]>;
+      writeArchiveSnapshotFromFiles?: (
+        cwd: string,
+        stanPath: string,
+        files: string[],
+        opts?: { snapshotFileName?: string },
+      ) => Promise<string>;
+      // Default fallback shapes
       default?: {
         loadConfig?: (cwd: string) => Promise<{
           stanPath: string;
@@ -153,6 +169,18 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
           includes?: string[];
           excludes?: string[];
         }) => Promise<string>;
+        computeContextAllowlistPlan?: (args: {
+          cwd: string;
+          stanPath: string;
+          meta: unknown;
+          state: unknown;
+        }) => Promise<string[]>;
+        writeArchiveSnapshotFromFiles?: (
+          cwd: string,
+          stanPath: string,
+          files: string[],
+          opts?: { snapshotFileName?: string },
+        ) => Promise<string>;
         ensureOutputDir?: (
           cwd: string,
           stanPath: string,
@@ -178,6 +206,19 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         : typeof core.default?.writeArchiveSnapshot === 'function'
           ? core.default.writeArchiveSnapshot
           : null;
+    const computePlanFn =
+      typeof core.computeContextAllowlistPlan === 'function'
+        ? core.computeContextAllowlistPlan
+        : typeof core.default?.computeContextAllowlistPlan === 'function'
+          ? core.default.computeContextAllowlistPlan
+          : null;
+    const writeSnapshotFilesFn =
+      typeof core.writeArchiveSnapshotFromFiles === 'function'
+        ? core.writeArchiveSnapshotFromFiles
+        : typeof core.default?.writeArchiveSnapshotFromFiles === 'function'
+          ? core.default.writeArchiveSnapshotFromFiles
+          : null;
+
     if (writeSnapshotFn) {
       // Make sure <stanPath>/diff (and output) exist before writing the snapshot.
       // This avoids ENOENT when snapping a fresh repo or temp workspace.
@@ -206,6 +247,36 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         includes,
         excludes,
       });
+
+      // Context snapshot (if dependency artifacts exist)
+      if (computePlanFn && writeSnapshotFilesFn) {
+        const ctxDir = path.join(cwd, stanPath, 'context');
+        const metaP = path.join(ctxDir, 'dependency.meta.json');
+        const stateP = path.join(ctxDir, 'dependency.state.json');
+        try {
+          if (existsSync(metaP) && existsSync(stateP)) {
+            const readJson = (p: string) =>
+              new Promise<unknown>((resolve, reject) => {
+                readFile(p, 'utf8', (err, data) => {
+                  if (err) reject(err);
+                  else resolve(JSON.parse(data));
+                });
+              });
+            const meta = await readJson(metaP);
+            const state = await readJson(stateP);
+            const plan = await computePlanFn({ cwd, stanPath, meta, state });
+            // Add dependency artifacts themselves to the plan so the snapshot tracks their versions
+            const set = new Set(plan);
+            set.add(`${stanPath}/context/dependency.meta.json`);
+            set.add(`${stanPath}/context/dependency.state.json`);
+            await writeSnapshotFilesFn(cwd, stanPath, Array.from(set), {
+              snapshotFileName: '.archive.snapshot.context.json',
+            });
+          }
+        } catch {
+          // best-effort context snapshot
+        }
+      }
     }
   } catch {
     // best-effort: capturing still proceeds even if snapshot write fails

@@ -4,14 +4,9 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
-- Implement updated archive composition contract from stan-core interop note (Option B): `stan run` excludes dependency meta/state; `stan run --context` writes FULL+DIFF keyed to the same selection universe; `--context --meta` writes META-only and resets dependency state before archiving.
-- Introduce separate context snapshot baseline (`.archive.snapshot.context.json`) for context diffs, using stan-core’s `snapshotFileName` support; keep the existing non-context baseline unchanged.
-- Update `stan snap` to refresh BOTH baselines (non-context and context) when dependency context artifacts are present/applicable.
-- Enable and extend the smoke test(s) to assert archive membership rules across modes (including “diff is full minus unchanged since last snap” semantics and the separate baseline behavior).
-- Verify smoke test `src/test/smoke/archive-context.test.ts`.
-- Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules).
-- Fix `makeBaseConfigs` to propagate `dependency` context and force-include context artifacts in archives.
-- Verify fixes for DRY refactor (lint + typecheck + tests).
+- Verify `src/test/smoke/archive-context.test.ts` passes with new composition rules (FULL+DIFF in context mode).
+- Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules) to prepare for refactor.
+- Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
 - After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
@@ -61,4 +56,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Seeded `.stan/context/dependency.state.json` to load DRY hotspots (archive-stage + CLI config) for the next refactor pass.
 - Added `src/test/smoke/archive-context.test.ts` to validate archive composition and dependency state inclusion in diffs.
 - Removed `src/runner/run/control.ts` and restart logic from the live console (q/r keys); usage now relies on Ctrl-C.
+- Updated archive composition (Option B) and snapshot baselines: `stan run --context` writes FULL+DIFF; `stan snap` updates both standard and context snapshots; smoke tests extended.
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.

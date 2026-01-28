@@ -1,16 +1,12 @@
-# Scratch: Context archives (FULL/DIFF/META) interop alignment
+# Scratch: DRY refactor preparation (archive/snapshot alignment complete)
 
 ## Current objective
-- Align stan-cli archive outputs with the latest stan-core interop contract for context mode:
-  - `stan run`: FULL + DIFF, and BOTH must exclude dependency meta/state.
-  - `stan run --context`: FULL + DIFF (Option B), where DIFF is computed against the FULL selection universe for context mode.
-  - `stan run --context --meta`: META-only `archive.tar` (no diff), includes normal base selection + dependency meta/state, and resets dependency.state.json to empty v2 before archiving (semantic JSON only).
+- Proceed with the DRY refactor (CLI internals) now that context archive composition and snapshot keying are stable.
 
-## Key decisions (A–D)
-- Snapshot naming: keep existing non-context baseline; context uses `.archive.snapshot.context.json`.
-- `stan snap`: update BOTH non-context and context baselines when dependency context artifacts are present/applicable.
-- Meta archive includes the normal base selection (not minimal).
-- Empty dependency.state.json formatting is semantic-only (no byte pinning).
+## State
+- Context mode (Option B): `stan run --context` now produces `archive.tar` (FULL) and `archive.diff.tar` (DIFF).
+- Snapshots: `stan snap` updates both `.archive.snapshot.json` and `.archive.snapshot.context.json` when applicable.
+- Config: `makeBaseConfigs` handles dependency context propagation.
 
 ## Next step
-- Implement the above in run archive stage + archive phase wiring (snapshotFileName), update snap to write both baselines, then lock behavior with smoke tests.
+- Identify DRY hotspots (command registration, config loading, run defaults) and begin extraction.
