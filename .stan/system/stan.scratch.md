@@ -1,8 +1,8 @@
-# Scratch: Debug smoke test (meta content)
+# Scratch: Fix smoke test (stale graph)
 
 ## Current objective
 
-- Add debug printing of `dependency.meta.json` and `dependency.state.json` to `scripts/smoke-context-diff.ts` to diagnose why `src/main.ts` is missing from the archive despite `my-dep` being present.
+- Fix `scripts/smoke-context-diff.ts` failure where `src/main.ts` was missing from archives. Ensure source files are created *before* the initial `stan run -Scm` so the dependency graph includes them.
 
 ## What’s staged
 - `scripts/smoke-context-diff.ts`

@@ -102,6 +102,7 @@ const main = async () => {
 
     // Init
     await runStan('init -f', cwd);
+    // Ensure sources exist before first run so graph is complete
 
     // 2. Run -Scm (Meta) -> Empty baseline
     console.log('stan: [1/4] run -Scm (meta)...');
@@ -127,12 +128,12 @@ const main = async () => {
     // Print artifacts for debugging
     const metaContent = await readFile(path.join(cwd, '.stan/context/dependency.meta.json'), 'utf8');
     console.log('\n--- dependency.meta.json ---');
-    console.log(metaContent);
+    console.log(JSON.stringify(JSON.parse(metaContent), null, 2));
     console.log('----------------------------\n');
 
     const stateContent = await readFile(statePath, 'utf8');
     console.log('\n--- dependency.state.json ---');
-    console.log(stateContent);
+    console.log(JSON.stringify(JSON.parse(stateContent), null, 2));
     console.log('-----------------------------\n');
 
     // 6. Verify contents
