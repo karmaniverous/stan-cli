@@ -111,6 +111,34 @@ export const registerRunAction = (
     // Context Mode (dependency graph)
     let dependency: DependencyContext | undefined;
     if (derived.behavior.context) {
+      const extractAllowlistFiles = (plan: unknown): string[] => {
+        if (Array.isArray(plan)) {
+          return plan.filter((x): x is string => typeof x === 'string');
+        }
+        if (!plan || typeof plan !== 'object') return [];
+        const obj = plan as Record<string, unknown>;
+        const candidates = [
+          obj['files'],
+          obj['plan'],
+          obj['allowlist'],
+          obj['selected'],
+          obj['selectedFiles'],
+        ];
+        for (const c of candidates) {
+          if (Array.isArray(c)) {
+            return c.filter((x): x is string => typeof x === 'string');
+          }
+        }
+        // Support nested shapes like { plan: { files: [...] } }
+        const nested = obj['plan'];
+        if (nested && typeof nested === 'object') {
+          const n = nested as Record<string, unknown>;
+          if (Array.isArray(n['files']))
+            return n['files'].filter((x): x is string => typeof x === 'string');
+        }
+        return [];
+      };
+
       console.log('stan: building dependency graph...');
       const built = await buildDependencyMeta({
         cwd: runCwd,
@@ -163,7 +191,8 @@ export const registerRunAction = (
           meta: built.meta,
           state,
         });
-        mapForRun = filterDependencyMapToAllowlist(built.map, plan);
+        const allowlist = extractAllowlistFiles(plan as unknown);
+        mapForRun = filterDependencyMapToAllowlist(built.map, allowlist);
       } catch (e) {
         if (process.env.STAN_DEBUG === '1') {
           console.error(

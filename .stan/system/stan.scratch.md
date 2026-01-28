@@ -9,6 +9,9 @@
 
 - CLI-side hardening: compute the allowlist plan from `dependency.meta.json` + `dependency.state.json`, then filter `dependency.map.json` to that allowlist before archiving.
 - Added a smoke test that creates two external deps reachable from different repo files, selects only one seed in state, and asserts only the selected dep is staged/archived.
+- Fixups required after initial implementation:
+  - `computeContextAllowlistPlan` returns a non-array plan type in current `stan-core` typings; extract the file list before filtering.
+  - Ensure mkdirs in the smoke test (`src/` and `node_modules/...`) to avoid Windows ENOENT.
 
 ## Next step
 

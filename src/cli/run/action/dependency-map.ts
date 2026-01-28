@@ -9,23 +9,35 @@
 
 const toPosix = (p: string): string => p.replace(/\\+/g, '/');
 
+type DependencyMapNodeV1 = {
+  id: string;
+  locatorAbs: string;
+  size: number;
+  sha256: string;
+};
+
+type DependencyMapFileV1 = {
+  v: 1;
+  nodes: Record<string, DependencyMapNodeV1>;
+};
+
 /**
  * Return a shallow copy of the dependency map containing only entries whose
  * keys are present in the allowlist.
  *
  * @typeParam V - Dependency-map entry value type.
- * @param map - Full dependency map (nodeId -> entry).
+ * @param map - Full dependency map (nodeId -\> entry).
  * @param allowlist - Allowlist plan entries (repo-relative POSIX paths).
  * @returns Filtered dependency map containing only allowlisted entries.
  */
-export const filterDependencyMapToAllowlist = <V>(
-  map: Record<string, V>,
+export const filterDependencyMapToAllowlist = (
+  map: DependencyMapFileV1,
   allowlist: string[],
-): Record<string, V> => {
+): DependencyMapFileV1 => {
   const allow = new Set(allowlist.map(toPosix));
-  const out: Record<string, V> = {};
-  for (const [k, v] of Object.entries(map)) {
-    if (allow.has(toPosix(k))) out[k] = v;
+  const nodes: Record<string, DependencyMapNodeV1> = {};
+  for (const [k, v] of Object.entries(map.nodes)) {
+    if (allow.has(toPosix(k))) nodes[k] = v;
   }
-  return out;
+  return { v: map.v, nodes };
 };

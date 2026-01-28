@@ -75,4 +75,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed smoke test to modify sources after snapping (ensures diff inclusion) and aggregate verification errors.
 - Fixed `stan run --context` to avoid eager staging of all external deps; staging is now selection-aware (depth=0 default), and smoke harnesses explicitly request depth=1 when needed.
 - Sent `stan-core` interop note proposing a context-mode “stop-and-stage” prompt gate (force `dependency.state.json` updates before patching unloaded files).
-- Hardened context-mode staging by filtering the dependency map to the computed allowlist plan and added smoke coverage to prevent unselected externals from being staged/archived.
+- Hardened context-mode staging by filtering the dependency map to the computed allowlist plan and added smoke coverage to prevent unselected externals from being staged/archived.
+- Fixed follow-up regressions in dependency-map filtering (map shape + allowlist-plan extraction), TSDoc escaping, and Windows mkdirs for the new smoke test.

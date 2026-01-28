@@ -1,5 +1,5 @@
 import { exec as execCb } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -56,6 +56,13 @@ describe('smoke: context mode respects dependency.state.json for staging', () =>
       }),
       'utf8',
     );
+
+    // Ensure directories exist for nested writes (Windows-friendly).
+    await mkdir(path.join(cwd, 'src'), { recursive: true });
+    await mkdir(path.join(cwd, 'node_modules', 'my-dep'), { recursive: true });
+    await mkdir(path.join(cwd, 'node_modules', 'unused-dep'), {
+      recursive: true,
+    });
 
     // Sources: both are in base selection; only main.ts is selected in state.
     await writeFile(
