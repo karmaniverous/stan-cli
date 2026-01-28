@@ -8,56 +8,60 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * No filesystem side-effects; no snapshot file reads.
  */
 
-describe('snap: snapshot baseline (pure call contract)', () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.restoreAllMocks();
-  });
-
-  it('passes engine selection into writeArchiveSnapshot', async () => {
-    // Arrange mocks (capture fn refs for assertions)
-    const ensureOutputDirMock = vi.fn(async () => {
-      // satisfy require-await without behavior changes
+// Hoist mock functions so they can be used in vi.mock factory
+const { ensureOutputDirMock, loadConfigMock, writeSnapshotMock } = vi.hoisted(
+  () => {
+    const ensure = vi.fn(async () => {
       await Promise.resolve();
       return 'out';
     });
-
-    const loadConfigMock = vi.fn(async () => {
-      await Promise.resolve(); // satisfy require-await
+    const load = vi.fn(async () => {
+      await Promise.resolve();
       return {
         stanPath: 'out',
         includes: ['**/*.md'],
         excludes: ['CHANGELOG.md'],
       };
     });
-
-    type SnapshotArgs = {
-      cwd: string;
-      stanPath: string;
-      includes?: string[];
-      excludes?: string[];
-    };
-
-    const writeSnapshotMock = vi.fn(async (_args: SnapshotArgs) => {
-      await Promise.resolve(); // satisfy require-await
+    const write = vi.fn(async () => {
+      await Promise.resolve();
       return 'out/diff/.archive.snapshot.json';
     });
-
-    // Mock core (static import in module + dynamic import inside handleSnap)
-    const coreMock = {
-      resolveStanPathSync: () => 'out',
-      ensureOutputDir: ensureOutputDirMock,
-      loadConfig: loadConfigMock,
-      writeArchiveSnapshot: writeSnapshotMock,
+    return {
+      ensureOutputDirMock: ensure,
+      loadConfigMock: load,
+      writeSnapshotMock: write,
     };
-    vi.doMock('@karmaniverous/stan-core', () => ({
-      __esModule: true,
-      ...coreMock,
-      default: coreMock,
-    }));
+  },
+);
+
+// Mock core globally for this test file (hoisted)
+vi.mock('@karmaniverous/stan-core', () => {
+  const coreMock = {
+    resolveStanPathSync: () => 'out',
+    ensureOutputDir: ensureOutputDirMock,
+    loadConfig: loadConfigMock,
+    writeArchiveSnapshot: writeSnapshotMock,
+  };
+  return {
+    __esModule: true,
+    ...coreMock,
+    default: coreMock,
+  };
+});
+
+describe('snap: snapshot baseline (pure call contract)', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('passes engine selection into writeArchiveSnapshot', async () => {
+    // Reset mocks to ensure clean call counts
+    ensureOutputDirMock.mockClear();
+    writeSnapshotMock.mockClear();
 
     // Mock run defaults
-    vi.doMock('@/cli/run/derive/run-defaults', () => ({
+    vi.mock('@/cli/run/derive/run-defaults', () => ({
       __esModule: true,
       getRunDefaults: () =>
         ({
@@ -89,7 +93,9 @@ describe('snap: snapshot baseline (pure call contract)', () => {
     // Assert: writeArchiveSnapshot invoked with merged selection + anchors
     expect(writeSnapshotMock).toHaveBeenCalledTimes(1);
     // Safely destructure first call (Args is a single-arg tuple)
-    const [[call]] = writeSnapshotMock.mock.calls;
+    const [[call]] = writeSnapshotMock.mock.calls as [
+      [{ includes: string[]; excludes: string[]; stanPath: string }],
+    ];
 
     // includes from engine config
     expect(call.includes).toEqual(['**/*.md', 'out/imports/**']);
