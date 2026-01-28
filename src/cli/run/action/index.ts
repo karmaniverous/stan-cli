@@ -5,6 +5,7 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import {
   buildDependencyMeta,
+  computeContextAllowlistPlan,
   ensureOutputDir,
   findConfigPathSync,
   resolveStanPathSync,
@@ -27,6 +28,7 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
 import { assertNoScriptsConflict } from './conflict';
+import { filterDependencyMapToAllowlist } from './dependency-map';
 import { runLoopHeaderAndGuard } from './loop';
 import { makeRunnerConfig } from './runner-config';
 import { resolveScriptsForRun } from './scripts';
@@ -124,12 +126,6 @@ export const registerRunAction = (
         stanPath: config.stanPath,
         meta: built.meta,
       });
-      await writeDependencyMapFile({
-        cwd: runCwd,
-        stanPath: config.stanPath,
-
-        map: built.map,
-      });
 
       const stateP = path.join(
         runCwd,
@@ -148,17 +144,48 @@ export const registerRunAction = (
       }
 
       // Read current state (if any) so the runner/engine can use it for diff selection
-      let state: unknown;
+      const stateFallback = { v: 2, i: [] as unknown[] };
+      let state: unknown = stateFallback;
       try {
         state = JSON.parse(await readFile(stateP, 'utf8'));
       } catch {
-        /* ignore */
+        state = stateFallback;
       }
+
+      // Filter the dependency map to the allowlist computed from meta+state.
+      // This hardens the CLI against any staging internals that might otherwise
+      // stage every entry in the map (graph-unconditional) regardless of state.
+      let mapForRun = built.map;
+      try {
+        const plan = await computeContextAllowlistPlan({
+          cwd: runCwd,
+          stanPath: config.stanPath,
+          meta: built.meta,
+          state,
+        });
+        mapForRun = filterDependencyMapToAllowlist(built.map, plan);
+      } catch (e) {
+        if (process.env.STAN_DEBUG === '1') {
+          console.error(
+            'stan: debug: unable to compute context allowlist plan; using full dependency map',
+            e,
+          );
+        }
+        mapForRun = built.map;
+      }
+
+      // Persist the (possibly filtered) map for downstream staging/validation.
+      // This is host-private and must never be archived.
+      await writeDependencyMapFile({
+        cwd: runCwd,
+        stanPath: config.stanPath,
+        map: mapForRun,
+      });
 
       // Pass dependency info to runner so it can do "WithDependencyContext" archives.
       dependency = {
         meta: built.meta,
-        map: built.map,
+        map: mapForRun,
         state,
         // Keep the staging area deterministic per-run. This prevents stale staged
         // payloads from prior selections being archived when the current state

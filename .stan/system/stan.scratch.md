@@ -1,12 +1,15 @@
-# Scratch: Interop to prevent load-before-edit failures in context mode
+# Scratch: Context-mode staging must honor dependency state
 
 ## Current objective
 
-- Post an interop note to `stan-core` explaining a failure mode: the assistant drafted patches for repo files whose contents were not loaded via archive/staged selection.
-- Propose prompt-level guardrails that mechanically force the correct first step in dependency graph mode:
-  - require a “target availability checklist” before patches, and
-  - require a “stop-and-stage” branch that only patches `dependency.state.json` + scratch/todo when any target file is missing.
+- Fix `stan run --context` staging so external dependency payloads are staged from the dependency **state-derived allowlist**, not from the entire dependency graph/map.
+- Prevent archive bloat/regressions where `archive.tar` and `archive.diff.tar` accidentally include unselected staged externals.
+
+## Notes
+
+- CLI-side hardening: compute the allowlist plan from `dependency.meta.json` + `dependency.state.json`, then filter `dependency.map.json` to that allowlist before archiving.
+- Added a smoke test that creates two external deps reachable from different repo files, selects only one seed in state, and asserts only the selected dep is staged/archived.
 
 ## Next step
 
-- After `stan-core` incorporates the gate, apply the same behavior consistently in `stan-cli` threads to avoid speculative patches.
+- If the issue is actually in `stan-core` staging internals, mirror this guard in core (or accept a filtered map input) so non-CLI consumers remain safe.

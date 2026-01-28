@@ -21,11 +21,11 @@ stan-cli:
     smoke: npx tsx scripts/smoke-context-diff.ts
 stan-core:
   excludes:
-    - '*.local'
     - assets
     - CHANGELOG.md
     - docs
     - package-lock.json
+    - guides
   imports:
     stan-context:
       - ../stan-context/.stan/interop/stan-cli/**
