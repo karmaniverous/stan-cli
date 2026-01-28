@@ -81,10 +81,24 @@ Out of scope for the CLI:
 - Flags:
   - `--context`: Enable context mode.
   - `--no-context`: Disable context mode.
-- Meta archive:
-  - A meta archive is created on every `stan run --context` (no dedicated CLI flag).
-  - It serves as a thread opener and includes the normal repo-root selection plus dependency context artifacts (per engine selection rules).
+- Standard run archive composition (no context):
+  - `stan run` writes FULL and DIFF archives.
+  - `archive.tar` MUST be the FULL archive and MUST NOT contain `dependency.meta.json` or `dependency.state.json`.
+  - `archive.diff.tar` MUST be the DIFF archive and MUST NOT contain `dependency.meta.json` or `dependency.state.json`.
+  - DIFF membership is computed relative to the FULL selection universe for the same command: DIFF = FULL minus files unchanged since the last `stan snap`.
+- Meta mode archive composition (`--context --meta`):
+  - `stan run --context --meta` writes `archive.tar` as the META archive and MUST NOT write `archive.diff.tar`.
+  - The META archive MUST contain `dependency.meta.json` and `dependency.state.json` and MUST include the normal base selection (repo-root selection for the run).
+  - Before writing archives in meta mode, the CLI MUST reset `dependency.state.json` to an empty v2 state (any semantically equivalent JSON is acceptable).
   - Host-private mapping files (e.g., `dependency.map.json`) must not be included in assistant-facing archives.
+- Context mode archive composition (`--context` non-meta; Option B):
+  - `stan run --context` (non-meta) writes BOTH `archive.tar` (FULL allowlist context archive) and `archive.diff.tar` (DIFF allowlist context archive).
+  - `archive.tar` MUST contain `dependency.meta.json` and `dependency.state.json` and MUST include the same files as the META archive plus the staged/selected files indicated by `dependency.state.json` (per engine dependency-context rules).
+  - `archive.diff.tar` MUST include `dependency.meta.json` and `dependency.state.json` only when they changed since the last `stan snap`, and MUST include only files that are in the FULL allowlist context archive and were added/changed since the last `stan snap`.
+  - The DIFF archive is keyed to the FULL selection universe for the same command; it is the same selection universe as FULL, minus files unchanged since the last `stan snap`.
+- Snapshot baseline requirements:
+  - The context diff baseline MUST NOT clobber the non-context baseline; maintain a separate context snapshot baseline file (e.g., `.archive.snapshot.context.json`).
+  - `stan snap` MUST update BOTH the non-context snapshot baseline and the context snapshot baseline when dependency context artifacts are present/applicable.
 
 ---
 

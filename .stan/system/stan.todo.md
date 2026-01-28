@@ -4,6 +4,10 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
+- Implement updated archive composition contract from stan-core interop note (Option B): `stan run` excludes dependency meta/state; `stan run --context` writes FULL+DIFF keyed to the same selection universe; `--context --meta` writes META-only and resets dependency state before archiving.
+- Introduce separate context snapshot baseline (`.archive.snapshot.context.json`) for context diffs, using stan-core’s `snapshotFileName` support; keep the existing non-context baseline unchanged.
+- Update `stan snap` to refresh BOTH baselines (non-context and context) when dependency context artifacts are present/applicable.
+- Enable and extend the smoke test(s) to assert archive membership rules across modes (including “diff is full minus unchanged since last snap” semantics and the separate baseline behavior).
 - Verify smoke test `src/test/smoke/archive-context.test.ts`.
 - Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules).
 - Fix `makeBaseConfigs` to propagate `dependency` context and force-include context artifacts in archives.
