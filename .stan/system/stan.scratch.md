@@ -1,12 +1,12 @@
-# Scratch: Context staging must respect state depth
+# Scratch: Interop to prevent load-before-edit failures in context mode
 
 ## Current objective
 
-- Fix `stan run --context` so external dependency payloads are only staged/archived when selected by `dependency.state.json` closure (depth defaults to 0).
-- Remove eager staging of the entire dependency graph; rely on stan-core dependency-context archiving to stage selected externals and clean stale payloads.
-- Update smoke harnesses so they explicitly request depth=1 when they intend to include runtime deps, and do not expect unchanged base-selection files in `archive.diff.tar`.
+- Post an interop note to `stan-core` explaining a failure mode: the assistant drafted patches for repo files whose contents were not loaded via archive/staged selection.
+- Propose prompt-level guardrails that mechanically force the correct first step in dependency graph mode:
+  - require a “target availability checklist” before patches, and
+  - require a “stop-and-stage” branch that only patches `dependency.state.json` + scratch/todo when any target file is missing.
 
-## What’s staged
-- `src/cli/run/action/index.ts`
-- `src/test/smoke/archive-context.test.ts`
-- `scripts/smoke-context-diff.ts`
+## Next step
+
+- After `stan-core` incorporates the gate, apply the same behavior consistently in `stan-cli` threads to avoid speculative patches.
