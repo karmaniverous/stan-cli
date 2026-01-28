@@ -44,12 +44,16 @@ describe('snap: snapshot baseline (pure call contract)', () => {
     });
 
     // Mock core (static import in module + dynamic import inside handleSnap)
-    vi.doMock('@karmaniverous/stan-core', () => ({
-      __esModule: true,
+    const coreMock = {
       resolveStanPathSync: () => 'out',
       ensureOutputDir: ensureOutputDirMock,
       loadConfig: loadConfigMock,
       writeArchiveSnapshot: writeSnapshotMock,
+    };
+    vi.doMock('@karmaniverous/stan-core', () => ({
+      __esModule: true,
+      ...coreMock,
+      default: coreMock,
     }));
 
     // Mock run defaults

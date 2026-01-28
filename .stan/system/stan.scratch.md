@@ -1,8 +1,7 @@
-# Scratch: DRY refactor preparation (archive/snapshot alignment complete)
+# Scratch: Archive context verification (test fixes)
 
 ## Current objective
-- Proceed with the DRY refactor (CLI internals) now that context archive composition and snapshot keying are stable.
-
+- Proceed with the DRY refactor (CLI internals) now that context archive composition and snapshot keying are stable.
 ## State
 - Context mode (Option B): `stan run --context` now produces `archive.tar` (FULL) and `archive.diff.tar` (DIFF).
 - Snapshots: `stan snap` updates both `.archive.snapshot.json` and `.archive.snapshot.context.json` when applicable.
