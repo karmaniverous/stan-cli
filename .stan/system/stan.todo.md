@@ -10,7 +10,8 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
 - After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
-- Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).- Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
+- Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).
+- Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
 - Consider release prep (changelog/versioning) once refactors and docs/test coverage are stable.
 
 ## Completed (context essentials only)
@@ -76,4 +77,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed `stan run --context` to avoid eager staging of all external deps; staging is now selection-aware (depth=0 default), and smoke harnesses explicitly request depth=1 when needed.
 - Sent `stan-core` interop note proposing a context-mode “stop-and-stage” prompt gate (force `dependency.state.json` updates before patching unloaded files).
 - Hardened context-mode staging by filtering the dependency map to the computed allowlist plan and added smoke coverage to prevent unselected externals from being staged/archived.
-- Fixed follow-up regressions in dependency-map filtering (map shape + allowlist-plan extraction), TSDoc escaping, and Windows mkdirs for the new smoke test.
+- Fixed follow-up regressions in dependency-map filtering (map shape + allowlist-plan extraction), TSDoc escaping, and Windows mkdirs for the new smoke test.
+- Fixed dependency-map filtering to use meta/state nodeId closure (not staged archive paths), preventing archive-stage failures and fixing `archive-context-selection` smoke coverage.

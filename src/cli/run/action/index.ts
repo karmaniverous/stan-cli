@@ -5,7 +5,6 @@ import path from 'node:path';
 import type { ContextConfig } from '@karmaniverous/stan-core';
 import {
   buildDependencyMeta,
-  computeContextAllowlistPlan,
   ensureOutputDir,
   findConfigPathSync,
   resolveStanPathSync,
@@ -28,6 +27,7 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
 import { assertNoScriptsConflict } from './conflict';
+import { computeSelectedNodeIdsFromMetaAndState } from './dependency-closure';
 import { filterDependencyMapToAllowlist } from './dependency-map';
 import { runLoopHeaderAndGuard } from './loop';
 import { makeRunnerConfig } from './runner-config';
@@ -111,34 +111,6 @@ export const registerRunAction = (
     // Context Mode (dependency graph)
     let dependency: DependencyContext | undefined;
     if (derived.behavior.context) {
-      const extractAllowlistFiles = (plan: unknown): string[] => {
-        if (Array.isArray(plan)) {
-          return plan.filter((x): x is string => typeof x === 'string');
-        }
-        if (!plan || typeof plan !== 'object') return [];
-        const obj = plan as Record<string, unknown>;
-        const candidates = [
-          obj['files'],
-          obj['plan'],
-          obj['allowlist'],
-          obj['selected'],
-          obj['selectedFiles'],
-        ];
-        for (const c of candidates) {
-          if (Array.isArray(c)) {
-            return c.filter((x): x is string => typeof x === 'string');
-          }
-        }
-        // Support nested shapes like { plan: { files: [...] } }
-        const nested = obj['plan'];
-        if (nested && typeof nested === 'object') {
-          const n = nested as Record<string, unknown>;
-          if (Array.isArray(n['files']))
-            return n['files'].filter((x): x is string => typeof x === 'string');
-        }
-        return [];
-      };
-
       console.log('stan: building dependency graph...');
       const built = await buildDependencyMeta({
         cwd: runCwd,
@@ -180,23 +152,26 @@ export const registerRunAction = (
         state = stateFallback;
       }
 
-      // Filter the dependency map to the allowlist computed from meta+state.
+      // Filter the dependency map to the selected nodeId closure (meta+state).
       // This hardens the CLI against any staging internals that might otherwise
       // stage every entry in the map (graph-unconditional) regardless of state.
+      //
+      // IMPORTANT:
+      // - The dependency map is keyed by graph node IDs (e.g., "node_modules/x/index.js"),
+      //   NOT by staged archive paths (e.g., ".stan/context/npm/...").
+      // - We compute the nodeId closure directly from meta/state so we filter
+      //   in the same coordinate system as the map.
       let mapForRun = built.map;
       try {
-        const plan = await computeContextAllowlistPlan({
-          cwd: runCwd,
-          stanPath: config.stanPath,
-          meta: built.meta,
+        const selectedNodeIds = computeSelectedNodeIdsFromMetaAndState(
+          built.meta,
           state,
-        });
-        const allowlist = extractAllowlistFiles(plan as unknown);
-        mapForRun = filterDependencyMapToAllowlist(built.map, allowlist);
+        );
+        mapForRun = filterDependencyMapToAllowlist(built.map, selectedNodeIds);
       } catch (e) {
         if (process.env.STAN_DEBUG === '1') {
           console.error(
-            'stan: debug: unable to compute context allowlist plan; using full dependency map',
+            'stan: debug: unable to compute dependency selection closure; using full dependency map',
             e,
           );
         }

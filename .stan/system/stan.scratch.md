@@ -1,18 +1,14 @@
-# Scratch: Context-mode staging must honor dependency state
+# Scratch: Fix context selection smoke test (archive.tar missing)
 
 ## Current objective
 
-- Fix `stan run --context` staging so external dependency payloads are staged from the dependency **state-derived allowlist**, not from the entire dependency graph/map.
-- Prevent archive bloat/regressions where `archive.tar` and `archive.diff.tar` accidentally include unselected staged externals.
+- Fix `src/test/smoke/archive-context-selection.test.ts` failure where `stan run -Sc` exits without producing `.stan/output/archive.tar` (FULL).
 
-## Notes
+## Working hypothesis
 
-- CLI-side hardening: compute the allowlist plan from `dependency.meta.json` + `dependency.state.json`, then filter `dependency.map.json` to that allowlist before archiving.
-- Added a smoke test that creates two external deps reachable from different repo files, selects only one seed in state, and asserts only the selected dep is staged/archived.
-- Fixups required after initial implementation:
-  - `computeContextAllowlistPlan` returns a non-array plan type in current `stan-core` typings; extract the file list before filtering.
-  - Ensure mkdirs in the smoke test (`src/` and `node_modules/...`) to avoid Windows ENOENT.
+- CLI-side dependency-map filtering is using the wrong coordinate system: it was filtering the host-private dependency map using an allowlist of *archive file paths* (which may be staged `.stan/context/...` paths), but the map is keyed by *graph node IDs* (e.g., `node_modules/<pkg>/...`), causing context archiving to fail and skip writing FULL.
 
-## Next step
+## Current fix direction
 
-- If the issue is actually in `stan-core` staging internals, mirror this guard in core (or accept a filtered map input) so non-CLI consumers remain safe.
+- Compute the selected nodeId closure directly from dependency meta (v2) + dependency state (v2), then filter the dependency map to those nodeIds before archiving (so staging cannot “accidentally stage everything”, but also cannot drop required nodes due to path mismatch).
+
