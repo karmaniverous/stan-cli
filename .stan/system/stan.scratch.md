@@ -1,4 +1,4 @@
-# Scratch: Context mode test stability
+# Scratch: Patch test fixes
 
 ## Current objective
 - Proceed with the DRY refactor (CLI internals) now that context archive composition and snapshot keying are stable.## State

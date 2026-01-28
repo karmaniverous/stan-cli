@@ -10,8 +10,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('snap: snapshot baseline (pure call contract)', () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
     vi.resetModules();
+    vi.restoreAllMocks();
   });
 
   it('passes engine selection into writeArchiveSnapshot', async () => {

@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { rmDirWithRetries } from '@/test';
 
+let spawnExitCode = 0;
+
 // Mock spawn to avoid running real git; return an EE that closes with code 0.
 vi.mock('node:child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:child_process')>();
@@ -18,7 +20,7 @@ vi.mock('node:child_process', async (importOriginal) => {
     default: actual as unknown as object,
     spawn: () => {
       const ee = new EventEmitter();
-      setTimeout(() => ee.emit('close', 0), 0);
+      setTimeout(() => ee.emit('close', spawnExitCode), 0);
       return ee as unknown;
     },
   };
@@ -47,6 +49,7 @@ describe('patch subcommand (clipboard and file modes)', () => {
   beforeEach(async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), 'stan-patch-'));
     process.chdir(dir);
+    spawnExitCode = 0;
   });
 
   afterEach(async () => {
@@ -144,6 +147,7 @@ describe('patch subcommand (clipboard and file modes)', () => {
   });
 
   it('failure message includes tail "-> <path>" (apply path)', async () => {
+    spawnExitCode = 1; // Simulate git apply failure
     const cli = new Command();
     registerPatch(cli);
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -168,6 +172,7 @@ describe('patch subcommand (clipboard and file modes)', () => {
   });
 
   it('failure message includes tail "-> <path>" (check path)', async () => {
+    spawnExitCode = 1; // Simulate git apply failure
     const cli = new Command();
     registerPatch(cli);
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

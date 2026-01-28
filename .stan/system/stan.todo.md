@@ -59,4 +59,5 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Fixed `snap.overlay.snapshot.test.ts` mock for robust dynamic import handling and enabled `archive-context.test.ts` smoke test.
 - Updated smoke test runner to pass `--tsconfig` to `tsx`, ensuring path alias resolution in the child process.
 - Updated `vitest.config.ts` to inline `@karmaniverous/stan-core` and `tar`, ensuring `vi.doMock` applies correctly in unit tests.
+- Fixed `patch.test.ts` to simulate failure codes correctly when testing failure paths, and ensured `snap.overlay.snapshot.test.ts` resets modules before mocking.
 - Updated `cli-examples.md`, `stan-assistant-guide.md`, and `stan.requirements.md` to reflect removal of q/r keys.
