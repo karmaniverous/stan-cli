@@ -10,10 +10,13 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 const exec = promisify(execCb);
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..');
 const CLI_ENTRY = path.join(REPO_ROOT, 'src/cli/bin/stan.ts');
 const TSCONFIG = path.join(REPO_ROOT, 'tsconfig.json');

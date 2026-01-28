@@ -1,8 +1,8 @@
-# Scratch: Context diff smoke test
+# Scratch: Fix smoke test (ESM __dirname)
 
 ## Current objective
 
-- Add a standalone smoke test script `scripts/smoke-context-diff.ts` to exercise the `--context` diff creation workflow (META -> snap -> modify state -> FULL+DIFF) without relying on Vitest.
+- Fix `scripts/smoke-context-diff.ts` to use `import.meta.url` instead of `__dirname` (ESM compatibility).
 
 ## What’s staged
 - `scripts/smoke-context-diff.ts`
