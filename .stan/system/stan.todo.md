@@ -4,6 +4,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 ## Next up (priority order)
 
+- Refactor context mode to use `stan-core` orchestration (Option B) and delete manual CLI filtering.
 - Stage DRY hotspots into the thread context via `.stan/context/dependency.state.json` (archive-stage + CLI config modules) to prepare for refactor.
 - Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
 - Resolve the TypeDoc warning by exporting/documenting the missing symbol(s) referenced from the public API (do not silence TypeDoc validation).
@@ -11,7 +12,6 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
 - After each DRY extraction: update/co-locate tests to pin behavior (especially SSR/Vitest fork ordering) and keep diffs small enough to review.
 - Continue TypeDoc/TSDoc sweep via dependency graph mode (`.stan/context/dependency.state.json`) once the DRY refactor target area is stable (ignore pure barrels).
-- Coordinate with `stan-core` on context-mode `stan snap` using `dependency.map.json` as an optional hash fast-path (core-owned change).
 - Consider release prep (changelog/versioning) once refactors and docs/test coverage are stable.
 
 ## Completed (context essentials only)
@@ -79,3 +79,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Hardened context-mode staging by filtering the dependency map to the computed allowlist plan and added smoke coverage to prevent unselected externals from being staged/archived.
 - Fixed follow-up regressions in dependency-map filtering (map shape + allowlist-plan extraction), TSDoc escaping, and Windows mkdirs for the new smoke test.
 - Fixed dependency-map filtering to use meta/state nodeId closure (not staged archive paths), preventing archive-stage failures and fixing `archive-context-selection` smoke coverage.
+- Reviewed updated `stan-core` assistant guide and proposed migration to engine-owned context orchestration (`createContextArchive...`) to fix FULL archive selection.
