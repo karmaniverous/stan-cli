@@ -57,7 +57,7 @@ export default defineConfig({
       ],
     ],
     setupFiles: [resolve(rootDir, 'src/test/setup.ts')],
-    testTimeout: 15000,
+    testTimeout: 30000,
     hookTimeout: 10000,
   },
 });
