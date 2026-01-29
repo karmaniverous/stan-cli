@@ -78,4 +78,6 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Hardened context-mode staging by filtering the dependency map to the computed allowlist plan and added smoke coverage to prevent unselected externals from being staged/archived.
 - Fixed follow-up regressions in dependency-map filtering (map shape + allowlist-plan extraction), TSDoc escaping, and Windows mkdirs for the new smoke test.
 - Fixed dependency-map filtering to use meta/state nodeId closure (not staged archive paths), preventing archive-stage failures and fixing `archive-context-selection` smoke coverage.
-- Reviewed updated `stan-core` assistant guide and proposed migration to engine-owned context orchestration (`createContextArchive...`) to fix FULL archive selection.- Refactored `archivePhase` to use `createContextArchive...` helpers (Option B) and removed redundant CLI-side dependency filtering (`dependency-closure.ts`, `dependency-map.ts`).
+- Reviewed updated `stan-core` assistant guide and proposed migration to engine-owned context orchestration (`createContextArchive...`) to fix FULL archive selection.
+- Refactored `archivePhase` to use `createContextArchive...` helpers (Option B) and removed redundant CLI-side dependency filtering (`dependency-closure.ts`, `dependency-map.ts`).
+- Fixed `archivePhase` build errors (nested archive options) and updated `smoke-context-diff.ts` to expect exclusion of unselected repo files in context archives.

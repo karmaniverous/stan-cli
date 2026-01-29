@@ -178,9 +178,9 @@ const main = async () => {
       // Unused dependency (should NOT be staged)
       if (list.some((p) => /context\/npm\/unused-dep/.test(p)))
         errors.push(`${label}: included unused-dep (should be excluded)`);
-      // Base selection file should be present in FULL.
-      if (!has('src/ignored.ts'))
-        errors.push(`${label}: missing src/ignored.ts (base selection)`);
+      // Base selection file should be MISSING in FULL (Context Mode = Meta + Closure).
+      if (has('src/ignored.ts'))
+        errors.push(`${label}: included src/ignored.ts (should be excluded)`);
     };
 
     const checkDiff = (list: string[]) => {
@@ -197,9 +197,9 @@ const main = async () => {
       // Unused dependency must not appear.
       if (list.some((p) => /context\/npm\/unused-dep/.test(p)))
         errors.push(`${label}: included unused-dep (should be excluded)`);
-      // Base selection files are changed-only: do not require unchanged files in DIFF.
+      // Base selection files: src/ignored.ts is not in FULL, so it must not be in DIFF.
       if (has('src/ignored.ts'))
-        errors.push(`${label}: included src/ignored.ts (should be unchanged)`);
+        errors.push(`${label}: included src/ignored.ts (should be excluded)`);
     };
 
     console.log('stan: verifying FULL archive...');

@@ -178,8 +178,10 @@ export const archivePhase = async (
             includes,
             excludes: config.excludes ?? [],
           },
-          includeOutputDir: includeOutputs,
-          onSelectionReport: reportSelection,
+          archive: {
+            includeOutputDir: includeOutputs,
+            onSelectionReport: reportSelection,
+          },
         });
         archivePath = res.archivePath;
       } else {
@@ -232,7 +234,6 @@ export const archivePhase = async (
             baseName: 'archive',
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
-            onSelectionReport: reportSelection,
             snapshotFileName: '.archive.snapshot.context.json',
           },
         })) as { diffPath: string };
