@@ -5,8 +5,8 @@ import type { ContextConfig, SelectionReport } from '@karmaniverous/stan-core';
 import {
   createArchive,
   createArchiveDiff,
-  createArchiveDiffWithDependencyContext,
-  createArchiveWithDependencyContext,
+  createContextArchiveDiffWithDependencyContext,
+  createContextArchiveWithDependencyContext,
   createMetaArchive,
 } from '@karmaniverous/stan-core';
 import { exists } from 'fs-extra';
@@ -170,19 +170,16 @@ export const archivePhase = async (
         await rename(metaPath, tarAbs);
         archivePath = tarAbs;
       } else if (dependency) {
-        const res = await createArchiveWithDependencyContext({
+        const res = await createContextArchiveWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
           dependency,
-
-          archive: {
-            includeOutputDir: includeOutputs,
+          selection: {
             includes,
             excludes: config.excludes ?? [],
-            onSelectionReport: reportSelection,
-          } as Parameters<
-            typeof createArchiveWithDependencyContext
-          >[0]['archive'],
+          },
+          includeOutputDir: includeOutputs,
+          onSelectionReport: reportSelection,
         });
         archivePath = res.archivePath;
       } else {
@@ -223,22 +220,21 @@ export const archivePhase = async (
 
       let out: { diffPath: string };
       if (dependency) {
-        out = (await createArchiveDiffWithDependencyContext({
+        out = (await createContextArchiveDiffWithDependencyContext({
           cwd,
           stanPath: config.stanPath,
           dependency,
-
-          diff: {
-            baseName: 'archive',
+          selection: {
             includes,
             excludes: config.excludes ?? [],
+          },
+          diff: {
+            baseName: 'archive',
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: includeOutputs,
             onSelectionReport: reportSelection,
             snapshotFileName: '.archive.snapshot.context.json',
-          } as Parameters<
-            typeof createArchiveDiffWithDependencyContext
-          >[0]['diff'],
+          },
         })) as { diffPath: string };
       } else {
         out = (await createArchiveDiff({

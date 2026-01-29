@@ -27,8 +27,6 @@ import { DBG_SCOPE_RUN_ENGINE_LEGACY } from '@/runner/util/debug-scopes';
 
 import type { FlagPresence } from '../options';
 import { assertNoScriptsConflict } from './conflict';
-import { computeSelectedNodeIdsFromMetaAndState } from './dependency-closure';
-import { filterDependencyMapToAllowlist } from './dependency-map';
 import { runLoopHeaderAndGuard } from './loop';
 import { makeRunnerConfig } from './runner-config';
 import { resolveScriptsForRun } from './scripts';
@@ -152,31 +150,9 @@ export const registerRunAction = (
         state = stateFallback;
       }
 
-      // Filter the dependency map to the selected nodeId closure (meta+state).
-      // This hardens the CLI against any staging internals that might otherwise
-      // stage every entry in the map (graph-unconditional) regardless of state.
-      //
-      // IMPORTANT:
-      // - The dependency map is keyed by graph node IDs (e.g., "node_modules/x/index.js"),
-      //   NOT by staged archive paths (e.g., ".stan/context/npm/...").
-      // - We compute the nodeId closure directly from meta/state so we filter
-      //   in the same coordinate system as the map.
-      let mapForRun = built.map;
-      try {
-        const selectedNodeIds = computeSelectedNodeIdsFromMetaAndState(
-          built.meta,
-          state,
-        );
-        mapForRun = filterDependencyMapToAllowlist(built.map, selectedNodeIds);
-      } catch (e) {
-        if (process.env.STAN_DEBUG === '1') {
-          console.error(
-            'stan: debug: unable to compute dependency selection closure; using full dependency map',
-            e,
-          );
-        }
-        mapForRun = built.map;
-      }
+      // Pass the full map; engine context orchestration (`createContextArchive...`)
+      // handles closure computation and filtering internally.
+      const mapForRun = built.map;
 
       // Persist the (possibly filtered) map for downstream staging/validation.
       // This is host-private and must never be archived.

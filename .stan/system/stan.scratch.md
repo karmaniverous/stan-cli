@@ -1,7 +1,6 @@
-# Scratch: Implement Context Mode Option B via Engine Orchestration
+# Scratch: Stage DRY Hotspots
 
 ## Current objective
 
-- Refactor `stan-cli` to use the new `stan-core` context orchestration helpers (`createContextArchive...`).
-- Fix `archive-context-selection` smoke test by ensuring FULL archives respect the allowlist closure (excluding unselected repo files).
-- Delete redundant CLI-side dependency filtering logic.
+- Stage DRY hotspots (archive-stage + CLI config modules) into the thread context via `dependency.state.json`.
+- Prepare for refactor to reduce duplication in CLI command registration, option wiring, and config loaders.
