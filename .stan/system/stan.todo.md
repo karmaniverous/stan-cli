@@ -81,4 +81,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Reviewed updated `stan-core` assistant guide and proposed migration to engine-owned context orchestration (`createContextArchive...`) to fix FULL archive selection.
 - Refactored `archivePhase` to use `createContextArchive...` helpers (Option B) and removed redundant CLI-side dependency filtering (`dependency-closure.ts`, `dependency-map.ts`).
 - Fixed `archivePhase` build errors (nested archive options) and updated `smoke-context-diff.ts` to expect exclusion of unselected repo files in context archives.
-- Resolved context mode `combine` conflict by enforcing `includeOutputDir: false` and skipping cleanup (with warning); fixes TS2322 build error.- Exported `DependencyMetaResult` in `src/runner/run/types.ts` to resolve TypeDoc warning.
+- Resolved context mode `combine` conflict by enforcing `includeOutputDir: false` and skipping cleanup (with warning); fixes TS2322 build error.
+- Exported `DependencyMetaResult` in `src/runner/run/types.ts` to resolve TypeDoc warning.
+- Increased global Vitest timeout to 30s to resolve smoke test timeouts in `archive-context` suites.
+- Re-exported `DependencyMetaResult` from `src/index.ts` to fully resolve TypeDoc visibility warning.

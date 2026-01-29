@@ -5,3 +5,8 @@ export * from './runner/help';
 export * from './runner/run';
 // Consolidated type re‑exports for documentation completeness.
 export type { ScriptEntry, ScriptMap, ScriptObject } from './cli/config/schema';
+// Re-export dependency context types for documentation completeness.
+export type {
+  DependencyContext,
+  DependencyMetaResult,
+} from './runner/run/types';
