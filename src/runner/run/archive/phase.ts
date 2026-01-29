@@ -1,3 +1,9 @@
+/**
+ * Archive phase orchestration for `stan run`: creates full/diff/meta archives,
+ * including dependency-context (“context mode”) archives via stan-core.
+ * Logs selection summaries via `onSelectionReport`; performs fs + console IO.
+ * @module
+ */
 import { copyFile, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -20,6 +26,43 @@ import {
 import type { DependencyContext } from '@/runner/run/types';
 import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { alert, ok } from '@/runner/util/color';
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  Boolean(v) && typeof v === 'object';
+
+const getStateEntries = (state: unknown): unknown[] => {
+  if (!isRecord(state)) return [];
+  const i = state.i;
+  return Array.isArray(i) ? i : [];
+};
+
+const getStateNodeId = (entry: unknown): string | null => {
+  if (typeof entry === 'string') return entry;
+  if (Array.isArray(entry) && typeof entry[0] === 'string') return entry[0];
+  return null;
+};
+
+const stateExplicitlySelectsExternalContext = (
+  state: unknown,
+  stanPath: string,
+): boolean => {
+  const npmPrefix = `${stanPath}/context/npm/`;
+  const absPrefix = `${stanPath}/context/abs/`;
+  for (const e of getStateEntries(state)) {
+    const id = getStateNodeId(e);
+    if (!id) continue;
+    if (id.startsWith(npmPrefix) || id.startsWith(absPrefix)) return true;
+  }
+  return false;
+};
+
+const uniqueStrings = (items: readonly string[]): string[] =>
+  Array.from(new Set(items));
+
+const externalContextExcludes = (stanPath: string): readonly string[] => [
+  `${stanPath}/context/npm/**`,
+  `${stanPath}/context/abs/**`,
+];
 
 type WithDeps = {
   includes?: string[];
@@ -120,6 +163,15 @@ export const archivePhase = async (
     config.stanPath,
     config.includes ?? [],
   );
+  const baseExcludes = config.excludes ?? [];
+  const excludesForContext =
+    dependency &&
+    !stateExplicitlySelectsExternalContext(dependency.state, config.stanPath)
+      ? uniqueStrings([
+          ...baseExcludes,
+          ...externalContextExcludes(config.stanPath),
+        ])
+      : baseExcludes;
 
   if (!silent && (which === 'both' || which === 'full')) {
     console.log(`stan: start "${alert('archive')}"`);
@@ -159,7 +211,7 @@ export const archivePhase = async (
           config.stanPath,
           {
             includes,
-            excludes: config.excludes ?? [],
+            excludes: baseExcludes,
           },
           {
             includeOutputDir: includeOutputs,
@@ -176,7 +228,7 @@ export const archivePhase = async (
           dependency,
           selection: {
             includes,
-            excludes: config.excludes ?? [],
+            excludes: excludesForContext,
           },
           archive: {
             includeOutputDir: false,
@@ -188,7 +240,7 @@ export const archivePhase = async (
         archivePath = await createArchive(cwd, config.stanPath, {
           includeOutputDir: includeOutputs,
           includes,
-          excludes: config.excludes ?? [],
+          excludes: baseExcludes,
           onSelectionReport: reportSelection,
         } as Parameters<typeof createArchive>[2]);
       }
@@ -228,9 +280,10 @@ export const archivePhase = async (
           dependency,
           selection: {
             includes,
-            excludes: config.excludes ?? [],
+            excludes: excludesForContext,
           },
           diff: {
+            onSelectionReport: reportSelection,
             baseName: 'archive',
             updateSnapshot: 'createIfMissing',
             includeOutputDirInDiff: false,
@@ -243,7 +296,7 @@ export const archivePhase = async (
           stanPath: config.stanPath,
           baseName: 'archive',
           includes,
-          excludes: config.excludes ?? [],
+          excludes: baseExcludes,
           updateSnapshot: 'createIfMissing',
           includeOutputDirInDiff: includeOutputs,
           onSelectionReport: reportSelection,
