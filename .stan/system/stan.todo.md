@@ -5,6 +5,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 ## Next up (priority order)
 
 - Run `stan run --context` to stage the selected DRY hotspots (via `.stan/context/dependency.state.json`) into the next archive/diff.
+- Implement: always pass `onSelectionReport` when building context archives; use it to surface/guard selection bloat.
 - Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
 - Resolve the TypeDoc warning by exporting/documenting the missing symbol(s) referenced from the public API (do not silence TypeDoc validation).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
@@ -86,4 +87,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Increased global Vitest timeout to 30s to resolve smoke test timeouts in `archive-context` suites.
 - Re-exported `DependencyMetaResult` from `src/index.ts` to fully resolve TypeDoc visibility warning.
 - Added `scripts/smoke-context-diff.ts` to `knip.json` entries to resolve unused-file error.
-- Seeded `.stan/context/dependency.state.json` with DRY hotspot paths to prepare for the next context-mode refactor pass.
+- Seeded `.stan/context/dependency.state.json` with DRY hotspot paths to prepare for the next context-mode refactor pass.- Minified `.stan/context/dependency.state.json` and removed depth traversal to avoid pulling externals and to keep state diffs small.
