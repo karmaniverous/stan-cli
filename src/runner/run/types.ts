@@ -16,7 +16,6 @@ import type { ScriptMap } from '@/cli/config/schema';
 
 /**
  * Return type helper for dependency graph build (internal).
- * @hidden
  */
 export type DependencyMetaResult = Awaited<
   ReturnType<typeof buildDependencyMeta>
