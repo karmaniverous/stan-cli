@@ -179,7 +179,7 @@ export const archivePhase = async (
             excludes: config.excludes ?? [],
           },
           archive: {
-            includeOutputDir: includeOutputs,
+            includeOutputDir: false,
             onSelectionReport: reportSelection,
           },
         });
@@ -233,7 +233,7 @@ export const archivePhase = async (
           diff: {
             baseName: 'archive',
             updateSnapshot: 'createIfMissing',
-            includeOutputDirInDiff: includeOutputs,
+            includeOutputDirInDiff: false,
             snapshotFileName: '.archive.snapshot.context.json',
           },
         })) as { diffPath: string };
@@ -275,7 +275,13 @@ export const archivePhase = async (
   }
   if (doCleanup) {
     if (includeOutputs) {
-      await cleanupOutputsAfterCombine(dirs.output);
+      if (!dependency) {
+        await cleanupOutputsAfterCombine(dirs.output);
+      } else if (!silent) {
+        console.log(
+          `stan: ${alert('warn')} combine mode (-b) ignored in context mode`,
+        );
+      }
     }
     await cleanupPatchDirAfterArchive(cwd, config.stanPath);
   }
