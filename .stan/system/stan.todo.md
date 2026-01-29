@@ -85,3 +85,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Exported `DependencyMetaResult` in `src/runner/run/types.ts` to resolve TypeDoc warning.
 - Increased global Vitest timeout to 30s to resolve smoke test timeouts in `archive-context` suites.
 - Re-exported `DependencyMetaResult` from `src/index.ts` to fully resolve TypeDoc visibility warning.
+- Added `scripts/smoke-context-diff.ts` to `knip.json` entries to resolve unused-file error.

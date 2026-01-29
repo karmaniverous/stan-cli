@@ -1,5 +1,5 @@
 {
-  "entry": ["src/**/index.ts"],
+  "entry": ["src/**/index.ts", "scripts/smoke-context-diff.ts"],
   "ignore": [".stan/**"],
   "ignoreDependencies": ["@types/eslint-config-prettier", "cross-env"],
   "project": ["*/**", "!docs/**"],
