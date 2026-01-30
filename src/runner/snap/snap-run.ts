@@ -6,6 +6,7 @@
  */
 
 import { existsSync, readFile } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import path from 'node:path';
 
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
@@ -144,20 +145,26 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         includes?: string[];
         excludes?: string[];
       }) => Promise<string>;
-      computeContextAllowlistPlan?: (args: {
+      // Context mode wrapper (same as stan run uses) ensures correct Base+Closure universe
+      createContextArchiveDiffWithDependencyContext?: (args: {
         cwd: string;
         stanPath: string;
-        meta: unknown;
-        state: unknown;
-        includes?: string[];
-        excludes?: string[];
-      }) => Promise<string[]>;
-      writeArchiveSnapshotFromFiles?: (
-        cwd: string,
-        stanPath: string,
-        files: string[],
-        opts?: { snapshotFileName?: string },
-      ) => Promise<string>;
+        dependency: {
+          meta: unknown;
+          map: unknown;
+          state: unknown;
+          clean?: boolean;
+        };
+        selection: { includes?: string[]; excludes?: string[] };
+        diff: {
+          baseName: string;
+          snapshotFileName: string;
+          updateSnapshot: 'replace' | 'createIfMissing' | 'never';
+          includeOutputDirInDiff?: boolean;
+          onSelectionReport?: (r: unknown) => void;
+          onArchiveWarnings?: (m: string) => void;
+        };
+      }) => Promise<{ diffPath: string }>;
       // Default fallback shapes
       default?: {
         loadConfig?: (cwd: string) => Promise<{
@@ -171,18 +178,9 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
           includes?: string[];
           excludes?: string[];
         }) => Promise<string>;
-        computeContextAllowlistPlan?: (args: {
-          cwd: string;
-          stanPath: string;
-          meta: unknown;
-          state: unknown;
-        }) => Promise<string[]>;
-        writeArchiveSnapshotFromFiles?: (
-          cwd: string,
-          stanPath: string,
-          files: string[],
-          opts?: { snapshotFileName?: string },
-        ) => Promise<string>;
+        createContextArchiveDiffWithDependencyContext?: (
+          args: unknown,
+        ) => Promise<{ diffPath: string }>;
         ensureOutputDir?: (
           cwd: string,
           stanPath: string,
@@ -208,17 +206,13 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         : typeof core.default?.writeArchiveSnapshot === 'function'
           ? core.default.writeArchiveSnapshot
           : null;
-    const computePlanFn =
-      typeof core.computeContextAllowlistPlan === 'function'
-        ? core.computeContextAllowlistPlan
-        : typeof core.default?.computeContextAllowlistPlan === 'function'
-          ? core.default.computeContextAllowlistPlan
-          : null;
-    const writeSnapshotFilesFn =
-      typeof core.writeArchiveSnapshotFromFiles === 'function'
-        ? core.writeArchiveSnapshotFromFiles
-        : typeof core.default?.writeArchiveSnapshotFromFiles === 'function'
-          ? core.default.writeArchiveSnapshotFromFiles
+    const createContextDiffFn =
+      typeof core.createContextArchiveDiffWithDependencyContext === 'function'
+        ? core.createContextArchiveDiffWithDependencyContext
+        : typeof core.default?.createContextArchiveDiffWithDependencyContext ===
+            'function'
+          ? (core.default
+              .createContextArchiveDiffWithDependencyContext as unknown as typeof core.createContextArchiveDiffWithDependencyContext)
           : null;
 
     if (writeSnapshotFn) {
@@ -251,10 +245,11 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
       });
 
       // Context snapshot (if dependency artifacts exist)
-      if (computePlanFn && writeSnapshotFilesFn) {
+      if (createContextDiffFn) {
         const ctxDir = path.join(cwd, stanPath, 'context');
         const metaP = path.join(ctxDir, 'dependency.meta.json');
         const stateP = path.join(ctxDir, 'dependency.state.json');
+        const mapP = path.join(ctxDir, 'dependency.map.json');
         try {
           if (existsSync(metaP) && existsSync(stateP)) {
             const readJson = (p: string) =>
@@ -266,21 +261,25 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
               });
             const meta = await readJson(metaP);
             const state = await readJson(stateP);
-            const plan = await computePlanFn({
+            const map = existsSync(mapP) ? await readJson(mapP) : undefined;
+
+            // Use a temp archive name; we only care about updating the snapshot side-effect
+            const tmpName = `snap-tmp-${String(Date.now())}`;
+            const res = await createContextDiffFn({
               cwd,
               stanPath,
-              meta,
-              state,
-              includes,
-              excludes,
+              dependency: { meta, map, state, clean: false },
+              selection: { includes, excludes },
+              diff: {
+                baseName: tmpName,
+                snapshotFileName: '.archive.snapshot.context.json',
+                updateSnapshot: 'replace',
+                includeOutputDirInDiff: false,
+              },
             });
-            // Add dependency artifacts themselves to the plan so the snapshot tracks their versions
-            const set = new Set(plan);
-            set.add(`${stanPath}/context/dependency.meta.json`);
-            set.add(`${stanPath}/context/dependency.state.json`);
-            await writeSnapshotFilesFn(cwd, stanPath, Array.from(set), {
-              snapshotFileName: '.archive.snapshot.context.json',
-            });
+            if (res.diffPath) {
+              await rm(res.diffPath, { force: true });
+            }
           }
         } catch {
           // best-effort context snapshot

@@ -91,4 +91,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Seeded `.stan/context/dependency.state.json` with DRY hotspot paths to prepare for the next context-mode refactor pass.
 - Minified `.stan/context/dependency.state.json` and removed depth traversal to avoid pulling externals and to keep state diffs small.
 - Always emit `onSelectionReport` for context archives and exclude `.stan/context/npm/**` + `.stan/context/abs/**` unless explicitly selected in dependency state.
-- Fixed `stan snap` context snapshot generation to include base selection files (prevents false-positive diffs on subsequent runs).
+- Fixed `stan snap` context snapshot generation to use `createContextArchiveDiffWithDependencyContext`, ensuring the baseline matches the `stan run` selection universe (Base + Closure).
