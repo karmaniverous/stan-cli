@@ -49,22 +49,18 @@
 <p>Context mode (<code>--context</code>):</p>
 <ul>
 <li>When enabled, STAN builds the dependency graph and stages dependency context.</li>
-<li>STAN creates <code>archive.meta.tar</code> as a thread opener on every context-mode run (no <code>--meta</code> CLI option).</li>
+<li>Use <code>--meta</code> (<code>-m</code>) to produce a meta archive (<code>archive.tar</code> = system + context) instead of the full source.</li>
 </ul>
 <p>Produces deterministic outputs and (when enabled) archives:</p>
 <ul>
 <li>Script outputs: <code>&lt;stanPath&gt;/output/&lt;key&gt;.txt</code> (combined stdout/stderr).</li>
-<li>Full archive: <code>&lt;stanPath&gt;/output/archive.tar</code> (repo snapshot).</li>
+<li>Full archive: <code>&lt;stanPath&gt;/output/archive.tar</code> (repo snapshot; or meta snapshot if <code>-m</code>).</li>
 <li>Diff archive: <code>&lt;stanPath&gt;/output/archive.diff.tar</code> (changed-only vs snapshot baseline).</li>
 </ul>
 <p>Live UI + cancellation:</p>
 <ul>
-<li>In TTY, live mode shows a progress table. Keys:
-<ul>
-<li><code>q</code> cancels the run (best-effort skips archives; exit code set).</li>
-<li><code>r</code> restarts the run session (TTY only).</li>
-</ul>
-</li>
+<li>In TTY, live mode shows a progress table.</li>
+<li>Use <code>Ctrl-C</code> to cancel the run (best-effort skips archives; exit code set).</li>
 </ul>
 <p>Combine mode:</p>
 <ul>

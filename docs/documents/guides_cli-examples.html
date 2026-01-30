@@ -155,7 +155,13 @@
 <p>-c, --context / -C, --no-context</p>
 <ul>
 <li>Enable context mode (dependency graph &amp; staged imports).</li>
-<li>Generates <code>archive.meta.tar</code> (thread opener) in addition to full/diff archives.</li>
+</ul>
+</li>
+<li>
+<p>-m, --meta</p>
+<ul>
+<li>Create a meta archive (system + context + meta/state) instead of a full source archive.</li>
+<li>Requires <code>--context</code>. <code>archive.tar</code> becomes the meta archive; no diff archive is produced.</li>
 </ul>
 </li>
 <li>
