@@ -149,6 +149,8 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
         stanPath: string;
         meta: unknown;
         state: unknown;
+        includes?: string[];
+        excludes?: string[];
       }) => Promise<string[]>;
       writeArchiveSnapshotFromFiles?: (
         cwd: string,
@@ -264,7 +266,14 @@ export async function handleSnap(opts?: { stash?: boolean }): Promise<void> {
               });
             const meta = await readJson(metaP);
             const state = await readJson(stateP);
-            const plan = await computePlanFn({ cwd, stanPath, meta, state });
+            const plan = await computePlanFn({
+              cwd,
+              stanPath,
+              meta,
+              state,
+              includes,
+              excludes,
+            });
             // Add dependency artifacts themselves to the plan so the snapshot tracks their versions
             const set = new Set(plan);
             set.add(`${stanPath}/context/dependency.meta.json`);

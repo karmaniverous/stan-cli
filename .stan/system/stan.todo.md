@@ -5,6 +5,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 ## Next up (priority order)
 
 - Run `stan run --context` to stage the selected DRY hotspots (via `.stan/context/dependency.state.json`) into the next archive/diff.
+- Verify `stan snap` fixes (empty diff on subsequent run) using `scripts/smoke-context-diff.ts`.
 - Validate context archive size/contents (externals excluded unless explicitly selected) and add/adjust smoke coverage if needed.
 - Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
 - Resolve the TypeDoc warning by exporting/documenting the missing symbol(s) referenced from the public API (do not silence TypeDoc validation).
@@ -90,3 +91,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Seeded `.stan/context/dependency.state.json` with DRY hotspot paths to prepare for the next context-mode refactor pass.
 - Minified `.stan/context/dependency.state.json` and removed depth traversal to avoid pulling externals and to keep state diffs small.
 - Always emit `onSelectionReport` for context archives and exclude `.stan/context/npm/**` + `.stan/context/abs/**` unless explicitly selected in dependency state.
+- Fixed `stan snap` context snapshot generation to include base selection files (prevents false-positive diffs on subsequent runs).

@@ -1,10 +1,5 @@
-# Scratch: DRY refactor (CLI wiring)
+# Scratch: Fix context snapshot keying
 
-- Objective: reduce duplication in CLI command registration, option wiring, and config loading.
-- Context mode is active; iterate by updating `.stan/context/dependency.state.json` and re-running `stan run --context` to pull in focused modules before editing them.
-- Keep `.stan/context/dependency.state.json` diffs small: minified JSON, avoid depth traversal unless we explicitly need closure.
-- Context archives now always log `onSelectionReport` (FULL + DIFF). Externals are excluded by default unless the state explicitly selects `.stan/context/npm/**` or `.stan/context/abs/**`.
-- Focus areas:
-  - `src/cli/**`: commander setup, run/snap/patch option wiring, config load/peek/raw.
-  - `src/runner/run/session/archive-stage/**` + `src/runner/run/archive/**`: archive staging/orchestration.
-- Next step: run `stan run --context` and attach `.stan/output/archive.tar` + `.stan/output/archive.diff.tar`; then implement “always pass `onSelectionReport` when building context archives” and use it to surface/guard against accidental external bloat.
+- Objective: Ensure `stan snap` updates the context snapshot (`.archive.snapshot.context.json`) with the full allowlist (Base + Closure) so subsequent runs don't diff base files as new.
+- Fix: Pass `includes` and `excludes` to `computeContextAllowlistPlan` in `src/runner/snap/snap-run.ts`.
+- Context mode Option B: `stan run --context` writes FULL+DIFF; `stan snap` must baseline both.
