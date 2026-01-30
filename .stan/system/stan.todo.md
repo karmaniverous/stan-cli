@@ -5,7 +5,6 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 ## Next up (priority order)
 
 - Run `stan run --context` to stage the selected DRY hotspots (via `.stan/context/dependency.state.json`) into the next archive/diff.
-- Verify `stan snap` fixes (empty diff on subsequent run) using `scripts/smoke-context-diff.ts`.
 - Validate context archive size/contents (externals excluded unless explicitly selected) and add/adjust smoke coverage if needed.
 - Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed; verify).
 - Resolve the TypeDoc warning by exporting/documenting the missing symbol(s) referenced from the public API (do not silence TypeDoc validation).
@@ -19,6 +18,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 **CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
 
+- Extended `scripts/smoke-context-diff.ts` to verify `stan snap` baseline stability (ensure subsequent runs produce empty diffs).
 - Fixed lint errors (`no-unnecessary-type-parameters`, `no-unnecessary-condition`) in DRY resolver helpers.
 - Make repo ESM-only: update rollup config (drop CJS) and package.json exports.
 - Verified ESM-only build/exports and full CI suite (build/docs/knip/test/lint/typecheck passed).

@@ -216,6 +216,31 @@ const main = async () => {
       process.exit(1);
     }
 
+    // 7. Snap again (should update baseline with current context)
+    console.log('stan: [7/8] snap (update baseline)...');
+    await runStan('snap', cwd);
+
+    // 8. Run -Sc again (should produce empty/sentinel diff)
+    console.log('stan: [8/8] run -Sc (verify stability)...');
+    await runStan('run -Sc', cwd);
+
+    const diffList2 = await listTar(diffPath, cwd);
+    console.log('stan: verifying DIFF 2 (should be clean)...');
+
+    if (diffList2.includes('src/main.ts')) {
+      errors.push('DIFF 2: src/main.ts reappeared (failed to baseline)');
+    }
+    if (diffList2.includes('.stan/context/dependency.state.json')) {
+      errors.push('DIFF 2: dependency.state.json reappeared (failed to baseline)');
+    }
+
+    if (errors.length > 0) {
+      console.error('stan: verification failed (stability).');
+      console.error('DIFF 2 content:', diffList2);
+      console.error('Errors:', errors);
+      process.exit(1);
+    }
+
     console.log('stan: smoke test passed.');
   } finally {
     await rm(cwd, { recursive: true, force: true });
