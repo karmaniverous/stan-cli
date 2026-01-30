@@ -1,11 +1,13 @@
 /** src/cli/patch/apply-local.ts
  * Local unified‑diff apply path (shim → jsdiff fallback).
  * - Tries "./apply".runGitApply (mockable in tests).
- * - Falls back to engine applyWithJsDiff (preserves EOLs).
+ * Falls back to engine applyWithJsDiff (preserves EOLs).
  */
 import path from 'node:path';
 
 import { applyWithJsDiff } from '@karmaniverous/stan-core';
+
+import { tryResolveCallableExport } from '@/common/interop/resolve';
 
 import { parseFirstTarget } from './detect';
 
@@ -16,21 +18,6 @@ type RunGitApplyFn = (args: {
   stripOrder?: number[];
 }) => Promise<{ ok: boolean }>;
 
-const pickRunGitApply = (modUnknown: unknown): RunGitApplyFn | null => {
-  const mod = modUnknown as {
-    runGitApply?: unknown;
-    default?: { runGitApply?: unknown };
-  };
-  const cand = (
-    typeof mod.runGitApply === 'function'
-      ? mod.runGitApply
-      : typeof mod.default?.runGitApply === 'function'
-        ? mod.default.runGitApply
-        : undefined
-  ) as RunGitApplyFn | undefined;
-  return typeof cand === 'function' ? cand : null;
-};
-
 export const applyUnifiedDiffLocally = async (
   cwd: string,
   cleaned: string,
@@ -40,7 +27,11 @@ export const applyUnifiedDiffLocally = async (
   // Try git‑apply via local shim (mockable)
   try {
     const modUnknown: unknown = await import('../apply');
-    const runGitApply = pickRunGitApply(modUnknown);
+    const runGitApply = tryResolveCallableExport<RunGitApplyFn>(
+      modUnknown,
+      'runGitApply',
+      { maxDefaultDepth: 2 },
+    );
     if (runGitApply) {
       const gitOut = await runGitApply({
         cwd,

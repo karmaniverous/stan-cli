@@ -25,7 +25,6 @@ stan-core:
     - CHANGELOG.md
     - docs
     - package-lock.json
-    - guides
   imports:
     stan-context:
       - ../stan-context/.stan/interop/stan-cli/**

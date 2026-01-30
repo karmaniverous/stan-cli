@@ -1,4 +1,8 @@
-// src/runner/run/session/archive-stage-resolver.ts
+/**
+ * SSR-robust resolver for the archive stage entrypoint.
+ * @module
+ */
+import { resolveCallableExport } from '@/common/interop/resolve';
 import * as archiveStageMod from '@/runner/run/session/archive-stage';
 
 /**
@@ -9,18 +13,9 @@ export type RunArchiveStageFn =
   (typeof import('@/runner/run/session/archive-stage'))['runArchiveStage'];
 
 export const getRunArchiveStage = (): RunArchiveStageFn => {
-  const mod = archiveStageMod as unknown as {
-    runArchiveStage?: unknown;
-    default?: { runArchiveStage?: unknown };
-  };
-  const named = mod.runArchiveStage;
-  const viaDefault = mod.default?.runArchiveStage;
-  const fn =
-    typeof named === 'function'
-      ? (named as RunArchiveStageFn)
-      : typeof viaDefault === 'function'
-        ? (viaDefault as RunArchiveStageFn)
-        : undefined;
-  if (!fn) throw new Error('runArchiveStage not found');
-  return fn;
+  return resolveCallableExport<RunArchiveStageFn>(
+    archiveStageMod as unknown,
+    'runArchiveStage',
+    { maxDefaultDepth: 2 },
+  );
 };

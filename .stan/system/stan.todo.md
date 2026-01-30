@@ -7,7 +7,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Run `stan run --context` to stage the selected DRY hotspots (via `.stan/context/dependency.state.json`) into the next archive/diff.
 - Verify `stan snap` fixes (empty diff on subsequent run) using `scripts/smoke-context-diff.ts`.
 - Validate context archive size/contents (externals excluded unless explicitly selected) and add/adjust smoke coverage if needed.
-- Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed, verify).
+- Ensure `makeBaseConfigs` propagates `dependency` context correctly (already partially addressed; verify).
 - Resolve the TypeDoc warning by exporting/documenting the missing symbol(s) referenced from the public API (do not silence TypeDoc validation).
 - DRY pass: identify duplication hotspots (CLI command registration, option wiring, config loading/peek/raw, run defaults merging, named-or-default dynamic import patterns in SSR paths).
 - Long-file scan: collect `wc -l` for `src/**/*.ts` and propose decompositions for anything >300 LOC before refactoring those modules further.
@@ -19,6 +19,7 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 
 **CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
 
+- Fixed lint errors (`no-unnecessary-type-parameters`, `no-unnecessary-condition`) in DRY resolver helpers.
 - Make repo ESM-only: update rollup config (drop CJS) and package.json exports.
 - Verified ESM-only build/exports and full CI suite (build/docs/knip/test/lint/typecheck passed).
 - Refactored documentation to enforce the "Run -> Snap -> Patch" loop model, emphasizing "Run" as the save point and "Patch" as the intelligence center.
@@ -91,4 +92,4 @@ Note: Keep changes cohesive and high-signal. Resolve as many related issues per 
 - Seeded `.stan/context/dependency.state.json` with DRY hotspot paths to prepare for the next context-mode refactor pass.
 - Minified `.stan/context/dependency.state.json` and removed depth traversal to avoid pulling externals and to keep state diffs small.
 - Always emit `onSelectionReport` for context archives and exclude `.stan/context/npm/**` + `.stan/context/abs/**` unless explicitly selected in dependency state.
-- Fixed `stan snap` context snapshot generation to use `createContextArchiveDiffWithDependencyContext`, ensuring the baseline matches the `stan run` selection universe (Base + Closure).
+- Fixed `stan snap` context snapshot generation to use `createContextArchiveDiffWithDependencyContext`, ensuring the baseline matches the `stan run` selection universe (Base + Closure).- DRY: centralize SSR/mock callable export resolution and reuse it across archive/snap/patch/run.

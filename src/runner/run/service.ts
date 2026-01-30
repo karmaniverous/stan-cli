@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { ensureOutputDir } from '@karmaniverous/stan-core';
 
+import { tryResolveCallableExport } from '@/common/interop/resolve';
 import { yieldToEventLoop } from '@/runner/run/exec/util';
 import type { RunnerConfig } from '@/runner/run/types';
 
@@ -19,26 +20,15 @@ const resolveUI = (): {
   LiveUICtor?: new (opts?: { boring?: boolean }) => RunnerUI;
   LoggerUICtor?: new () => RunnerUI;
 } => {
-  const mod = uiMod as unknown as {
-    LiveUI?: unknown;
-    LoggerUI?: unknown;
-    default?: { LiveUI?: unknown; LoggerUI?: unknown };
-  };
-  const Live = (
-    typeof mod.LiveUI === 'function'
-      ? (mod.LiveUI as unknown)
-      : typeof mod.default?.LiveUI === 'function'
-        ? (mod.default.LiveUI as unknown)
-        : undefined
-  ) as (new (opts?: { boring?: boolean }) => RunnerUI) | undefined;
-  const Logger = (
-    typeof mod.LoggerUI === 'function'
-      ? (mod.LoggerUI as unknown)
-      : typeof mod.default?.LoggerUI === 'function'
-        ? (mod.default.LoggerUI as unknown)
-        : undefined
-  ) as (new () => RunnerUI) | undefined;
-  return { LiveUICtor: Live, LoggerUICtor: Logger };
+  const Live = tryResolveCallableExport<
+    new (opts?: { boring?: boolean }) => RunnerUI
+  >(uiMod as unknown, 'LiveUI', { maxDefaultDepth: 2 });
+  const Logger = tryResolveCallableExport<new () => RunnerUI>(
+    uiMod as unknown,
+    'LoggerUI',
+    { maxDefaultDepth: 2 },
+  );
+  return { LiveUICtor: Live ?? undefined, LoggerUICtor: Logger ?? undefined };
 };
 
 /**

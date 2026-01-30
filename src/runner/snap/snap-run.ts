@@ -1,16 +1,15 @@
-// src/runner/snap/snap-run.ts
 /**
  * Snap entry point — creates/updates the diff snapshot (optionally with stash).
  * SSR-robust: resolves captureSnapshotAndArchives at call time to tolerate
  * named/default export shape differences under Vitest SSR/bundlers.
  */
-
 import { existsSync, readFile } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 
 import { resolveStanPathSync } from '@karmaniverous/stan-core';
 
+import { resolveCallableExport } from '@/common/interop/resolve';
 import { withImplicitImportsInclude } from '@/runner/selection/implicit-imports';
 import { utcStamp } from '@/runner/util/time';
 
@@ -24,71 +23,16 @@ type CaptureFn = (args: {
 
 const resolveCaptureSnapshotAndArchives = async (): Promise<CaptureFn> => {
   const modUnknown: unknown = await import('./capture');
-
-  // 1) named export
-  try {
-    const named = (modUnknown as { captureSnapshotAndArchives?: unknown })
-      .captureSnapshotAndArchives;
-    if (typeof named === 'function') return named as CaptureFn;
-  } catch {
-    /* ignore */
-  }
-
-  // 2) default.captureSnapshotAndArchives
-  try {
-    const viaDefaultObj = (
-      modUnknown as { default?: { captureSnapshotAndArchives?: unknown } }
-    ).default?.captureSnapshotAndArchives;
-    if (typeof viaDefaultObj === 'function') return viaDefaultObj as CaptureFn;
-  } catch {
-    /* ignore */
-  }
-
-  // 3) default as function
-  try {
-    const dAny = (modUnknown as { default?: unknown }).default;
-    if (typeof dAny === 'function') {
-      return dAny as unknown as {
-        (...a: unknown[]): Promise<unknown>;
-      } as unknown as CaptureFn;
-    }
-  } catch {
-    /* ignore */
-  }
-
-  // 4) nested default.default as function (some mock shapes)
-  try {
-    const nestedDefault = (
-      modUnknown as {
-        default?: { default?: unknown };
-      }
-    ).default?.default;
-    if (typeof nestedDefault === 'function')
-      return nestedDefault as unknown as CaptureFn;
-  } catch {
-    /* ignore */
-  }
-
-  // 5) module itself as function
-  try {
-    if (typeof modUnknown === 'function') return modUnknown as CaptureFn;
-  } catch {
-    /* ignore */
-  }
-
-  // 6) scan default object for any callable property (last resort)
-  try {
-    const d = (modUnknown as { default?: unknown }).default;
-    if (d && typeof d === 'object') {
-      for (const v of Object.values(d as Record<string, unknown>)) {
-        if (typeof v === 'function') return v as CaptureFn;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-
-  throw new Error('captureSnapshotAndArchives not found in "./capture"');
+  return resolveCallableExport<CaptureFn>(
+    modUnknown,
+    'captureSnapshotAndArchives',
+    {
+      allowDefaultCallable: true,
+      allowModuleCallable: true,
+      scanDefaultObject: true,
+      maxDefaultDepth: 3,
+    },
+  );
 };
 
 /**
